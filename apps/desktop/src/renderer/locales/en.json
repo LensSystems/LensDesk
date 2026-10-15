@@ -1,5 +1,8 @@
 {
   "shell": {
     "label": "LensDesk"
+  },
+  "ui": {
+    "loading": "Loading"
   }
 }
