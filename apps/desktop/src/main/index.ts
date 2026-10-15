@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
+import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
+import { createRouter } from "./ipc/router.ts";
+import { ipcSchemas } from "./ipc/schemas.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 
 const packageJson = JSON.parse(
@@ -8,6 +11,18 @@ const packageJson = JSON.parse(
 ) as { version: string };
 const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (path) =>
   app.setPath("userData", path),
+);
+let shellContents: Electron.WebContents | undefined;
+const router = createRouter({
+  schemas: ipcSchemas,
+  handlers: {
+    "app.getInfo": () => ({ version: packageJson.version, platform: process.platform }),
+  },
+  isShellSender: (sender) => shellContents !== undefined && sender === shellContents,
+});
+
+ipcMain.handle(HOST_IPC_CHANNEL, (event, channel: string, payload: unknown) =>
+  router(event.sender, channel, payload),
 );
 
 void app.whenReady().then(async () => {
@@ -21,6 +36,7 @@ void app.whenReady().then(async () => {
     },
   });
 
+  shellContents = window.webContents;
   window.webContents.on("will-navigate", (event) => event.preventDefault());
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
 
