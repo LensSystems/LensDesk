@@ -1,0 +1,154 @@
+@import "tailwindcss";
+@import "@lensdesk/sdk/fonts.css";
+@import "@lensdesk/sdk/theme.css";
+@import "@lensdesk/sdk/tailwind.css";
+
+:root {
+  font:
+    13px / 1.45 Inter,
+    sans-serif;
+  color: var(--ld-text);
+  background: var(--ld-bg);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 640px;
+  min-height: 100vh;
+}
+button,
+input {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid var(--ld-border-control);
+  border-radius: 4px;
+  color: var(--ld-text);
+  background: var(--ld-surface);
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+button:hover {
+  background: var(--ld-surface-raised);
+}
+button:focus-visible,
+input:focus-visible,
+.cm-content:focus-visible {
+  outline: 2px solid var(--ld-accent);
+  outline-offset: 2px;
+}
+.notes-app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.app-toolbar,
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ld-border);
+}
+.app-toolbar h1,
+.editor-toolbar h1 {
+  margin: 0 auto 0 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+}
+.note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-right: 1px solid var(--ld-border);
+  overflow: auto;
+}
+.note-list nav {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.note-row {
+  display: flex;
+  gap: 4px;
+}
+.note-title {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note-row.selected .note-title {
+  border-color: var(--ld-accent);
+}
+.editor-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.code-editor,
+.preview {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+}
+.cm-editor {
+  height: 100%;
+  font:
+    13px / 1.5 "JetBrains Mono",
+    monospace;
+  color: var(--ld-text);
+  background: var(--ld-bg);
+}
+.cm-scroller {
+  overflow: auto;
+}
+.cm-gutters {
+  color: var(--ld-text-muted);
+  background: var(--ld-surface);
+  border-right: 1px solid var(--ld-border);
+}
+.cm-cursor {
+  border-left-color: var(--ld-accent);
+}
+.preview img {
+  max-width: 100%;
+}
+.preview pre {
+  overflow: auto;
+  padding: 12px;
+  background: var(--ld-surface);
+}
+.preview a {
+  color: var(--ld-accent);
+}
+.empty-state {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+}
+.muted {
+  color: var(--ld-text-muted);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
