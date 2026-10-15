@@ -1,10 +1,14 @@
 import { Buffer } from "node:buffer";
+import { lstat, readFile, stat, writeFile } from "node:fs/promises";
+import { basename } from "node:path";
 import { LensError } from "@lensdesk/sdk/errors";
 import { TOOL_CHANNELS } from "../../shared/tool-channels.ts";
 import type { SqliteDatabase } from "../db/database.ts";
 import { toolIpcSchemas } from "../ipc/tool-schemas.ts";
+import type { FileTokens } from "./file-tokens.ts";
 
 const MAX_VALUE_BYTES = 1024 * 1024;
+const MAX_FILE_BYTES = 50 * 1024 * 1024;
 type Tool = { id: string; version: string; manifest: Record<string, unknown>; enabled: boolean };
 type Context = { locale: string; theme: string };
 type ToolView = { webContents: { id: number; send?(channel: string, payload: unknown): void } };
@@ -21,28 +25,103 @@ export function createToolApi(options: {
   hostVersion: string;
   clipboard: (text: string) => void;
   openExternal: (url: string) => Promise<void>;
+  fileTokens: FileTokens;
+  dialog: {
+    showOpenDialog(options: unknown): Promise<{ canceled: boolean; filePaths: string[] }>;
+    showSaveDialog(options: unknown): Promise<{ canceled: boolean; filePath?: string }>;
+  };
+  fs?: {
+    lstat(path: string): Promise<{ isFile(): boolean }>;
+    stat(path: string): Promise<{ isFile(): boolean; size: number }>;
+    readFile(path: string): Promise<Buffer>;
+    writeFile(path: string, data: string): Promise<void>;
+  };
 }) {
+  const fs = options.fs ?? { lstat, stat, readFile, writeFile };
+  const regularFile = async (path: string) => {
+    const info = await fs.lstat(path);
+    if (!info.isFile()) throw new LensError("E_PATH_NOT_GRANTED", "El archivo no está autorizado.");
+    const details = await fs.stat(path);
+    if (!details.isFile())
+      throw new LensError("E_PATH_NOT_GRANTED", "El archivo no está autorizado.");
+    if (details.size > MAX_FILE_BYTES)
+      throw new LensError("E_TOO_LARGE", "El archivo supera 50 MB.");
+    return details;
+  };
   return {
     invoke: async (sender: unknown, channel: string, payload: unknown): Promise<Result> => {
       if (!TOOL_CHANNELS.includes(channel as (typeof TOOL_CHANNELS)[number]))
         return fail("E_METHOD_NOT_FOUND", "Canal desconocido");
       const schema = toolIpcSchemas[channel as keyof typeof toolIpcSchemas];
-      const parsed = schema.request.safeParse(payload);
-      if (!parsed.success) return fail("E_INVALID_PARAMS", parsed.error.message);
       try {
         const id = (sender as { id?: number } | null)?.id;
         const toolId = typeof id === "number" ? options.viewId(id) : undefined;
         if (!toolId) throw new LensError("E_PERMISSION_DENIED", "Emisor no autorizado");
         const tool = options.registry.get(toolId);
         if (!tool?.enabled) throw new LensError("E_PERMISSION_DENIED", "Herramienta no autorizada");
-        const input = parsed.data as Record<string, unknown>;
         const requirePermission = (permission: string) => {
           const manifestPermissions = tool.manifest.permissions;
           if (!Array.isArray(manifestPermissions) || !manifestPermissions.includes(permission))
             throw new LensError("E_PERMISSION_DENIED", "Permiso no concedido");
         };
+        if (channel.startsWith("files.")) requirePermission("files");
+        const parsed = schema.request.safeParse(payload);
+        if (!parsed.success) return fail("E_INVALID_PARAMS", parsed.error.message);
+        const input = parsed.data as Record<string, unknown>;
         let data: unknown;
-        if (channel.startsWith("storage.")) {
+        if (channel === "files.pickOpen") {
+          const picked = await options.dialog.showOpenDialog({
+            properties: ["openFile", ...(input.multiple ? ["multiSelections"] : [])],
+            ...(input.filters ? { filters: input.filters } : {}),
+          });
+          data = picked.canceled
+            ? []
+            : await Promise.all(
+                picked.filePaths.map(async (path) => {
+                  const info = await regularFile(path);
+                  return {
+                    token: options.fileTokens.grant(toolId, path, "read"),
+                    name: basename(path),
+                    size: info.size,
+                  };
+                }),
+              );
+        } else if (channel === "files.pickSave") {
+          const picked = await options.dialog.showSaveDialog({
+            ...(input.defaultName ? { defaultPath: input.defaultName } : {}),
+            ...(input.filters ? { filters: input.filters } : {}),
+          });
+          if (picked.canceled || !picked.filePath) data = null;
+          else {
+            let size = 0;
+            try {
+              size = (await fs.stat(picked.filePath)).size;
+            } catch {
+              /* A new save target is empty. */
+            }
+            data = {
+              token: options.fileTokens.grant(toolId, picked.filePath, "write"),
+              name: basename(picked.filePath),
+              size,
+            };
+          }
+        } else if (channel.startsWith("files.")) {
+          const token = input.token as string;
+          if (channel === "files.readText" || channel === "files.readBytes") {
+            const path = options.fileTokens.resolve(toolId, token, "read", channel);
+            await regularFile(path);
+            const contents = await fs.readFile(path);
+            data =
+              channel === "files.readText" ? contents.toString("utf8") : new Uint8Array(contents);
+          } else if (channel === "files.writeText") {
+            const path = options.fileTokens.resolve(toolId, token, "write", channel);
+            const text = input.text as string;
+            if (Buffer.byteLength(text, "utf8") > MAX_FILE_BYTES)
+              throw new LensError("E_TOO_LARGE", "El archivo supera 50 MB.");
+            await fs.writeFile(path, text);
+            data = undefined;
+          }
+        } else if (channel.startsWith("storage.")) {
           requirePermission("storage");
           const key = input.key as string;
           if (channel === "storage.get") {
@@ -99,7 +178,6 @@ export function createToolApi(options: {
           await options.openExternal(url.toString());
           data = undefined;
         } else {
-          if (channel.startsWith("files.")) requirePermission("files");
           if (channel.startsWith("backend.")) requirePermission("backend");
           throw new LensError("E_BACKEND_UNAVAILABLE", "Esta función aún no está disponible.");
         }

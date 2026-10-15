@@ -4,6 +4,9 @@ import type { ToolChannel } from "../../shared/tool-channels.ts";
 const key = z.string().min(1).max(256);
 const fileFilter = z.object({ name: z.string(), extensions: z.array(z.string()) }).strict();
 const unavailable = { response: z.unknown() };
+const handle = z
+  .object({ token: z.string(), name: z.string(), size: z.number().nonnegative() })
+  .strict();
 export const toolIpcSchemas = {
   "storage.get": { request: z.object({ key }).strict(), response: z.unknown() },
   "storage.set": { request: z.object({ key, value: z.unknown() }).strict(), response: z.unknown() },
@@ -13,19 +16,25 @@ export const toolIpcSchemas = {
     request: z
       .object({ filters: z.array(fileFilter).optional(), multiple: z.boolean().optional() })
       .strict(),
-    ...unavailable,
+    response: z.array(handle),
   },
   "files.pickSave": {
     request: z
       .object({ defaultName: z.string().optional(), filters: z.array(fileFilter).optional() })
       .strict(),
-    ...unavailable,
+    response: handle.nullable(),
   },
-  "files.readText": { request: z.object({ token: z.string().min(1) }).strict(), ...unavailable },
-  "files.readBytes": { request: z.object({ token: z.string().min(1) }).strict(), ...unavailable },
+  "files.readText": {
+    request: z.object({ token: z.string().min(1) }).strict(),
+    response: z.string(),
+  },
+  "files.readBytes": {
+    request: z.object({ token: z.string().min(1) }).strict(),
+    response: z.custom<Uint8Array>((value) => value instanceof Uint8Array),
+  },
   "files.writeText": {
     request: z.object({ token: z.string().min(1), text: z.string() }).strict(),
-    ...unavailable,
+    response: z.void(),
   },
   "backend.invoke": {
     request: z

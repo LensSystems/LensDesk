@@ -26,9 +26,10 @@ import { configureRuntime, runSmoke } from "./runtime.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 import { scanDevTools } from "./tools/dev-tools.ts";
+import { createFileTokens } from "./tools/file-tokens.ts";
 import { createToolInstaller } from "./tools/installer.ts";
 import { registerToolProtocol } from "./tools/protocol.ts";
-import { registerToolApi } from "./tools/register-tool-api.ts";
+import { createToolDialogs, registerToolApi } from "./tools/register-tool-api.ts";
 import { publishTabsChanged } from "./tools/tool-events.ts";
 import { createToolHandlers } from "./tools/tool-handlers.ts";
 import { createToolViews, type ViewHost } from "./tools/tool-views.ts";
@@ -46,6 +47,9 @@ let activeLocale: "es" | "en" = "es";
 let toolInstaller: ReturnType<typeof createToolInstaller> | undefined;
 let toolViews: ReturnType<typeof createToolViews> | undefined;
 let toolApi: ReturnType<typeof registerToolApi> | undefined;
+const fileTokens = createFileTokens({
+  log: (toolId, channel) => console.warn("Acceso a archivo denegado", { toolId, channel }),
+});
 let shellWindow: BrowserWindow | undefined;
 // La vista de la herramienta activa solo se muestra cuando el shell está en una pestaña, no en
 // Herramientas ni en Ajustes. Sigue la misma regla que el store del shell: hay página de pestaña
@@ -66,7 +70,10 @@ const showActiveTool = (): void => {
 };
 const toolHandlers = createToolHandlers({
   installer: () => toolInstaller,
-  onToolDisabled: (toolId) => toolViews?.close(toolId),
+  onToolDisabled: (toolId) => {
+    fileTokens.revoke(toolId);
+    toolViews?.close(toolId);
+  },
   onToolEnabled: () => showActiveTool(),
   pick: () =>
     dialog.showOpenDialog({
@@ -176,6 +183,7 @@ void app.whenReady().then(async () => {
     database,
     userData,
     onToolRemoved: (toolId) => {
+      fileTokens.revoke(toolId);
       toolViews?.close(toolId);
       followTabs(tabsStore().list());
       publishTabsChanged(tabsStore().list, (tabs) => shellContents?.send("tabs.changed", { tabs }));
@@ -226,6 +234,8 @@ void app.whenReady().then(async () => {
     clipboard: (text) => clipboard.writeText(text),
     openExternal: (url) =>
       import("electron").then(({ shell: electronShell }) => electronShell.openExternal(url)),
+    fileTokens,
+    dialog: createToolDialogs(dialog, window),
   });
   window.on("resize", showActiveTool);
   followTabs(tabsStore().list());

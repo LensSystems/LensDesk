@@ -20,6 +20,7 @@ export const TOOL_CHANNELS = [
 ] as const;
 export const TOOL_EVENTS = ["files.drop", "backend.progress", "app.contextChanged"] as const;
 export const TOOL_IPC_CHANNEL = "lensdesk:tool-invoke";
+export const TOOL_DROP_REGISTER_CHANNEL = "lensdesk:tool-drop-register-internal";
 export type ToolChannel = (typeof TOOL_CHANNELS)[number];
 export type ToolEvent = (typeof TOOL_EVENTS)[number];
 export type ToolContextPayload = {
@@ -28,6 +29,14 @@ export type ToolContextPayload = {
   hostVersion: string;
   toolVersion: string;
 };
+export type FileHandle = { token: string; name: string; size: number };
+export function registerDroppedFiles(
+  files: readonly File[],
+  getPath: (file: File) => string,
+  register: (paths: string[]) => Promise<FileHandle[]>,
+): Promise<FileHandle[]> {
+  return register(files.map(getPath));
+}
 type Invoker = (channel: string, payload: unknown) => Promise<unknown>;
 type Subscriber = (event: string, callback: (payload: unknown) => void) => () => void;
 function failure(code: LensErrorCode, message: string): Result<never> {

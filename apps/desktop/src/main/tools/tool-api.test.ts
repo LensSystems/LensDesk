@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import { createFileTokens } from "./file-tokens.ts";
 import { createToolApi } from "./tool-api.ts";
 
-function fixture(permissions = ["storage"]) {
+function fixture(permissions = ["storage"], extra: Record<string, unknown> = {}) {
   const rows = new Map<string, { value_json: string; updated_at: string }>();
   const db = {
     prepare: vi.fn((sql: string) => ({
@@ -37,6 +38,12 @@ function fixture(permissions = ["storage"]) {
     hostVersion: "0.1.0",
     clipboard: vi.fn(),
     openExternal: vi.fn(async () => undefined),
+    fileTokens: createFileTokens({ createId: () => "file-token" }),
+    dialog: {
+      showOpenDialog: vi.fn(async () => ({ canceled: true, filePaths: [] })),
+      showSaveDialog: vi.fn(async () => ({ canceled: true })),
+    },
+    ...extra,
   });
   return { api, view };
 }
@@ -100,5 +107,43 @@ describe("tool API", () => {
     expect(
       errorCode(await api.invoke({ id: 5 }, "ui.openExternal", { url: "http://example.com" })),
     ).toBe("E_INVALID_PARAMS");
+  });
+
+  it("grants read/write tokens only through files APIs and checks the files permission", async () => {
+    const contents = Buffer.from("hello");
+    const fileTokens = createFileTokens({ createId: () => "read-token" });
+    const dialog = {
+      showOpenDialog: vi.fn(async () => ({ canceled: false, filePaths: ["/safe/file.txt"] })),
+      showSaveDialog: vi.fn(async () => ({ canceled: true })),
+    };
+    const fs = {
+      lstat: vi.fn(async () => ({ isFile: () => true })),
+      stat: vi.fn(async () => ({ isFile: () => true, size: 5 })),
+      readFile: vi.fn(async () => contents),
+      writeFile: vi.fn(async () => undefined),
+    };
+    const { api } = fixture(["files"], { fileTokens, dialog, fs });
+    const picked = await api.invoke({ id: 5 }, "files.pickOpen", { multiple: false });
+    expect(picked).toEqual({
+      ok: true,
+      data: [{ token: "read-token", name: "file.txt", size: 5 }],
+    });
+    expect(JSON.stringify(picked)).not.toContain("/safe/file.txt");
+    expect(await api.invoke({ id: 5 }, "files.readText", { token: "read-token" })).toEqual({
+      ok: true,
+      data: "hello",
+    });
+    expect(
+      errorCode(
+        await api.invoke({ id: 5 }, "files.writeText", { token: "read-token", text: "no" }),
+      ),
+    ).toBe("E_PATH_NOT_GRANTED");
+    expect(errorCode(await api.invoke({ id: 5 }, "files.readText", { token: "other" }))).toBe(
+      "E_PATH_NOT_GRANTED",
+    );
+    const denied = fixture([]).api;
+    expect(errorCode(await denied.invoke({ id: 5 }, "files.pickOpen", {}))).toBe(
+      "E_PERMISSION_DENIED",
+    );
   });
 });
