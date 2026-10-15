@@ -1,0 +1,24 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tools/*"
+
+# pnpm 11: la clave es allowBuilds (onlyBuiltDependencies se ignora en silencio).
+# Si `pnpm install` falla con ERR_PNPM_IGNORED_BUILDS, agrega aqui cada nombre que liste el error
+# con valor true y vuelve a ejecutar. Nunca agregues `electron` (no tiene script de instalacion
+# desde Electron 42) ni uses dangerouslyAllowAllBuilds.
+allowBuilds:
+  esbuild: true
+  "@tailwindcss/oxide": true
+  # Dependencia de electron-builder (instalador Squirrel, que LensDesk no usa: el instalador es NSIS).
+  # false = revisada y denegada; sin esta linea `pnpm install` falla con ERR_PNPM_IGNORED_BUILDS.
+  electron-winstaller: false
+
+minimumReleaseAgeExclude:
+  - electron@44.7.1
+  - lucide-react@1.56.0
+
+# electron-builder con el linker por defecto de pnpm: SIN VERIFICAR. Probar primero asi.
+# Solo si `pnpm dist:dir` falla al recolectar node_modules, descomenta la linea siguiente,
+# ejecuta `pnpm install` y repite.
+# nodeLinker: hoisted

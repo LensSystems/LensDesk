@@ -1,0 +1,43 @@
+{
+  "name": "@lensdesk/desktop",
+  "productName": "LensDesk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Contenedor de escritorio de LensDesk",
+  "author": "LensDesk",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "dist": "electron-builder --config electron-builder.yml",
+    "dist:dir": "electron-builder --config electron-builder.yml --dir"
+  },
+  "devDependencies": {
+    "@lensdesk/lenspkg": "workspace:*",
+    "@lensdesk/sdk": "workspace:*",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/semver": "7.8.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "electron": "44.7.1",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "i18next": "26.4.4",
+    "lucide-react": "1.56.0",
+    "radix-ui": "1.8.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-i18next": "17.0.16",
+    "semver": "7.8.5",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3",
+    "vite": "7.3.7",
+    "zod": "4.6.7",
+    "zustand": "5.0.15"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@lensdesk/lenspkg",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Empaquetado, firma, verificacion y extraccion segura de paquetes .lenspkg",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@lensdesk/sdk": "workspace:*",
+    "semver": "7.8.5",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/semver": "7.8.0"
+  }
+}

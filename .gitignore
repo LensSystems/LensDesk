@@ -1,0 +1,22 @@
+# Dependencias
+node_modules/
+
+# Salidas de compilacion y empaquetado. Ancladas a la raiz a proposito: un patron suelto como
+# `release/` tambien ignoraria cualquier otra carpeta con ese nombre.
+/apps/desktop/out/
+/apps/desktop/release/
+/tools/*/dist/
+/coverage/
+*.tsbuildinfo
+
+# Pruebas
+/test-results/
+/playwright-report/
+
+# Claves privadas de desarrollo (lenspkg keygen). Las .pub de confianza viven en
+# apps/desktop/resources/keys/ y SI se versionan.
+/.keys/
+
+# Local
+*.log
+.DS_Store
