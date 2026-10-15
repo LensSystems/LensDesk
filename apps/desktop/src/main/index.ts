@@ -26,8 +26,10 @@ import { createTabsStore } from "./shell/tabs-store.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 import { scanDevTools } from "./tools/dev-tools.ts";
 import { createToolInstaller } from "./tools/installer.ts";
+import { registerToolProtocol } from "./tools/protocol.ts";
 import { publishTabsChanged } from "./tools/tool-events.ts";
 import { createToolHandlers } from "./tools/tool-handlers.ts";
+import { createToolViews, type ViewHost } from "./tools/tool-views.ts";
 import { loadTrustedKeys } from "./tools/trusted-keys.ts";
 
 const packageJson = JSON.parse(
@@ -40,8 +42,29 @@ let shellContents: Electron.WebContents | undefined;
 let database: ReturnType<typeof openHostDatabase> | undefined;
 let activeLocale: "es" | "en" = "es";
 let toolInstaller: ReturnType<typeof createToolInstaller> | undefined;
+let toolViews: ReturnType<typeof createToolViews> | undefined;
+let shellWindow: BrowserWindow | undefined;
+// La vista de la herramienta activa solo se muestra cuando el shell está en una pestaña, no en
+// Herramientas ni en Ajustes. Sigue la misma regla que el store del shell: hay página de pestaña
+// mientras exista una pestaña activa, salvo que el shell pida otra página.
+let showingTab = false;
+const followTabs = (tabs: { active: boolean }[]): void => {
+  showingTab = tabs.some((tab) => tab.active);
+  showActiveTool();
+};
+const showActiveTool = (): void => {
+  if (!toolViews || !shellWindow || !database) return;
+  toolViews.hideAll();
+  if (!showingTab) return;
+  const active = createTabsStore(database, () => undefined)
+    .list()
+    .find((tab) => tab.active);
+  if (active) toolViews.show(active.toolId, shellWindow.getContentBounds());
+};
 const toolHandlers = createToolHandlers({
   installer: () => toolInstaller,
+  onToolDisabled: (toolId) => toolViews?.close(toolId),
+  onToolEnabled: () => showActiveTool(),
   pick: () =>
     dialog.showOpenDialog({
       properties: ["openFile"],
@@ -93,10 +116,27 @@ const router = createRouter({
     "settings.set": settingsHandlers["settings.set"],
     "app.getContext": settingsHandlers["app.getContext"],
     "tabs.list": () => ({ tabs: tabsStore().list() }),
-    "tabs.open": ({ toolId }) => ({ tabs: tabsStore().open(toolId) }),
-    "tabs.close": ({ toolId }) => ({ tabs: tabsStore().close(toolId) }),
-    "tabs.activate": ({ toolId }) => ({ tabs: tabsStore().activate(toolId) }),
-    "shell.showPage": ({ page }) => ({ page }),
+    "tabs.open": ({ toolId }) => {
+      const tabs = tabsStore().open(toolId);
+      followTabs(tabs);
+      return { tabs };
+    },
+    "tabs.close": ({ toolId }) => {
+      const tabs = tabsStore().close(toolId);
+      toolViews?.close(toolId);
+      followTabs(tabs);
+      return { tabs };
+    },
+    "tabs.activate": ({ toolId }) => {
+      const tabs = tabsStore().activate(toolId);
+      followTabs(tabs);
+      return { tabs };
+    },
+    "shell.showPage": ({ page }) => {
+      showingTab = false;
+      toolViews?.hideAll();
+      return { page };
+    },
     ...toolHandlers,
   },
   isShellSender: (sender) => shellContents !== undefined && sender === shellContents,
@@ -131,8 +171,11 @@ void app.whenReady().then(async () => {
   toolInstaller = createToolInstaller({
     database,
     userData,
-    onToolRemoved: () =>
-      publishTabsChanged(tabsStore().list, (tabs) => shellContents?.send("tabs.changed", { tabs })),
+    onToolRemoved: (toolId) => {
+      toolViews?.close(toolId);
+      followTabs(tabsStore().list());
+      publishTabsChanged(tabsStore().list, (tabs) => shellContents?.send("tabs.changed", { tabs }));
+    },
     trustedKeys: () =>
       loadTrustedKeys({
         directory: keysDirectory,
@@ -146,6 +189,7 @@ void app.whenReady().then(async () => {
     isPackaged: app.isPackaged,
     registry: toolInstaller.registry,
   });
+  registerToolProtocol(toolInstaller.registry);
   setNativeMenu(activeLocale);
   nativeTheme.on("updated", settingsHandlers.emitContextChanged);
   const bounds = restoreWindowBounds(
@@ -162,6 +206,13 @@ void app.whenReady().then(async () => {
       nodeIntegration: false,
     },
   });
+  shellWindow = window;
+  toolViews = createToolViews({
+    host: window.contentView as unknown as ViewHost,
+    registry: toolInstaller.registry,
+  });
+  window.on("resize", showActiveTool);
+  followTabs(tabsStore().list());
 
   shellContents = window.webContents;
   window.on("close", () => {

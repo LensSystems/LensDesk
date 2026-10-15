@@ -17,6 +17,8 @@ export function createToolHandlers(options: {
   installer: () => Installer | undefined;
   pick: () => Promise<{ canceled: boolean; filePaths: string[] }>;
   emit: () => void;
+  onToolDisabled?: (toolId: string) => void;
+  onToolEnabled?: (toolId: string) => void;
   fs?: Fs;
 }) {
   const fs = options.fs ?? { lstat };
@@ -72,6 +74,8 @@ export function createToolHandlers(options: {
       if (!installer) throw new LensError("E_INTERNAL", "El registro no está disponible.");
       if (!installer.registry.setEnabled(toolId, enabled, new Date().toISOString()))
         throw new LensError("E_TOOL_NOT_FOUND", "Herramienta no encontrada.");
+      if (!enabled) options.onToolDisabled?.(toolId);
+      else options.onToolEnabled?.(toolId);
       options.emit();
       return state();
     },
