@@ -1,6 +1,9 @@
+import { SHORTCUTS } from "./shell/shortcuts.ts";
+
 export type MenuItem = {
   label: string;
   role?: string;
+  accelerator?: string;
   submenu?: MenuItem[];
 };
 
@@ -25,6 +28,20 @@ export function buildMenuTemplate(t: MenuTranslator, platform: NodeJS.Platform):
         label: menu(key),
         role: key,
       })),
+    },
+    {
+      label: menu("tools"),
+      submenu: [
+        { label: menu("showTools"), accelerator: SHORTCUTS.tools },
+        { label: menu("closeTab"), accelerator: SHORTCUTS.closeTab },
+        { label: menu("nextTab"), accelerator: SHORTCUTS.nextTab },
+        { label: menu("previousTab"), accelerator: SHORTCUTS.previousTab },
+        ...Array.from({ length: 9 }, (_, index) => ({
+          label: menu("switchToTab").replace("{{number}}", String(index + 1)),
+          accelerator: SHORTCUTS.tab(index + 1),
+        })),
+        { label: menu("settings"), accelerator: SHORTCUTS.settings },
+      ],
     },
     {
       label: menu("view"),

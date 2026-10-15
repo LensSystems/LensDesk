@@ -17,7 +17,14 @@
     "reload": "Reload",
     "toggleDevTools": "Toggle Developer Tools",
     "minimize": "Minimize",
-    "close": "Close"
+    "close": "Close",
+    "tools": "Tools",
+    "showTools": "Show tools",
+    "closeTab": "Close tab",
+    "nextTab": "Next tab",
+    "previousTab": "Previous tab",
+    "switchToTab": "Go to tab {{number}}",
+    "settings": "Settings"
   },
   "schemaTooNew": {
     "message": "This database belongs to a newer version of LensDesk.",

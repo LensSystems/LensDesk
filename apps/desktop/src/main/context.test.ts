@@ -93,7 +93,15 @@ describe("contexto y ajustes", () => {
     const { database, emit, handlers } = createFixture();
     const router = createRouter({
       schemas: ipcSchemas,
-      handlers: { "app.getInfo": () => ({ version: "1", platform: "darwin" }), ...handlers },
+      handlers: {
+        "app.getInfo": () => ({ version: "1", platform: "darwin" }),
+        ...handlers,
+        "tabs.list": () => ({ tabs: [] }),
+        "tabs.open": () => ({ tabs: [] }),
+        "tabs.close": () => ({ tabs: [] }),
+        "tabs.activate": () => ({ tabs: [] }),
+        "shell.showPage": ({ page }) => ({ page }),
+      },
       isShellSender: () => true,
     });
     await expect(

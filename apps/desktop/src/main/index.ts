@@ -1,7 +1,16 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { LensError } from "@lensdesk/sdk/errors";
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, utilityProcess } from "electron";
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeTheme,
+  screen,
+  utilityProcess,
+} from "electron";
 import type { HostEventPayloads } from "../shared/host-channels.ts";
 import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
 import { createSettingsHandlers } from "./context.ts";
@@ -13,6 +22,8 @@ import { createRouter } from "./ipc/router.ts";
 import { ipcSchemas } from "./ipc/schemas.ts";
 import { buildMenuTemplate } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
+import { createTabsStore } from "./shell/tabs-store.ts";
+import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 
 const packageJson = JSON.parse(
   readFileSync(resolve(import.meta.dirname, "../../package.json"), "utf8"),
@@ -51,6 +62,10 @@ const settingsHandlers = createSettingsHandlers({
   },
   getSystemIsDark: () => nativeTheme.shouldUseDarkColors,
 });
+const tabsStore = () => {
+  if (!database) throw new LensError("E_INTERNAL", "La base de datos aún no está disponible.");
+  return createTabsStore(database, (tabs) => shellContents?.send("tabs.changed", { tabs }));
+};
 const router = createRouter({
   schemas: ipcSchemas,
   handlers: {
@@ -58,6 +73,11 @@ const router = createRouter({
     "settings.get": settingsHandlers["settings.get"],
     "settings.set": settingsHandlers["settings.set"],
     "app.getContext": settingsHandlers["app.getContext"],
+    "tabs.list": () => ({ tabs: tabsStore().list() }),
+    "tabs.open": ({ toolId }) => ({ tabs: tabsStore().open(toolId) }),
+    "tabs.close": ({ toolId }) => ({ tabs: tabsStore().close(toolId) }),
+    "tabs.activate": ({ toolId }) => ({ tabs: tabsStore().activate(toolId) }),
+    "shell.showPage": ({ page }) => ({ page }),
   },
   isShellSender: (sender) => shellContents !== undefined && sender === shellContents,
 });
@@ -85,7 +105,12 @@ void app.whenReady().then(async () => {
   activeLocale = getSetting(database, "locale");
   setNativeMenu(activeLocale);
   nativeTheme.on("updated", settingsHandlers.emitContextChanged);
+  const bounds = restoreWindowBounds(
+    database,
+    screen.getAllDisplays().map(({ bounds: rect }) => rect),
+  );
   const window = new BrowserWindow({
+    ...bounds,
     show: !smoke,
     webPreferences: {
       preload: resolve(import.meta.dirname, "../preload/host.cjs"),
@@ -96,6 +121,9 @@ void app.whenReady().then(async () => {
   });
 
   shellContents = window.webContents;
+  window.on("close", () => {
+    if (database) saveWindowBounds(database, window.getBounds());
+  });
   window.webContents.on("will-navigate", (event) => event.preventDefault());
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
 

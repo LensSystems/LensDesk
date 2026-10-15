@@ -17,7 +17,14 @@
     "reload": "Recargar",
     "toggleDevTools": "Alternar herramientas de desarrollo",
     "minimize": "Minimizar",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "tools": "Herramientas",
+    "showTools": "Mostrar herramientas",
+    "closeTab": "Cerrar pestaña",
+    "nextTab": "Pestaña siguiente",
+    "previousTab": "Pestaña anterior",
+    "switchToTab": "Ir a la pestaña {{number}}",
+    "settings": "Ajustes"
   },
   "schemaTooNew": {
     "message": "La base de datos pertenece a una versión más reciente de LensDesk.",

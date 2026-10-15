@@ -5,8 +5,13 @@ export const HOST_CHANNELS = [
   "settings.get",
   "settings.set",
   "app.getContext",
+  "tabs.list",
+  "tabs.open",
+  "tabs.close",
+  "tabs.activate",
+  "shell.showPage",
 ] as const;
-export const HOST_EVENTS = ["settings.changed", "context.changed"] as const;
+export const HOST_EVENTS = ["settings.changed", "context.changed", "tabs.changed"] as const;
 export const HOST_IPC_CHANNEL = "lensdesk:invoke";
 
 export type HostChannel = (typeof HOST_CHANNELS)[number];
@@ -15,6 +20,11 @@ export type HostPayloads = {
   "settings.get": { key: HostSettingKey };
   "settings.set": { key: HostSettingKey; value: unknown };
   "app.getContext": Record<string, never>;
+  "tabs.list": Record<string, never>;
+  "tabs.open": { toolId: string };
+  "tabs.close": { toolId: string };
+  "tabs.activate": { toolId: string };
+  "shell.showPage": { page: "tools" | "settings" };
 };
 export type HostSettingKey =
   | "locale"
@@ -29,11 +39,18 @@ export type HostResponses = {
   "settings.get": { key: HostSettingKey; value: HostSettingValue };
   "settings.set": { key: HostSettingKey; value: HostSettingValue };
   "app.getContext": { locale: "es" | "en"; theme: "dark" | "light" };
+  "tabs.list": { tabs: ShellTab[] };
+  "tabs.open": { tabs: ShellTab[] };
+  "tabs.close": { tabs: ShellTab[] };
+  "tabs.activate": { tabs: ShellTab[] };
+  "shell.showPage": { page: "tools" | "settings" };
 };
+export type ShellTab = { toolId: string; position: number; active: boolean };
 export type HostEvent = (typeof HOST_EVENTS)[number];
 export type HostEventPayloads = {
   "settings.changed": { key: HostSettingKey; value: HostSettingValue };
   "context.changed": { locale: "es" | "en"; theme: "dark" | "light" };
+  "tabs.changed": { tabs: ShellTab[] };
 };
 
 export type HostBridge = {

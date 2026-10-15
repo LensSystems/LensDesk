@@ -7,6 +7,11 @@ const unusedHandlers = {
   "settings.get": () => ({ key: "locale" as const, value: "es" }),
   "settings.set": () => ({ key: "locale" as const, value: "es" }),
   "app.getContext": () => ({ locale: "es" as const, theme: "dark" as const }),
+  "tabs.list": () => ({ tabs: [] }),
+  "tabs.open": () => ({ tabs: [] }),
+  "tabs.close": () => ({ tabs: [] }),
+  "tabs.activate": () => ({ tabs: [] }),
+  "shell.showPage": ({ page }: { page: "tools" | "settings" }) => ({ page }),
 };
 
 describe("IPC router", () => {
