@@ -22,6 +22,7 @@ export const HOST_EVENTS = [
   "context.changed",
   "tabs.changed",
   "tools.changed",
+  "tools.toast",
 ] as const;
 export const HOST_IPC_CHANNEL = "lensdesk:invoke";
 
@@ -94,6 +95,7 @@ export type HostEventPayloads = {
   "context.changed": { locale: "es" | "en"; theme: "dark" | "light" };
   "tabs.changed": { tabs: ShellTab[] };
   "tools.changed": ToolState;
+  "tools.toast": { toolId: string; kind: string; message: string };
 };
 
 export type HostBridge = {

@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({
@@ -49,6 +50,7 @@ describe("tool view helpers", () => {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
+      preload: join(import.meta.dirname, "../preload/tool.cjs"),
     });
     expect(computeViewBounds({ width: 800, height: 600 })).toEqual({
       x: 0,

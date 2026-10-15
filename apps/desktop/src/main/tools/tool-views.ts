@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { shell, WebContentsView } from "electron";
 import { registerToolProtocolFor } from "./protocol.ts";
 
@@ -7,6 +8,7 @@ export function toolWebPreferences(toolId: string): Electron.WebPreferences {
     contextIsolation: true,
     sandbox: true,
     nodeIntegration: false,
+    preload: join(import.meta.dirname, "../preload/tool.cjs"),
   };
 }
 
@@ -32,6 +34,7 @@ export type ToolView = {
   setBounds(bounds: ReturnType<typeof computeViewBounds>): void;
   webContents: {
     id: number;
+    send?(channel: string, payload: unknown): void;
     close(): void;
     on(event: string, listener: (...args: never[]) => void): void;
     setWindowOpenHandler(handler: (details: { url: string }) => { action: "deny" }): void;
@@ -66,6 +69,7 @@ export function createToolViews(options: {
   };
   return {
     getToolIdForContents: (id: number) => contentsToTool.get(id),
+    getViews: () => [...views.values()],
     hideAll(): void {
       for (const view of views.values()) options.host.removeChildView(view);
     },

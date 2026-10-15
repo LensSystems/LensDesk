@@ -4,6 +4,7 @@ import { LensError } from "@lensdesk/sdk/errors";
 import {
   app,
   BrowserWindow,
+  clipboard,
   dialog,
   ipcMain,
   Menu,
@@ -27,6 +28,7 @@ import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 import { scanDevTools } from "./tools/dev-tools.ts";
 import { createToolInstaller } from "./tools/installer.ts";
 import { registerToolProtocol } from "./tools/protocol.ts";
+import { registerToolApi } from "./tools/register-tool-api.ts";
 import { publishTabsChanged } from "./tools/tool-events.ts";
 import { createToolHandlers } from "./tools/tool-handlers.ts";
 import { createToolViews, type ViewHost } from "./tools/tool-views.ts";
@@ -43,6 +45,7 @@ let database: ReturnType<typeof openHostDatabase> | undefined;
 let activeLocale: "es" | "en" = "es";
 let toolInstaller: ReturnType<typeof createToolInstaller> | undefined;
 let toolViews: ReturnType<typeof createToolViews> | undefined;
+let toolApi: ReturnType<typeof registerToolApi> | undefined;
 let shellWindow: BrowserWindow | undefined;
 // La vista de la herramienta activa solo se muestra cuando el shell está en una pestaña, no en
 // Herramientas ni en Ajustes. Sigue la misma regla que el store del shell: hay página de pestaña
@@ -99,6 +102,7 @@ const settingsHandlers = createSettingsHandlers({
     if (event === "context.changed") {
       activeLocale = (payload as HostEventPayloads["context.changed"]).locale;
       setNativeMenu(activeLocale);
+      toolApi?.publishContext(payload as HostEventPayloads["context.changed"]);
     }
     shellContents?.send(event, payload);
   },
@@ -210,6 +214,18 @@ void app.whenReady().then(async () => {
   toolViews = createToolViews({
     host: window.contentView as unknown as ViewHost,
     registry: toolInstaller.registry,
+  });
+  toolApi = registerToolApi({
+    ipcMain,
+    db: database,
+    registry: toolInstaller.registry,
+    views: toolViews,
+    context: () => settingsHandlers["app.getContext"]() as { locale: string; theme: string },
+    hostVersion: packageJson.version,
+    shellContents: () => shellContents,
+    clipboard: (text) => clipboard.writeText(text),
+    openExternal: (url) =>
+      import("electron").then(({ shell: electronShell }) => electronShell.openExternal(url)),
   });
   window.on("resize", showActiveTool);
   followTabs(tabsStore().list());
