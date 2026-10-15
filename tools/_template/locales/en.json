@@ -1,0 +1,13 @@
+{
+  "title": "Example tool",
+  "context": "Language: {{locale}} · Theme: {{theme}}",
+  "actionsHeading": "Example actions",
+  "counter": "Counter: {{count}}",
+  "incrementButton": "Increment counter",
+  "pingButton": "Try backend",
+  "openFileButton": "Open file",
+  "pingSuccess": "Successful response",
+  "errors": {
+    "generic": "The action could not be completed ({{code}})"
+  }
+}
