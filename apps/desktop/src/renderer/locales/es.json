@@ -1,6 +1,28 @@
 {
   "shell": {
-    "label": "LensDesk"
+    "label": "LensDesk",
+    "tabsLabel": "Pestañas abiertas",
+    "closeTab": "Cerrar {{name}}",
+    "toolsPage": "Herramientas",
+    "settingsPage": "Ajustes",
+    "activeTool": "Herramienta activa"
+  },
+  "toolsPage": {
+    "title": "Herramientas",
+    "emptyTitle": "Aún no hay herramientas",
+    "emptyDescription": "Agrega una herramienta para empezar.",
+    "addTool": "Agregar herramienta…"
+  },
+  "settingsPage": {
+    "title": "Ajustes",
+    "language": "Idioma",
+    "spanish": "Español",
+    "english": "Inglés",
+    "theme": "Tema",
+    "system": "Sistema",
+    "dark": "Oscuro",
+    "light": "Claro",
+    "developerMode": "Modo desarrollador"
   },
   "ui": {
     "loading": "Cargando",

@@ -1,6 +1,28 @@
 {
   "shell": {
-    "label": "LensDesk"
+    "label": "LensDesk",
+    "tabsLabel": "Open tabs",
+    "closeTab": "Close {{name}}",
+    "toolsPage": "Tools",
+    "settingsPage": "Settings",
+    "activeTool": "Active tool"
+  },
+  "toolsPage": {
+    "title": "Tools",
+    "emptyTitle": "No tools yet",
+    "emptyDescription": "Add a tool to get started.",
+    "addTool": "Add tool…"
+  },
+  "settingsPage": {
+    "title": "Settings",
+    "language": "Language",
+    "spanish": "Spanish",
+    "english": "English",
+    "theme": "Theme",
+    "system": "System",
+    "dark": "Dark",
+    "light": "Light",
+    "developerMode": "Developer mode"
   },
   "ui": {
     "loading": "Loading",

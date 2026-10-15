@@ -1,0 +1,37 @@
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { applyContext } from "../apply-context.ts";
+import { useShellStore } from "../state/store.ts";
+import { SettingsPage } from "./SettingsPage.tsx";
+import { TabBar } from "./TabBar.tsx";
+import { ToolsPage } from "./ToolsPage.tsx";
+
+type AppProps = { bridge?: Window["lensdeskHost"] };
+
+export function App({ bridge = window.lensdeskHost }: AppProps) {
+  const { i18n, t } = useTranslation();
+  const tabs = useShellStore((state) => state.tabs);
+  const page = useShellStore((state) => state.page);
+  const context = useShellStore((state) => state.context);
+  useEffect(() => {
+    const unsubscribe = useShellStore.getState().subscribe(bridge);
+    void useShellStore.getState().hydrate(bridge);
+    return unsubscribe;
+  }, [bridge]);
+  useEffect(() => {
+    void i18n.changeLanguage(context.locale);
+    applyContext(context, document.documentElement);
+  }, [context, i18n]);
+  return (
+    <div className="min-h-screen bg-bg text-text">
+      <TabBar tabs={tabs} bridge={bridge} />
+      {page === "settings" ? (
+        <SettingsPage bridge={bridge} />
+      ) : page === "tab" ? (
+        <main aria-label={t("shell.activeTool")} />
+      ) : (
+        <ToolsPage />
+      )}
+    </div>
+  );
+}
