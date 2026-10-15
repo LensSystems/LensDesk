@@ -43,6 +43,7 @@ export function registerToolApi(options: {
   openExternal: (url: string) => Promise<void>;
   fileTokens: FileTokens;
   dialog: Parameters<typeof createToolApi>[0]["dialog"];
+  backend?: Parameters<typeof createToolApi>[0]["backend"];
 }) {
   const api = createToolApi({
     db: options.db,
@@ -55,6 +56,7 @@ export function registerToolApi(options: {
     openExternal: options.openExternal,
     fileTokens: options.fileTokens,
     dialog: options.dialog,
+    backend: options.backend,
     log: (toolId, toast) => options.shellContents()?.send("tools.toast", { toolId, ...toast }),
   });
   options.ipcMain.handle(TOOL_IPC_CHANNEL, (event, channel: string, payload: unknown) =>

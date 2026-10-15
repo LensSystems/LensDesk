@@ -4,7 +4,6 @@ import { LensError } from "@lensdesk/sdk/errors";
 import {
   app,
   BrowserWindow,
-  clipboard,
   dialog,
   ipcMain,
   Menu,
@@ -25,15 +24,7 @@ import { buildMenuTemplate } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
-import { scanDevTools } from "./tools/dev-tools.ts";
-import { createFileTokens } from "./tools/file-tokens.ts";
-import { createToolInstaller } from "./tools/installer.ts";
-import { registerToolProtocol } from "./tools/protocol.ts";
-import { createToolDialogs, registerToolApi } from "./tools/register-tool-api.ts";
-import { publishTabsChanged } from "./tools/tool-events.ts";
-import { createToolHandlers } from "./tools/tool-handlers.ts";
-import { createToolViews, type ViewHost } from "./tools/tool-views.ts";
-import { loadTrustedKeys } from "./tools/trusted-keys.ts";
+import { createToolWiring } from "./tools/wire-tools.ts";
 
 const packageJson = JSON.parse(
   readFileSync(resolve(import.meta.dirname, "../../package.json"), "utf8"),
@@ -44,13 +35,6 @@ const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (pa
 let shellContents: Electron.WebContents | undefined;
 let database: ReturnType<typeof openHostDatabase> | undefined;
 let activeLocale: "es" | "en" = "es";
-let toolInstaller: ReturnType<typeof createToolInstaller> | undefined;
-let toolViews: ReturnType<typeof createToolViews> | undefined;
-let toolApi: ReturnType<typeof registerToolApi> | undefined;
-const fileTokens = createFileTokens({
-  log: (toolId, channel) => console.warn("Acceso a archivo denegado", { toolId, channel }),
-});
-let shellWindow: BrowserWindow | undefined;
 // La vista de la herramienta activa solo se muestra cuando el shell está en una pestaña, no en
 // Herramientas ni en Ajustes. Sigue la misma regla que el store del shell: hay página de pestaña
 // mientras exista una pestaña activa, salvo que el shell pida otra página.
@@ -59,33 +43,8 @@ const followTabs = (tabs: { active: boolean }[]): void => {
   showingTab = tabs.some((tab) => tab.active);
   showActiveTool();
 };
-const showActiveTool = (): void => {
-  if (!toolViews || !shellWindow || !database) return;
-  toolViews.hideAll();
-  if (!showingTab) return;
-  const active = createTabsStore(database, () => undefined)
-    .list()
-    .find((tab) => tab.active);
-  if (active) toolViews.show(active.toolId, shellWindow.getContentBounds());
-};
-const toolHandlers = createToolHandlers({
-  installer: () => toolInstaller,
-  onToolDisabled: (toolId) => {
-    fileTokens.revoke(toolId);
-    toolViews?.close(toolId);
-  },
-  onToolEnabled: () => showActiveTool(),
-  pick: () =>
-    dialog.showOpenDialog({
-      properties: ["openFile"],
-      filters: [{ name: "LensDesk Tool", extensions: ["lenspkg"] }],
-    }),
-  emit: () =>
-    shellContents?.send("tools.changed", {
-      tools: (toolInstaller?.registry.list() ?? []).map(({ installPath: _path, ...tool }) => tool),
-      pendingDowngrade: toolInstaller?.getPendingDowngrade() ?? null,
-    }),
-});
+let showActiveTool = (): void => undefined;
+let toolWiring: ReturnType<typeof createToolWiring>;
 const setNativeMenu = (locale: "es" | "en"): void => {
   const t = createTranslator(locale);
   Menu.setApplicationMenu(
@@ -109,7 +68,7 @@ const settingsHandlers = createSettingsHandlers({
     if (event === "context.changed") {
       activeLocale = (payload as HostEventPayloads["context.changed"]).locale;
       setNativeMenu(activeLocale);
-      toolApi?.publishContext(payload as HostEventPayloads["context.changed"]);
+      toolWiring?.publishContext(payload as HostEventPayloads["context.changed"]);
     }
     shellContents?.send(event, payload);
   },
@@ -119,6 +78,18 @@ const tabsStore = () => {
   if (!database) throw new LensError("E_INTERNAL", "La base de datos aún no está disponible.");
   return createTabsStore(database, (tabs) => shellContents?.send("tabs.changed", { tabs }));
 };
+toolWiring = createToolWiring({
+  app,
+  database: () => database,
+  userData: app.getPath("userData"),
+  version: packageJson.version,
+  shellContents: () => shellContents,
+  context: () => settingsHandlers["app.getContext"]() as { locale: string; theme: string },
+  showingTab: () => showingTab,
+  onShowActiveTool: (callback) => {
+    showActiveTool = callback;
+  },
+});
 const router = createRouter({
   schemas: ipcSchemas,
   handlers: {
@@ -134,7 +105,7 @@ const router = createRouter({
     },
     "tabs.close": ({ toolId }) => {
       const tabs = tabsStore().close(toolId);
-      toolViews?.close(toolId);
+      toolWiring.close(toolId);
       followTabs(tabs);
       return { tabs };
     },
@@ -145,10 +116,10 @@ const router = createRouter({
     },
     "shell.showPage": ({ page }) => {
       showingTab = false;
-      toolViews?.hideAll();
+      toolWiring.hideAll();
       return { page };
     },
-    ...toolHandlers,
+    ...toolWiring.handlers,
   },
   isShellSender: (sender) => shellContents !== undefined && sender === shellContents,
 });
@@ -175,33 +146,6 @@ void app.whenReady().then(async () => {
   }
   activeLocale = getSetting(database, "locale");
   const readyDatabase = database;
-  const userData = app.getPath("userData");
-  const keysDirectory = app.isPackaged
-    ? resolve(process.resourcesPath, "keys")
-    : resolve(import.meta.dirname, "../../resources/keys");
-  toolInstaller = createToolInstaller({
-    database,
-    userData,
-    onToolRemoved: (toolId) => {
-      fileTokens.revoke(toolId);
-      toolViews?.close(toolId);
-      followTabs(tabsStore().list());
-      publishTabsChanged(tabsStore().list, (tabs) => shellContents?.send("tabs.changed", { tabs }));
-    },
-    trustedKeys: () =>
-      loadTrustedKeys({
-        directory: keysDirectory,
-        developerMode: getSetting(readyDatabase, "developerMode"),
-      }),
-    developerMode: () => getSetting(readyDatabase, "developerMode"),
-    hostVersion: packageJson.version,
-  });
-  await scanDevTools({
-    directory: process.env.LENSDESK_DEV_TOOLS_DIR,
-    isPackaged: app.isPackaged,
-    registry: toolInstaller.registry,
-  });
-  registerToolProtocol(toolInstaller.registry);
   setNativeMenu(activeLocale);
   nativeTheme.on("updated", settingsHandlers.emitContextChanged);
   const bounds = restoreWindowBounds(
@@ -218,29 +162,11 @@ void app.whenReady().then(async () => {
       nodeIntegration: false,
     },
   });
-  shellWindow = window;
-  toolViews = createToolViews({
-    host: window.contentView as unknown as ViewHost,
-    registry: toolInstaller.registry,
-  });
-  toolApi = registerToolApi({
-    ipcMain,
-    db: database,
-    registry: toolInstaller.registry,
-    views: toolViews,
-    context: () => settingsHandlers["app.getContext"]() as { locale: string; theme: string },
-    hostVersion: packageJson.version,
-    shellContents: () => shellContents,
-    clipboard: (text) => clipboard.writeText(text),
-    openExternal: (url) =>
-      import("electron").then(({ shell: electronShell }) => electronShell.openExternal(url)),
-    fileTokens,
-    dialog: createToolDialogs(dialog, window),
-  });
   window.on("resize", showActiveTool);
   followTabs(tabsStore().list());
 
   shellContents = window.webContents;
+  await toolWiring.initialize(readyDatabase, window, process.env.LENSDESK_DEV_TOOLS_DIR);
   window.on("close", () => {
     if (database) saveWindowBounds(database, window.getBounds());
   });
@@ -290,10 +216,11 @@ void app.whenReady().then(async () => {
               if (code !== 0) resolveSmoke(false);
             });
           }),
-        tools: () => toolInstaller !== undefined && Array.isArray(toolInstaller.registry.list()),
+        tools: () => toolWiring.registry !== undefined && Array.isArray(toolWiring.registry.list()),
       },
     );
   }
 });
 
 app.on("window-all-closed", () => app.quit());
+app.on("before-quit", () => toolWiring?.terminateAll());

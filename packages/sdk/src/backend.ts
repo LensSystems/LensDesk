@@ -143,9 +143,20 @@ export function createBackendRuntime(methods: Record<string, BackendMethod>, por
 }
 
 export function defineBackend(definition: BackendDefinition) {
-  const parentPort = (globalThis as unknown as { process?: { parentPort?: Port } }).process
-    ?.parentPort;
-  return parentPort
-    ? createBackendRuntime(definition.methods, parentPort)
-    : { methods: definition.methods };
+  const parentPort = (
+    globalThis as unknown as {
+      process?: {
+        parentPort?: {
+          on(event: "message", listener: (event: { data: RuntimeMessage }) => void): void;
+          postMessage(message: unknown): void;
+        };
+      };
+    }
+  ).process?.parentPort;
+  if (!parentPort) return { methods: definition.methods };
+  // En un utilityProcess, parentPort entrega cada mensaje envuelto en un evento con `data`.
+  return createBackendRuntime(definition.methods, {
+    on: (event, listener) => parentPort.on(event, (message) => listener(message.data)),
+    postMessage: (message) => parentPort.postMessage(message),
+  });
 }

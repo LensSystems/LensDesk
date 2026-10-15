@@ -109,6 +109,43 @@ describe("tool API", () => {
     ).toBe("E_INVALID_PARAMS");
   });
 
+  it("enforces backend permission, validates requests and scopes progress to its view", async () => {
+    const backend = {
+      invoke: vi.fn(async (_id, _requestId, _method, _params, progress) => {
+        progress({ fraction: 0.5 });
+        return { pong: true };
+      }),
+      cancel: vi.fn(),
+    };
+    const { api, view } = fixture(["backend"], { backend });
+    expect(
+      await api.invoke({ id: 5 }, "backend.invoke", {
+        requestId: "r1",
+        method: "ping",
+        params: {},
+      }),
+    ).toEqual({ ok: true, data: { pong: true } });
+    expect(view.webContents.send).toHaveBeenCalledWith("lensdesk:tool-event:backend.progress", {
+      fraction: 0.5,
+      requestId: "r1",
+    });
+    expect(
+      await api.invoke({ id: 5 }, "backend.invoke", { requestId: "", method: "ping", params: {} }),
+    ).toMatchObject({ ok: false, error: { code: "E_INVALID_PARAMS" } });
+    expect(await api.invoke({ id: 5 }, "backend.cancel", { requestId: "r1" })).toMatchObject({
+      ok: true,
+    });
+    expect(backend.cancel).toHaveBeenCalledWith("test-tool", "r1");
+    const denied = fixture([]).api;
+    expect(
+      await denied.invoke({ id: 5 }, "backend.invoke", {
+        requestId: "r",
+        method: "ping",
+        params: {},
+      }),
+    ).toMatchObject({ ok: false, error: { code: "E_PERMISSION_DENIED" } });
+  });
+
   it("grants read/write tokens only through files APIs and checks the files permission", async () => {
     const contents = Buffer.from("hello");
     const fileTokens = createFileTokens({ createId: () => "read-token" });

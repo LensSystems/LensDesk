@@ -24,6 +24,28 @@ describe("defineBackend", () => {
     expect(defineBackend({ methods }).methods).toBe(methods);
   });
 
+  it("unwraps the data of each parentPort event in a utility process", async () => {
+    const { port, messages } = makePort();
+    let listener: (event: { data: Message }) => void = () => {};
+    const parentPort = {
+      on: (_event: "message", callback: (event: { data: Message }) => void) => {
+        listener = callback;
+      },
+      postMessage: port.postMessage,
+    };
+    const proc = process as unknown as { parentPort?: typeof parentPort };
+    proc.parentPort = parentPort;
+    try {
+      defineBackend({ methods: { ping: () => "pong" } });
+    } finally {
+      delete proc.parentPort;
+    }
+    listener({ data: { type: "request", id: 1, method: "ping", params: {} } });
+    await vi.waitFor(() =>
+      expect(messages).toContainEqual({ type: "response", id: 1, result: "pong" }),
+    );
+  });
+
   it("returns results, maps thrown errors, and rejects missing methods", async () => {
     const { port, send, messages } = makePort();
     createBackendRuntime(

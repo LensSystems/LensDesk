@@ -36,6 +36,16 @@ export function createToolApi(options: {
     readFile(path: string): Promise<Buffer>;
     writeFile(path: string, data: string): Promise<void>;
   };
+  backend?: {
+    invoke(
+      toolId: string,
+      requestId: string,
+      method: string,
+      params: unknown,
+      onProgress: (event: { fraction: number; message?: string }) => void,
+    ): Promise<unknown>;
+    cancel(toolId: string, requestId: string): void;
+  };
 }) {
   const fs = options.fs ?? { lstat, stat, readFile, writeFile };
   const regularFile = async (path: string) => {
@@ -65,6 +75,7 @@ export function createToolApi(options: {
             throw new LensError("E_PERMISSION_DENIED", "Permiso no concedido");
         };
         if (channel.startsWith("files.")) requirePermission("files");
+        if (channel.startsWith("backend.")) requirePermission("backend");
         const parsed = schema.request.safeParse(payload);
         if (!parsed.success) return fail("E_INVALID_PARAMS", parsed.error.message);
         const input = parsed.data as Record<string, unknown>;
@@ -177,8 +188,31 @@ export function createToolApi(options: {
             throw new LensError("E_INVALID_PARAMS", "Solo se permiten URL HTTPS.");
           await options.openExternal(url.toString());
           data = undefined;
+        } else if (channel === "backend.invoke") {
+          if (!options.backend)
+            throw new LensError("E_BACKEND_UNAVAILABLE", "El backend no está disponible.");
+          const requestId = input.requestId as string;
+          data = await options.backend.invoke(
+            toolId,
+            requestId,
+            input.method as string,
+            input.params,
+            (progress) => {
+              const view = options
+                .views()
+                .find((candidate) => options.viewId(candidate.webContents.id) === toolId);
+              view?.webContents.send?.("lensdesk:tool-event:backend.progress", {
+                ...progress,
+                requestId,
+              });
+            },
+          );
+        } else if (channel === "backend.cancel") {
+          if (!options.backend)
+            throw new LensError("E_BACKEND_UNAVAILABLE", "El backend no está disponible.");
+          options.backend.cancel(toolId, input.requestId as string);
+          data = undefined;
         } else {
-          if (channel.startsWith("backend.")) requirePermission("backend");
           throw new LensError("E_BACKEND_UNAVAILABLE", "Esta función aún no está disponible.");
         }
         const response = schema.response.safeParse(data);
