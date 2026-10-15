@@ -1,0 +1,73 @@
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ld-bg: #0f1115;
+  --ld-surface: #171a21;
+  --ld-surface-raised: #1e222b;
+  --ld-border: #2a2f3a;
+  --ld-border-control: #9aa3b2;
+  --ld-text: #e6e8ec;
+  --ld-text-muted: #9aa3b2;
+  --ld-accent: #4f8cff;
+  --ld-accent-hover: #6ba0ff;
+  --ld-accent-fg: #0b1020;
+  --ld-success: #3fb950;
+  --ld-warning: #d29922;
+  --ld-danger: #f85149;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --ld-bg: #ffffff;
+  --ld-surface: #f6f7f9;
+  --ld-surface-raised: #ffffff;
+  --ld-border: #d9dde3;
+  --ld-border-control: #5b6472;
+  --ld-text: #16181d;
+  --ld-text-muted: #5b6472;
+  --ld-accent: #2563eb;
+  --ld-accent-hover: #1d4ed8;
+  --ld-accent-fg: #ffffff;
+  --ld-success: #1a7f37;
+  --ld-warning: #9a6700;
+  --ld-danger: #cf222e;
+}
+
+:root {
+  font-family: "Inter Variable", Inter, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--ld-text);
+  background: var(--ld-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ld-text);
+  background: var(--ld-bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ld-accent);
+  outline-offset: 2px;
+}
+
+/* biome-ignore-start lint/complexity/noImportantStyles: la preferencia de movimiento reducido debe ganar a cualquier transición de un componente */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+/* biome-ignore-end lint/complexity/noImportantStyles: fin de la regla de movimiento reducido */

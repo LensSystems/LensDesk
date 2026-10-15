@@ -1,0 +1,17 @@
+@theme inline {
+  --color-bg: var(--ld-bg);
+  --color-surface: var(--ld-surface);
+  --color-surface-raised: var(--ld-surface-raised);
+  --color-border: var(--ld-border);
+  --color-border-control: var(--ld-border-control);
+  --color-text: var(--ld-text);
+  --color-muted: var(--ld-text-muted);
+  --color-accent: var(--ld-accent);
+  --color-accent-hover: var(--ld-accent-hover);
+  --color-accent-fg: var(--ld-accent-fg);
+  --color-success: var(--ld-success);
+  --color-warning: var(--ld-warning);
+  --color-danger: var(--ld-danger);
+  --font-sans: "Inter Variable", Inter, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
+}

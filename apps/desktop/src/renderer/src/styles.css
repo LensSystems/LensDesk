@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@import "@lensdesk/sdk/fonts.css";
+@import "@lensdesk/sdk/theme.css";
+@import "@lensdesk/sdk/tailwind.css";
