@@ -23,6 +23,11 @@ export async function runSmoke(
   version: string,
   write: (line: string) => void,
   exit: (code: number) => void,
+  checks: {
+    database?: () => boolean;
+    ftsMain?: () => boolean;
+    ftsUtility?: () => Promise<boolean>;
+  } = {},
 ): Promise<void> {
   try {
     if (!(await probe(window))) {
@@ -30,6 +35,19 @@ export async function runSmoke(
       return;
     }
     write(`LENSDESK_SMOKE_OK ${version}`);
+    if (checks.database) {
+      if (!checks.database()) throw new Error("La base no contiene el esquema esperado.");
+      write("LENSDESK_SMOKE_DB_OK");
+    }
+    if (checks.ftsMain) {
+      if (!checks.ftsMain()) throw new Error("FTS5 no está disponible en main.");
+      write("LENSDESK_SMOKE_FTS5_MAIN_OK");
+    }
+    if (checks.ftsUtility) {
+      if (!(await checks.ftsUtility()))
+        throw new Error("FTS5 no está disponible en utilityProcess.");
+      write("LENSDESK_SMOKE_FTS5_UTILITY_OK");
+    }
     exit(0);
   } catch {
     exit(1);

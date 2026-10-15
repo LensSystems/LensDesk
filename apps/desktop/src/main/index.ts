@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, utilityProcess } from "electron";
 import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
+import { openHostDatabase, supportsFts5 } from "./db/driver.ts";
+import { SchemaTooNewError } from "./db/migrate.ts";
 import { createRouter } from "./ipc/router.ts";
 import { ipcSchemas } from "./ipc/schemas.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
@@ -26,6 +28,21 @@ ipcMain.handle(HOST_IPC_CHANNEL, (event, channel: string, payload: unknown) =>
 );
 
 void app.whenReady().then(async () => {
+  let database: ReturnType<typeof openHostDatabase> | undefined;
+  try {
+    database = openHostDatabase(app.getPath("userData"));
+  } catch (error) {
+    if (error instanceof SchemaTooNewError) {
+      await dialog.showMessageBox({
+        type: "error",
+        message: "La base de datos pertenece a una versión más reciente de LensDesk.",
+        detail: error.message,
+      });
+      app.exit(1);
+      return;
+    }
+    throw error;
+  }
   const window = new BrowserWindow({
     show: !smoke,
     webPreferences: {
@@ -56,6 +73,33 @@ void app.whenReady().then(async () => {
       packageJson.version,
       (line) => console.log(line),
       (code) => app.exit(code),
+      {
+        database: () => {
+          const tables = database
+            .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+            .all() as { name: string }[];
+          return ["schema_migrations", "settings", "installed_tools", "open_tabs", "tool_kv"].every(
+            (name) => tables.some((table) => table.name === name),
+          );
+        },
+        ftsMain: supportsFts5,
+        ftsUtility: () =>
+          new Promise((resolveSmoke) => {
+            const utility = utilityProcess.fork(resolve(import.meta.dirname, "./smoke-utility.js"));
+            utility.once("message", (message) => {
+              utility.kill();
+              resolveSmoke(
+                typeof message === "object" &&
+                  message !== null &&
+                  "fts5" in message &&
+                  message.fts5 === true,
+              );
+            });
+            utility.once("exit", (code) => {
+              if (code !== 0) resolveSmoke(false);
+            });
+          }),
+      },
     );
   }
 });
