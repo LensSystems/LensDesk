@@ -11,7 +11,32 @@
     "title": "Herramientas",
     "emptyTitle": "Aún no hay herramientas",
     "emptyDescription": "Agrega una herramienta para empezar.",
-    "addTool": "Agregar herramienta…"
+    "addTool": "Agregar herramienta…",
+    "unsigned": "sin firmar",
+    "actions": "Acciones de {{name}}",
+    "disable": "Desactivar",
+    "enable": "Activar",
+    "details": "Ver detalles",
+    "remove": "Quitar",
+    "detailsTitle": "Detalles de {{name}}",
+    "version": "Versión",
+    "signed": "Firmada",
+    "permissions": "Permisos",
+    "noPermissions": "Ninguno",
+    "removeTitle": "Quitar {{name}}",
+    "removeDescription": "¿Quieres quitar esta herramienta?",
+    "deleteData": "Eliminar también los datos",
+    "installError": "No se pudo instalar la herramienta",
+    "downgradeTitle": "Instalar una versión anterior",
+    "downgradeDescription": "La versión instalada es {{installed}} y la nueva versión es {{incoming}}. ¿Continuar?",
+    "cancel": "Cancelar",
+    "confirm": "Continuar",
+    "actionError": "No se pudo completar la acción",
+    "permission": {
+      "storage": "Almacenamiento",
+      "files": "Archivos",
+      "backend": "Proceso en segundo plano"
+    }
   },
   "settingsPage": {
     "title": "Ajustes",
@@ -28,5 +53,19 @@
     "loading": "Cargando",
     "close": "Cerrar",
     "dismiss": "Descartar"
+  },
+  "errors": {
+    "E_SIGNATURE_INVALID": "La firma de la herramienta no es válida.",
+    "E_HASH_MISMATCH": "El contenido de la herramienta no coincide con sus hashes.",
+    "E_UNSIGNED": "La herramienta no está firmada.",
+    "E_MANIFEST_INVALID": "El manifiesto de la herramienta no es válido.",
+    "E_API_VERSION_UNSUPPORTED": "La versión de API de la herramienta no es compatible.",
+    "E_HOST_TOO_OLD": "Actualiza LensDesk para instalar esta herramienta.",
+    "E_ZIP_UNSAFE_PATH": "El paquete contiene una ruta no segura.",
+    "E_TOO_LARGE": "El paquete supera el tamaño permitido.",
+    "E_INVALID_PARAMS": "Los datos proporcionados no son válidos.",
+    "E_PERMISSION_DENIED": "No tienes permiso para realizar esta acción.",
+    "E_TOOL_NOT_FOUND": "No se encontró la herramienta.",
+    "E_INTERNAL": "Ocurrió un error interno."
   }
 }

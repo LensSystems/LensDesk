@@ -9,7 +9,7 @@ export function DropdownMenuItem({ className, ...props }: ComponentProps<typeof 
     <Primitive.Item
       {...props}
       className={cn(
-        "flex h-7 cursor-default items-center rounded px-2 outline-none focus:bg-surface focus:text-text",
+        "flex h-7 cursor-default items-center rounded px-2 focus:bg-surface focus:text-text",
         className,
       )}
     />

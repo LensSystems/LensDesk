@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, webUtils } from "electron";
 import { createHostBridge, HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
 
 const bridge = createHostBridge(
@@ -11,4 +11,10 @@ const bridge = createHostBridge(
   },
 );
 
-contextBridge.exposeInMainWorld("lensdeskHost", bridge);
+contextBridge.exposeInMainWorld(
+  "lensdeskHost",
+  Object.freeze({
+    ...bridge,
+    pathForFile: (file: File) => webUtils.getPathForFile(file),
+  }),
+);

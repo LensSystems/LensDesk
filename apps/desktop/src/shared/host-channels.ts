@@ -102,6 +102,7 @@ export type HostBridge = {
     payload: HostPayloads[C],
   ): Promise<Result<HostResponses[C]>>;
   on<E extends HostEvent>(event: E, callback: (payload: HostEventPayloads[E]) => void): () => void;
+  pathForFile(file: File): string;
 };
 
 export function createHostBridge(

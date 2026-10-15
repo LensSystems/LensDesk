@@ -3,7 +3,9 @@ import type {
   HostBridge,
   HostEventPayloads,
   HostSettingKey,
+  PendingDowngrade,
   ShellTab,
+  ToolSummary,
 } from "../../../shared/host-channels.ts";
 
 type SettingValues = {
@@ -13,7 +15,8 @@ type SettingValues = {
 };
 type State = {
   tabs: ShellTab[];
-  tools: unknown[];
+  tools: ToolSummary[];
+  pendingDowngrade: PendingDowngrade | null;
   settings: SettingValues;
   context: HostEventPayloads["context.changed"];
   page: "tools" | "settings" | "tab";
@@ -30,6 +33,7 @@ const eventCounts = { tabs: 0, settings: 0, context: 0 };
 export const useShellStore = create<State>((set) => ({
   tabs: [],
   tools: [],
+  pendingDowngrade: null,
   settings: defaults,
   context: { locale: "es", theme: "dark" },
   page: "tools",
@@ -40,12 +44,13 @@ export const useShellStore = create<State>((set) => ({
   },
   async hydrate(bridge) {
     const before = { ...eventCounts };
-    const [tabs, locale, theme, developerMode, context] = await Promise.all([
+    const [tabs, locale, theme, developerMode, context, tools] = await Promise.all([
       bridge.invoke("tabs.list", {}),
       bridge.invoke("settings.get", { key: "locale" }),
       bridge.invoke("settings.get", { key: "theme" }),
       bridge.invoke("settings.get", { key: "developerMode" }),
       bridge.invoke("app.getContext", {}),
+      bridge.invoke("tools.list", {}),
     ]);
     const stale = (field: keyof typeof eventCounts) => eventCounts[field] !== before[field];
     set((state) => ({
@@ -76,6 +81,9 @@ export const useShellStore = create<State>((set) => ({
                 : defaults.developerMode,
           },
       context: context.ok && !stale("context") ? context.data : state.context,
+      ...(tools.ok
+        ? { tools: tools.data.tools, pendingDowngrade: tools.data.pendingDowngrade }
+        : {}),
     }));
   },
   subscribe(bridge) {
@@ -93,6 +101,7 @@ export const useShellStore = create<State>((set) => ({
         eventCounts.context += 1;
         set({ context });
       }),
+      bridge.on("tools.changed", ({ tools, pendingDowngrade }) => set({ tools, pendingDowngrade })),
     ];
     return () => {
       for (const unsubscribe of unsubscribers) unsubscribe();
