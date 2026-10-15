@@ -1,9 +1,12 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { app, BrowserWindow, dialog, ipcMain, utilityProcess } from "electron";
+import { LensError } from "@lensdesk/sdk/errors";
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, utilityProcess } from "electron";
 import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
+import { createSettingsHandlers } from "./context.ts";
 import { openHostDatabase, supportsFts5 } from "./db/driver.ts";
 import { SchemaTooNewError } from "./db/migrate.ts";
+import { getSetting, setSetting } from "./db/settings-repo.ts";
 import { createRouter } from "./ipc/router.ts";
 import { ipcSchemas } from "./ipc/schemas.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
@@ -15,10 +18,28 @@ const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (pa
   app.setPath("userData", path),
 );
 let shellContents: Electron.WebContents | undefined;
+let database: ReturnType<typeof openHostDatabase> | undefined;
+const settingsHandlers = createSettingsHandlers({
+  repo: {
+    get: (key) => {
+      if (!database) throw new LensError("E_INTERNAL", "La base de datos aún no está disponible.");
+      return getSetting(database, key);
+    },
+    set: (key, value) => {
+      if (!database) throw new LensError("E_INTERNAL", "La base de datos aún no está disponible.");
+      setSetting(database, key, value);
+    },
+  },
+  emit: (event, payload) => shellContents?.send(event, payload),
+  getSystemIsDark: () => nativeTheme.shouldUseDarkColors,
+});
 const router = createRouter({
   schemas: ipcSchemas,
   handlers: {
     "app.getInfo": () => ({ version: packageJson.version, platform: process.platform }),
+    "settings.get": settingsHandlers["settings.get"],
+    "settings.set": settingsHandlers["settings.set"],
+    "app.getContext": settingsHandlers["app.getContext"],
   },
   isShellSender: (sender) => shellContents !== undefined && sender === shellContents,
 });
@@ -28,7 +49,6 @@ ipcMain.handle(HOST_IPC_CHANNEL, (event, channel: string, payload: unknown) =>
 );
 
 void app.whenReady().then(async () => {
-  let database: ReturnType<typeof openHostDatabase> | undefined;
   try {
     database = openHostDatabase(app.getPath("userData"));
   } catch (error) {
@@ -43,6 +63,7 @@ void app.whenReady().then(async () => {
     }
     throw error;
   }
+  nativeTheme.on("updated", settingsHandlers.emitContextChanged);
   const window = new BrowserWindow({
     show: !smoke,
     webPreferences: {
@@ -75,6 +96,7 @@ void app.whenReady().then(async () => {
       (code) => app.exit(code),
       {
         database: () => {
+          if (!database) return false;
           const tables = database
             .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
             .all() as { name: string }[];

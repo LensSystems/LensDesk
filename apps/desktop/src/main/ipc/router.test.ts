@@ -3,6 +3,12 @@ import { HOST_CHANNELS } from "../../shared/host-channels.ts";
 import { createRouter } from "./router.ts";
 import { ipcSchemas } from "./schemas.ts";
 
+const unusedHandlers = {
+  "settings.get": () => ({ key: "locale" as const, value: "es" }),
+  "settings.set": () => ({ key: "locale" as const, value: "es" }),
+  "app.getContext": () => ({ locale: "es" as const, theme: "dark" as const }),
+};
+
 describe("IPC router", () => {
   it("declara un esquema para cada canal host y ninguno adicional", () => {
     expect(Object.keys(ipcSchemas).sort()).toEqual([...HOST_CHANNELS].sort());
@@ -11,7 +17,10 @@ describe("IPC router", () => {
   it("valida la respuesta de app.getInfo", async () => {
     const router = createRouter({
       schemas: ipcSchemas,
-      handlers: { "app.getInfo": () => ({ version: "1.0.0", platform: "darwin" }) },
+      handlers: {
+        ...unusedHandlers,
+        "app.getInfo": () => ({ version: "1.0.0", platform: "darwin" }),
+      },
       isShellSender: () => true,
     });
     await expect(router({}, "app.getInfo", {})).resolves.toEqual({
@@ -24,7 +33,7 @@ describe("IPC router", () => {
     const handler = vi.fn(() => ({ version: "1.0.0", platform: "darwin" }));
     const router = createRouter({
       schemas: ipcSchemas,
-      handlers: { "app.getInfo": handler },
+      handlers: { ...unusedHandlers, "app.getInfo": handler },
       isShellSender: () => true,
     });
     await expect(router({}, "app.getInfo", { extra: true })).resolves.toMatchObject({
@@ -38,7 +47,7 @@ describe("IPC router", () => {
     const handler = vi.fn(() => ({ version: "1.0.0", platform: "darwin" }));
     const router = createRouter({
       schemas: ipcSchemas,
-      handlers: { "app.getInfo": handler },
+      handlers: { ...unusedHandlers, "app.getInfo": handler },
       isShellSender: (sender) => sender === "shell",
     });
     await expect(router("tool", "app.getInfo", {})).resolves.toMatchObject({
@@ -51,7 +60,10 @@ describe("IPC router", () => {
   it("rechaza canales desconocidos", async () => {
     const router = createRouter({
       schemas: ipcSchemas,
-      handlers: { "app.getInfo": () => ({ version: "1", platform: "darwin" }) },
+      handlers: {
+        ...unusedHandlers,
+        "app.getInfo": () => ({ version: "1", platform: "darwin" }),
+      },
       isShellSender: () => true,
     });
     await expect(router({}, "unknown", {})).resolves.toMatchObject({
