@@ -3,6 +3,8 @@
     "label": "LensDesk"
   },
   "ui": {
-    "loading": "Cargando"
+    "loading": "Cargando",
+    "close": "Cerrar",
+    "dismiss": "Descartar"
   }
 }
