@@ -59,4 +59,19 @@ describe("runSmoke", () => {
     expect(write).not.toHaveBeenCalled();
     expect(exit).toHaveBeenCalledWith(1);
   });
+
+  it("prints the tools marker only after a successful registry read", async () => {
+    const write = vi.fn();
+    const exit = vi.fn();
+    await runSmoke(
+      async () => true,
+      { webContents: { executeJavaScript: async () => true } },
+      "0.1.0",
+      write,
+      exit,
+      { tools: () => true },
+    );
+    expect(write).toHaveBeenCalledWith("LENSDESK_SMOKE_TOOLS_OK");
+    expect(exit).toHaveBeenCalledWith(0);
+  });
 });

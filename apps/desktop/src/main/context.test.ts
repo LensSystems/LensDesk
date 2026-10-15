@@ -101,6 +101,12 @@ describe("contexto y ajustes", () => {
         "tabs.close": () => ({ tabs: [] }),
         "tabs.activate": () => ({ tabs: [] }),
         "shell.showPage": ({ page }) => ({ page }),
+        "tools.list": () => ({ tools: [], pendingDowngrade: null }),
+        "tools.pickAndInstall": () => ({ tools: [], pendingDowngrade: null }),
+        "tools.installFromPath": () => ({ tools: [], pendingDowngrade: null }),
+        "tools.confirmDowngrade": () => ({ tools: [], pendingDowngrade: null }),
+        "tools.setEnabled": () => ({ tools: [], pendingDowngrade: null }),
+        "tools.remove": () => ({ tools: [], pendingDowngrade: null }),
       },
       isShellSender: () => true,
     });

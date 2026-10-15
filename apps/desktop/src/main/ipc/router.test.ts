@@ -12,11 +12,30 @@ const unusedHandlers = {
   "tabs.close": () => ({ tabs: [] }),
   "tabs.activate": () => ({ tabs: [] }),
   "shell.showPage": ({ page }: { page: "tools" | "settings" }) => ({ page }),
+  "tools.list": () => ({ tools: [], pendingDowngrade: null }),
+  "tools.pickAndInstall": () => ({ tools: [], pendingDowngrade: null }),
+  "tools.installFromPath": () => ({ tools: [], pendingDowngrade: null }),
+  "tools.confirmDowngrade": () => ({ tools: [], pendingDowngrade: null }),
+  "tools.setEnabled": () => ({ tools: [], pendingDowngrade: null }),
+  "tools.remove": () => ({ tools: [], pendingDowngrade: null }),
 };
 
 describe("IPC router", () => {
   it("declara un esquema para cada canal host y ninguno adicional", () => {
     expect(Object.keys(ipcSchemas).sort()).toEqual([...HOST_CHANNELS].sort());
+  });
+
+  it("valida el estado pendiente en las respuestas de herramientas", () => {
+    const state = {
+      tools: [],
+      pendingDowngrade: {
+        toolId: "sample-tool",
+        installedVersion: "2.0.0",
+        version: "1.0.0",
+      },
+    };
+    expect(ipcSchemas["tools.list"].response.safeParse(state).success).toBe(true);
+    expect(ipcSchemas["tools.list"].response.safeParse({ tools: [] }).success).toBe(false);
   });
 
   it("valida la respuesta de app.getInfo", async () => {

@@ -17,6 +17,27 @@ const tabsResponseSchema = z
     ),
   })
   .strict();
+const toolSchema = z
+  .object({
+    id: z.string(),
+    version: z.string(),
+    manifest: z.record(z.string(), z.unknown()),
+    enabled: z.boolean(),
+    signed: z.boolean(),
+    keyId: z.string().nullable(),
+    installedAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .strict();
+const toolStateSchema = z
+  .object({
+    tools: z.array(toolSchema),
+    pendingDowngrade: z
+      .object({ toolId: z.string(), installedVersion: z.string(), version: z.string() })
+      .strict()
+      .nullable(),
+  })
+  .strict();
 
 export const ipcSchemas = {
   "app.getInfo": {
@@ -54,5 +75,23 @@ export const ipcSchemas = {
   "shell.showPage": {
     request: z.object({ page: z.enum(["tools", "settings"]) }).strict(),
     response: z.object({ page: z.enum(["tools", "settings"]) }).strict(),
+  },
+  "tools.list": { request: z.object({}).strict(), response: toolStateSchema },
+  "tools.pickAndInstall": { request: z.object({}).strict(), response: toolStateSchema },
+  "tools.installFromPath": {
+    request: z.object({ path: z.string().min(1) }).strict(),
+    response: toolStateSchema,
+  },
+  "tools.confirmDowngrade": {
+    request: z.object({ toolId: z.string().min(1), version: z.string().min(1) }).strict(),
+    response: toolStateSchema,
+  },
+  "tools.setEnabled": {
+    request: z.object({ toolId: z.string().min(1), enabled: z.boolean() }).strict(),
+    response: toolStateSchema,
+  },
+  "tools.remove": {
+    request: z.object({ toolId: z.string().min(1), deleteData: z.boolean() }).strict(),
+    response: toolStateSchema,
   },
 } satisfies Record<HostChannel, { request: z.ZodType; response: z.ZodType }>;

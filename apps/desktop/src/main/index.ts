@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { isAbsolute, relative, resolve } from "node:path";
 import { LensError } from "@lensdesk/sdk/errors";
 import {
   app,
@@ -24,6 +24,10 @@ import { buildMenuTemplate } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
+import { scanDevTools } from "./tools/dev-tools.ts";
+import { createToolInstaller } from "./tools/installer.ts";
+import { publishTabsChanged } from "./tools/tool-events.ts";
+import { loadTrustedKeys } from "./tools/trusted-keys.ts";
 
 const packageJson = JSON.parse(
   readFileSync(resolve(import.meta.dirname, "../../package.json"), "utf8"),
@@ -34,6 +38,28 @@ const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (pa
 let shellContents: Electron.WebContents | undefined;
 let database: ReturnType<typeof openHostDatabase> | undefined;
 let activeLocale: "es" | "en" = "es";
+let toolInstaller: ReturnType<typeof createToolInstaller> | undefined;
+const toolSummaries = () =>
+  (toolInstaller?.registry.list() ?? []).map(({ installPath: _path, ...tool }) => tool);
+const toolState = () => ({
+  tools: toolSummaries(),
+  pendingDowngrade: toolInstaller?.getPendingDowngrade() ?? null,
+});
+const emitToolsChanged = () => shellContents?.send("tools.changed", toolState());
+const installTool = async (path: string) => {
+  if (!toolInstaller) throw new LensError("E_INTERNAL", "El instalador no está disponible.");
+  try {
+    await toolInstaller.install(path);
+  } catch (error) {
+    emitToolsChanged();
+    throw error;
+  }
+  emitToolsChanged();
+};
+const developerModeEnabled = () => {
+  if (!database) throw new LensError("E_INTERNAL", "La base de datos aún no está disponible.");
+  return getSetting(database, "developerMode");
+};
 const setNativeMenu = (locale: "es" | "en"): void => {
   const t = createTranslator(locale);
   Menu.setApplicationMenu(
@@ -78,6 +104,63 @@ const router = createRouter({
     "tabs.close": ({ toolId }) => ({ tabs: tabsStore().close(toolId) }),
     "tabs.activate": ({ toolId }) => ({ tabs: tabsStore().activate(toolId) }),
     "shell.showPage": ({ page }) => ({ page }),
+    "tools.list": () => toolState(),
+    "tools.pickAndInstall": async () => {
+      if (!toolInstaller) throw new LensError("E_INTERNAL", "El instalador no está disponible.");
+      const picked = await dialog.showOpenDialog({
+        properties: ["openFile"],
+        filters: [{ name: "LensDesk Tool", extensions: ["lenspkg"] }],
+      });
+      if (!picked.canceled && picked.filePaths[0]) await installTool(picked.filePaths[0]);
+      return toolState();
+    },
+    "tools.installFromPath": async ({ path }) => {
+      const root = process.env.LENSDESK_DEV_TOOLS_DIR;
+      if (app.isPackaged || !root || !developerModeEnabled())
+        throw new LensError(
+          "E_PERMISSION_DENIED",
+          "La instalación por ruta solo está disponible para herramientas de desarrollo.",
+        );
+      const allowed = resolve(root);
+      const candidate = resolve(path);
+      const rel = relative(allowed, candidate);
+      if (
+        rel === ".." ||
+        rel.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) ||
+        isAbsolute(rel)
+      )
+        throw new LensError(
+          "E_PERMISSION_DENIED",
+          "La ruta debe estar dentro de LENSDESK_DEV_TOOLS_DIR.",
+        );
+      await installTool(candidate);
+      return toolState();
+    },
+    "tools.confirmDowngrade": async ({ toolId, version }) => {
+      if (!toolInstaller) throw new LensError("E_INTERNAL", "El instalador no está disponible.");
+      try {
+        await toolInstaller.confirmDowngrade(toolId, version);
+      } finally {
+        emitToolsChanged();
+      }
+      return toolState();
+    },
+    "tools.setEnabled": ({ toolId, enabled }) => {
+      if (!toolInstaller) throw new LensError("E_INTERNAL", "El registro no está disponible.");
+      if (!toolInstaller.registry.setEnabled(toolId, enabled, new Date().toISOString()))
+        throw new LensError("E_TOOL_NOT_FOUND", "Herramienta no encontrada.");
+      emitToolsChanged();
+      return toolState();
+    },
+    "tools.remove": async ({ toolId, deleteData }) => {
+      if (!toolInstaller) throw new LensError("E_INTERNAL", "El instalador no está disponible.");
+      try {
+        await toolInstaller.remove(toolId, deleteData);
+      } finally {
+        emitToolsChanged();
+      }
+      return toolState();
+    },
   },
   isShellSender: (sender) => shellContents !== undefined && sender === shellContents,
 });
@@ -103,6 +186,29 @@ void app.whenReady().then(async () => {
     throw error;
   }
   activeLocale = getSetting(database, "locale");
+  const readyDatabase = database;
+  const userData = app.getPath("userData");
+  const keysDirectory = app.isPackaged
+    ? resolve(process.resourcesPath, "keys")
+    : resolve(import.meta.dirname, "../../resources/keys");
+  toolInstaller = createToolInstaller({
+    database,
+    userData,
+    onToolRemoved: () =>
+      publishTabsChanged(tabsStore().list, (tabs) => shellContents?.send("tabs.changed", { tabs })),
+    trustedKeys: () =>
+      loadTrustedKeys({
+        directory: keysDirectory,
+        developerMode: getSetting(readyDatabase, "developerMode"),
+      }),
+    developerMode: () => getSetting(readyDatabase, "developerMode"),
+    hostVersion: packageJson.version,
+  });
+  await scanDevTools({
+    directory: process.env.LENSDESK_DEV_TOOLS_DIR,
+    isPackaged: app.isPackaged,
+    registry: toolInstaller.registry,
+  });
   setNativeMenu(activeLocale);
   nativeTheme.on("updated", settingsHandlers.emitContextChanged);
   const bounds = restoreWindowBounds(
@@ -170,6 +276,7 @@ void app.whenReady().then(async () => {
               if (code !== 0) resolveSmoke(false);
             });
           }),
+        tools: () => toolInstaller !== undefined && Array.isArray(toolInstaller.registry.list()),
       },
     );
   }

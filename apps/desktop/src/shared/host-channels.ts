@@ -10,8 +10,19 @@ export const HOST_CHANNELS = [
   "tabs.close",
   "tabs.activate",
   "shell.showPage",
+  "tools.list",
+  "tools.pickAndInstall",
+  "tools.installFromPath",
+  "tools.confirmDowngrade",
+  "tools.setEnabled",
+  "tools.remove",
 ] as const;
-export const HOST_EVENTS = ["settings.changed", "context.changed", "tabs.changed"] as const;
+export const HOST_EVENTS = [
+  "settings.changed",
+  "context.changed",
+  "tabs.changed",
+  "tools.changed",
+] as const;
 export const HOST_IPC_CHANNEL = "lensdesk:invoke";
 
 export type HostChannel = (typeof HOST_CHANNELS)[number];
@@ -25,6 +36,12 @@ export type HostPayloads = {
   "tabs.close": { toolId: string };
   "tabs.activate": { toolId: string };
   "shell.showPage": { page: "tools" | "settings" };
+  "tools.list": Record<string, never>;
+  "tools.pickAndInstall": Record<string, never>;
+  "tools.installFromPath": { path: string };
+  "tools.confirmDowngrade": { toolId: string; version: string };
+  "tools.setEnabled": { toolId: string; enabled: boolean };
+  "tools.remove": { toolId: string; deleteData: boolean };
 };
 export type HostSettingKey =
   | "locale"
@@ -44,6 +61,31 @@ export type HostResponses = {
   "tabs.close": { tabs: ShellTab[] };
   "tabs.activate": { tabs: ShellTab[] };
   "shell.showPage": { page: "tools" | "settings" };
+  "tools.list": ToolState;
+  "tools.pickAndInstall": ToolState;
+  "tools.installFromPath": ToolState;
+  "tools.confirmDowngrade": ToolState;
+  "tools.setEnabled": ToolState;
+  "tools.remove": ToolState;
+};
+export type PendingDowngrade = {
+  toolId: string;
+  installedVersion: string;
+  version: string;
+};
+export type ToolState = {
+  tools: ToolSummary[];
+  pendingDowngrade: PendingDowngrade | null;
+};
+export type ToolSummary = {
+  id: string;
+  version: string;
+  manifest: Record<string, unknown>;
+  enabled: boolean;
+  signed: boolean;
+  keyId: string | null;
+  installedAt: string;
+  updatedAt: string;
 };
 export type ShellTab = { toolId: string; position: number; active: boolean };
 export type HostEvent = (typeof HOST_EVENTS)[number];
@@ -51,6 +93,7 @@ export type HostEventPayloads = {
   "settings.changed": { key: HostSettingKey; value: HostSettingValue };
   "context.changed": { locale: "es" | "en"; theme: "dark" | "light" };
   "tabs.changed": { tabs: ShellTab[] };
+  "tools.changed": ToolState;
 };
 
 export type HostBridge = {

@@ -27,6 +27,7 @@ export async function runSmoke(
     database?: () => boolean;
     ftsMain?: () => boolean;
     ftsUtility?: () => Promise<boolean>;
+    tools?: () => boolean;
   } = {},
 ): Promise<void> {
   try {
@@ -47,6 +48,10 @@ export async function runSmoke(
       if (!(await checks.ftsUtility()))
         throw new Error("FTS5 no está disponible en utilityProcess.");
       write("LENSDESK_SMOKE_FTS5_UTILITY_OK");
+    }
+    if (checks.tools) {
+      if (!checks.tools()) throw new Error("El registro de herramientas no está disponible.");
+      write("LENSDESK_SMOKE_TOOLS_OK");
     }
     exit(0);
   } catch {
