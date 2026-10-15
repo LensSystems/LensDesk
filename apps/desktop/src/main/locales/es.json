@@ -1,0 +1,26 @@
+{
+  "menu": {
+    "app": "LensDesk",
+    "file": "Archivo",
+    "edit": "Editar",
+    "view": "Ver",
+    "window": "Ventana",
+    "help": "Ayuda",
+    "about": "Acerca de LensDesk",
+    "quit": "Salir de LensDesk",
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "cut": "Cortar",
+    "copy": "Copiar",
+    "paste": "Pegar",
+    "selectAll": "Seleccionar todo",
+    "reload": "Recargar",
+    "toggleDevTools": "Alternar herramientas de desarrollo",
+    "minimize": "Minimizar",
+    "close": "Cerrar"
+  },
+  "schemaTooNew": {
+    "message": "La base de datos pertenece a una versión más reciente de LensDesk.",
+    "detail": "La base usa el esquema {{version}}, pero esta versión solo admite hasta {{latest}}."
+  }
+}

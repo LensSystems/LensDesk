@@ -1,14 +1,17 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { LensError } from "@lensdesk/sdk/errors";
-import { app, BrowserWindow, dialog, ipcMain, nativeTheme, utilityProcess } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, utilityProcess } from "electron";
+import type { HostEventPayloads } from "../shared/host-channels.ts";
 import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
 import { createSettingsHandlers } from "./context.ts";
-import { openHostDatabase, supportsFts5 } from "./db/driver.ts";
+import { openHostDatabase, readStoredLocale, supportsFts5 } from "./db/driver.ts";
 import { SchemaTooNewError } from "./db/migrate.ts";
 import { getSetting, setSetting } from "./db/settings-repo.ts";
+import { createTranslator } from "./i18n.ts";
 import { createRouter } from "./ipc/router.ts";
 import { ipcSchemas } from "./ipc/schemas.ts";
+import { buildMenuTemplate } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 
 const packageJson = JSON.parse(
@@ -19,6 +22,15 @@ const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (pa
 );
 let shellContents: Electron.WebContents | undefined;
 let database: ReturnType<typeof openHostDatabase> | undefined;
+let activeLocale: "es" | "en" = "es";
+const setNativeMenu = (locale: "es" | "en"): void => {
+  const t = createTranslator(locale);
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate(
+      buildMenuTemplate(t, process.platform) as Electron.MenuItemConstructorOptions[],
+    ),
+  );
+};
 const settingsHandlers = createSettingsHandlers({
   repo: {
     get: (key) => {
@@ -30,7 +42,13 @@ const settingsHandlers = createSettingsHandlers({
       setSetting(database, key, value);
     },
   },
-  emit: (event, payload) => shellContents?.send(event, payload),
+  emit: (event, payload) => {
+    if (event === "context.changed") {
+      activeLocale = (payload as HostEventPayloads["context.changed"]).locale;
+      setNativeMenu(activeLocale);
+    }
+    shellContents?.send(event, payload);
+  },
   getSystemIsDark: () => nativeTheme.shouldUseDarkColors,
 });
 const router = createRouter({
@@ -53,16 +71,19 @@ void app.whenReady().then(async () => {
     database = openHostDatabase(app.getPath("userData"));
   } catch (error) {
     if (error instanceof SchemaTooNewError) {
+      const t = createTranslator(readStoredLocale(app.getPath("userData")));
       await dialog.showMessageBox({
         type: "error",
-        message: "La base de datos pertenece a una versión más reciente de LensDesk.",
-        detail: error.message,
+        message: t("schemaTooNew.message"),
+        detail: t("schemaTooNew.detail", { version: error.version, latest: error.latest }),
       });
       app.exit(1);
       return;
     }
     throw error;
   }
+  activeLocale = getSetting(database, "locale");
+  setNativeMenu(activeLocale);
   nativeTheme.on("updated", settingsHandlers.emitContextChanged);
   const window = new BrowserWindow({
     show: !smoke,

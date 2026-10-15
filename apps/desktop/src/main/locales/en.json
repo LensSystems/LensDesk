@@ -1,0 +1,26 @@
+{
+  "menu": {
+    "app": "LensDesk",
+    "file": "File",
+    "edit": "Edit",
+    "view": "View",
+    "window": "Window",
+    "help": "Help",
+    "about": "About LensDesk",
+    "quit": "Quit LensDesk",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "selectAll": "Select All",
+    "reload": "Reload",
+    "toggleDevTools": "Toggle Developer Tools",
+    "minimize": "Minimize",
+    "close": "Close"
+  },
+  "schemaTooNew": {
+    "message": "This database belongs to a newer version of LensDesk.",
+    "detail": "The database uses schema {{version}}, but this version supports up to {{latest}}."
+  }
+}
