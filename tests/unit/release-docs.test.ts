@@ -37,6 +37,12 @@ describe("documentación de CI y publicación", () => {
     expect(release).toContain("softprops/action-gh-release@v3.0.3");
   });
 
+  test("las sumas de verificación usan solo el nombre de cada archivo publicado", () => {
+    const step = release.slice(release.indexOf("name: Generate checksums"));
+    expect(step).toContain('shasum -a 256 "$(basename "$file")"');
+    expect(step).not.toMatch(/xargs shasum/);
+  });
+
   test("el README incluye ambos idiomas, instrucciones de instalación y desarrollo", () => {
     const englishHeading = "# LensDesk (English)";
     const spanish = readme.slice(0, readme.indexOf(englishHeading));

@@ -73,11 +73,16 @@ jobs:
           pattern: release-*
           path: release-assets
           merge-multiple: true
-      # Las sumas se calculan aquí, con los archivos de los dos sistemas ya reunidos.
+      # Las sumas se calculan aquí, con los archivos de los dos sistemas ya reunidos. Cada línea
+      # lleva solo el nombre del archivo, como se publica, para que `shasum -c` funcione al descargar.
       - name: Generate checksums
         run: |
           cd release-assets
-          find . -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.exe' -o -name '*.lenspkg' \) | sort | xargs shasum -a 256 > SHA256SUMS.txt
+          find . -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.exe' -o -name '*.lenspkg' \) -print0 \
+            | sort -z \
+            | while IFS= read -r -d '' file; do
+                (cd "$(dirname "$file")" && shasum -a 256 "$(basename "$file")")
+              done > SHA256SUMS.txt
         shell: bash
       - uses: softprops/action-gh-release@v3.0.3
         with:

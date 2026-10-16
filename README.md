@@ -83,8 +83,15 @@ Descarga el instalador de la [última versión](https://github.com/LensSystems/L
 | macOS con Intel | `LensDesk-<versión>-mac-x64.dmg` |
 | Windows x64 | `LensDesk-<versión>-win-x64.exe` |
 
-Cada versión incluye `SHA256SUMS.txt` para comprobar las descargas, y los paquetes `.lenspkg`
-firmados de las herramientas incluidas.
+Cada versión incluye los paquetes `.lenspkg` firmados de las herramientas incluidas y
+`SHA256SUMS.txt` para comprobar las descargas. Desde la carpeta donde las guardaste:
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt --ignore-missing
+```
+
+En Windows (PowerShell): `Get-FileHash .\LensDesk-<versión>-win-x64.exe` y compara el resultado
+con la línea del archivo en `SHA256SUMS.txt`.
 
 ## Primer arranque
 
@@ -251,7 +258,9 @@ accounts, no telemetry, no servers.
 
 Download the installer from the [latest release](https://github.com/LensSystems/LensDesk/releases):
 `mac-arm64.dmg` (Apple Silicon), `mac-x64.dmg` (Intel) or `win-x64.exe` (Windows). Each release
-includes `SHA256SUMS.txt` and the signed `.lenspkg` packages of the included tools.
+includes `SHA256SUMS.txt` and the signed `.lenspkg` packages of the included tools. To check
+your downloads, run `shasum -a 256 -c SHA256SUMS.txt --ignore-missing` in their folder (on
+Windows, compare the output of `Get-FileHash` with the file's line).
 
 ## First launch
 
