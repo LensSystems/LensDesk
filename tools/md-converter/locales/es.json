@@ -1,0 +1,35 @@
+{
+  "title": "Convertidor",
+  "chooseFiles": "Elegir archivos…",
+  "dropZone": "Zona para soltar archivos",
+  "dropHint": "Suelta aquí documentos HTML, DOCX, CSV, PDF o XLSX, o elígelos para convertirlos a Markdown.",
+  "supportedFiles": "Documentos compatibles",
+  "markdownFiles": "Archivos Markdown",
+  "queue": "Cola de conversión",
+  "emptyQueue": "La cola está vacía.",
+  "progressOf": "Progreso de {{name}}",
+  "cancel": "Cancelar",
+  "cancelFile": "Cancelar conversión de {{name}}",
+  "status": {
+    "queued": "En cola",
+    "converting": "Convirtiendo…",
+    "done": "Listo"
+  },
+  "resultTabs": "Vista del resultado",
+  "rendered": "Vista renderizada",
+  "raw": "Markdown crudo",
+  "copy": "Copiar",
+  "save": "Guardar .md",
+  "saveAll": "Guardar todos…",
+  "copied": "Markdown copiado al portapapeles.",
+  "saved": "Archivos guardados: {{count}}",
+  "noResult": "Elige un archivo convertido para ver su Markdown.",
+  "imagesOmitted": "El documento original tenía imágenes que se omitieron.",
+  "errors": {
+    "E_UNSUPPORTED_FORMAT": "Formato de archivo no compatible.",
+    "E_PDF_NO_TEXT": "El PDF no tiene texto seleccionable.",
+    "E_TOO_LARGE": "El archivo supera el tamaño máximo de 50 MB.",
+    "E_CANCELLED": "Conversión cancelada.",
+    "generic": "No se pudo completar la acción ({{code}})."
+  }
+}

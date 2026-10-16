@@ -223,6 +223,9 @@ importers:
       '@lensdesk/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@types/markdown-it':
+        specifier: 14.2.0
+        version: 14.2.0
       '@types/papaparse':
         specifier: 5.5.2
         version: 5.5.2
@@ -241,6 +244,9 @@ importers:
       clsx:
         specifier: 2.1.1
         version: 2.1.1
+      dompurify:
+        specifier: 3.4.17
+        version: 3.4.17
       i18next:
         specifier: 26.4.4
         version: 26.4.4(typescript@6.0.3)
@@ -250,6 +256,9 @@ importers:
       mammoth:
         specifier: 1.13.0
         version: 1.13.0
+      markdown-it:
+        specifier: 15.0.2
+        version: 15.0.2
       papaparse:
         specifier: 5.7.0
         version: 5.7.0
