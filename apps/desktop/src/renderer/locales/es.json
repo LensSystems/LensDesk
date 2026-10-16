@@ -5,6 +5,7 @@
     "closeTab": "Cerrar {{name}}",
     "toolsPage": "Herramientas",
     "settingsPage": "Ajustes",
+    "unexpectedError": "Ocurrió un error inesperado. Los detalles están en los registros.",
     "activeTool": "Herramienta activa"
   },
   "toolsPage": {

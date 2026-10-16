@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Logger } from "./logger.ts";
 import {
   logBackendExit,
+  logBackendMessage,
   logFileDenied,
   logInstallFailure,
   logProcessErrors,
@@ -25,6 +26,42 @@ describe("cableado de registros", () => {
       "TypeError: x no es función",
     );
     expect(logger.error).toHaveBeenCalledWith("main.unhandledRejection", "rechazo");
+  });
+
+  it("avisa de cada error no capturado con su tipo, sin el mensaje", () => {
+    const target = new EventEmitter();
+    const notify = vi.fn();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    logProcessErrors(target as never, fakeLogger(), notify);
+    target.emit("uncaughtException", new Error("secreto"));
+    target.emit("unhandledRejection", "otro secreto");
+    consoleError.mockRestore();
+    expect(notify.mock.calls).toEqual([["uncaught"], ["rejection"]]);
+  });
+
+  it("no deja escapar un fallo del aviso fuera del manejador", () => {
+    const target = new EventEmitter();
+    const logger = fakeLogger();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    logProcessErrors(target as never, logger, () => {
+      throw new Error("Object has been destroyed");
+    });
+    expect(() => target.emit("uncaughtException", new Error("x"))).not.toThrow();
+    expect(() => target.emit("unhandledRejection", "y")).not.toThrow();
+    consoleError.mockRestore();
+    expect(logger.error).toHaveBeenCalledTimes(2);
+  });
+
+  it("registra un mensaje de backend solo con herramienta y longitud, nunca el texto", () => {
+    const logger = fakeLogger();
+    logBackendMessage(logger, "notes", "warn", "contraseña=hunter2");
+    logBackendMessage(logger, "notes", "error", "otro texto");
+    logBackendMessage(logger, "notes", "debug", "x");
+    expect(logger.warn).toHaveBeenCalledWith("backend.log", "toolId=notes length=18");
+    expect(logger.error).toHaveBeenCalledWith("backend.log", "toolId=notes length=10");
+    expect(logger.info).toHaveBeenCalledWith("backend.log", "toolId=notes length=1");
+    const written = [logger.info, logger.warn, logger.error].flatMap((fn) => fn.mock.calls.flat());
+    expect(written.join(" ")).not.toMatch(/hunter2|otro texto/);
   });
 
   it("registra render-process-gone y avisa solo si era una herramienta", () => {

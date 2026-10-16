@@ -67,4 +67,17 @@ describe("store del shell", () => {
     expect(useShellStore.getState().context).toEqual({ locale: "en", theme: "light" });
     unsubscribe();
   });
+
+  it("convierte app.error en un aviso localizado sin detalles", () => {
+    const { bridge, listeners } = fakeBridge();
+    useShellStore.setState({ toasts: [] });
+    const unsubscribe = useShellStore.getState().subscribe(bridge);
+    listeners.get("app.error")?.({ kind: "uncaught" });
+    const [toast] = useShellStore.getState().toasts;
+    expect(toast).toMatchObject({
+      kind: "error",
+      message: "Ocurrió un error inesperado. Los detalles están en los registros.",
+    });
+    unsubscribe();
+  });
 });

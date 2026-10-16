@@ -1,3 +1,4 @@
+import type { ProcessErrorKind } from "./error-notifier.ts";
 import { describeError, type Logger } from "./logger.ts";
 
 type ProcessLike = {
@@ -18,14 +19,25 @@ type AppLike = {
 };
 
 // Excepciones no capturadas y rechazos no manejados de main: se registran y la app sigue.
-export function logProcessErrors(target: ProcessLike, logger: Logger): void {
+export function logProcessErrors(
+  target: ProcessLike,
+  logger: Logger,
+  notify: (kind: ProcessErrorKind) => void = () => undefined,
+): void {
   target.on("uncaughtException", (error) => {
     logger.error("main.uncaughtException", describeError(error));
     console.error(error);
+    // Un fallo del aviso nunca debe escapar del manejador: Node lo trataría como fatal.
+    try {
+      notify("uncaught");
+    } catch {}
   });
   target.on("unhandledRejection", (reason) => {
     logger.error("main.unhandledRejection", describeError(reason));
     console.error(reason);
+    try {
+      notify("rejection");
+    } catch {}
   });
 }
 
@@ -64,7 +76,8 @@ export function logBackendExit(
   else logger.error("backend.exit", message);
 }
 
-// Mensajes de `ctx.log` de un backend: se registran con su id y un nivel conocido.
+// Mensajes de `ctx.log` de un backend: se registra solo el evento (id, nivel y longitud), nunca
+// el texto, que puede contener datos del usuario.
 export function logBackendMessage(
   logger: Logger,
   toolId: string,
@@ -72,7 +85,7 @@ export function logBackendMessage(
   message: string,
 ): void {
   const method = level === "error" ? "error" : level === "warn" ? "warn" : "info";
-  logger[method]("backend.log", `toolId=${toolId} ${message}`);
+  logger[method]("backend.log", `toolId=${toolId} length=${message.length}`);
 }
 
 export function logInstallFailure(logger: Logger, error: unknown): void {

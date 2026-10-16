@@ -15,6 +15,10 @@ type Child = {
   kill(): void;
 };
 
+// Una cancelación anticipada solo vale unos segundos y hay un máximo por herramienta.
+const earlyCancelTtlMs = 30_000;
+const maxEarlyCancels = 100;
+
 export function createBackendHost(options: {
   userData: string;
   hostVersion: string;
@@ -29,13 +33,17 @@ export function createBackendHost(options: {
   log?: (toolId: string, level: string, message: string) => void;
   // `expected` es true cuando el host terminó el proceso (cerrar pestaña, quitar o salir).
   onExit?: (toolId: string, code: number, expected: boolean) => void;
+  now?: () => number;
 }) {
+  const now = options.now ?? Date.now;
   const children = new Map<
     string,
     { child: Child; session: ReturnType<typeof createRpcSession> }
   >();
   const requestIds = new Map<string, Map<string, number>>();
-  const cancelled = new Map<string, Set<string>>();
+  // Cancelaciones que llegaron antes que su llamada: requestId -> instante en que caducan. Si la
+  // llamada nunca llega (o ya había terminado), la entrada caduca y el mapa tiene tope por herramienta.
+  const cancelled = new Map<string, Map<string, number>>();
   const launch =
     options.fork ??
     ((path, settings) => utilityProcess.fork(path, [], settings) as unknown as Child);
@@ -87,7 +95,9 @@ export function createBackendHost(options: {
         requestIds.set(id, calls);
       }
       calls.set(requestId, call.id);
-      if (cancelled.get(id)?.delete(requestId)) backend.session.cancel(call.id);
+      const expiresAt = cancelled.get(id)?.get(requestId);
+      cancelled.get(id)?.delete(requestId);
+      if (expiresAt !== undefined && expiresAt > now()) backend.session.cancel(call.id);
       try {
         return await call.promise;
       } finally {
@@ -98,12 +108,17 @@ export function createBackendHost(options: {
       const callId = requestIds.get(id)?.get(requestId);
       if (callId !== undefined) children.get(id)?.session.cancel(callId);
       else {
-        let calls = cancelled.get(id);
-        if (!calls) {
-          calls = new Set();
-          cancelled.set(id, calls);
+        let early = cancelled.get(id);
+        if (!early) {
+          early = new Map();
+          cancelled.set(id, early);
         }
-        calls.add(requestId);
+        const current = now();
+        for (const [key, expiresAt] of early) if (expiresAt <= current) early.delete(key);
+        // Map conserva el orden de inserción: al llegar al tope se descarta la más antigua.
+        early.delete(requestId);
+        while (early.size >= maxEarlyCancels) early.delete(early.keys().next().value as string);
+        early.set(requestId, current + earlyCancelTtlMs);
       }
     },
     terminate(id: string) {

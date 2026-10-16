@@ -29,6 +29,7 @@ export const HOST_EVENTS = [
   "tools.toast",
   "update.available",
   "tool.crashed",
+  "app.error",
 ] as const;
 export const HOST_IPC_CHANNEL = "lensdesk:invoke";
 
@@ -117,6 +118,7 @@ export type HostEventPayloads = {
   "tools.toast": { toolId: string; kind: string; message: string };
   "update.available": { version: string; html_url: string };
   "tool.crashed": { toolId: string };
+  "app.error": { kind: "uncaught" | "rejection" };
 };
 
 export type HostBridge = {

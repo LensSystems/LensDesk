@@ -5,6 +5,7 @@
     "closeTab": "Close {{name}}",
     "toolsPage": "Tools",
     "settingsPage": "Settings",
+    "unexpectedError": "An unexpected error occurred. Details are in the logs.",
     "activeTool": "Active tool"
   },
   "toolsPage": {

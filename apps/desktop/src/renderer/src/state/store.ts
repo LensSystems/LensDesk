@@ -7,6 +7,7 @@ import type {
   ShellTab,
   ToolSummary,
 } from "../../../shared/host-channels.ts";
+import { rendererI18n } from "../i18n.ts";
 
 type SettingValues = {
   locale: "es" | "en";
@@ -181,6 +182,9 @@ export const useShellStore = create<State>((set) => ({
             message,
             toolId,
           ),
+      ),
+      bridge.on("app.error", () =>
+        useShellStore.getState().pushToast("error", rendererI18n.t("shell.unexpectedError")),
       ),
       bridge.on("tool.crashed", ({ toolId }) => set({ crashedToolId: toolId })),
     ];
