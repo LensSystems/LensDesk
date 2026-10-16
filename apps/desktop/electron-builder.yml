@@ -1,0 +1,30 @@
+appId: dev.lensdesk.app
+productName: LensDesk
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+asar: true
+npmRebuild: false
+extraResources:
+  - from: resources/keys
+    to: keys
+artifactName: "${productName}-${version}-${os}-${arch}.${ext}"
+publish: null
+mac:
+  category: public.app-category.developer-tools
+  identity: "-"
+  hardenedRuntime: false
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: true
+  perMachine: false

@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        shell: bash
+      - name: Lint
+        run: pnpm lint
+        shell: bash
+      - name: Typecheck
+        run: pnpm typecheck
+        shell: bash
+      - name: Unit tests
+        run: pnpm test
+        shell: bash
+      - name: Package tools
+        run: pnpm tools:package
+        shell: bash
+      - name: Smoke test
+        run: pnpm smoke DB FTS5_MAIN FTS5_UTILITY TOOLS
+        shell: bash
+      - name: Build installers
+        run: pnpm dist
+        shell: bash
+      - name: Sign published tools
+        if: runner.os == 'macOS'
+        env:
+          LENSPKG_SIGNING_KEY: ${{ secrets.LENSPKG_SIGNING_KEY }}
+        run: |
+          printf '%s' "$LENSPKG_SIGNING_KEY" > "$RUNNER_TEMP/release.pem"
+          mkdir -p release-tools
+          node packages/lenspkg/src/cli.ts pack tools/notes/dist --out release-tools/ --key "$RUNNER_TEMP/release.pem" --key-id release
+          node packages/lenspkg/src/cli.ts pack tools/md-converter/dist --out release-tools/ --key "$RUNNER_TEMP/release.pem" --key-id release
+        shell: bash
+      - name: Upload release files
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+            apps/desktop/release/*.exe
+            release-tools/*.lenspkg
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/download-artifact@v7.0.0
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+      # Las sumas se calculan aquí, con los archivos de los dos sistemas ya reunidos.
+      - name: Generate checksums
+        run: |
+          cd release-assets
+          find . -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.exe' -o -name '*.lenspkg' \) | sort | xargs shasum -a 256 > SHA256SUMS.txt
+        shell: bash
+      - uses: softprops/action-gh-release@v3.0.3
+        with:
+          files: release-assets/**
