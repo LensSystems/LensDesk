@@ -60,6 +60,9 @@ if (!backendOnly) {
     build: {
       outDir: resolve(distDir, "ui"),
       emptyOutDir: true,
+      // La UI se carga desde el disco dentro del paquete, no por red: un bundle grande (CodeMirror,
+      // conversores) no penaliza la carga y dividirlo complicaría el paquete.
+      chunkSizeWarningLimit: 2000,
     },
   });
 }
