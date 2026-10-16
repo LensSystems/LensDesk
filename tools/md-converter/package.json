@@ -26,6 +26,8 @@
     "react-i18next": "17.0.16",
     "tailwindcss": "4.3.3",
     "turndown": "7.2.4",
+    "unpdf": "1.8.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "yazl": "3.3.1"
   }
 }

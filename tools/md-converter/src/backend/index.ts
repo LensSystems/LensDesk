@@ -1,21 +1,15 @@
 import type { BackendContext } from "@lensdesk/sdk/backend";
 import { type BackendMethod, defineBackend } from "@lensdesk/sdk/backend";
 import { LensError } from "@lensdesk/sdk/errors";
+import { ConverterError } from "./converter-error.ts";
 import { convertCsv } from "./csv.ts";
 import { convertDocx } from "./docx.ts";
 import { convertHtml } from "./html.ts";
+import { convertPdf } from "./pdf.ts";
+import { convertXlsx } from "./xlsx.ts";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
-const SUPPORTED = new Set(["html", "htm", "docx", "csv"]);
-type ToolErrorCode = "E_UNSUPPORTED_FORMAT";
-
-class ConverterError extends LensError {
-  constructor(code: ToolErrorCode, message: string) {
-    super("E_INTERNAL", message);
-    Object.defineProperty(this, "code", { value: code, enumerable: true });
-  }
-}
-
+const SUPPORTED = new Set(["html", "htm", "docx", "csv", "pdf", "xlsx"]);
 type ConvertParams = { token: string; name: string };
 type ConverterOptions = { maxBytes?: number };
 
@@ -48,9 +42,14 @@ export function createConvertMethod({ maxBytes = MAX_FILE_BYTES }: ConverterOpti
       imageCount = result.imageCount;
     } else if (extension === "csv") {
       markdown = convertCsv(bytes);
+    } else if (extension === "pdf") {
+      markdown = await convertPdf(bytes, ctx);
+    } else if (extension === "xlsx") {
+      markdown = await convertXlsx(bytes, ctx);
     } else {
       throw new ConverterError("E_UNSUPPORTED_FORMAT", "Formato de archivo no compatible");
     }
+    ctx.progress(1, `Archivo convertido: ${name}`);
     const warnings: string[] = [];
     if (imageCount > 0) {
       const note =

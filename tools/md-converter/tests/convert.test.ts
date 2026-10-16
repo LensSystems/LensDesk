@@ -1,8 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { createTestContext } from "@lensdesk/sdk/backend/testing";
 import { describe, expect, it } from "vitest";
+import * as XLSX from "xlsx";
 import { createConvertMethod } from "../src/backend/index.ts";
 import { makeDocx } from "./make-docx.ts";
+import { makePdf } from "./make-pdf.ts";
 
 const fixture = (name: string) => readFile(new URL(`./fixtures/${name}`, import.meta.url));
 
@@ -65,6 +67,69 @@ describe("backend del convertidor", () => {
     expect(result.markdown).not.toContain("![");
     expect(result.markdown).toMatch(/2 imágenes/);
     expect(result.warnings[0]).toMatch(/2 imágenes/);
+  });
+
+  it("convierte PDF por páginas y rechaza los que no tienen texto", async () => {
+    const result = (await convert("informe.pdf", makePdf())) as { markdown: string };
+    expect(result.markdown).toContain("Primer parrafo");
+    expect(result.markdown).toContain("Segundo parrafo");
+    expect(result.markdown).toMatch(/Primer parrafo[\s\S]*\n---\n[\s\S]*Segundo parrafo/);
+    const ctx = createTestContext({ dataDir: "/tmp/md-converter-test" });
+    ctx.fileBytes.set("file-token", makePdf(false));
+    await expect(
+      createConvertMethod()({ token: "file-token", name: "vacio.pdf" }, ctx),
+    ).rejects.toMatchObject({ code: "E_PDF_NO_TEXT" });
+  });
+
+  it("convierte cada hoja XLSX en una tabla GFM", async () => {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ["Nombre", "Edad"],
+        ["Ada", 36],
+      ]),
+      "Personas",
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ["Ciudad", "País"],
+        ["Lima", "Perú"],
+      ]),
+      "Lugares",
+    );
+    const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+    const ctx = createTestContext({ dataDir: "/tmp/md-converter-test" });
+    ctx.fileBytes.set("file-token", new Uint8Array(bytes));
+    const result = (await createConvertMethod()(
+      { token: "file-token", name: "datos.xlsx" },
+      ctx,
+    )) as {
+      markdown: string;
+    };
+    expect(result.markdown).toContain("## Personas\n\n| Nombre | Edad |");
+    expect(result.markdown).toContain("| Ada | 36 |");
+    expect(result.markdown).toContain("## Lugares\n\n| Ciudad | País |");
+    expect(result.markdown).toContain("| Lima | Perú |");
+    expect(ctx.progressEvents.length).toBeGreaterThan(0);
+  });
+
+  it("cancela una conversión en curso en menos de un segundo", async () => {
+    const ctx = createTestContext({ dataDir: "/tmp/md-converter-test" });
+    ctx.fileBytes.set("file-token", makePdf());
+    const controller = new AbortController();
+    Object.defineProperty(ctx, "signal", { value: controller.signal });
+    const progress = ctx.progress;
+    ctx.progress = (fraction, message) => {
+      progress(fraction, message);
+      controller.abort();
+    };
+    const started = performance.now();
+    await expect(
+      createConvertMethod()({ token: "file-token", name: "informe.pdf" }, ctx),
+    ).rejects.toMatchObject({ code: "E_CANCELLED" });
+    expect(performance.now() - started).toBeLessThan(1000);
   });
 
   it("rechaza extensión no compatible y bytes sobre el límite inyectado", async () => {
