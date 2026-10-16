@@ -107,6 +107,10 @@ describe("contexto y ajustes", () => {
         "tools.confirmDowngrade": () => ({ tools: [], pendingDowngrade: null }),
         "tools.setEnabled": () => ({ tools: [], pendingDowngrade: null }),
         "tools.remove": () => ({ tools: [], pendingDowngrade: null }),
+        "logs.export": () => ({ saved: false }),
+        "app.openDataFolder": () => ({}),
+        "app.openExternal": () => ({}),
+        "updates.checkNow": () => ({ kind: "skipped" as const }),
       },
       isShellSender: () => true,
     });

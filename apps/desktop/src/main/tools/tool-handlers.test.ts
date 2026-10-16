@@ -47,4 +47,25 @@ describe("handlers de herramientas", () => {
       });
     expect(install).not.toHaveBeenCalled();
   });
+
+  it("avisa de un fallo de instalación y lo propaga", async () => {
+    const failure = Object.assign(new Error("firma"), { code: "E_SIGNATURE_INVALID" });
+    const onInstallFailed = vi.fn();
+    const handlers = createToolHandlers({
+      installer: () => ({
+        install: vi.fn(async () => {
+          throw failure;
+        }),
+        registry: { list: () => [], setEnabled: () => true },
+        confirmDowngrade: vi.fn(),
+        remove: vi.fn(),
+        getPendingDowngrade: () => null,
+      }),
+      pick: async () => ({ canceled: false, filePaths: ["/tmp/tool.lenspkg"] }),
+      emit: vi.fn(),
+      onInstallFailed,
+    });
+    await expect(handlers["tools.pickAndInstall"]()).rejects.toBe(failure);
+    expect(onInstallFailed).toHaveBeenCalledWith(failure);
+  });
 });

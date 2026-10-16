@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { LensError } from "@lensdesk/sdk/errors";
 import {
   app,
@@ -9,10 +9,12 @@ import {
   Menu,
   nativeTheme,
   screen,
+  shell,
   utilityProcess,
 } from "electron";
 import type { HostEventPayloads } from "../shared/host-channels.ts";
 import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
+import { createAppActions } from "./app-actions.ts";
 import { createSettingsHandlers } from "./context.ts";
 import { openHostDatabase, readStoredLocale, supportsFts5 } from "./db/driver.ts";
 import { SchemaTooNewError } from "./db/migrate.ts";
@@ -20,11 +22,15 @@ import { getSetting, setSetting } from "./db/settings-repo.ts";
 import { createTranslator } from "./i18n.ts";
 import { createRouter } from "./ipc/router.ts";
 import { ipcSchemas } from "./ipc/schemas.ts";
+import { exportLogs } from "./log/export.ts";
+import { createLogger } from "./log/logger.ts";
+import { logProcessErrors, logRendererCrashes } from "./log/wire-logging.ts";
 import { buildMenuTemplate } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 import { createToolWiring } from "./tools/wire-tools.ts";
+import { createUpdateService } from "./updates/update-service.ts";
 
 const packageJson = JSON.parse(
   readFileSync(resolve(import.meta.dirname, "../../package.json"), "utf8"),
@@ -32,6 +38,15 @@ const packageJson = JSON.parse(
 const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (path) =>
   app.setPath("userData", path),
 );
+// Registros locales en <userData>/logs: 1 MB por archivo y 5 archivos como máximo.
+const logsDir = join(app.getPath("userData"), "logs");
+const logger = createLogger({
+  dir: logsDir,
+  maxBytes: 1024 * 1024,
+  maxFiles: 5,
+  now: () => new Date(),
+});
+logProcessErrors(process, logger);
 let shellContents: Electron.WebContents | undefined;
 let database: ReturnType<typeof openHostDatabase> | undefined;
 let activeLocale: "es" | "en" = "es";
@@ -89,6 +104,49 @@ toolWiring = createToolWiring({
   onShowActiveTool: (callback) => {
     showActiveTool = callback;
   },
+  logger,
+});
+logRendererCrashes(app as never, {
+  logger,
+  toolIdForContents: (id) => toolWiring.toolIdForContents(id),
+  onToolCrashed: (toolId) => shellContents?.send("tool.crashed", { toolId }),
+});
+// Sin `lensdesk.releasesRepo` (hoy vacío) la comprobación se omite siempre y no hay red.
+const updates = createUpdateService({
+  repo: __RELEASES_REPO__,
+  currentVersion: packageJson.version,
+  fetch: (url, init) => fetch(url, init),
+  now: () => new Date(),
+  settings: {
+    enabled: () => settingsHandlers["settings.get"]({ key: "updates.check" }).value === true,
+    lastCheckedAt: () =>
+      settingsHandlers["settings.get"]({ key: "updates.lastCheckedAt" }).value as string | null,
+    setLastCheckedAt: (value) =>
+      settingsHandlers["settings.set"]({ key: "updates.lastCheckedAt", value }),
+  },
+  emit: (payload) => shellContents?.send("update.available", payload),
+  log: (message) => logger.warn("update.check", message),
+});
+const appActions = createAppActions({
+  userData: app.getPath("userData"),
+  logsDir,
+  now: () => new Date(),
+  pickSavePath: async (defaultName) => {
+    const options = {
+      defaultPath: defaultName,
+      filters: [{ name: "Zip", extensions: ["zip"] }],
+    };
+    const window = BrowserWindow.getFocusedWindow();
+    const picked = window
+      ? await dialog.showSaveDialog(window, options)
+      : await dialog.showSaveDialog(options);
+    return picked.canceled ? undefined : picked.filePath;
+  },
+  exportLogs,
+  openPath: (path) => shell.openPath(path),
+  openExternal: (url) => shell.openExternal(url),
+  checkNow: () => updates.run(true),
+  log: (event, message) => logger.error(event, message),
 });
 const router = createRouter({
   schemas: ipcSchemas,
@@ -120,6 +178,7 @@ const router = createRouter({
       return { page };
     },
     ...toolWiring.handlers,
+    ...appActions,
   },
   isShellSender: (sender) => shellContents !== undefined && sender === shellContents,
 });
@@ -178,6 +237,8 @@ void app.whenReady().then(async () => {
   } else {
     await window.loadFile(resolve(import.meta.dirname, "../renderer/index.html"));
   }
+
+  void updates.run().catch((error: unknown) => logger.warn("update.check", String(error)));
 
   if (smoke) {
     await runSmoke(

@@ -27,6 +27,8 @@ export function createBackendHost(options: {
   ): Promise<Uint8Array | undefined>;
   fork?: (path: string, options: { serviceName: string; env: Record<string, string> }) => Child;
   log?: (toolId: string, level: string, message: string) => void;
+  // `expected` es true cuando el host terminó el proceso (cerrar pestaña, quitar o salir).
+  onExit?: (toolId: string, code: number, expected: boolean) => void;
 }) {
   const children = new Map<
     string,
@@ -61,9 +63,11 @@ export function createBackendHost(options: {
     });
     children.set(id, { child, session });
     child.postMessage({ type: "init", dataDir, toolId: id, hostVersion: options.hostVersion });
-    child.on("exit", (() => {
+    child.on("exit", ((code: number) => {
+      const current = children.get(id)?.child === child;
+      options.onExit?.(id, typeof code === "number" ? code : -1, !current);
       session.close();
-      if (children.get(id)?.child === child) children.delete(id);
+      if (current) children.delete(id);
     }) as never);
     return { child, session };
   }

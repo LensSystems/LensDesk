@@ -19,6 +19,7 @@ export function createToolHandlers(options: {
   emit: () => void;
   onToolDisabled?: (toolId: string) => void;
   onToolEnabled?: (toolId: string) => void;
+  onInstallFailed?: (error: unknown) => void;
   fs?: Fs;
 }) {
   const fs = options.fs ?? { lstat };
@@ -34,6 +35,9 @@ export function createToolHandlers(options: {
     if (!installer) throw new LensError("E_INTERNAL", "El instalador no está disponible.");
     try {
       await installer.install(path);
+    } catch (error) {
+      options.onInstallFailed?.(error);
+      throw error;
     } finally {
       options.emit();
     }
@@ -64,6 +68,9 @@ export function createToolHandlers(options: {
       if (!installer) throw new LensError("E_INTERNAL", "El instalador no está disponible.");
       try {
         await installer.confirmDowngrade(toolId, version);
+      } catch (error) {
+        options.onInstallFailed?.(error);
+        throw error;
       } finally {
         options.emit();
       }

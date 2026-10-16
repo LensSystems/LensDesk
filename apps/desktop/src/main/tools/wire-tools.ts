@@ -3,6 +3,13 @@ import { LensError } from "@lensdesk/sdk/errors";
 import { clipboard, dialog, ipcMain } from "electron";
 import type { SqliteDatabase } from "../db/database.ts";
 import { getSetting } from "../db/settings-repo.ts";
+import type { Logger } from "../log/logger.ts";
+import {
+  logBackendExit,
+  logBackendMessage,
+  logFileDenied,
+  logInstallFailure,
+} from "../log/wire-logging.ts";
 import { createTabsStore } from "../shell/tabs-store.ts";
 import { createBackendHost } from "./backend-host.ts";
 import { scanDevTools } from "./dev-tools.ts";
@@ -24,9 +31,10 @@ export function createToolWiring(options: {
   context: () => { locale: string; theme: string };
   showingTab: () => boolean;
   onShowActiveTool(callback: () => void): void;
+  logger: Logger;
 }) {
   const fileTokens = createFileTokens({
-    log: (toolId, channel) => console.warn("Acceso a archivo denegado", { toolId, channel }),
+    log: (toolId, channel) => logFileDenied(options.logger, toolId, channel),
   });
   let installer: ReturnType<typeof createToolInstaller> | undefined;
   let views: ReturnType<typeof createToolViews> | undefined;
@@ -36,6 +44,8 @@ export function createToolWiring(options: {
     userData: options.userData,
     hostVersion: options.version,
     getTool: (id) => installer?.registry.get(id),
+    log: (toolId, level, message) => logBackendMessage(options.logger, toolId, level, message),
+    onExit: (toolId, code, expected) => logBackendExit(options.logger, toolId, code, expected),
     resolveFile: async (toolId, op, token, bytes) => {
       if (op === "readBytes") {
         const path = fileTokens.resolve(toolId, token, "read", "backend.files.readBytes");
@@ -75,6 +85,7 @@ export function createToolWiring(options: {
       views?.close(id);
     },
     onToolEnabled: showActive,
+    onInstallFailed: (error) => logInstallFailure(options.logger, error),
     pick: () =>
       dialog.showOpenDialog({
         properties: ["openFile"],
@@ -156,6 +167,9 @@ export function createToolWiring(options: {
       views?.hideAll();
     },
     showActive,
+    toolIdForContents(id: number) {
+      return views?.getToolIdForContents(id);
+    },
     terminateAll() {
       backend.terminateAll();
     },

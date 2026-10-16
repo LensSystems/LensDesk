@@ -16,6 +16,10 @@ export const HOST_CHANNELS = [
   "tools.confirmDowngrade",
   "tools.setEnabled",
   "tools.remove",
+  "logs.export",
+  "app.openDataFolder",
+  "app.openExternal",
+  "updates.checkNow",
 ] as const;
 export const HOST_EVENTS = [
   "settings.changed",
@@ -23,6 +27,8 @@ export const HOST_EVENTS = [
   "tabs.changed",
   "tools.changed",
   "tools.toast",
+  "update.available",
+  "tool.crashed",
 ] as const;
 export const HOST_IPC_CHANNEL = "lensdesk:invoke";
 
@@ -43,6 +49,10 @@ export type HostPayloads = {
   "tools.confirmDowngrade": { toolId: string; version: string };
   "tools.setEnabled": { toolId: string; enabled: boolean };
   "tools.remove": { toolId: string; deleteData: boolean };
+  "logs.export": Record<string, never>;
+  "app.openDataFolder": Record<string, never>;
+  "app.openExternal": { url: string };
+  "updates.checkNow": Record<string, never>;
 };
 export type HostSettingKey =
   | "locale"
@@ -68,7 +78,15 @@ export type HostResponses = {
   "tools.confirmDowngrade": ToolState;
   "tools.setEnabled": ToolState;
   "tools.remove": ToolState;
+  "logs.export": { saved: boolean };
+  "app.openDataFolder": Record<string, never>;
+  "app.openExternal": Record<string, never>;
+  "updates.checkNow": UpdateCheckResult;
 };
+export type UpdateCheckResult =
+  | { kind: "skipped" }
+  | { kind: "none" }
+  | { kind: "available"; version: string; url: string };
 export type PendingDowngrade = {
   toolId: string;
   installedVersion: string;
@@ -96,6 +114,8 @@ export type HostEventPayloads = {
   "tabs.changed": { tabs: ShellTab[] };
   "tools.changed": ToolState;
   "tools.toast": { toolId: string; kind: string; message: string };
+  "update.available": { version: string; html_url: string };
+  "tool.crashed": { toolId: string };
 };
 
 export type HostBridge = {

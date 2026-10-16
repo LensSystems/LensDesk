@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { HostChannel } from "../../shared/host-channels.ts";
+import { isHttpsUrl } from "../app-actions.ts";
 import { type SettingKey, settingSchemas } from "../db/settings-repo.ts";
 
 const settingKeySchema = z.enum(Object.keys(settingSchemas) as [SettingKey, ...SettingKey[]]);
@@ -93,5 +94,35 @@ export const ipcSchemas = {
   "tools.remove": {
     request: z.object({ toolId: z.string().min(1), deleteData: z.boolean() }).strict(),
     response: toolStateSchema,
+  },
+  "logs.export": {
+    request: z.object({}).strict(),
+    response: z.object({ saved: z.boolean() }).strict(),
+  },
+  "app.openDataFolder": {
+    request: z.object({}).strict(),
+    response: z.object({}).strict(),
+  },
+  "app.openExternal": {
+    request: z
+      .object({
+        url: z.string().max(2048).refine(isHttpsUrl, { message: "Solo se abren enlaces https." }),
+      })
+      .strict(),
+    response: z.object({}).strict(),
+  },
+  "updates.checkNow": {
+    request: z.object({}).strict(),
+    response: z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("skipped") }).strict(),
+      z.object({ kind: z.literal("none") }).strict(),
+      z
+        .object({
+          kind: z.literal("available"),
+          version: z.string(),
+          url: z.string().refine(isHttpsUrl),
+        })
+        .strict(),
+    ]),
   },
 } satisfies Record<HostChannel, { request: z.ZodType; response: z.ZodType }>;

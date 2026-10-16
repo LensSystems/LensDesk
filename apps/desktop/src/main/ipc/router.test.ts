@@ -18,6 +18,10 @@ const unusedHandlers = {
   "tools.confirmDowngrade": () => ({ tools: [], pendingDowngrade: null }),
   "tools.setEnabled": () => ({ tools: [], pendingDowngrade: null }),
   "tools.remove": () => ({ tools: [], pendingDowngrade: null }),
+  "logs.export": () => ({ saved: false }),
+  "app.openDataFolder": () => ({}),
+  "app.openExternal": () => ({}),
+  "updates.checkNow": () => ({ kind: "skipped" as const }),
 };
 
 describe("IPC router", () => {
@@ -94,5 +98,43 @@ describe("IPC router", () => {
       ok: false,
       error: { code: "E_METHOD_NOT_FOUND" },
     });
+  });
+
+  it("app.openExternal solo acepta https y no ejecuta el handler con otro esquema", async () => {
+    const handler = vi.fn(() => ({}));
+    const router = createRouter({
+      schemas: ipcSchemas,
+      handlers: {
+        ...unusedHandlers,
+        "app.getInfo": () => ({ version: "1", platform: "darwin" }),
+        "app.openExternal": handler,
+      },
+      isShellSender: () => true,
+    });
+    for (const url of ["http://example.com", "file:///etc/hosts", "javascript:alert(1)", "x"])
+      await expect(router({}, "app.openExternal", { url })).resolves.toMatchObject({
+        ok: false,
+        error: { code: "E_INVALID_PARAMS" },
+      });
+    expect(handler).not.toHaveBeenCalled();
+    await expect(
+      router({}, "app.openExternal", { url: "https://github.com/o/r" }),
+    ).resolves.toEqual({ ok: true, data: {} });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("valida las respuestas de logs.export y updates.checkNow", () => {
+    expect(ipcSchemas["logs.export"].response.safeParse({ saved: true }).success).toBe(true);
+    const checkNow = ipcSchemas["updates.checkNow"].response;
+    expect(checkNow.safeParse({ kind: "skipped" }).success).toBe(true);
+    expect(
+      checkNow.safeParse({ kind: "available", version: "1.0.0", url: "https://github.com/o/r" })
+        .success,
+    ).toBe(true);
+    expect(
+      checkNow.safeParse({ kind: "available", version: "1.0.0", url: "http://github.com/o/r" })
+        .success,
+    ).toBe(false);
+    expect(checkNow.safeParse({ kind: "available" }).success).toBe(false);
   });
 });
