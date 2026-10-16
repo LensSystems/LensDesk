@@ -47,12 +47,26 @@
     "system": "Sistema",
     "dark": "Oscuro",
     "light": "Claro",
-    "developerMode": "Modo desarrollador"
+    "developerMode": "Modo desarrollador",
+    "checkUpdates": "Buscar actualizaciones",
+    "exportLogs": "Exportar registros",
+    "openDataFolder": "Carpeta de datos",
+    "about": "Acerca de · LensDesk {{version}}"
   },
   "ui": {
     "loading": "Cargando",
     "close": "Cerrar",
     "dismiss": "Descartar"
+  },
+  "recovery": {
+    "errorTitle": "LensDesk encontró un problema",
+    "errorDescription": "La interfaz no pudo cargarse correctamente.",
+    "reload": "Recargar",
+    "updateAvailable": "LensDesk {{version}} está disponible.",
+    "viewUpdate": "Ver actualización",
+    "toolCrashedTitle": "{{name}} dejó de funcionar",
+    "toolCrashedDescription": "Puedes volver a abrirla para continuar.",
+    "retry": "Reintentar"
   },
   "errors": {
     "E_SIGNATURE_INVALID": "La firma de la herramienta no es válida.",

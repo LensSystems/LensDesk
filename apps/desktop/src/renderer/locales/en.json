@@ -47,12 +47,26 @@
     "system": "System",
     "dark": "Dark",
     "light": "Light",
-    "developerMode": "Developer mode"
+    "developerMode": "Developer mode",
+    "checkUpdates": "Check for updates",
+    "exportLogs": "Export logs",
+    "openDataFolder": "Data folder",
+    "about": "About · LensDesk {{version}}"
   },
   "ui": {
     "loading": "Loading",
     "close": "Close",
     "dismiss": "Dismiss"
+  },
+  "recovery": {
+    "errorTitle": "LensDesk encountered a problem",
+    "errorDescription": "The interface could not load correctly.",
+    "reload": "Reload",
+    "updateAvailable": "LensDesk {{version}} is available.",
+    "viewUpdate": "View update",
+    "toolCrashedTitle": "{{name}} stopped working",
+    "toolCrashedDescription": "You can reopen it to continue.",
+    "retry": "Retry"
   },
   "errors": {
     "E_SIGNATURE_INVALID": "The tool signature is invalid.",

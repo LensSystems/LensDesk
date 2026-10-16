@@ -109,7 +109,11 @@ toolWiring = createToolWiring({
 logRendererCrashes(app as never, {
   logger,
   toolIdForContents: (id) => toolWiring.toolIdForContents(id),
-  onToolCrashed: (toolId) => shellContents?.send("tool.crashed", { toolId }),
+  // La vista caída taparía la pantalla de recuperación del shell: se cierra antes de avisar.
+  onToolCrashed: (toolId) => {
+    toolWiring.close(toolId);
+    shellContents?.send("tool.crashed", { toolId });
+  },
 });
 // Sin `lensdesk.releasesRepo` (hoy vacío) la comprobación se omite siempre y no hay red.
 const updates = createUpdateService({
