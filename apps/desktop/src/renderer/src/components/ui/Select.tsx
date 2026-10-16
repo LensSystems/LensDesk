@@ -37,7 +37,7 @@ export function SelectContent({
       <Primitive.Content
         {...props}
         className={cn(
-          "z-50 overflow-hidden rounded-md border border-border bg-surface-raised text-text shadow-[0_8px_24px_rgb(0_0_0/0.24)] outline-none",
+          "ld-pop z-50 overflow-hidden rounded-md border border-border bg-surface-raised text-text shadow-[0_8px_24px_rgb(0_0_0/0.24)] outline-none",
           className,
         )}
       >

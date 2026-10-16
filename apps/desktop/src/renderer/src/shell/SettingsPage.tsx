@@ -14,7 +14,7 @@ import { useShellStore } from "../state/store.ts";
 type SettingsPageProps = { bridge: Window["lensdeskHost"] };
 
 export function SettingsPage({ bridge }: SettingsPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const settings = useShellStore((state) => state.settings);
   const [version, setVersion] = useState<string | null>(null);
   useEffect(() => {
@@ -22,6 +22,14 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
       if (result.ok) setVersion(result.data.version);
     });
   }, [bridge]);
+  const pushToast = useShellStore((state) => state.pushToast);
+  const exportLogs = async () => {
+    const result = await bridge.invoke("logs.export", {});
+    if (!result.ok) {
+      const key = `errors.${result.error.code}`;
+      pushToast("error", i18n.exists(key) ? t(key) : t("settingsPage.exportLogsError"));
+    } else if (result.data.saved) pushToast("success", t("settingsPage.exportLogsSaved"));
+  };
   const update = (key: HostSettingKey, value: unknown) =>
     void bridge.invoke("settings.set", { key, value });
   return (
@@ -63,7 +71,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
       <section className="grid gap-2 border-t border-border pt-3">
         <button
           className="h-7 justify-self-start rounded border border-border px-3"
-          onClick={() => void bridge.invoke("logs.export", {})}
+          onClick={() => void exportLogs()}
           type="button"
         >
           {t("settingsPage.exportLogs")}

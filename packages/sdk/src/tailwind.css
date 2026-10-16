@@ -15,3 +15,73 @@
   --font-sans: "Inter Variable", Inter, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
 }
+
+/* Animaciones de superposiciones: 140 ms ease-out, sin movimiento con prefers-reduced-motion. */
+@keyframes ld-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ld-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ld-pop-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+@keyframes ld-pop-out {
+  to {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+@keyframes ld-slide-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+@keyframes ld-slide-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@utility ld-fade {
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state="open"] {
+      animation: ld-fade-in 140ms ease-out;
+    }
+    &[data-state="closed"] {
+      animation: ld-fade-out 140ms ease-out;
+    }
+  }
+}
+
+@utility ld-pop {
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state="open"],
+    &[data-state="delayed-open"],
+    &[data-state="instant-open"] {
+      animation: ld-pop-in 140ms ease-out;
+    }
+    &[data-state="closed"] {
+      animation: ld-pop-out 140ms ease-out;
+    }
+  }
+}
+
+@utility ld-slide {
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state="open"] {
+      animation: ld-slide-in 140ms ease-out;
+    }
+    &[data-state="closed"] {
+      animation: ld-slide-out 140ms ease-out;
+    }
+  }
+}

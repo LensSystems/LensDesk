@@ -8,6 +8,7 @@ export const settingSchemas = {
   developerMode: z.boolean(),
   "updates.check": z.boolean(),
   "updates.lastCheckedAt": z.string().datetime().nullable(),
+  "updates.dismissedVersion": z.string().min(1).max(64).nullable(),
   "window.bounds": z
     .object({
       x: z.number(),
@@ -26,6 +27,7 @@ const defaults: { [K in SettingKey]: z.infer<(typeof settingSchemas)[K]> } = {
   developerMode: false,
   "updates.check": true,
   "updates.lastCheckedAt": null,
+  "updates.dismissedVersion": null,
   "window.bounds": null,
 };
 

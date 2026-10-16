@@ -9,10 +9,7 @@ export function ToastViewport({ className, ...props }: ComponentProps<typeof Pri
   return (
     <Primitive.Viewport
       {...props}
-      className={cn(
-        "fixed bottom-4 right-4 z-50 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none",
-        className,
-      )}
+      className={cn("flex min-w-0 max-w-80 flex-col outline-none", className)}
     />
   );
 }
@@ -28,19 +25,17 @@ export function Toast({ className, title, description, ...props }: ToastProps) {
     <Primitive.Root
       {...props}
       className={cn(
-        "relative rounded-md border border-border bg-surface-raised p-3 pr-10 text-text shadow-[0_8px_24px_rgb(0_0_0/0.24)] outline-none",
+        "ld-slide flex h-7 min-w-0 items-center gap-1 rounded border border-border bg-surface-raised pl-2 text-xs text-text outline-none",
         className,
       )}
     >
-      <Primitive.Title className="font-medium">{title}</Primitive.Title>
+      <Primitive.Title className="min-w-0 flex-1 truncate">{title}</Primitive.Title>
       {description && (
-        <Primitive.Description className="mt-1 text-xs text-muted">
-          {description}
-        </Primitive.Description>
+        <Primitive.Description className="sr-only">{description}</Primitive.Description>
       )}
       <Primitive.Close
         aria-label={t("ui.dismiss")}
-        className="absolute right-2 top-2 rounded px-2 py-1 text-muted hover:bg-surface"
+        className="size-6 shrink-0 rounded text-muted hover:bg-surface"
       >
         ×
       </Primitive.Close>

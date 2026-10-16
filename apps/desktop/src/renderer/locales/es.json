@@ -49,6 +49,8 @@
     "light": "Claro",
     "developerMode": "Modo desarrollador",
     "checkUpdates": "Buscar actualizaciones",
+    "exportLogsSaved": "Registros exportados.",
+    "exportLogsError": "No se pudieron exportar los registros.",
     "exportLogs": "Exportar registros",
     "openDataFolder": "Carpeta de datos",
     "about": "Acerca de · LensDesk {{version}}"
@@ -56,6 +58,7 @@
   "ui": {
     "loading": "Cargando",
     "close": "Cerrar",
+    "notifications": "Notificaciones",
     "dismiss": "Descartar"
   },
   "recovery": {

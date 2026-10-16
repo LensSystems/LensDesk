@@ -17,11 +17,11 @@ export function DialogContent({
   const { t } = useTranslation();
   return (
     <Primitive.Portal>
-      <Primitive.Overlay className="fixed inset-0 z-40 bg-bg/60" />
+      <Primitive.Overlay className="ld-fade fixed inset-0 z-40 bg-bg/60" />
       <Primitive.Content
         {...props}
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-md border border-border bg-surface-raised p-4 text-text shadow-[0_8px_24px_rgb(0_0_0/0.24)]",
+          "ld-pop fixed left-1/2 top-1/2 z-50 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-md border border-border bg-surface-raised p-4 text-text shadow-[0_8px_24px_rgb(0_0_0/0.24)]",
           className,
         )}
       >

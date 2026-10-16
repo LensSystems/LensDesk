@@ -14,6 +14,16 @@ type SettingValues = {
   developerMode: boolean;
   updatesCheck: boolean;
 };
+export type ShellToast = {
+  id: number;
+  kind: "success" | "error" | "info";
+  message: string;
+  source?: string;
+};
+// Máximo de avisos en cola: al superarlo se descarta el más antiguo.
+const maxToasts = 3;
+const toastKinds = ["success", "error", "info"] as const;
+let nextToastId = 1;
 type State = {
   tabs: ShellTab[];
   tools: ToolSummary[];
@@ -21,8 +31,12 @@ type State = {
   settings: SettingValues;
   context: HostEventPayloads["context.changed"];
   page: "tools" | "settings" | "tab";
-  toasts: unknown[];
+  toasts: ShellToast[];
   update: HostEventPayloads["update.available"] | null;
+  dismissedVersion: string | null;
+  pushToast: (kind: ShellToast["kind"], message: string, source?: string) => void;
+  removeToast: (id: number) => void;
+  dismissUpdate: (bridge: HostBridge) => void;
   crashedToolId: string | null;
   showPage: (bridge: HostBridge, page: "tools" | "settings") => Promise<void>;
   hydrate: (bridge: HostBridge) => Promise<void>;
@@ -47,22 +61,45 @@ export const useShellStore = create<State>((set) => ({
   page: "tools",
   toasts: [],
   update: null,
+  dismissedVersion: null,
   crashedToolId: null,
+  pushToast(kind, message, source) {
+    set((state) => ({
+      toasts: [...state.toasts, { id: nextToastId++, kind, message, source }].slice(-maxToasts),
+    }));
+  },
+  removeToast(id) {
+    set((state) => ({ toasts: state.toasts.filter((toast) => toast.id !== id) }));
+  },
+  dismissUpdate(bridge) {
+    const version = useShellStore.getState().update?.version;
+    set({ update: null, ...(version ? { dismissedVersion: version } : {}) });
+    if (version)
+      void bridge.invoke("settings.set", { key: "updates.dismissedVersion", value: version });
+  },
   async showPage(bridge, page) {
     const result = await bridge.invoke("shell.showPage", { page });
     if (result.ok) set({ page: result.data.page });
   },
   async hydrate(bridge) {
     const before = { ...eventCounts };
-    const [tabs, locale, theme, developerMode, updatesCheck, context, tools] = await Promise.all([
-      bridge.invoke("tabs.list", {}),
-      bridge.invoke("settings.get", { key: "locale" }),
-      bridge.invoke("settings.get", { key: "theme" }),
-      bridge.invoke("settings.get", { key: "developerMode" }),
-      bridge.invoke("settings.get", { key: "updates.check" }),
-      bridge.invoke("app.getContext", {}),
-      bridge.invoke("tools.list", {}),
-    ]);
+    const [tabs, locale, theme, developerMode, updatesCheck, context, tools, dismissed] =
+      await Promise.all([
+        bridge.invoke("tabs.list", {}),
+        bridge.invoke("settings.get", { key: "locale" }),
+        bridge.invoke("settings.get", { key: "theme" }),
+        bridge.invoke("settings.get", { key: "developerMode" }),
+        bridge.invoke("settings.get", { key: "updates.check" }),
+        bridge.invoke("app.getContext", {}),
+        bridge.invoke("tools.list", {}),
+        bridge.invoke("settings.get", { key: "updates.dismissedVersion" }),
+      ]);
+    const dismissedVersion =
+      dismissed.ok &&
+      dismissed.data.key === "updates.dismissedVersion" &&
+      typeof dismissed.data.value === "string"
+        ? dismissed.data.value
+        : null;
     const stale = (field: keyof typeof eventCounts) => eventCounts[field] !== before[field];
     set((state) => ({
       ...state,
@@ -95,8 +132,10 @@ export const useShellStore = create<State>((set) => ({
                 ? updatesCheck.data.value
                 : defaults.updatesCheck,
           },
+      dismissedVersion: dismissedVersion ?? state.dismissedVersion,
+      update: dismissedVersion && state.update?.version === dismissedVersion ? null : state.update,
       context: context.ok && !stale("context") ? context.data : state.context,
-      ...(tools.ok
+      ...(tools.ok && Array.isArray(tools.data.tools)
         ? { tools: tools.data.tools, pendingDowngrade: tools.data.pendingDowngrade }
         : {}),
     }));
@@ -109,6 +148,8 @@ export const useShellStore = create<State>((set) => ({
       }),
       bridge.on("settings.changed", ({ key, value }) => {
         eventCounts.settings += 1;
+        if (key === "updates.dismissedVersion")
+          set({ dismissedVersion: typeof value === "string" ? value : null });
         if (
           key === "locale" ||
           key === "theme" ||
@@ -127,7 +168,20 @@ export const useShellStore = create<State>((set) => ({
         set({ context });
       }),
       bridge.on("tools.changed", ({ tools, pendingDowngrade }) => set({ tools, pendingDowngrade })),
-      bridge.on("update.available", (update) => set({ update })),
+      bridge.on("update.available", (update) =>
+        set((state) => (update.version === state.dismissedVersion ? {} : { update })),
+      ),
+      bridge.on("tools.toast", ({ toolId, kind, message }) =>
+        useShellStore
+          .getState()
+          .pushToast(
+            (toastKinds as readonly string[]).includes(kind)
+              ? (kind as ShellToast["kind"])
+              : "info",
+            message,
+            toolId,
+          ),
+      ),
       bridge.on("tool.crashed", ({ toolId }) => set({ crashedToolId: toolId })),
     ];
     return () => {

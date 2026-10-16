@@ -60,6 +60,7 @@ export type HostSettingKey =
   | "developerMode"
   | "updates.check"
   | "updates.lastCheckedAt"
+  | "updates.dismissedVersion"
   | "window.bounds";
 export type HostSettingValue = unknown;
 export type HostResponses = {

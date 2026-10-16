@@ -6,10 +6,15 @@ import { Checkbox } from "./Checkbox.tsx";
 import { IconButton } from "./IconButton.tsx";
 import { Input } from "./Input.tsx";
 import { Switch } from "./Switch.tsx";
+import { TooltipProvider } from "./Tooltip.tsx";
 
 describe("componentes de formulario y estado", () => {
   it("expone el label del IconButton como nombre accesible", () => {
-    render(<IconButton label="Cerrar">x</IconButton>);
+    render(
+      <TooltipProvider>
+        <IconButton label="Cerrar">x</IconButton>
+      </TooltipProvider>,
+    );
     expect(screen.getByRole("button", { name: "Cerrar" })).toBeTruthy();
   });
 

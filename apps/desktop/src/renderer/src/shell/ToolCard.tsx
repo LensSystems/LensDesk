@@ -1,5 +1,4 @@
-import * as Icons from "lucide-react";
-import { MoreHorizontal, Puzzle } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { ToolSummary } from "../../../shared/host-channels.ts";
@@ -11,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/DropdownMenu.tsx";
+import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 
 type Actions = { enabled: () => void; details: () => void; remove: () => void };
@@ -27,12 +27,7 @@ export function ToolCard({
   const { name, description } = toolText(tool, i18n.resolvedLanguage);
   const nameId = useId();
   const descriptionId = useId();
-  const iconName = String((tool.manifest as { icon?: string }).icon ?? "")
-    .split(/[-_\s]/)
-    .filter(Boolean)
-    .map((part) => part[0]?.toUpperCase() + part.slice(1))
-    .join("");
-  const Icon = (Icons as unknown as Record<string, typeof Puzzle>)[iconName] ?? Puzzle;
+  const Icon = toolIcon((tool.manifest as { icon?: unknown }).icon);
   return (
     <article
       className={`relative rounded-md border border-border bg-surface-raised p-3 ${tool.enabled ? "" : "opacity-50"}`}

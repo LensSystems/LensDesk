@@ -49,6 +49,8 @@
     "light": "Light",
     "developerMode": "Developer mode",
     "checkUpdates": "Check for updates",
+    "exportLogsSaved": "Logs exported.",
+    "exportLogsError": "Could not export the logs.",
     "exportLogs": "Export logs",
     "openDataFolder": "Data folder",
     "about": "About · LensDesk {{version}}"
@@ -56,6 +58,7 @@
   "ui": {
     "loading": "Loading",
     "close": "Close",
+    "notifications": "Notifications",
     "dismiss": "Dismiss"
   },
   "recovery": {

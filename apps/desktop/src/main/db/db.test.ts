@@ -69,6 +69,14 @@ describe("host database", () => {
     expect(() => setSetting(database, "locale", "fr")).toThrowError(
       expect.objectContaining({ code: "E_INVALID_PARAMS" }),
     );
+    expect(getSetting(database, "updates.dismissedVersion")).toBeNull();
+    setSetting(database, "updates.dismissedVersion", "2.0.0");
+    expect(getSetting(database, "updates.dismissedVersion")).toBe("2.0.0");
+    setSetting(database, "updates.dismissedVersion", null);
+    expect(getSetting(database, "updates.dismissedVersion")).toBeNull();
+    expect(() => setSetting(database, "updates.dismissedVersion", 3)).toThrowError(
+      expect.objectContaining({ code: "E_INVALID_PARAMS" }),
+    );
     database.close();
   });
 });
