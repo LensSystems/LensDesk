@@ -34,13 +34,17 @@
 
 :root {
   font-family: "Inter Variable", Inter, sans-serif;
-  font-size: 13px;
   line-height: 1.45;
   font-weight: 400;
   color: var(--ld-text);
   background: var(--ld-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+/* En body y no en :root: la escala de Tailwind usa rem y debe partir de 16 px (h-9 = 36 px). */
+body {
+  font-size: 13px;
 }
 
 * {
