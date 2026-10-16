@@ -1,5 +1,6 @@
 import type { createToolClient, FileHandle } from "@lensdesk/sdk";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type Client = ReturnType<typeof createToolClient>;
 
@@ -18,6 +19,10 @@ export type QueueItem = {
 type ConvertResult = { markdown: string; warnings: string[] };
 
 export function useQueue(client: Client) {
+  const { i18n } = useTranslation();
+  // El idioma se lee al convertir, no al crear el bucle, para respetar un cambio en vivo.
+  const localeRef = useRef<"es" | "en">("es");
+  localeRef.current = i18n.language === "en" ? "en" : "es";
   const [items, setItems] = useState<QueueItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // La cola vive en una referencia para que el bucle secuencial lea siempre el estado actual;
@@ -56,7 +61,7 @@ export function useQueue(client: Client) {
         try {
           const result = await client.backend.invoke<ConvertResult>(
             "convert",
-            { token: next.file.token, name: next.file.name },
+            { token: next.file.token, name: next.file.name, locale: localeRef.current },
             {
               signal: controller.signal,
               onProgress: ({ fraction }) => patch(next.id, { progress: fraction }, "converting"),

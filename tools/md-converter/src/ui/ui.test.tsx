@@ -95,12 +95,32 @@ describe("interfaz del Convertidor", () => {
     await waitFor(() => expect(within(row("datos.csv")).getByText("Listo")).toBeInTheDocument());
     expect(fake.invoke).toHaveBeenLastCalledWith(
       "convert",
-      { token: "tok-datos.csv", name: "datos.csv" },
+      { token: "tok-datos.csv", name: "datos.csv", locale: "es" },
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
     expect(
       screen.queryByRole("button", { name: "Cancelar conversión de datos.csv" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("envía el idioma actual al backend al convertir", async () => {
+    await i18n.changeLanguage("en");
+    const fake = fakeClient([handle("datos.csv")]);
+    fake.client.app.getContext.mockResolvedValue({
+      locale: "en",
+      theme: "dark",
+      hostVersion: "",
+      toolVersion: "",
+    });
+    render(<App client={fake.client as never} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Choose files…" }));
+    await waitFor(() =>
+      expect(fake.invoke).toHaveBeenCalledWith(
+        "convert",
+        { token: "tok-datos.csv", name: "datos.csv", locale: "en" },
+        expect.anything(),
+      ),
+    );
   });
 
   it("marca un fallo con el mensaje localizado y sigue con la cola", async () => {

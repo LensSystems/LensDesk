@@ -8,10 +8,10 @@ import { makePdf } from "./make-pdf.ts";
 
 const fixture = (name: string) => readFile(new URL(`./fixtures/${name}`, import.meta.url));
 
-async function convert(name: string, bytes: Uint8Array) {
+async function convert(name: string, bytes: Uint8Array, locale?: string) {
   const ctx = createTestContext({ dataDir: "/tmp/md-converter-test" });
   ctx.fileBytes.set("file-token", bytes);
-  return createConvertMethod()({ token: "file-token", name }, ctx);
+  return createConvertMethod()({ token: "file-token", name, ...(locale ? { locale } : {}) }, ctx);
 }
 
 describe("backend del convertidor", () => {
@@ -67,6 +67,33 @@ describe("backend del convertidor", () => {
     expect(result.markdown).not.toContain("![");
     expect(result.markdown).toMatch(/2 imágenes/);
     expect(result.warnings[0]).toMatch(/2 imágenes/);
+  });
+
+  it("escribe la nota de imágenes omitidas en inglés cuando se pide", async () => {
+    const one = (await convert("uno.html", new TextEncoder().encode("<p>a</p><img>"), "en")) as {
+      markdown: string;
+      warnings: string[];
+    };
+    expect(one.markdown).toContain("1 image was omitted.");
+    expect(one.warnings).toEqual(["1 image was omitted."]);
+    const many = (await convert(
+      "dos.html",
+      new TextEncoder().encode("<p>a</p><img><img><img>"),
+      "en",
+    )) as { markdown: string; warnings: string[] };
+    expect(many.warnings).toEqual(["3 images were omitted."]);
+    const spanish = (await convert("es.html", new TextEncoder().encode("<img><img>"), "es")) as {
+      warnings: string[];
+    };
+    expect(spanish.warnings).toEqual(["Se omitieron 2 imágenes."]);
+    const ctx = createTestContext({ dataDir: "/tmp/md-converter-test" });
+    ctx.fileBytes.set("file-token", new TextEncoder().encode("<img>"));
+    await expect(
+      createConvertMethod()({ token: "file-token", name: "x.html", locale: "fr" }, ctx),
+    ).rejects.toMatchObject({ code: "E_INVALID_PARAMS", message: "Parámetros no válidos" });
+    await expect(
+      createConvertMethod()({ token: "file-token", name: "x.html", extra: 1 }, ctx),
+    ).rejects.toMatchObject({ code: "E_INVALID_PARAMS" });
   });
 
   it("convierte PDF por páginas y rechaza los que no tienen texto", async () => {

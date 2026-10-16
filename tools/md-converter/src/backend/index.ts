@@ -10,20 +10,31 @@ import { convertXlsx } from "./xlsx.ts";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 const SUPPORTED = new Set(["html", "htm", "docx", "csv", "pdf", "xlsx"]);
-type ConvertParams = { token: string; name: string };
+type ConvertParams = { token: string; name: string; locale: "es" | "en" };
 type ConverterOptions = { maxBytes?: number };
+
+// Sin zod en el bundle de la herramienta: la validación del borde se escribe a mano.
+function parseConvertParams(params: unknown): ConvertParams | null {
+  if (typeof params !== "object" || params === null) return null;
+  const value = params as Record<string, unknown>;
+  if (Object.keys(value).some((key) => !["token", "name", "locale"].includes(key))) return null;
+  const { token, name, locale = "es" } = value;
+  if (typeof token !== "string" || typeof name !== "string") return null;
+  if (locale !== "es" && locale !== "en") return null;
+  return { token, name, locale };
+}
+
+function omittedImagesNote(count: number, locale: "es" | "en"): string {
+  if (locale === "en")
+    return count === 1 ? "1 image was omitted." : `${count} images were omitted.`;
+  return count === 1 ? "Se omitió 1 imagen." : `Se omitieron ${count} imágenes.`;
+}
 
 export function createConvertMethod({ maxBytes = MAX_FILE_BYTES }: ConverterOptions = {}) {
   return async (params: unknown, ctx: BackendContext) => {
-    if (
-      typeof params !== "object" ||
-      params === null ||
-      typeof (params as Partial<ConvertParams>).token !== "string" ||
-      typeof (params as Partial<ConvertParams>).name !== "string"
-    ) {
-      throw new LensError("E_INVALID_PARAMS", "Se requieren token y nombre de archivo");
-    }
-    const { token, name } = params as ConvertParams;
+    const parsed = parseConvertParams(params);
+    if (!parsed) throw new LensError("E_INVALID_PARAMS", "Parámetros no válidos");
+    const { token, name, locale } = parsed;
     const extension = name.toLowerCase().match(/\.([^.]+)$/)?.[1];
     // Un formato no compatible se rechaza antes de leer el archivo.
     if (!extension || !SUPPORTED.has(extension))
@@ -52,8 +63,7 @@ export function createConvertMethod({ maxBytes = MAX_FILE_BYTES }: ConverterOpti
     ctx.progress(1, `Archivo convertido: ${name}`);
     const warnings: string[] = [];
     if (imageCount > 0) {
-      const note =
-        imageCount === 1 ? "Se omitió 1 imagen." : `Se omitieron ${imageCount} imágenes.`;
+      const note = omittedImagesNote(imageCount, locale);
       markdown = `${markdown}${markdown ? "\n\n" : ""}${note}`;
       warnings.push(note);
     }
