@@ -25,7 +25,10 @@ En LensDesk, pulsa **Agregar herramienta…** y elige el archivo `.lenspkg` que 
 Usa [`tools/_template`](tools/_template) como punto de partida:
 
 1. Copia la carpeta a `tools/<tu-herramienta>`.
-2. Cambia `id` y `name` en `lensdesk.tool.json`, y `name` en `package.json`.
+2. Cambia `id`, `name`, `description` e `icon` en `lensdesk.tool.json`, y `name` en
+   `package.json`. Los textos de la interfaz están en `locales/es.json` y `locales/en.json`.
+   El icono debe ser uno de los nombres de
+   [`tool-icons.ts`](apps/desktop/src/renderer/src/shell/tool-icons.ts); si no, se usa `puzzle`.
 3. Ejecuta `pnpm install` y genera el paquete con
    `pnpm --filter <nombre-del-paquete> run package`.
 4. Instala el `.lenspkg` de `dist/` con **Agregar herramienta…**. Sin firma, activa antes el modo
@@ -69,7 +72,10 @@ In LensDesk, click **Add Tool…** and choose the `.lenspkg` file you want to in
 Use [`tools/_template`](tools/_template) as the starting point:
 
 1. Copy the folder to `tools/<your-tool>`.
-2. Change `id` and `name` in `lensdesk.tool.json`, and `name` in `package.json`.
+2. Change `id`, `name`, `description` and `icon` in `lensdesk.tool.json`, and `name` in
+   `package.json`. The UI texts live in `locales/es.json` and `locales/en.json`.
+   The icon must be one of the names in
+   [`tool-icons.ts`](apps/desktop/src/renderer/src/shell/tool-icons.ts); otherwise `puzzle` is used.
 3. Run `pnpm install` and build the package with
    `pnpm --filter <package-name> run package`.
 4. Install the `.lenspkg` from `dist/` with **Add Tool…**. Unsigned packages need developer mode
