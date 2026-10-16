@@ -75,6 +75,8 @@ if (declaresBackend) {
       outDir: resolve(distDir, "backend"),
       emptyOutDir: true,
       target: "node24",
+      // Algunos paquetes ESM aún llaman a require() (turndown → @mixmark-io/domino).
+      commonjsOptions: { transformMixedEsModules: true },
       rollupOptions: {
         output: {
           format: "es",
