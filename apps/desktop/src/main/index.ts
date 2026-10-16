@@ -119,7 +119,7 @@ logRendererCrashes(app as never, {
   },
 });
 const { updates, appActions } = wireAppServices({
-  // Sin `lensdesk.releasesRepo` (hoy vacío) la comprobación se omite siempre y no hay red.
+  // Sin `lensdesk.releasesRepo` la comprobación se omite siempre y no hay red.
   repo: __RELEASES_REPO__,
   currentVersion: packageJson.version,
   userData: app.getPath("userData"),

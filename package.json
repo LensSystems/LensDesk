@@ -10,7 +10,7 @@
     "node": ">=24.21.0"
   },
   "lensdesk": {
-    "releasesRepo": ""
+    "releasesRepo": "LensSystems/LensDesk"
   },
   "scripts": {
     "dev": "pnpm --filter @lensdesk/desktop dev",

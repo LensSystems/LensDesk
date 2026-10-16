@@ -17,7 +17,7 @@ type SettingsHandlers = Pick<
 // Une las actualizaciones y las acciones del shell con sus ajustes y registros. Las piezas de
 // Electron (diálogo, `shell`, `fetch`) llegan por parámetro desde `index.ts`.
 export function wireAppServices(options: {
-  // Sin `lensdesk.releasesRepo` (hoy vacío) la comprobación se omite siempre y no hay red.
+  // Sin `lensdesk.releasesRepo` la comprobación se omite siempre y no hay red.
   repo: string;
   currentVersion: string;
   userData: string;
