@@ -60,6 +60,17 @@ input:focus-visible,
   font-size: 15px;
   font-weight: 600;
 }
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ld-border);
+  color: var(--ld-danger);
+}
+.notice span {
+  flex: 1;
+}
 .workspace {
   flex: 1;
   min-height: 0;

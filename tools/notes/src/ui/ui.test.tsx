@@ -30,6 +30,9 @@ function fakeClient() {
     { token: "import2", name: "two.md", size: 12 },
   ];
   const invoke = vi.fn(async (method: string, params?: unknown) => {
+    // Como el backend real: todo método exige un objeto de parámetros, aunque esté vacío.
+    if (typeof params !== "object" || params === null)
+      throw Object.assign(new Error("Expected an object"), { code: "E_INVALID_PARAMS" });
     const args = (params ?? {}) as {
       id?: string;
       body_md?: string;
@@ -237,21 +240,23 @@ describe("interfaz de Notas", () => {
     expect(dialog).toHaveTextContent("Esta acción no se puede deshacer.");
     expect(screen.getByRole("button", { name: "Cancelar" })).toHaveFocus();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
-    expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash");
+    expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash", expect.anything());
     expect(dialog).not.toHaveAttribute("open");
 
     fireEvent.click(screen.getByRole("button", { name: "Vaciar papelera" }));
     const reopened = await screen.findByRole("dialog");
     fireEvent(reopened, new Event("cancel", { cancelable: true }));
     expect(reopened).not.toHaveAttribute("open");
-    expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash");
+    expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash", expect.anything());
 
     fireEvent.click(screen.getByRole("button", { name: "Vaciar papelera" }));
     const confirmButton = within(await screen.findByRole("dialog")).getByRole("button", {
       name: "Vaciar papelera",
     });
     fireEvent.click(confirmButton);
-    await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("emptyTrash"));
+    await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("emptyTrash", {}));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Restaurar" })).toBeNull());
+    expect(screen.queryByRole("alert")).toBeNull();
     expect(confirm).not.toHaveBeenCalled();
   });
 

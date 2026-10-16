@@ -28,6 +28,14 @@ test("Notas conserva una nota después de reiniciar LensDesk", async () => {
     tool = await toolPage(app, "notes");
     await expect(tool.getByRole("heading", { name: "Persistencia local" })).toBeVisible();
     await expect(tool.locator(".cm-content")).toContainText("Texto que debe seguir aquí");
+
+    await tool.getByRole("button", { name: "Mover a la papelera" }).first().click();
+    await tool.getByRole("button", { name: "Papelera", exact: true }).click();
+    await expect(tool.getByRole("button", { name: "Persistencia local" })).toBeVisible();
+    await tool.getByRole("button", { name: "Vaciar papelera" }).click();
+    await tool.getByRole("dialog").getByRole("button", { name: "Vaciar papelera" }).click();
+    await expect(tool.getByRole("button", { name: "Persistencia local" })).toHaveCount(0);
+    await expect(tool.getByRole("alert")).toHaveCount(0);
   } finally {
     await app.close().catch(() => undefined);
     await rm(userDataDir, { recursive: true, force: true });

@@ -150,7 +150,7 @@ export function useNotes(client: Client) {
   };
   const emptyTrash = async () => {
     try {
-      await client.backend.invoke("emptyTrash");
+      await client.backend.invoke("emptyTrash", {});
       setSelectedId(null);
       setBody("");
       await load(true, "");

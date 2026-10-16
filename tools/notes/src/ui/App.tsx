@@ -36,7 +36,7 @@ export function App({ client }: { client: Client }) {
         )}
       </header>
       {state.error && (
-        <div role="alert">
+        <div className="notice" role="alert">
           <span>{state.error}</span>
           {state.errorKind === "error" ? (
             <button type="button" onClick={() => void state.load()}>
