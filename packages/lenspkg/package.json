@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Empaquetado, firma, verificacion y extraccion segura de paquetes .lenspkg",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

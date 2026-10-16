@@ -3,7 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "LensDesk: contenedor de escritorio modular y 100% local para herramientas de desarrollo",
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "author": "LensSystems",
+  "homepage": "https://github.com/LensSystems/LensDesk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LensSystems/LensDesk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LensSystems/LensDesk/issues"
+  },
   "type": "module",
   "packageManager": "pnpm@11.28.2",
   "engines": {

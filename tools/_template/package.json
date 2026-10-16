@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Herramienta plantilla de LensDesk: punto de partida y fixture de pruebas e2e",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "node ../../scripts/build-tool.ts",

@@ -48,7 +48,7 @@ describe("documentación de CI y publicación", () => {
     ] as const) {
       expect(section).toContain("xattr -dr com.apple.quarantine /Applications/LensDesk.app");
       expect(section).toMatch(smartScreenSteps);
-      expect(section).toMatch(/Agregar herramienta|Add Tool/);
+      expect(section).toMatch(/Agregar herramienta|Add tool/);
       expect(section).toContain("tools/_template");
       expect(section).toContain("pnpm install");
     }

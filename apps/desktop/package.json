@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "Contenedor de escritorio de LensDesk",
-  "author": "LensDesk",
-  "license": "UNLICENSED",
+  "author": "LensSystems",
+  "license": "MIT",
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
