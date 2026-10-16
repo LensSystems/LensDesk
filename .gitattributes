@@ -1,0 +1,12 @@
+# Finales de línea LF en todas las plataformas: Biome y las pruebas los esperan así,
+# también en la CI de Windows.
+* text=auto eol=lf
+
+# Binarios: sin conversión ni diff de texto.
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.woff2 binary
+*.zip binary
+*.lenspkg binary
