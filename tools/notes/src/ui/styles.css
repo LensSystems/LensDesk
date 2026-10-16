@@ -152,3 +152,43 @@ input:focus-visible,
   white-space: nowrap;
   border: 0;
 }
+.confirm-dialog {
+  margin: auto;
+  max-width: 400px;
+  padding: 16px;
+  border: 1px solid var(--ld-border);
+  border-radius: 6px;
+  color: var(--ld-text);
+  background: var(--ld-surface-raised);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.24);
+}
+.confirm-dialog::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+.confirm-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.confirm-dialog p {
+  margin: 0 0 16px;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+button.danger {
+  border-color: var(--ld-danger);
+  color: var(--ld-accent-fg);
+  background: var(--ld-danger);
+}
+button.danger:hover {
+  background: var(--ld-danger);
+  opacity: 0.9;
+}
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}

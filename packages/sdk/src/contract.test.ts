@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ToolBridge } from "./api.ts";
 import { createToolClient } from "./client.ts";
+import { LENS_ERROR_CODES, LensError } from "./errors.ts";
 
 describe("public client contract", () => {
   it("exposes and dispatches all 16 v1 methods", async () => {
@@ -55,5 +56,11 @@ describe("public client contract", () => {
     expect(bridge.files.onDrop).toHaveBeenCalledOnce();
     expect(bridge.app.onContextChange).toHaveBeenCalledOnce();
     expect(bridge.ui.openExternal).toHaveBeenCalledWith("https://example.com");
+  });
+
+  it("incluye E_NOT_FOUND como código de error estable", () => {
+    expect(LENS_ERROR_CODES).toContain("E_NOT_FOUND");
+    expect(LENS_ERROR_CODES).toContain("E_INTERNAL");
+    expect(new LensError("E_NOT_FOUND", "x").code).toBe("E_NOT_FOUND");
   });
 });

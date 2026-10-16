@@ -73,6 +73,22 @@ describe("backend de Notas", () => {
     db.close();
   });
 
+  it("responde E_NOT_FOUND cuando la nota no existe", () => {
+    const { db, repo } = setup();
+    for (const call of [
+      () => repo.get({ id: "no-existe" }),
+      () => repo.update({ id: "no-existe", body_md: "x" }),
+      () => repo.setPinned({ id: "no-existe", pinned: true }),
+      () => repo.trash({ id: "no-existe" }),
+      () => repo.restore({ id: "no-existe" }),
+    ])
+      expect(call).toThrow(expect.objectContaining({ code: "E_NOT_FOUND" }));
+    expect(() => repo.get({ id: 3 })).toThrow(
+      expect.objectContaining({ code: "E_INVALID_PARAMS" }),
+    );
+    db.close();
+  });
+
   it("ordena las fijadas primero y deriva el título desde el cuerpo", () => {
     const { db, repo } = setup();
     const first = repo.create({ body_md: "  \n\n### Título inicial\nTexto" });

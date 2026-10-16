@@ -46,7 +46,7 @@ function note(row: StoredNote | undefined): Note | null {
 }
 function requiredNote(db: Db, id: string): Note {
   const found = note(db.get<StoredNote>("SELECT * FROM notes WHERE id = ?", id));
-  if (!found) throw new LensError("E_INVALID_PARAMS", "Note not found");
+  if (!found) throw new LensError("E_NOT_FOUND", "Note not found");
   return found;
 }
 

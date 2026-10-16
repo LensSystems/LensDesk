@@ -17,6 +17,7 @@ export const LENS_ERROR_CODES = [
   "E_BACKEND_CRASHED",
   "E_CANCELLED",
   "E_INTERNAL",
+  "E_NOT_FOUND",
 ] as const;
 
 export type LensErrorCode = (typeof LENS_ERROR_CODES)[number];

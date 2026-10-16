@@ -17,8 +17,15 @@
   "markdownFiles": "Markdown files",
   "restore": "Restore",
   "emptyTrash": "Empty trash",
-  "confirmEmptyTrash": "Empty the trash? This action cannot be undone.",
+  "confirmEmptyTitle": "Empty the trash?",
+  "cancel": "Cancel",
   "retry": "Retry",
   "loading": "Loading notes…",
-  "errors": { "generic": "The action could not be completed ({{code}})" }
+  "errors": {
+    "generic": "The action could not be completed ({{code}})",
+    "notFound": "The note no longer exists. The list was reloaded.",
+    "notFoundRecovered": "The note no longer existed; your text was saved as a new note."
+  },
+  "confirmEmptyMessage": "Notes in the trash will be deleted permanently. This cannot be undone.",
+  "close": "Close"
 }

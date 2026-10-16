@@ -17,8 +17,15 @@
   "markdownFiles": "Archivos Markdown",
   "restore": "Restaurar",
   "emptyTrash": "Vaciar papelera",
-  "confirmEmptyTrash": "¿Vaciar la papelera? Esta acción no se puede deshacer.",
+  "confirmEmptyTitle": "¿Vaciar la papelera?",
+  "cancel": "Cancelar",
   "retry": "Reintentar",
   "loading": "Cargando notas…",
-  "errors": { "generic": "No se pudo completar la acción ({{code}})" }
+  "errors": {
+    "generic": "No se pudo completar la acción ({{code}})",
+    "notFound": "La nota ya no existe. Se recargó la lista.",
+    "notFoundRecovered": "La nota ya no existía; tu texto se guardó como nota nueva."
+  },
+  "confirmEmptyMessage": "Las notas de la papelera se borrarán para siempre. Esta acción no se puede deshacer.",
+  "close": "Cerrar"
 }

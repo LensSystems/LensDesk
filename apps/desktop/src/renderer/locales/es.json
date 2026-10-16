@@ -84,6 +84,7 @@
     "E_INVALID_PARAMS": "Los datos proporcionados no son válidos.",
     "E_PERMISSION_DENIED": "No tienes permiso para realizar esta acción.",
     "E_TOOL_NOT_FOUND": "No se encontró la herramienta.",
-    "E_INTERNAL": "Ocurrió un error interno."
+    "E_INTERNAL": "Ocurrió un error interno.",
+    "E_NOT_FOUND": "No se encontró el elemento."
   }
 }

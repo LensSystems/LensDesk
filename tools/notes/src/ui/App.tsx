@@ -1,6 +1,7 @@
 import type { createToolClient } from "@lensdesk/sdk";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ConfirmDialog } from "./ConfirmDialog.tsx";
 import { Editor } from "./Editor.tsx";
 import { NoteList } from "./NoteList.tsx";
 import { useAutosave } from "./use-autosave.ts";
@@ -11,6 +12,7 @@ type Client = ReturnType<typeof createToolClient>;
 export function App({ client }: { client: Client }) {
   const { t } = useTranslation();
   const state = useNotes(client);
+  const [confirmingEmpty, setConfirmingEmpty] = useState(false);
   const flush = useAutosave(state.selected?.id ?? null, state.body, state.save);
   const updateBody = useCallback((value: string) => state.setBody(value), [state.setBody]);
 
@@ -28,7 +30,7 @@ export function App({ client }: { client: Client }) {
           {t("import")}
         </button>
         {state.trashed && (
-          <button type="button" onClick={state.emptyTrash}>
+          <button type="button" onClick={() => setConfirmingEmpty(true)}>
             {t("emptyTrash")}
           </button>
         )}
@@ -36,9 +38,15 @@ export function App({ client }: { client: Client }) {
       {state.error && (
         <div role="alert">
           <span>{state.error}</span>
-          <button type="button" onClick={() => void state.load()}>
-            {t("retry")}
-          </button>
+          {state.errorKind === "error" ? (
+            <button type="button" onClick={() => void state.load()}>
+              {t("retry")}
+            </button>
+          ) : (
+            <button type="button" onClick={() => state.setError("")}>
+              {t("close")}
+            </button>
+          )}
         </div>
       )}
       {state.loading ? (
@@ -61,9 +69,7 @@ export function App({ client }: { client: Client }) {
               void client.backend
                 .invoke("setPinned", { id: note.id, pinned: !note.pinned })
                 .then(() => state.load(false, state.query))
-                .catch((reason: unknown) =>
-                  state.setError(t("errors.generic", { code: errorCode(reason) })),
-                )
+                .catch((reason: unknown) => state.fail(reason))
             }
           />
           {state.selected ? (
@@ -92,12 +98,18 @@ export function App({ client }: { client: Client }) {
           )}
         </div>
       )}
+      <ConfirmDialog
+        open={confirmingEmpty}
+        title={t("confirmEmptyTitle")}
+        message={t("confirmEmptyMessage")}
+        confirmLabel={t("emptyTrash")}
+        cancelLabel={t("cancel")}
+        onConfirm={() => {
+          setConfirmingEmpty(false);
+          void state.emptyTrash();
+        }}
+        onCancel={() => setConfirmingEmpty(false)}
+      />
     </main>
   );
-}
-
-function errorCode(error: unknown) {
-  return typeof error === "object" && error !== null && "code" in error
-    ? String(error.code)
-    : "E_INTERNAL";
 }

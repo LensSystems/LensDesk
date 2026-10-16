@@ -84,6 +84,7 @@
     "E_INVALID_PARAMS": "The provided data is invalid.",
     "E_PERMISSION_DENIED": "You are not allowed to perform this action.",
     "E_TOOL_NOT_FOUND": "The tool was not found.",
-    "E_INTERNAL": "An internal error occurred."
+    "E_INTERNAL": "An internal error occurred.",
+    "E_NOT_FOUND": "The item was not found."
   }
 }

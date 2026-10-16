@@ -1,12 +1,13 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { EditorView } from "codemirror";
 import i18n from "i18next";
 import { useState } from "react";
 import { initReactI18next } from "react-i18next";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import es from "../../locales/es.json";
 import { App } from "./App.tsx";
+import { ConfirmDialog } from "./ConfirmDialog.tsx";
 import type { Note } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
 import { useAutosave } from "./use-autosave.ts";
@@ -99,6 +100,16 @@ function fakeClient() {
     changeLanguage: (locale: string) => contextListener?.({ locale, theme: "dark" }),
   };
 }
+
+// jsdom no implementa <dialog>.showModal(): este polyfill mínimo basta para las pruebas.
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    this.removeAttribute("open");
+  };
+});
 
 beforeEach(async () => {
   await i18n.use(initReactI18next).init({
@@ -212,5 +223,131 @@ describe("interfaz de Notas", () => {
     await screen.findByRole("heading", { name: "Sin título" });
     expect(es.untitled).toBe("Sin título");
     expect(en.untitled).toBe("Untitled");
+  });
+
+  it("vaciar la papelera pide confirmación en un diálogo propio con foco en Cancelar", async () => {
+    const confirm = vi.spyOn(window, "confirm");
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Vieja" });
+    await fake.invoke("trash", { id: "1" });
+    render(<App client={fake.client as never} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Papelera" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Vaciar papelera" }));
+    const dialog = await screen.findByRole("dialog", { name: "¿Vaciar la papelera?" });
+    expect(dialog).toHaveTextContent("Esta acción no se puede deshacer.");
+    expect(screen.getByRole("button", { name: "Cancelar" })).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash");
+    expect(dialog).not.toHaveAttribute("open");
+
+    fireEvent.click(screen.getByRole("button", { name: "Vaciar papelera" }));
+    const reopened = await screen.findByRole("dialog");
+    fireEvent(reopened, new Event("cancel", { cancelable: true }));
+    expect(reopened).not.toHaveAttribute("open");
+    expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash");
+
+    fireEvent.click(screen.getByRole("button", { name: "Vaciar papelera" }));
+    const confirmButton = within(await screen.findByRole("dialog")).getByRole("button", {
+      name: "Vaciar papelera",
+    });
+    fireEvent.click(confirmButton);
+    await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("emptyTrash"));
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("ConfirmDialog solo se abre cuando open es true", () => {
+    const props = {
+      title: "T",
+      message: "M",
+      confirmLabel: "Sí",
+      cancelLabel: "No",
+      onConfirm: vi.fn(),
+      onCancel: vi.fn(),
+    };
+    const { rerender } = render(<ConfirmDialog {...props} open={false} />);
+    expect(document.querySelector("dialog")).not.toHaveAttribute("open");
+    rerender(<ConfirmDialog {...props} open />);
+    expect(document.querySelector("dialog")).toHaveAttribute("open");
+  });
+
+  it("avisa y recarga la lista cuando una acción responde E_NOT_FOUND", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Fantasma" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("button", { name: "Fantasma" });
+    const original = fake.invoke.getMockImplementation();
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "trash") {
+        await original?.("trash", params);
+        throw Object.assign(new Error("Note not found"), { code: "E_NOT_FOUND" });
+      }
+      return original?.(method, params);
+    });
+    fake.invoke.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("La nota ya no existe. Se recargó la lista.");
+    expect(within(alert).queryByRole("button", { name: "Reintentar" })).toBeNull();
+    expect(within(alert).getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
+    expect(fake.invoke).toHaveBeenCalledWith("list", { trashed: false });
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Fantasma" })).toBeNull());
+    expect(en.errors.notFound).toBe("The note no longer exists. The list was reloaded.");
+  });
+
+  it("no avisa de nota inexistente si la recarga también falla", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Uno" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("button", { name: "Uno" });
+    const original = fake.invoke.getMockImplementation();
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "trash") throw Object.assign(new Error("x"), { code: "E_NOT_FOUND" });
+      if (method === "list") throw Object.assign(new Error("x"), { code: "E_INTERNAL" });
+      return original?.(method, params);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).not.toHaveTextContent("ya no existe");
+    expect(within(alert).getByRole("button", { name: "Reintentar" })).toBeInTheDocument();
+  });
+
+  it("conserva el texto como nota nueva si el autoguardado recibe E_NOT_FOUND", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Original" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Original" });
+    const original = fake.invoke.getMockImplementation();
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "update") throw Object.assign(new Error("x"), { code: "E_NOT_FOUND" });
+      return original?.(method, params);
+    });
+    const editor = document.querySelector(".cm-content") as HTMLElement;
+    act(() => {
+      const view = EditorView.findFromDOM(editor);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: "\ntexto valioso" } });
+    });
+    fireEvent.blur(editor);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("La nota ya no existía; tu texto se guardó como nota nueva.");
+    expect(within(alert).queryByRole("button", { name: "Reintentar" })).toBeNull();
+    expect(fake.invoke).toHaveBeenCalledWith("create", { body_md: "# Original\ntexto valioso" });
+    await waitFor(() =>
+      expect(document.querySelector(".cm-content")?.textContent).toContain("texto valioso"),
+    );
+  });
+
+  it("seleccionar una nota y esperar no llama a update", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Uno" });
+    await fake.invoke("create", { body_md: "# Dos" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("button", { name: "Dos" });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fireEvent.click(screen.getByRole("button", { name: "Dos" }));
+    await act(async () => {
+      vi.advanceTimersByTime(1500);
+    });
+    vi.useRealTimers();
+    expect(fake.invoke).not.toHaveBeenCalledWith("update", expect.anything());
   });
 });
