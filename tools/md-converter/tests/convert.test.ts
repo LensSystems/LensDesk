@@ -28,6 +28,17 @@ describe("backend del convertidor", () => {
     expect(result.markdown.match(/\|/g)).toHaveLength(12);
   });
 
+  it("deja las listas sin casillas como listas normales y conserva la numeración", async () => {
+    const html = "<ul><li>Uno</li><li>Dos</li></ul><ol><li>Primero</li><li>Segundo</li></ol>";
+    const result = (await convert("listas.html", new TextEncoder().encode(html))) as {
+      markdown: string;
+    };
+    expect(result.markdown).not.toContain("[ ]");
+    expect(result.markdown).toMatch(/^[-*]\s+Uno$/m);
+    expect(result.markdown).toMatch(/^1\.\s+Primero$/m);
+    expect(result.markdown).toMatch(/^2\.\s+Segundo$/m);
+  });
+
   it("tacha también <s> y <strike>, y concuerda la nota de una sola imagen", async () => {
     const html = '<p><s>uno</s> <strike>dos</strike></p><img src="a.png">';
     const result = (await convert("corto.html", new TextEncoder().encode(html))) as {

@@ -18,7 +18,8 @@ export function addTurndownRules(service: TurndownService): { imageCount: () => 
     replacement: (content) => (content.trim() ? `~~${content.trim()}~~` : ""),
   });
   service.addRule("taskListItem", {
-    filter: (node) => node.nodeName === "LI" && node.querySelector("input[type=checkbox]") !== null,
+    // El DOM de turndown en Node devuelve `undefined` (no `null`) cuando no encuentra nada.
+    filter: (node) => node.nodeName === "LI" && Boolean(node.querySelector("input[type=checkbox]")),
     replacement: (content, node) => {
       const checked = node.querySelector("input[type=checkbox]")?.hasAttribute("checked");
       const text = content.replace(/^\s+|\s+$/g, "").replace(/\n/g, "\n  ");

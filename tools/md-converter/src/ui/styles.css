@@ -205,3 +205,78 @@ button:focus-visible,
 .muted {
   color: var(--ld-text-muted);
 }
+
+/* Formato del Markdown renderizado: el reset de Tailwind quita tamaños, márgenes y viñetas. */
+.rendered-markdown > :first-child {
+  margin-top: 0;
+}
+.rendered-markdown h1,
+.rendered-markdown h2,
+.rendered-markdown h3,
+.rendered-markdown h4 {
+  margin: 16px 0 8px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.rendered-markdown h1 {
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--ld-border);
+  font-size: 20px;
+}
+.rendered-markdown h2 {
+  font-size: 16px;
+}
+.rendered-markdown h3 {
+  font-size: 14px;
+}
+.rendered-markdown h4 {
+  font-size: 13px;
+}
+.rendered-markdown p,
+.rendered-markdown ul,
+.rendered-markdown ol,
+.rendered-markdown pre,
+.rendered-markdown table,
+.rendered-markdown blockquote {
+  margin: 0 0 12px;
+}
+.rendered-markdown ul {
+  padding-left: 24px;
+  list-style: disc;
+}
+.rendered-markdown ol {
+  padding-left: 24px;
+  list-style: decimal;
+}
+.rendered-markdown li + li {
+  margin-top: 4px;
+}
+.rendered-markdown code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--ld-surface);
+  font:
+    12px / 1.45 "JetBrains Mono",
+    monospace;
+}
+.rendered-markdown pre {
+  border: 1px solid var(--ld-border);
+  border-radius: 6px;
+}
+.rendered-markdown pre code {
+  padding: 0;
+  background: none;
+}
+.rendered-markdown blockquote {
+  padding-left: 12px;
+  border-left: 4px solid var(--ld-border);
+  color: var(--ld-text-muted);
+}
+.rendered-markdown hr {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid var(--ld-border);
+}
+.rendered-markdown a {
+  text-decoration: underline;
+}
