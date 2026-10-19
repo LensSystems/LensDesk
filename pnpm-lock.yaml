@@ -206,6 +206,9 @@ importers:
       '@lensdesk/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@lensdesk/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0

@@ -1,4 +1,5 @@
 import { createToolClient } from "@lensdesk/sdk";
+import { Button, Panel } from "@lensdesk/ui";
 import i18n from "i18next";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -95,26 +96,34 @@ function App() {
   };
 
   return (
-    <main className="panel">
+    <main className="template-page grid gap-4">
       <header>
-        <h1>{t("title")}</h1>
-        <p>{t("context", { locale: context.locale, theme: context.theme })}</p>
+        <h1 className="mb-1 text-[15px] font-semibold">{t("title")}</h1>
+        <p className="text-muted">
+          {t("context", { locale: context.locale, theme: context.theme })}
+        </p>
       </header>
-      <section aria-label={t("actionsHeading")}>
-        <div className="row">
+      <Panel aria-label={t("actionsHeading")} className="grid gap-2 p-3">
+        <div className="flex items-center justify-between gap-2">
           <span>{t("counter", { count })}</span>
-          <button type="button" aria-label={t("incrementButton")} onClick={increment}>
+          <Button type="button" aria-label={t("incrementButton")} onClick={increment}>
             {t("incrementButton")}
-          </button>
+          </Button>
         </div>
-        <button type="button" aria-label={t("pingButton")} disabled={busy} onClick={ping}>
+        <Button type="button" aria-label={t("pingButton")} disabled={busy} onClick={ping}>
           {t("pingButton")}
-        </button>
-        <button type="button" aria-label={t("openFileButton")} onClick={openFile}>
+        </Button>
+        <Button type="button" aria-label={t("openFileButton")} onClick={openFile}>
           {t("openFileButton")}
-        </button>
-      </section>
-      {result && <output aria-live="polite">{result}</output>}
+        </Button>
+      </Panel>
+      {result && (
+        <Panel className="p-2">
+          <output aria-live="polite" className="block whitespace-pre-wrap wrap-anywhere">
+            {result}
+          </output>
+        </Panel>
+      )}
     </main>
   );
 }
