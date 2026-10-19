@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { rendererI18n } from "../../i18n.ts";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./Dialog.tsx";
 import {
   DropdownMenu,
@@ -12,6 +11,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./Select.tsx";
 import { Tabs, TabsList, TabsTrigger } from "./Tabs.tsx";
 import { Toast, ToastProvider, ToastViewport } from "./Toast.tsx";
+import { UiLabelsProvider } from "./UiLabelsProvider.tsx";
 
 Element.prototype.scrollIntoView = vi.fn();
 
@@ -101,7 +101,6 @@ describe("componentes superpuestos", () => {
   });
 
   it("anuncia Toast y permite descartarlo con nombre accesible", async () => {
-    rendererI18n.changeLanguage("es");
     function Example() {
       const [open, setOpen] = useState(true);
       return (
@@ -111,7 +110,11 @@ describe("componentes superpuestos", () => {
         </ToastProvider>
       );
     }
-    render(<Example />);
+    render(
+      <UiLabelsProvider labels={{ loading: "Cargando", close: "Cerrar", dismiss: "Descartar" }}>
+        <Example />
+      </UiLabelsProvider>,
+    );
     const status = await screen.findByRole("status");
     expect(status.getAttribute("aria-live")).toBe("assertive");
     fireEvent.click(screen.getByRole("button", { name: "Descartar" }));

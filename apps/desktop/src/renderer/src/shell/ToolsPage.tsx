@@ -1,8 +1,7 @@
+import { Button, EmptyState } from "@lensdesk/ui";
 import { type DragEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { HostBridge } from "../../../shared/host-channels.ts";
-import { Button } from "../components/ui/Button.tsx";
-import { EmptyState } from "../components/ui/EmptyState.tsx";
 import { useShellStore } from "../state/store.ts";
 import { ToolCard } from "./ToolCard.tsx";
 import { type ToolDialogState, ToolDialogs } from "./ToolDialogs.tsx";

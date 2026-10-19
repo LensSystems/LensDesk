@@ -1,7 +1,7 @@
 import { Dialog as Primitive } from "radix-ui";
 import type { ComponentProps } from "react";
-import { useTranslation } from "react-i18next";
-import { cn } from "../cn.ts";
+import { cn } from "./cn.ts";
+import { useUiLabels } from "./ui-labels.ts";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -9,12 +9,10 @@ export const DialogTitle = Primitive.Title;
 export const DialogDescription = Primitive.Description;
 export const DialogClose = Primitive.Close;
 
-export function DialogContent({
-  className,
-  children,
-  ...props
-}: ComponentProps<typeof Primitive.Content>) {
-  const { t } = useTranslation();
+export type DialogContentProps = ComponentProps<typeof Primitive.Content> & { closeLabel?: string };
+
+export function DialogContent({ className, children, closeLabel, ...props }: DialogContentProps) {
+  const labels = useUiLabels();
   return (
     <Primitive.Portal>
       <Primitive.Overlay className="ld-fade fixed inset-0 z-40 bg-bg/60" />
@@ -27,7 +25,7 @@ export function DialogContent({
       >
         {children}
         <Primitive.Close
-          aria-label={t("ui.close")}
+          aria-label={closeLabel ?? labels.close}
           className="absolute right-2 top-2 rounded px-2 py-1 text-muted hover:bg-surface"
         >
           ×

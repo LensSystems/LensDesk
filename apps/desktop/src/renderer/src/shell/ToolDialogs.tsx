@@ -1,9 +1,14 @@
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@lensdesk/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { HostBridge, PendingDowngrade, ToolSummary } from "../../../shared/host-channels.ts";
-import { Button } from "../components/ui/Button.tsx";
-import { Checkbox } from "../components/ui/Checkbox.tsx";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../components/ui/Dialog.tsx";
 import { toolText } from "./tool-name.ts";
 
 export type ToolDialogState =

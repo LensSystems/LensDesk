@@ -1,6 +1,6 @@
 import { Select as Primitive } from "radix-ui";
 import type { ComponentProps } from "react";
-import { cn } from "../cn.ts";
+import { cn } from "./cn.ts";
 
 export const Select = Primitive.Root;
 export const SelectGroup = Primitive.Group;

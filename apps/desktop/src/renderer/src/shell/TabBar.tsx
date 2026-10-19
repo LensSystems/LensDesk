@@ -1,8 +1,7 @@
-import { Plus, Settings, X } from "lucide-react";
+import { IconButton, Plus, Settings, X } from "@lensdesk/ui";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ShellTab } from "../../../shared/host-channels.ts";
-import { IconButton } from "../components/ui/IconButton.tsx";
 import { useShellStore } from "../state/store.ts";
 import { HeaderNotices } from "./HeaderNotices.tsx";
 import { toolText } from "./tool-name.ts";

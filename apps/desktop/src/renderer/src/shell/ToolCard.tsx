@@ -1,15 +1,14 @@
-import { MoreHorizontal } from "lucide-react";
-import { useId } from "react";
-import { useTranslation } from "react-i18next";
-import type { ToolSummary } from "../../../shared/host-channels.ts";
-import { Badge } from "../components/ui/Badge.tsx";
-
 import {
+  Badge,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../components/ui/DropdownMenu.tsx";
+  MoreHorizontal,
+} from "@lensdesk/ui";
+import { useId } from "react";
+import { useTranslation } from "react-i18next";
+import type { ToolSummary } from "../../../shared/host-channels.ts";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 

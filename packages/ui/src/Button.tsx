@@ -1,15 +1,23 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import { cn } from "../cn.ts";
+import { cn } from "./cn.ts";
 import { Progress } from "./Progress.tsx";
+import { useUiLabels } from "./ui-labels.ts";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
+  loadingLabel?: string;
   children: ReactNode;
 };
 
-export function Button({ className, disabled, loading = false, children, ...props }: ButtonProps) {
-  const { t } = useTranslation();
+export function Button({
+  className,
+  disabled,
+  loading = false,
+  loadingLabel,
+  children,
+  ...props
+}: ButtonProps) {
+  const labels = useUiLabels();
   return (
     <button
       className={cn(
@@ -19,7 +27,7 @@ export function Button({ className, disabled, loading = false, children, ...prop
       disabled={disabled || loading}
       {...props}
     >
-      {loading && <Progress label={t("ui.loading")} />}
+      {loading && <Progress label={loadingLabel ?? labels.loading} />}
       {children}
     </button>
   );

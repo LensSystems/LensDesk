@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import type { HostSettingKey } from "../../../shared/host-channels.ts";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../components/ui/Select.tsx";
-import { Switch } from "../components/ui/Switch.tsx";
+  Switch,
+} from "@lensdesk/ui";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { HostSettingKey } from "../../../shared/host-channels.ts";
 import { useShellStore } from "../state/store.ts";
 
 type SettingsPageProps = { bridge: Window["lensdeskHost"] };

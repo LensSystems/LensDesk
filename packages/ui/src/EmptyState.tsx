@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type EmptyStateProps = { title: string; description?: string; action?: ReactNode };
+export type EmptyStateProps = { title: string; description?: string; action?: ReactNode };
 
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (

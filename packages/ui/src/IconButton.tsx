@@ -1,8 +1,8 @@
 import type { ComponentProps } from "react";
-import { cn } from "../cn.ts";
+import { cn } from "./cn.ts";
 import { Tooltip } from "./Tooltip.tsx";
 
-type IconButtonProps = Omit<ComponentProps<"button">, "aria-label"> & {
+export type IconButtonProps = Omit<ComponentProps<"button">, "aria-label"> & {
   label: string;
   tooltipSide?: ComponentProps<typeof Tooltip>["side"];
 };

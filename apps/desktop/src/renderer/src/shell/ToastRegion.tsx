@@ -1,5 +1,5 @@
+import { Toast, ToastProvider, ToastViewport } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
-import { Toast, ToastProvider, ToastViewport } from "../components/ui/Toast.tsx";
 import { useShellStore } from "../state/store.ts";
 import { toolText } from "./tool-name.ts";
 
@@ -27,6 +27,7 @@ export function ToastRegion() {
           className={
             style === "error" ? "border-danger" : style === "success" ? "border-success" : undefined
           }
+          dismissLabel={t("ui.dismiss")}
           key={toast.id}
           onOpenChange={(open) => {
             if (!open) removeToast(toast.id);

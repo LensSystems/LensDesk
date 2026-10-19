@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { rendererI18n } from "../../i18n.ts";
 import { Button } from "./Button.tsx";
 import { Checkbox } from "./Checkbox.tsx";
 import { IconButton } from "./IconButton.tsx";
 import { Input } from "./Input.tsx";
 import { Switch } from "./Switch.tsx";
 import { TooltipProvider } from "./Tooltip.tsx";
+import { UiLabelsProvider } from "./UiLabelsProvider.tsx";
 
 describe("componentes de formulario y estado", () => {
   it("expone el label del IconButton como nombre accesible", () => {
@@ -67,8 +67,11 @@ describe("componentes de formulario y estado", () => {
   });
 
   it("deshabilita el botón durante la carga y muestra progreso", () => {
-    rendererI18n.changeLanguage("es");
-    render(<Button loading>Guardar</Button>);
+    render(
+      <UiLabelsProvider labels={{ loading: "Cargando", close: "Cerrar", dismiss: "Descartar" }}>
+        <Button loading>Guardar</Button>
+      </UiLabelsProvider>,
+    );
     expect(screen.getByRole("button", { name: "Guardar" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByRole("progressbar", { name: "Cargando" })).toBeTruthy();
   });

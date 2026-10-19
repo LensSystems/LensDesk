@@ -1,7 +1,7 @@
 import { type InputHTMLAttributes, type ReactNode, useId } from "react";
-import { cn } from "../cn.ts";
+import { cn } from "./cn.ts";
 
-type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
+export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
   label: ReactNode;
   error?: ReactNode;
   id?: string;

@@ -1,8 +1,7 @@
+import { Puzzle, StickyNote, TooltipProvider } from "@lensdesk/ui";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Puzzle, StickyNote } from "lucide-react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HostBridge } from "../../../shared/host-channels.ts";
-import { TooltipProvider } from "../components/ui/Tooltip.tsx";
 import { rendererI18n } from "../i18n.ts";
 import { useShellStore } from "../state/store.ts";
 import { App } from "./App.tsx";

@@ -34,6 +34,7 @@ export default defineConfig({
           environment: "jsdom",
           include: [
             "apps/desktop/src/renderer/**/*.test.{ts,tsx}",
+            "packages/*/src/**/*.test.tsx",
             "tools/*/src/ui/**/*.test.{ts,tsx}",
           ],
           exclude,

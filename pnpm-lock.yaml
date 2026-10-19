@@ -71,6 +71,9 @@ importers:
       '@lensdesk/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@lensdesk/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@tailwindcss/vite':
         specifier: 4.3.3
         version: 4.3.3(vite@7.3.7(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.32.0))
@@ -86,12 +89,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: 5.2.0
         version: 5.2.0(supports-color@7.2.0)(vite@7.3.7(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.32.0))
-      class-variance-authority:
-        specifier: 0.7.1
-        version: 0.7.1
-      clsx:
-        specifier: 2.1.1
-        version: 2.1.1
       electron:
         specifier: 44.7.1
         version: 44.7.1(supports-color@7.2.0)
@@ -104,12 +101,6 @@ importers:
       i18next:
         specifier: 26.4.4
         version: 26.4.4(typescript@6.0.3)
-      lucide-react:
-        specifier: 1.56.0
-        version: 1.56.0(@types/react@19.3.0)(react@19.3.0)
-      radix-ui:
-        specifier: 1.8.1
-        version: 1.8.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -122,9 +113,6 @@ importers:
       semver:
         specifier: 7.8.5
         version: 7.8.5
-      tailwind-merge:
-        specifier: 3.7.0
-        version: 3.7.0
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
@@ -184,6 +172,34 @@ importers:
       '@types/semver':
         specifier: 7.8.0
         version: 7.8.0
+
+  packages/ui:
+    dependencies:
+      '@lensdesk/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      class-variance-authority:
+        specifier: 0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: 2.1.1
+        version: 2.1.1
+      lucide-react:
+        specifier: 1.56.0
+        version: 1.56.0(@types/react@19.3.0)(react@19.3.0)
+      radix-ui:
+        specifier: 1.8.1
+        version: 1.8.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      tailwind-merge:
+        specifier: 3.7.0
+        version: 3.7.0
+    devDependencies:
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: 19.3.0
+        version: 19.3.0(react@19.3.0)
 
   tools/_template:
     devDependencies:

@@ -1,12 +1,12 @@
 import { Tooltip as Primitive } from "radix-ui";
 import type { ComponentProps, ReactElement } from "react";
-import { cn } from "../cn.ts";
+import { cn } from "./cn.ts";
 
 export function TooltipProvider(props: ComponentProps<typeof Primitive.Provider>) {
   return <Primitive.Provider delayDuration={300} skipDelayDuration={200} {...props} />;
 }
 
-type TooltipProps = {
+export type TooltipProps = {
   label: string;
   children: ReactElement<Record<string, unknown>>;
   className?: string;

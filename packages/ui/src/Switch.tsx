@@ -1,7 +1,7 @@
 import { type InputHTMLAttributes, useId, useState } from "react";
-import { cn } from "../cn.ts";
+import { cn } from "./cn.ts";
 
-type SwitchProps = Omit<
+export type SwitchProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
   "type" | "checked" | "defaultChecked" | "onChange"
 > & {

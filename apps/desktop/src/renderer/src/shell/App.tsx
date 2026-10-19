@@ -1,7 +1,7 @@
+import { TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { applyContext } from "../apply-context.ts";
-import { TooltipProvider } from "../components/ui/Tooltip.tsx";
 import { useShellStore } from "../state/store.ts";
 import { ErrorBoundary } from "./ErrorBoundary.tsx";
 import { SettingsPage } from "./SettingsPage.tsx";
@@ -32,22 +32,26 @@ export function App({ bridge = window.lensdeskHost }: AppProps) {
       description={t("recovery.errorDescription")}
       reloadLabel={t("recovery.reload")}
     >
-      <TooltipProvider>
-        <div className="min-h-screen bg-bg text-text">
-          <TabBar tabs={tabs} bridge={bridge} />
-          {page === "settings" ? (
-            <SettingsPage bridge={bridge} />
-          ) : page === "tab" ? (
-            crashedToolId && tabs.some((tab) => tab.active && tab.toolId === crashedToolId) ? (
-              <ToolCrashed bridge={bridge} toolId={crashedToolId} />
+      <UiLabelsProvider
+        labels={{ loading: t("ui.loading"), close: t("ui.close"), dismiss: t("ui.dismiss") }}
+      >
+        <TooltipProvider>
+          <div className="min-h-screen bg-bg text-text">
+            <TabBar tabs={tabs} bridge={bridge} />
+            {page === "settings" ? (
+              <SettingsPage bridge={bridge} />
+            ) : page === "tab" ? (
+              crashedToolId && tabs.some((tab) => tab.active && tab.toolId === crashedToolId) ? (
+                <ToolCrashed bridge={bridge} toolId={crashedToolId} />
+              ) : (
+                <main aria-label={t("shell.activeTool")} />
+              )
             ) : (
-              <main aria-label={t("shell.activeTool")} />
-            )
-          ) : (
-            <ToolsPage />
-          )}
-        </div>
-      </TooltipProvider>
+              <ToolsPage />
+            )}
+          </div>
+        </TooltipProvider>
+      </UiLabelsProvider>
     </ErrorBoundary>
   );
 }

@@ -1,7 +1,7 @@
 import { Toast as Primitive } from "radix-ui";
 import type { ComponentProps, ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import { cn } from "../cn.ts";
+import { cn } from "./cn.ts";
+import { useUiLabels } from "./ui-labels.ts";
 
 export const ToastProvider = Primitive.Provider;
 
@@ -14,13 +14,14 @@ export function ToastViewport({ className, ...props }: ComponentProps<typeof Pri
   );
 }
 
-type ToastProps = Omit<ComponentProps<typeof Primitive.Root>, "children"> & {
+export type ToastProps = Omit<ComponentProps<typeof Primitive.Root>, "children"> & {
   title: ReactNode;
   description?: ReactNode;
+  dismissLabel?: string;
 };
 
-export function Toast({ className, title, description, ...props }: ToastProps) {
-  const { t } = useTranslation();
+export function Toast({ className, title, description, dismissLabel, ...props }: ToastProps) {
+  const labels = useUiLabels();
   return (
     <Primitive.Root
       {...props}
@@ -34,7 +35,7 @@ export function Toast({ className, title, description, ...props }: ToastProps) {
         <Primitive.Description className="sr-only">{description}</Primitive.Description>
       )}
       <Primitive.Close
-        aria-label={t("ui.dismiss")}
+        aria-label={dismissLabel ?? labels.dismiss}
         className="size-6 shrink-0 rounded text-muted hover:bg-surface"
       >
         ×
