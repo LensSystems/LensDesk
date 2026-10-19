@@ -101,6 +101,12 @@ export function SharedExamples() {
           onFiles={(items) => setFiles(items.map((file) => file.name).join(", "))}
         />
         <FileDropZone
+          label="Elegir mediante la aplicación"
+          buttonLabel="Abrir selector"
+          description={notice || "La aplicación gestiona los archivos"}
+          onBrowse={() => setNotice("Selector solicitado")}
+        />
+        <FileDropZone
           label="No disponible"
           buttonLabel="Elegir archivos"
           disabled

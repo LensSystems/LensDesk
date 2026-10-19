@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@lensdesk/sdk": "workspace:*",
+    "@lensdesk/ui": "workspace:*",
     "@types/markdown-it": "14.2.0",
     "@types/papaparse": "5.5.2",
     "@types/react": "19.3.0",

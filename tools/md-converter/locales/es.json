@@ -1,4 +1,6 @@
 {
+  "loading": "Cargando…",
+  "close": "Cerrar",
   "title": "Convertidor",
   "chooseFiles": "Elegir archivos…",
   "dropZone": "Zona para soltar archivos",

@@ -3,7 +3,9 @@ import { Button } from "./Button.tsx";
 import { cn } from "./cn.ts";
 
 export type FileDropZoneProps = {
-  onFiles: (files: File[]) => void;
+  onFiles?: (files: File[]) => void;
+  onBrowse?: () => void;
+  "aria-label"?: string;
   accept?: string;
   multiple?: boolean;
   disabled?: boolean;
@@ -14,6 +16,8 @@ export type FileDropZoneProps = {
 };
 export function FileDropZone({
   onFiles,
+  onBrowse,
+  "aria-label": accessibleLabel,
   accept,
   multiple = false,
   disabled = false,
@@ -26,7 +30,7 @@ export function FileDropZone({
   const depth = useRef(0);
   const [dragging, setDragging] = useState(false);
   const deliver = (files: File[]) => {
-    if (disabled) return;
+    if (disabled || !onFiles) return;
     const patterns = accept
       ?.split(",")
       .map((part) => part.trim().toLowerCase())
@@ -46,7 +50,7 @@ export function FileDropZone({
   };
   return (
     <section
-      aria-label={label}
+      aria-label={accessibleLabel ?? label}
       aria-disabled={disabled}
       data-dragging={!disabled && dragging}
       className={cn(
@@ -75,24 +79,30 @@ export function FileDropZone({
         event.preventDefault();
         depth.current = 0;
         setDragging(false);
-        deliver(Array.from(event.dataTransfer.files));
+        if (onFiles) deliver(Array.from(event.dataTransfer.files));
       }}
     >
       <p>{label}</p>
       {description && <p className="text-xs text-muted">{description}</p>}
-      <input
-        ref={input}
-        type="file"
-        hidden
-        accept={accept}
-        multiple={multiple}
+      {!onBrowse && (
+        <input
+          ref={input}
+          type="file"
+          hidden
+          accept={accept}
+          multiple={multiple}
+          disabled={disabled}
+          onChange={(event) => {
+            deliver(Array.from(event.currentTarget.files ?? []));
+            event.currentTarget.value = "";
+          }}
+        />
+      )}
+      <Button
+        type="button"
         disabled={disabled}
-        onChange={(event) => {
-          deliver(Array.from(event.currentTarget.files ?? []));
-          event.currentTarget.value = "";
-        }}
-      />
-      <Button type="button" disabled={disabled} onClick={() => input.current?.click()}>
+        onClick={() => (onBrowse ? onBrowse() : input.current?.click())}
+      >
         {buttonLabel}
       </Button>
     </section>

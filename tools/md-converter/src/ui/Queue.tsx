@@ -1,4 +1,6 @@
+import { Button, FileDropZone } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
+import { StatusText } from "./StatusText.tsx";
 import type { QueueItem } from "./use-queue.ts";
 
 export function Queue({
@@ -19,12 +21,12 @@ export function Queue({
 
   return (
     <section className="queue-panel">
-      <section className="drop-zone" aria-label={t("dropZone")}>
-        <p className="muted">{t("dropHint")}</p>
-        <button type="button" className="primary" onClick={onChoose}>
-          {t("chooseFiles")}
-        </button>
-      </section>
+      <FileDropZone
+        onBrowse={onChoose}
+        label={t("dropHint")}
+        aria-label={t("dropZone")}
+        buttonLabel={t("chooseFiles")}
+      />
       {items.length === 0 ? (
         <p className="muted">{t("emptyQueue")}</p>
       ) : (
@@ -35,7 +37,7 @@ export function Queue({
               className={item.id === selectedId ? "queue-row selected" : "queue-row"}
             >
               <div className="queue-row-head">
-                <button
+                <Button
                   type="button"
                   className="queue-name"
                   aria-pressed={item.id === selectedId}
@@ -43,15 +45,15 @@ export function Queue({
                   onClick={() => onSelect(item.id)}
                 >
                   {item.file.name}
-                </button>
+                </Button>
                 {(item.status === "queued" || item.status === "converting") && (
-                  <button
+                  <Button
                     type="button"
                     aria-label={t("cancelFile", { name: item.file.name })}
                     onClick={() => onCancel(item.id)}
                   >
                     {t("cancel")}
-                  </button>
+                  </Button>
                 )}
               </div>
               <div className="queue-row-status">
@@ -68,25 +70,5 @@ export function Queue({
         </ul>
       )}
     </section>
-  );
-}
-
-function StatusText({ item }: { item: QueueItem }) {
-  const { t } = useTranslation();
-  if (item.status === "error" || item.status === "cancelled")
-    return (
-      <p className={item.status === "error" ? "row-error" : "muted"}>
-        {t(`errors.${item.errorCode}`, {
-          defaultValue: t("errors.generic", { code: item.errorCode }),
-        })}
-      </p>
-    );
-  return (
-    <>
-      <p className="muted">{t(`status.${item.status}`)}</p>
-      {item.status === "done" && item.warnings.length > 0 && (
-        <p className="row-warning">{t("imagesOmitted")}</p>
-      )}
-    </>
   );
 }

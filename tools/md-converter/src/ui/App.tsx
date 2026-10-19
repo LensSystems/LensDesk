@@ -1,4 +1,5 @@
 import type { createToolClient } from "@lensdesk/sdk";
+import { Notice, TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Preview } from "./Preview.tsx";
@@ -48,29 +49,29 @@ export function App({ client }: { client: Client }) {
   };
 
   return (
-    <main className="converter-app">
-      <header className="app-toolbar">
-        <h1>{t("title")}</h1>
-      </header>
-      {error && (
-        <p className="app-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="workspace">
-        <Queue
-          items={queue.items}
-          selectedId={queue.selected?.id ?? null}
-          onChoose={() => void choose()}
-          onSelect={queue.setSelectedId}
-          onCancel={queue.cancel}
-        />
-        <Preview
-          client={client}
-          item={queue.selected}
-          results={queue.items.filter((item) => item.status === "done")}
-        />
-      </div>
-    </main>
+    <UiLabelsProvider labels={{ loading: t("loading"), close: t("close"), dismiss: t("close") }}>
+      <TooltipProvider>
+        <main className="converter-app">
+          <header className="app-toolbar">
+            <h1>{t("title")}</h1>
+          </header>
+          {error && <Notice tone="danger" title={error} />}
+          <div className="workspace">
+            <Queue
+              items={queue.items}
+              selectedId={queue.selected?.id ?? null}
+              onChoose={() => void choose()}
+              onSelect={queue.setSelectedId}
+              onCancel={queue.cancel}
+            />
+            <Preview
+              client={client}
+              item={queue.selected}
+              results={queue.items.filter((item) => item.status === "done")}
+            />
+          </div>
+        </main>
+      </TooltipProvider>
+    </UiLabelsProvider>
   );
 }

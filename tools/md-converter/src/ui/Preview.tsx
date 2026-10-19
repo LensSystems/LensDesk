@@ -1,12 +1,20 @@
 import type { createToolClient } from "@lensdesk/sdk";
+import {
+  Button,
+  MarkdownView,
+  Notice,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@lensdesk/ui";
 import DOMPurify from "dompurify";
 import MarkdownIt from "markdown-it";
-import { type KeyboardEvent, useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorCode, type QueueItem } from "./use-queue.ts";
 
 type Client = ReturnType<typeof createToolClient>;
-type Tab = "rendered" | "raw";
 
 const markdown = new MarkdownIt({ html: true, linkify: true });
 
@@ -37,18 +45,11 @@ export function Preview({
   results: QueueItem[];
 }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<Tab>("rendered");
+  const [tab, setTab] = useState("rendered");
   const [notice, setNotice] = useState("");
   // El HTML saneado solo se recalcula cuando cambia el Markdown, no con cada aviso de progreso.
   const source = item?.markdown ?? "";
   const html = useMemo(() => renderMarkdown(source), [source]);
-  const mountHtml = useCallback(
-    (element: HTMLElement | null) => {
-      if (element) element.innerHTML = html;
-    },
-    [html],
-  );
-
   const saveOne = async (result: QueueItem) => {
     const file = await client.files.pickSave({
       defaultName: `${result.file.name.replace(/\.[^.]+$/, "")}.md`,
@@ -67,34 +68,17 @@ export function Preview({
     }
   };
 
-  const onTabKey = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-    const next: Tab = tab === "rendered" ? "raw" : "rendered";
-    setTab(next);
-    document.getElementById(`tab-${next}`)?.focus();
-  };
-
   return (
-    <section className="preview-panel">
+    <Tabs value={tab} onValueChange={setTab} className="preview-panel">
       <header className="preview-toolbar">
-        <div className="tabs" role="tablist" aria-label={t("resultTabs")}>
+        <TabsList className="mr-auto" aria-label={t("resultTabs")}>
           {(["rendered", "raw"] as const).map((name) => (
-            <button
-              key={name}
-              id={`tab-${name}`}
-              type="button"
-              role="tab"
-              aria-selected={tab === name}
-              aria-controls={`panel-${name}`}
-              tabIndex={tab === name ? 0 : -1}
-              onClick={() => setTab(name)}
-              onKeyDown={onTabKey}
-            >
+            <TabsTrigger key={name} value={name} onClick={() => setTab(name)}>
               {t(name)}
-            </button>
+            </TabsTrigger>
           ))}
-        </div>
-        <button
+        </TabsList>
+        <Button
           type="button"
           disabled={!item}
           onClick={() =>
@@ -106,8 +90,8 @@ export function Preview({
           }
         >
           {t("copy")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           disabled={!item}
           onClick={() =>
@@ -115,8 +99,8 @@ export function Preview({
           }
         >
           {t("save")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           disabled={results.length === 0}
           onClick={() =>
@@ -128,27 +112,22 @@ export function Preview({
           }
         >
           {t("saveAll")}
-        </button>
+        </Button>
       </header>
-      <p className="notice muted" role="status">
-        {notice}
-      </p>
-      <div
-        id={`panel-${tab}`}
-        className="preview-body"
-        role="tabpanel"
-        aria-labelledby={`tab-${tab}`}
-      >
-        {!item ? (
-          <p className="muted">{t("noResult")}</p>
-        ) : tab === "raw" ? (
-          <pre className="raw-markdown">
-            <code>{item.markdown}</code>
-          </pre>
-        ) : (
-          <article className="rendered-markdown" ref={mountHtml} />
-        )}
-      </div>
-    </section>
+      {notice && <Notice tone="info" title={notice} />}
+      {(["rendered", "raw"] as const).map((name) => (
+        <TabsContent key={name} value={name} className="preview-body">
+          {!item ? (
+            <p className="muted">{t("noResult")}</p>
+          ) : name === "raw" ? (
+            <pre className="raw-markdown">
+              <code>{item.markdown}</code>
+            </pre>
+          ) : (
+            <MarkdownView html={html} />
+          )}
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }

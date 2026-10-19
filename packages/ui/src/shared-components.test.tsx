@@ -227,6 +227,47 @@ describe("componentes compartidos", () => {
     expect(input.value).toBe("");
   });
 
+  it("FileDropZone usa onBrowse sin montar un selector nativo", () => {
+    const onBrowse = vi.fn();
+    const onFiles = vi.fn();
+    const { container } = render(
+      <FileDropZone label="Soltar" buttonLabel="Elegir" onBrowse={onBrowse} onFiles={onFiles} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Elegir" }));
+    expect(onBrowse).toHaveBeenCalledOnce();
+    expect(onFiles).not.toHaveBeenCalled();
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+  });
+
+  it("FileDropZone sin onFiles deja llegar drop a window sin leer archivos", () => {
+    const listener = vi.fn();
+    const files = vi.fn(() => {
+      throw new Error("No se deben leer archivos");
+    });
+    const dataTransfer = Object.defineProperty({}, "files", { get: files });
+    render(
+      <FileDropZone
+        label="Instrucción"
+        aria-label="Soltar"
+        buttonLabel="Elegir"
+        onBrowse={vi.fn()}
+      />,
+    );
+    const zone = screen.getByRole("region", { name: "Soltar" });
+    expect(zone.textContent).toContain("Instrucción");
+    window.addEventListener("drop", listener);
+    try {
+      fireEvent.dragEnter(zone);
+      expect(zone.getAttribute("data-dragging")).toBe("true");
+      expect(() => fireEvent.drop(zone, { dataTransfer })).not.toThrow();
+      expect(zone.getAttribute("data-dragging")).toBe("false");
+      expect(listener).toHaveBeenCalledOnce();
+      expect(files).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener("drop", listener);
+    }
+  });
+
   it("Panel, Toolbar y ListItem exponen nombre, rol y selección", () => {
     render(
       <Panel title="Panel" actions={<button type="button">Acción</button>}>

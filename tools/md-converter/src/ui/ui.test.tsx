@@ -187,6 +187,33 @@ describe("interfaz del Convertidor", () => {
     expect(await screen.findByText("Archivos guardados: 2")).toBeInTheDocument();
   });
 
+  it("usa MarkdownView, pestañas con flechas y el selector del SDK sin input de archivos", async () => {
+    const fake = fakeClient([handle("sample.html")]);
+    const { container } = render(<App client={fake.client as never} />);
+    expect(screen.getByRole("region", { name: "Zona para soltar archivos" })).toHaveTextContent(
+      es.dropHint,
+    );
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Elegir archivos…" }));
+    expect(fake.client.files.pickOpen).toHaveBeenCalledOnce();
+    await screen.findByRole("heading", { name: "sample.html" });
+    expect(container.querySelector(".ld-markdown-view")).toBeInTheDocument();
+    const rendered = screen.getByRole("tab", { name: "Vista renderizada" });
+    const raw = screen.getByRole("tab", { name: "Markdown crudo" });
+    rendered.focus();
+    fireEvent.keyDown(rendered, { key: "ArrowRight" });
+    await waitFor(() => expect(raw).toHaveFocus());
+    expect(screen.getByRole("tabpanel", { name: "Markdown crudo" }).textContent).toContain(TABLE);
+    fireEvent.keyDown(raw, { key: "ArrowLeft" });
+    await waitFor(() => expect(rendered).toHaveFocus());
+    expect(
+      screen
+        .getByRole("tabpanel", { name: "Vista renderizada" })
+        .querySelector(".ld-markdown-view"),
+    ).toBeInTheDocument();
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+  });
+
   it("sanea el HTML renderizado y quita el origen remoto de imágenes", () => {
     const host = document.createElement("div");
     host.innerHTML = renderMarkdown(
