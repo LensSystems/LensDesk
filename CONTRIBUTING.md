@@ -49,8 +49,9 @@ Si cambias algo visible, incluye una captura y los pasos para probarlo a mano en
 - **TypeScript estricto, solo sintaxis borrable:** sin `enum` ni `namespace`, `import type` para
   tipos e imports relativos con extensión (`./archivo.ts`).
 - **Un componente por archivo,** de 200 líneas como máximo; un módulo del proceso principal, de 300.
-- **Diseño:** los componentes usan los tokens de `packages/sdk/src/theme.css`, nunca colores
-  sueltos.
+- **Diseño:** LensDesk y las herramientas usan los componentes de `packages/ui` (`@lensdesk/ui`;
+  galería con `pnpm ui:gallery`), y estos usan los tokens de `packages/sdk/src/theme.css`, nunca
+  colores sueltos.
 - **Sin dependencias nuevas** sin hablarlo antes en un issue.
 - Nunca subas claves privadas ni salidas de compilación (`out/`, `dist/`, `release/`).
 

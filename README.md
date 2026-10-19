@@ -159,7 +159,8 @@ Usa [`tools/_template`](tools/_template) como punto de partida:
    desarrollador en Ajustes.
 
 Una herramienta tiene una interfaz web (React u otra) que usa `createToolClient()` de
-`@lensdesk/sdk`, y opcionalmente una parte de servidor en Node que usa `defineBackend()` de
+`@lensdesk/sdk` y los componentes compartidos de `@lensdesk/ui` (los ves todos con
+`pnpm ui:gallery`), y opcionalmente una parte de servidor en Node que usa `defineBackend()` de
 `@lensdesk/sdk/backend`, con SQLite en su propia carpeta de datos.
 
 ## Arquitectura
@@ -173,6 +174,7 @@ apps/desktop/            Aplicación Electron
 └── src/shared/          Canales IPC y tipos compartidos
 packages/sdk/            SDK de herramientas: cliente, backend, manifiesto, errores y estilos
 packages/lenspkg/        Formato .lenspkg: empaquetar, firmar, verificar y extraer (con CLI)
+packages/ui/             Componentes de interfaz compartidos por LensDesk y las herramientas
 tools/notes/             Notas
 tools/md-converter/      Convertidor
 tools/_template/         Plantilla para crear herramientas
@@ -195,6 +197,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm test:e2e     # necesita pnpm build y pnpm tools:package
+pnpm ui:gallery   # galería de componentes de @lensdesk/ui en claro y oscuro
 ```
 
 Los detalles, las reglas del código y el proceso de publicación están en
@@ -308,6 +311,11 @@ Use [`tools/_template`](tools/_template) as the starting point:
 4. Install the `.lenspkg` from `dist/` with **Add tool…**. Unsigned packages need developer mode
    turned on in Settings first.
 
+A tool has a web UI (React or another library) that uses `createToolClient()` from
+`@lensdesk/sdk` and the shared components from `@lensdesk/ui` (browse them with
+`pnpm ui:gallery`), and optionally a Node backend that uses `defineBackend()` from
+`@lensdesk/sdk/backend`, with SQLite in its own data folder.
+
 ## Development
 
 Requirements: Node from `.nvmrc` and pnpm from `package.json`.
@@ -319,6 +327,7 @@ pnpm format
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm ui:gallery   # @lensdesk/ui component gallery, light and dark
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details and [CHANGELOG.md](CHANGELOG.md) for the
