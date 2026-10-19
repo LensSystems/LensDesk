@@ -36,7 +36,8 @@
     "lenspkg": "node packages/lenspkg/src/cli.ts",
     "tools:package": "pnpm --filter \"./tools/*\" run package",
     "dist": "pnpm --filter @lensdesk/desktop dist",
-    "dist:dir": "pnpm --filter @lensdesk/desktop dist:dir"
+    "dist:dir": "pnpm --filter @lensdesk/desktop dist:dir",
+    "ui:gallery": "vite --config packages/ui/gallery/vite.config.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
