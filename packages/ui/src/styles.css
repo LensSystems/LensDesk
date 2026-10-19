@@ -54,7 +54,7 @@
   border-radius: 4px;
   background: var(--ld-surface);
   font:
-    12px / 1.45 "JetBrains Mono",
+    12px / 1.45 "JetBrains Mono Variable",
     monospace;
 }
 .ld-markdown-view pre {

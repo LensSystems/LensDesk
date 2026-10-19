@@ -1,13 +1,6 @@
 @import "tailwindcss";
 @import "@lensdesk/ui/styles.css";
 
-:root {
-  font:
-    13px / 1.45 Inter,
-    sans-serif;
-  color: var(--ld-text);
-  background: var(--ld-bg);
-}
 body {
   min-width: 640px;
   min-height: 100vh;
@@ -67,13 +60,17 @@ body {
 .cm-editor {
   height: 100%;
   font:
-    13px / 1.5 "JetBrains Mono",
+    13px / 1.5 "JetBrains Mono Variable",
     monospace;
   color: var(--ld-text);
   background: var(--ld-bg);
 }
 .cm-scroller {
   overflow: auto;
+}
+/* CodeMirror fija `monospace` en .cm-scroller con un selector propio: este gana por especificidad. */
+.code-editor .cm-editor .cm-scroller {
+  font-family: "JetBrains Mono Variable", monospace;
 }
 .cm-gutters {
   color: var(--ld-text-muted);

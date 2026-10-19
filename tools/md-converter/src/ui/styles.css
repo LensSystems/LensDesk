@@ -1,13 +1,6 @@
 @import "tailwindcss";
 @import "@lensdesk/ui/styles.css";
 
-:root {
-  font:
-    13px / 1.45 Inter,
-    sans-serif;
-  color: var(--ld-text);
-  background: var(--ld-bg);
-}
 body {
   min-width: 640px;
   min-height: 100vh;
@@ -108,7 +101,7 @@ body {
   margin: 0;
   white-space: pre-wrap;
   font:
-    13px / 1.5 "JetBrains Mono",
+    13px / 1.5 "JetBrains Mono Variable",
     monospace;
 }
 .muted {

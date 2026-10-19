@@ -12,7 +12,19 @@
   --color-success: var(--ld-success);
   --color-warning: var(--ld-warning);
   --color-danger: var(--ld-danger);
-  --font-sans: "Inter Variable", Inter, sans-serif;
+  --color-accent-soft: var(--ld-accent-soft);
+  --color-accent-soft-fg: var(--ld-accent-soft-fg);
+  --color-success-soft: var(--ld-success-soft);
+  --color-warning-soft: var(--ld-warning-soft);
+  --color-warning-soft-fg: var(--ld-warning-soft-fg);
+  --color-danger-soft: var(--ld-danger-soft);
+  --color-danger-fg: var(--ld-danger-fg);
+  --radius-ld-sm: var(--ld-radius-sm);
+  --radius-ld-md: var(--ld-radius-md);
+  --radius-ld-lg: var(--ld-radius-lg);
+  --radius-ld-xl: var(--ld-radius-xl);
+  --shadow-ld: var(--ld-shadow);
+  --font-sans: "Manrope Variable", Manrope, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
 }
 

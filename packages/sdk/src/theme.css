@@ -1,39 +1,59 @@
 [data-theme="dark"] {
   color-scheme: dark;
-  --ld-bg: #0f1115;
-  --ld-surface: #171a21;
-  --ld-surface-raised: #1e222b;
-  --ld-border: #2a2f3a;
-  --ld-border-control: #9aa3b2;
-  --ld-text: #e6e8ec;
-  --ld-text-muted: #9aa3b2;
-  --ld-accent: #4f8cff;
-  --ld-accent-hover: #6ba0ff;
-  --ld-accent-fg: #0b1020;
-  --ld-success: #3fb950;
-  --ld-warning: #d29922;
-  --ld-danger: #f85149;
+  --ld-bg: #2a2f36;
+  --ld-surface: #323840;
+  --ld-surface-raised: #3b424b;
+  --ld-border: #49515b;
+  --ld-border-control: #8e98a3;
+  --ld-text: #eef1f4;
+  --ld-text-muted: #b7c0ca;
+  --ld-accent: #79affe;
+  --ld-accent-hover: #8bbaff;
+  --ld-accent-fg: #0a1e3f;
+  --ld-accent-soft: #2c3e5c;
+  --ld-accent-soft-fg: #bfd6ff;
+  --ld-success: #6edc8c;
+  --ld-success-soft: #2e4a3a;
+  --ld-warning: #f2c66d;
+  --ld-warning-soft: #4a4130;
+  --ld-warning-soft-fg: #f7d58e;
+  --ld-danger: #ff8c82;
+  --ld-danger-soft: #4e3335;
+  --ld-danger-fg: #3b0a06;
+  --ld-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --ld-bg: #ffffff;
-  --ld-surface: #f6f7f9;
+  --ld-bg: #e9ecf0;
+  --ld-surface: #f5f6f8;
   --ld-surface-raised: #ffffff;
-  --ld-border: #d9dde3;
-  --ld-border-control: #5b6472;
-  --ld-text: #16181d;
-  --ld-text-muted: #5b6472;
-  --ld-accent: #2563eb;
+  --ld-border: #d5dae1;
+  --ld-border-control: #7d8692;
+  --ld-text: #1c222a;
+  --ld-text-muted: #4f5966;
+  --ld-accent: #2160eb;
   --ld-accent-hover: #1d4ed8;
   --ld-accent-fg: #ffffff;
-  --ld-success: #1a7f37;
-  --ld-warning: #9a6700;
-  --ld-danger: #cf222e;
+  --ld-accent-soft: #e3ecfd;
+  --ld-accent-soft-fg: #1e40af;
+  --ld-success: #197b35;
+  --ld-success-soft: #e3f4e8;
+  --ld-warning: #8a5a00;
+  --ld-warning-soft: #fbf1dc;
+  --ld-warning-soft-fg: #6b4600;
+  --ld-danger: #c42b1c;
+  --ld-danger-soft: #fce8e6;
+  --ld-danger-fg: #ffffff;
+  --ld-shadow: 0 8px 24px rgb(16 24 40 / 0.1);
 }
 
 :root {
-  font-family: "Inter Variable", Inter, sans-serif;
+  --ld-radius-sm: 6px;
+  --ld-radius-md: 10px;
+  --ld-radius-lg: 14px;
+  --ld-radius-xl: 18px;
+  font-family: "Manrope Variable", Manrope, sans-serif;
   line-height: 1.45;
   font-weight: 400;
   color: var(--ld-text);
@@ -44,7 +64,7 @@
 
 /* En body y no en :root: la escala de Tailwind usa rem y debe partir de 16 px (h-9 = 36 px). */
 body {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 * {
