@@ -1,3 +1,4 @@
+import { Button, IconButton, Input, ListItem } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 
 export type Note = {
@@ -34,41 +35,46 @@ export function NoteList({
   const { t } = useTranslation();
   return (
     <aside className="note-list">
-      <label className="sr-only" htmlFor="note-search">
-        {t("search")}
-      </label>
-      <input
+      <Input
+        label={<span className="sr-only">{t("search")}</span>}
         id="note-search"
         value={query}
         onChange={(event) => onQuery(event.target.value)}
         placeholder={t("search")}
       />
       {!trashed && (
-        <button type="button" onClick={onCreate}>
+        <Button type="button" onClick={onCreate}>
           {t("newNote")}
-        </button>
+        </Button>
       )}
       <nav aria-label={t("notesList")}>
         {notes.map((note) => (
-          <div className={`note-row${selectedId === note.id ? " selected" : ""}`} key={note.id}>
-            <button className="note-title" type="button" onClick={() => onSelect(note.id)}>
-              {note.title || t("untitled")}
-            </button>
-            {!trashed && (
-              <button
-                type="button"
-                aria-label={note.pinned ? t("unpin") : t("pin")}
-                onClick={() => onPin(note)}
-              >
-                {note.pinned ? "★" : "☆"}
-              </button>
-            )}
-            {!trashed && (
-              <button type="button" aria-label={t("moveToTrash")} onClick={() => onTrash(note.id)}>
-                ×
-              </button>
-            )}
-          </div>
+          <ListItem
+            key={note.id}
+            title={note.title || t("untitled")}
+            selected={selectedId === note.id}
+            onClick={() => onSelect(note.id)}
+            actions={
+              !trashed && (
+                <>
+                  <IconButton
+                    type="button"
+                    label={note.pinned ? t("unpin") : t("pin")}
+                    onClick={() => onPin(note)}
+                  >
+                    {note.pinned ? "★" : "☆"}
+                  </IconButton>
+                  <IconButton
+                    type="button"
+                    label={t("moveToTrash")}
+                    onClick={() => onTrash(note.id)}
+                  >
+                    ×
+                  </IconButton>
+                </>
+              )
+            }
+          />
         ))}
         {notes.length === 0 && <p className="muted">{t("emptyNotes")}</p>}
       </nav>

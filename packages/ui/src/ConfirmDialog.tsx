@@ -33,16 +33,18 @@ export function ConfirmDialog({
   busy = false,
   children,
 }: ConfirmDialogProps) {
+  const cancelRef = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
-        closeLabel={cancelLabel}
         aria-busy={busy}
-        onOpenAutoFocus={() => {
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
           opener.current =
             document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          cancelRef.current?.querySelector("button")?.focus();
         }}
         onCloseAutoFocus={(event) => {
           if (!children && opener.current?.isConnected) {
@@ -53,7 +55,7 @@ export function ConfirmDialog({
       >
         <DialogTitle className="mb-2 text-[15px] font-semibold">{title}</DialogTitle>
         <DialogDescription className="mb-4 text-muted">{description}</DialogDescription>
-        <div className="flex justify-end gap-2">
+        <div ref={cancelRef} className="flex justify-end gap-2">
           <DialogClose asChild>
             <Button type="button">{cancelLabel}</Button>
           </DialogClose>

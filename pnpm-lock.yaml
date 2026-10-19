@@ -320,6 +320,9 @@ importers:
       '@lensdesk/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@lensdesk/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@types/markdown-it':
         specifier: 14.2.0
         version: 14.2.0

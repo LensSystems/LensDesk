@@ -1,4 +1,5 @@
 import { markdown } from "@codemirror/lang-markdown";
+import { Button, MarkdownView } from "@lensdesk/ui";
 import { EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -55,20 +56,15 @@ export function Editor({
     <section className="editor-panel">
       <header className="editor-toolbar">
         <h1>{note.title || t("untitled")}</h1>
-        <button type="button" aria-pressed={preview} onClick={() => setPreview(!preview)}>
+        <Button type="button" aria-pressed={preview} onClick={() => setPreview(!preview)}>
           {preview ? t("edit") : t("preview")}
-        </button>
-        <button type="button" onClick={onExport}>
+        </Button>
+        <Button type="button" onClick={onExport}>
           {t("export")}
-        </button>
+        </Button>
       </header>
       {preview ? (
-        <article
-          className="preview"
-          ref={(element) => {
-            if (element) element.innerHTML = renderPreview(note.body_md);
-          }}
-        />
+        <MarkdownView className="flex-1 overflow-auto p-3" html={renderPreview(note.body_md)} />
       ) : (
         <div className="code-editor" ref={host} />
       )}

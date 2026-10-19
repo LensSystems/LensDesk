@@ -30,7 +30,7 @@ test("Notas conserva una nota después de reiniciar LensDesk", async () => {
     await expect(tool.locator(".cm-content")).toContainText("Texto que debe seguir aquí");
 
     await tool.getByRole("button", { name: "Mover a la papelera" }).first().click();
-    await tool.getByRole("button", { name: "Papelera", exact: true }).click();
+    await tool.getByRole("radio", { name: "Papelera", exact: true }).click();
     await expect(tool.getByRole("button", { name: "Persistencia local" })).toBeVisible();
     await tool.getByRole("button", { name: "Vaciar papelera" }).click();
     await tool.getByRole("dialog").getByRole("button", { name: "Vaciar papelera" }).click();

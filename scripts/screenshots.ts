@@ -272,7 +272,7 @@ async function run() {
       await snap("notas-edicion", notes);
       await notes.getByRole("button", { name: "Vista previa", exact: true }).click();
       await snap("notas-vista-previa", notes);
-      await notes.getByRole("button", { name: "Papelera", exact: true }).click();
+      await notes.getByRole("radio", { name: "Papelera", exact: true }).click();
       await expect(
         notes.getByRole("button", { name: "Borrador archivado", exact: true }),
       ).toBeVisible();

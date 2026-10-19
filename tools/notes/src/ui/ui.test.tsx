@@ -7,7 +7,6 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import es from "../../locales/es.json";
 import { App } from "./App.tsx";
-import { ConfirmDialog } from "./ConfirmDialog.tsx";
 import type { Note } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
 import { useAutosave } from "./use-autosave.ts";
@@ -194,7 +193,7 @@ describe("interfaz de Notas", () => {
     render(<App client={fake.client as never} />);
     await screen.findByRole("button", { name: "Archivar" });
     fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Papelera" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Papelera" }));
     fireEvent.click(await screen.findByRole("button", { name: "Restaurar" }));
     await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("restore", { id: "1" }));
   });
@@ -228,25 +227,25 @@ describe("interfaz de Notas", () => {
     expect(en.untitled).toBe("Untitled");
   });
 
-  it("vaciar la papelera pide confirmación en un diálogo propio con foco en Cancelar", async () => {
+  it("vaciar la papelera pide confirmación en un diálogo con foco en Cancelar", async () => {
     const confirm = vi.spyOn(window, "confirm");
     const fake = fakeClient();
     await fake.invoke("create", { body_md: "# Vieja" });
     await fake.invoke("trash", { id: "1" });
     render(<App client={fake.client as never} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Papelera" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Papelera" }));
     fireEvent.click(await screen.findByRole("button", { name: "Vaciar papelera" }));
     const dialog = await screen.findByRole("dialog", { name: "¿Vaciar la papelera?" });
     expect(dialog).toHaveTextContent("Esta acción no se puede deshacer.");
     expect(screen.getByRole("button", { name: "Cancelar" })).toHaveFocus();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash", expect.anything());
-    expect(dialog).not.toHaveAttribute("open");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
     fireEvent.click(screen.getByRole("button", { name: "Vaciar papelera" }));
     const reopened = await screen.findByRole("dialog");
-    fireEvent(reopened, new Event("cancel", { cancelable: true }));
-    expect(reopened).not.toHaveAttribute("open");
+    fireEvent.keyDown(reopened, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash", expect.anything());
 
     fireEvent.click(screen.getByRole("button", { name: "Vaciar papelera" }));
@@ -260,19 +259,30 @@ describe("interfaz de Notas", () => {
     expect(confirm).not.toHaveBeenCalled();
   });
 
-  it("ConfirmDialog solo se abre cuando open es true", () => {
-    const props = {
-      title: "T",
-      message: "M",
-      confirmLabel: "Sí",
-      cancelLabel: "No",
-      onConfirm: vi.fn(),
-      onCancel: vi.fn(),
-    };
-    const { rerender } = render(<ConfirmDialog {...props} open={false} />);
-    expect(document.querySelector("dialog")).not.toHaveAttribute("open");
-    rerender(<ConfirmDialog {...props} open />);
-    expect(document.querySelector("dialog")).toHaveAttribute("open");
+  it("usa los componentes compartidos y cancela el vaciado con Escape", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Vista" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Vista" });
+    const group = screen.getByRole("radiogroup", { name: "Vista de notas" });
+    const notes = within(group).getByRole("radio", { name: "Notas" });
+    const trash = within(group).getByRole("radio", { name: "Papelera" });
+    notes.focus();
+    fireEvent.keyDown(notes, { key: "ArrowRight" });
+    await waitFor(() => expect(trash).toHaveFocus());
+    expect(trash).toHaveAttribute("aria-checked", "true");
+    fireEvent.keyDown(trash, { key: "ArrowLeft" });
+    await waitFor(() => expect(notes).toHaveFocus());
+    expect(notes).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(await screen.findByRole("button", { name: "Vista previa" }));
+    expect(screen.getByRole("article")).toHaveClass("ld-markdown-view");
+    fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Vista" })).toBeNull());
+    fireEvent.click(trash);
+    fireEvent.click(await screen.findByRole("button", { name: "Vaciar papelera" }));
+    fireEvent.keyDown(await screen.findByRole("dialog"), { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash", expect.anything());
   });
 
   it("avisa y recarga la lista cuando una acción responde E_NOT_FOUND", async () => {

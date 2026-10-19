@@ -10,6 +10,7 @@ import { Notice } from "./Notice.tsx";
 import { Panel } from "./Panel.tsx";
 import { SegmentedControl } from "./SegmentedControl.tsx";
 import { Toolbar } from "./Toolbar.tsx";
+import { UiLabelsProvider } from "./UiLabelsProvider.tsx";
 
 describe("componentes compartidos", () => {
   it("SegmentedControl selecciona, enfoca, salta deshabilitados y recorre los extremos", async () => {
@@ -91,6 +92,46 @@ describe("componentes compartidos", () => {
       expect(confirm).toHaveBeenCalledTimes(action === "Confirmar" ? 1 : 0);
     },
   );
+
+  it.each(["default", "danger"] as const)(
+    "ConfirmDialog enfoca cancelar en tono %s y distingue el cierre",
+    async (tone) => {
+      render(
+        <UiLabelsProvider labels={{ close: "Cerrar", loading: "Cargando", dismiss: "Descartar" }}>
+          <ConfirmDialog
+            open
+            onOpenChange={() => undefined}
+            title="Eliminar"
+            description="¿Continuar?"
+            confirmLabel="Confirmar"
+            cancelLabel="Cancelar"
+            onConfirm={vi.fn()}
+            tone={tone}
+          />
+        </UiLabelsProvider>,
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancelar" })),
+      );
+      expect(screen.getAllByRole("button", { name: "Cancelar" })).toHaveLength(1);
+      expect(screen.getByRole("button", { name: "Cerrar" }).textContent).toBe("×");
+    },
+  );
+
+  it("ConfirmDialog solo se abre cuando open es true", () => {
+    const props = {
+      title: "Eliminar",
+      description: "¿Continuar?",
+      confirmLabel: "Confirmar",
+      cancelLabel: "Cancelar",
+      onConfirm: vi.fn(),
+      onOpenChange: vi.fn(),
+    };
+    const { rerender } = render(<ConfirmDialog {...props} open={false} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    rerender(<ConfirmDialog {...props} open />);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+  });
 
   it("ConfirmDialog bloquea la confirmación durante busy", () => {
     const confirm = vi.fn();
