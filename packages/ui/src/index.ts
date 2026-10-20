@@ -1,4 +1,5 @@
 export {
+  ArrowDown,
   Ban,
   Braces,
   Bug,
@@ -31,6 +32,7 @@ export {
   StickyNote,
   Terminal,
   Trash2,
+  TriangleAlert,
   Wrench,
   X,
 } from "lucide-react";
