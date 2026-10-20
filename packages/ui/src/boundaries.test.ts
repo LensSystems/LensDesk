@@ -29,7 +29,7 @@ function forbiddenImports(source: string, file: string, root: string): string[] 
         /^(electron(?:\/|$)|node:|react-i18next(?:\/|$)|i18next(?:\/|$))/.test(specifier) ||
         /(?:^|[/\\])(apps|tools)(?:[/\\]|$)/.test(specifier) ||
         (specifier.startsWith(".") &&
-          (destination === ".." || destination.startsWith("../") || isAbsolute(destination)))
+          (/^\.\.(?:[/\\]|$)/.test(destination) || isAbsolute(destination)))
       )
         violations.push(specifier);
     }

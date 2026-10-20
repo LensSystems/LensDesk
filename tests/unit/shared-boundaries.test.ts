@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import ts from "typescript";
 import { expect, it } from "vitest";
 
@@ -49,7 +49,8 @@ function runtimeImports(file: string): string[] {
 
 function isShared(file: string): boolean {
   const path = relative(shared, file);
-  return path !== ".." && !path.startsWith("../") && !path.startsWith("/");
+  // relative() usa la barra del sistema: en Windows sale «..\».
+  return !/^\.\.(?:[/\\]|$)/.test(path) && !isAbsolute(path);
 }
 
 it("los módulos shared usados por el renderer solo importan otros módulos shared en ejecución", () => {
