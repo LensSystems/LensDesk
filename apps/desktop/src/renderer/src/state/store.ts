@@ -26,6 +26,7 @@ const maxToasts = 3;
 const toastKinds = ["success", "error", "info"] as const;
 let nextToastId = 1;
 type State = {
+  fullScreen: boolean;
   tabs: ShellTab[];
   tools: ToolSummary[];
   pendingDowngrade: PendingDowngrade | null;
@@ -54,6 +55,7 @@ const defaults: SettingValues = {
 // reciente que la respuesta de hydrate y no se pisa.
 const eventCounts = { tabs: 0, settings: 0, context: 0 };
 export const useShellStore = create<State>((set) => ({
+  fullScreen: false,
   tabs: [],
   tools: [],
   pendingDowngrade: null,
@@ -143,6 +145,7 @@ export const useShellStore = create<State>((set) => ({
   },
   subscribe(bridge) {
     const unsubscribers = [
+      bridge.on("window.fullScreenChanged", ({ fullScreen }) => set({ fullScreen })),
       bridge.on("tabs.changed", ({ tabs }) => {
         eventCounts.tabs += 1;
         set({ tabs, page: tabs.some((tab) => tab.active) ? "tab" : "tools" });

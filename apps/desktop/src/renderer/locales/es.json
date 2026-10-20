@@ -1,6 +1,7 @@
 {
   "shell": {
     "label": "LensDesk",
+    "labelFullScreen": "LensSystems - LensDesk",
     "tabsLabel": "Pestañas abiertas",
     "closeTab": "Cerrar {{name}}",
     "toolsPage": "Herramientas",

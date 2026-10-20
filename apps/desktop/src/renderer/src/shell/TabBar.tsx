@@ -17,6 +17,7 @@ type TabBarProps = { tabs: ShellTab[]; bridge: Window["lensdeskHost"] };
 export function TabBar({ tabs, bridge }: TabBarProps) {
   const { t, i18n } = useTranslation();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const fullScreen = useShellStore((state) => state.fullScreen);
   const page = useShellStore((state) => state.page);
   const showPage = useShellStore((state) => state.showPage);
   const tools = useShellStore((state) => state.tools);
@@ -37,13 +38,17 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
       data-platform={bridge.platform}
       style={{
         height: HEADER_HEIGHT,
-        paddingLeft: bridge.platform === "darwin" ? MAC_TRAFFIC_LIGHTS_WIDTH : undefined,
-        paddingRight: bridge.platform === "win32" ? WIN_CONTROLS_WIDTH + 16 : undefined,
+        paddingLeft:
+          !fullScreen && bridge.platform === "darwin" ? MAC_TRAFFIC_LIGHTS_WIDTH : undefined,
+        paddingRight:
+          !fullScreen && bridge.platform === "win32" ? WIN_CONTROLS_WIDTH + 16 : undefined,
       }}
       className="ld-drag flex items-center gap-3 bg-bg px-4"
     >
       <div className="min-w-0 flex-1">
-        <span className="block truncate font-bold text-muted">{t("shell.label")}</span>
+        <span className="block truncate font-bold text-muted">
+          {t(fullScreen ? "shell.labelFullScreen" : "shell.label")}
+        </span>
       </div>
       <div
         aria-label={t("shell.tabsLabel")}

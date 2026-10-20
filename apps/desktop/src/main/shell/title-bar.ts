@@ -23,3 +23,18 @@ export function updateTitleBar(
   window.setBackgroundColor(titleBarColors[theme].color);
   if (platform === "win32") window.setTitleBarOverlay(titleBarOverlayFor(theme));
 }
+
+export function wireFullScreen(window: {
+  isFullScreen(): boolean;
+  on(event: "enter-full-screen" | "leave-full-screen", listener: () => void): unknown;
+  webContents: {
+    on(event: "did-finish-load", listener: () => void): unknown;
+    send(event: "window.fullScreenChanged", payload: { fullScreen: boolean }): void;
+  };
+}): void {
+  const publish = () =>
+    window.webContents.send("window.fullScreenChanged", { fullScreen: window.isFullScreen() });
+  window.on("enter-full-screen", publish);
+  window.on("leave-full-screen", publish);
+  window.webContents.on("did-finish-load", publish);
+}

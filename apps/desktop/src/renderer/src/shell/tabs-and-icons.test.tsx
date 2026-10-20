@@ -58,7 +58,7 @@ function makeBridge(dismissed: string | null = null) {
 describe("pestañas", () => {
   beforeEach(async () => {
     await rendererI18n.changeLanguage("es");
-    useShellStore.setState({ tabs, tools, page: "tab" });
+    useShellStore.setState({ tabs, tools, page: "tab", fullScreen: false });
   });
   afterEach(cleanup);
 
@@ -68,7 +68,7 @@ describe("pestañas", () => {
       renderBar({ ...makeBridge().bridge, platform });
       const header = screen.getByRole("banner");
       expect(header.classList.contains("ld-drag")).toBe(true);
-      expect(header.style.paddingLeft).toBe(platform === "darwin" ? "80px" : "");
+      expect(header.style.paddingLeft).toBe(platform === "darwin" ? "96px" : "");
       expect(header.style.paddingRight).toBe(platform === "win32" ? "154px" : "");
       expect(header.style.height).toBe("52px");
       for (const item of [
@@ -78,6 +78,30 @@ describe("pestañas", () => {
       ]) {
         expect(item.closest(".ld-no-drag")).not.toBeNull();
       }
+    },
+  );
+
+  it.each(["darwin", "win32", "linux"])(
+    "el evento de pantalla completa actualiza la marca y las reservas en %s",
+    (platform) => {
+      const { bridge, listeners } = makeBridge();
+      const unsubscribe = useShellStore.getState().subscribe(bridge);
+      renderBar({ ...bridge, platform });
+      expect(screen.getByText("LensDesk")).toBeTruthy();
+      act(() => listeners.get("window.fullScreenChanged")?.({ fullScreen: true }));
+      expect(useShellStore.getState().fullScreen).toBe(true);
+      const brand = screen.getByText("LensSystems - LensDesk");
+      expect(brand.classList.contains("truncate")).toBe(true);
+      const header = screen.getByRole("banner");
+      expect(header.style.paddingLeft).toBe("");
+      expect(header.style.paddingRight).toBe("");
+      act(() => listeners.get("window.fullScreenChanged")?.({ fullScreen: false }));
+      expect(useShellStore.getState().fullScreen).toBe(false);
+      expect(screen.getByText("LensDesk")).toBeTruthy();
+      expect(header.style.paddingLeft).toBe(platform === "darwin" ? "96px" : "");
+      expect(header.style.paddingRight).toBe(platform === "win32" ? "154px" : "");
+      unsubscribe();
+      expect(listeners.has("window.fullScreenChanged")).toBe(false);
     },
   );
 

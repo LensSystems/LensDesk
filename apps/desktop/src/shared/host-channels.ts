@@ -30,6 +30,7 @@ export const HOST_EVENTS = [
   "update.available",
   "tool.crashed",
   "app.error",
+  "window.fullScreenChanged",
 ] as const;
 export const HOST_IPC_CHANNEL = "lensdesk:invoke";
 
@@ -111,6 +112,7 @@ export type ToolSummary = {
 export type ShellTab = { toolId: string; position: number; active: boolean };
 export type HostEvent = (typeof HOST_EVENTS)[number];
 export type HostEventPayloads = {
+  "window.fullScreenChanged": { fullScreen: boolean };
   "settings.changed": { key: HostSettingKey; value: HostSettingValue };
   "context.changed": { locale: "es" | "en"; theme: "dark" | "light" };
   "tabs.changed": { tabs: ShellTab[] };

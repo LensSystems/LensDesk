@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { HEADER_HEIGHT } from "../../shared/layout.ts";
 import { resolveTheme } from "../context.ts";
 import { shellWindowOptions } from "../wire-app.ts";
-import { titleBarColors, titleBarOverlayFor, updateTitleBar } from "./title-bar.ts";
+import { titleBarColors, titleBarOverlayFor, updateTitleBar, wireFullScreen } from "./title-bar.ts";
 
 describe("barra de título", () => {
   it("mantiene la altura y los colores sincronizados con CSS", () => {
@@ -68,5 +68,26 @@ describe("barra de título", () => {
         expect(window.setBackgroundColor).toHaveBeenLastCalledWith(titleBarColors[theme].color);
       else expect(window.setBackgroundColor).not.toHaveBeenCalled();
     }
+  });
+});
+
+describe("estado de pantalla completa", () => {
+  it("publica las transiciones y el estado actual después de cada carga", () => {
+    const listeners = new Map<string, () => void>();
+    let fullScreen = false;
+    const send = vi.fn();
+    const on = (event: string, listener: () => void) => listeners.set(event, listener);
+    wireFullScreen({ isFullScreen: () => fullScreen, on, webContents: { on, send } });
+    listeners.get("did-finish-load")?.();
+    expect(send).toHaveBeenLastCalledWith("window.fullScreenChanged", { fullScreen: false });
+    fullScreen = true;
+    listeners.get("enter-full-screen")?.();
+    expect(send).toHaveBeenLastCalledWith("window.fullScreenChanged", { fullScreen: true });
+    send.mockClear();
+    listeners.get("did-finish-load")?.();
+    expect(send).toHaveBeenCalledExactlyOnceWith("window.fullScreenChanged", { fullScreen: true });
+    fullScreen = false;
+    listeners.get("leave-full-screen")?.();
+    expect(send).toHaveBeenLastCalledWith("window.fullScreenChanged", { fullScreen: false });
   });
 });

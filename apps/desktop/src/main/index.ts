@@ -24,7 +24,7 @@ import { buildMenuTemplate } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 import { createTabHandlers } from "./shell/tab-handlers.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
-import { updateTitleBar } from "./shell/title-bar.ts";
+import { updateTitleBar, wireFullScreen } from "./shell/title-bar.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 import { createToolWiring } from "./tools/wire-tools.ts";
 import {
@@ -199,6 +199,7 @@ void app.whenReady().then(async () => {
   followTabs(tabsStore().list());
 
   shellContents = window.webContents;
+  wireFullScreen(window);
   await toolWiring.initialize(readyDatabase, window, process.env.LENSDESK_DEV_TOOLS_DIR);
   window.on("close", () => {
     if (database) saveWindowBounds(database, window.getBounds());
