@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { TooltipProvider } from "@lensdesk/ui";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { HostBridge, ToolSummary } from "../../../shared/host-channels.ts";
 import { rendererI18n } from "../i18n.ts";
@@ -42,31 +43,53 @@ function bridgeMock() {
 }
 
 describe("página Herramientas", () => {
+  it("muestra la insignia de firma válida", () => {
+    const { bridge } = bridgeMock();
+    useShellStore.setState({ tools: [{ ...tool(), signed: true }], pendingDowngrade: null });
+    render(
+      <TooltipProvider>
+        <ToolsPage bridge={bridge} />
+      </TooltipProvider>,
+    );
+    expect(screen.getByText("firmada").className).toContain("bg-accent-soft");
+    expect(screen.queryByText("sin firmar")).toBeNull();
+  });
+
   it("muestra nombre, descripción localizados, insignia, icono y abre herramienta activa", async () => {
     await rendererI18n.changeLanguage("es");
     const { bridge, invoke } = bridgeMock();
     useShellStore.setState({ tools: [tool()], pendingDowngrade: null });
-    render(<ToolsPage bridge={bridge} />);
-    fireEvent.click(screen.getByRole("button", { name: "Notas", description: "Apunta ideas" }));
+    render(
+      <TooltipProvider>
+        <ToolsPage bridge={bridge} />
+      </TooltipProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Abrir Notas" }));
     expect(invoke).toHaveBeenCalledWith("tabs.open", { toolId: "notas" });
-    expect(screen.getByText("sin firmar")).toBeTruthy();
+    expect(screen.getByText("sin firmar").className).toContain("bg-warning-soft");
+    expect(screen.getByText("v1.2.0")).toBeTruthy();
+    expect(screen.getByText("Apunta ideas")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Abrir Notas" }).textContent).toBe("Abrir");
+    expect(screen.queryByRole("button", { name: "Notas" })).toBeNull();
   });
 
   it("deshabilita tarjeta, ofrece acciones por teclado y muestra detalles", async () => {
     const { bridge, invoke } = bridgeMock();
     useShellStore.setState({ tools: [tool(false)], pendingDowngrade: null });
-    render(<ToolsPage bridge={bridge} />);
-    expect(
-      screen
-        .getByRole("button", { name: "Notas", description: "Apunta ideas" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
+    render(
+      <TooltipProvider>
+        <ToolsPage bridge={bridge} />
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole("button", { name: "Abrir Notas" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText("Desactivada. Actívala desde el menú para abrirla.")).toBeTruthy();
     const trigger = screen.getByRole("button", { name: "Acciones de Notas" });
+    expect(trigger.hasAttribute("disabled")).toBe(false);
     trigger.focus();
     fireEvent.keyDown(trigger, { key: "ArrowDown" });
     fireEvent.keyDown(screen.getByRole("menuitem", { name: "Ver detalles" }), { key: "Enter" });
     await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
-    expect(screen.getByText(/1.2.0/)).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText(/1.2.0/)).toBeTruthy();
     expect(invoke).not.toHaveBeenCalledWith("tabs.open", expect.anything());
   });
 
@@ -74,7 +97,12 @@ describe("página Herramientas", () => {
     const { bridge, invoke, listeners } = bridgeMock();
     useShellStore.setState({ tools: [], pendingDowngrade: null });
     useShellStore.setState({ tools: [], pendingDowngrade: null });
-    const { container } = render(<ToolsPage bridge={bridge} />);
+    const { container } = render(
+      <TooltipProvider>
+        <ToolsPage bridge={bridge} />
+      </TooltipProvider>,
+    );
+    expect(screen.getByText("Elige un archivo .lenspkg")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Agregar herramienta…" }));
     await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
     expect(screen.getByText(/firma de la herramienta/)).toBeTruthy();
@@ -90,11 +118,7 @@ describe("página Herramientas", () => {
     listeners.get("tools.changed")?.({ tools: [tool()], pendingDowngrade: null });
     const unsubscribe = useShellStore.getState().subscribe(bridge);
     listeners.get("tools.changed")?.({ tools: [tool()], pendingDowngrade: null });
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Notas", description: "Apunta ideas" }),
-      ).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Abrir Notas" })).toBeTruthy());
     unsubscribe();
   });
 
@@ -104,7 +128,11 @@ describe("página Herramientas", () => {
       tools: [tool()],
       pendingDowngrade: { toolId: "notas", installedVersion: "2.0.0", version: "1.2.0" },
     });
-    render(<ToolsPage bridge={bridge} />);
+    render(
+      <TooltipProvider>
+        <ToolsPage bridge={bridge} />
+      </TooltipProvider>,
+    );
     await waitFor(() => expect(screen.getByText(/versión instalada/)).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(invoke).not.toHaveBeenCalledWith("tools.confirmDowngrade", expect.anything());
@@ -121,6 +149,7 @@ describe("página Herramientas", () => {
     const trigger = screen.getByRole("button", { name: "Acciones de Notas" });
     trigger.focus();
     fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    expect(screen.getByRole("menuitem", { name: "Quitar" }).className).toContain("text-danger");
     fireEvent.keyDown(screen.getByRole("menuitem", { name: "Quitar" }), { key: "Enter" });
     fireEvent.click(screen.getByRole("checkbox", { name: "Eliminar también los datos" }));
     fireEvent.click(screen.getByRole("button", { name: "Quitar" }));
@@ -130,7 +159,11 @@ describe("página Herramientas", () => {
   it("la casilla de datos empieza desmarcada en cada confirmación de quitar", async () => {
     const { bridge } = bridgeMock();
     useShellStore.setState({ tools: [tool()], pendingDowngrade: null });
-    render(<ToolsPage bridge={bridge} />);
+    render(
+      <TooltipProvider>
+        <ToolsPage bridge={bridge} />
+      </TooltipProvider>,
+    );
     const openRemove = () => {
       const trigger = screen.getByRole("button", { name: "Acciones de Notas" });
       trigger.focus();
@@ -156,7 +189,11 @@ describe("página Herramientas", () => {
         : { ok: true as const, data: {} },
     );
     useShellStore.setState({ tools: [tool()], pendingDowngrade: null });
-    render(<ToolsPage bridge={bridge} />);
+    render(
+      <TooltipProvider>
+        <ToolsPage bridge={bridge} />
+      </TooltipProvider>,
+    );
     const trigger = screen.getByRole("button", { name: "Acciones de Notas" });
     trigger.focus();
     fireEvent.keyDown(trigger, { key: "ArrowDown" });

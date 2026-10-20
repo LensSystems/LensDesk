@@ -17,7 +17,7 @@ test("el Convertidor muestra una tabla GFM para HTML y CSV", async () => {
     await shell.getByRole("button", { name: "Herramientas" }).click();
     await shell.getByRole("button", { name: "Agregar herramienta…" }).click();
     await shell.getByText("Convertidor", { exact: true }).waitFor();
-    await shell.getByRole("button", { name: "Convertidor", exact: true }).click();
+    await shell.getByRole("button", { name: "Abrir Convertidor", exact: true }).click();
     const tool = await toolPage(app, "md-converter");
 
     await stubDialog(app, "open", {
@@ -67,7 +67,7 @@ test("un nombre de archivo largo no ensancha la cola", async () => {
     await shell.getByRole("button", { name: "Herramientas" }).click();
     await shell.getByRole("button", { name: "Agregar herramienta…" }).click();
     await shell.getByText("Convertidor", { exact: true }).waitFor();
-    await shell.getByRole("button", { name: "Convertidor", exact: true }).click();
+    await shell.getByRole("button", { name: "Abrir Convertidor", exact: true }).click();
     const tool = await toolPage(app, "md-converter");
 
     await stubDialog(app, "open", { canceled: false, filePaths: [longFile] });

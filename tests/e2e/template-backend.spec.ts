@@ -12,7 +12,7 @@ test("la plantilla reinicia el backend después de terminar el proceso", async (
     const shell = await app.firstWindow();
     await enableDeveloperMode(shell);
     await installTool(app, shell, pkg);
-    await shell.getByRole("button", { name: "Plantilla", exact: true }).click();
+    await shell.getByRole("button", { name: "Abrir Plantilla", exact: true }).click();
     const tool = await toolPage(app, "template");
     const ping = async () => {
       const output = tool.locator("output");

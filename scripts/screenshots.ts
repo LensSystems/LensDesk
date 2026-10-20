@@ -239,7 +239,9 @@ async function run() {
         await stubDialog(app, "open", { canceled: false, filePaths: [pkgs[index]] });
         await shell.getByRole("button", { name: "Herramientas", exact: true }).click();
         await shell.getByRole("button", { name: "Agregar herramienta…" }).click();
-        await expect(shell.getByRole("button", { name, exact: true })).toBeVisible();
+        await expect(
+          shell.getByRole("button", { name: `Abrir ${name}`, exact: true }),
+        ).toBeVisible();
       }
       await snap("herramientas");
       await shell.getByRole("button", { name: "Ajustes", exact: true }).click();
@@ -247,7 +249,7 @@ async function run() {
       await snap("ajustes");
       const open = async (name: string, id: string) => {
         await shell.getByRole("button", { name: "Herramientas", exact: true }).click();
-        await shell.getByRole("button", { name, exact: true }).click();
+        await shell.getByRole("button", { name: `Abrir ${name}`, exact: true }).click();
         const tool = await toolPage(app as ElectronApplication, id);
         await expect(tool.locator("html")).toHaveAttribute("data-theme", theme);
         return tool;

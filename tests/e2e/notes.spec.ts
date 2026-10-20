@@ -15,7 +15,7 @@ test("Notas conserva una nota después de reiniciar LensDesk", async () => {
     await shell.getByRole("button", { name: "Herramientas" }).click();
     await shell.getByRole("button", { name: "Agregar herramienta…" }).click();
     await shell.getByText("Notas", { exact: true }).waitFor();
-    await shell.getByRole("button", { name: "Notas", exact: true }).click();
+    await shell.getByRole("button", { name: "Abrir Notas", exact: true }).click();
     let tool = await toolPage(app, "notes");
     await tool.getByRole("button", { name: "Nueva nota" }).first().click();
     await tool.locator(".cm-content").fill("# Persistencia local\nTexto que debe seguir aquí");
@@ -53,7 +53,7 @@ test("un título largo no saca de la lista los botones de fijar y borrar", async
     await shell.getByRole("button", { name: "Herramientas" }).click();
     await shell.getByRole("button", { name: "Agregar herramienta…" }).click();
     await shell.getByText("Notas", { exact: true }).waitFor();
-    await shell.getByRole("button", { name: "Notas", exact: true }).click();
+    await shell.getByRole("button", { name: "Abrir Notas", exact: true }).click();
     const tool = await toolPage(app, "notes");
     await tool.getByRole("button", { name: "Nueva nota" }).first().click();
     const title = "Un título muy largo ".repeat(12).trim();

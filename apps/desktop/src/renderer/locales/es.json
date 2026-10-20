@@ -21,7 +21,7 @@
     "remove": "Quitar",
     "detailsTitle": "Detalles de {{name}}",
     "version": "Versión",
-    "signed": "Firmada",
+    "signed": "firmada",
     "permissions": "Permisos",
     "noPermissions": "Ninguno",
     "removeTitle": "Quitar {{name}}",
@@ -37,7 +37,13 @@
       "storage": "Almacenamiento",
       "files": "Archivos",
       "backend": "Proceso en segundo plano"
-    }
+    },
+    "open": "Abrir",
+    "openTool": "Abrir {{name}}",
+    "disabledDescription": "Desactivada. Actívala desde el menú para abrirla.",
+    "chooseFile": "Elige un archivo .lenspkg",
+    "subtitle": "Cada una guarda sus datos aparte, en tu equipo.",
+    "cardVersion": "v{{version}}"
   },
   "settingsPage": {
     "title": "Ajustes",

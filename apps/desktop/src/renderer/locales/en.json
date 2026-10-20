@@ -21,7 +21,7 @@
     "remove": "Remove",
     "detailsTitle": "{{name}} details",
     "version": "Version",
-    "signed": "Signed",
+    "signed": "signed",
     "permissions": "Permissions",
     "noPermissions": "None",
     "removeTitle": "Remove {{name}}",
@@ -37,7 +37,13 @@
       "storage": "Storage",
       "files": "Files",
       "backend": "Background process"
-    }
+    },
+    "open": "Open",
+    "openTool": "Open {{name}}",
+    "disabledDescription": "Disabled. Turn it on from the menu to open it.",
+    "chooseFile": "Choose a .lenspkg file",
+    "subtitle": "Each one keeps its data separately, on your computer.",
+    "cardVersion": "v{{version}}"
   },
   "settingsPage": {
     "title": "Settings",

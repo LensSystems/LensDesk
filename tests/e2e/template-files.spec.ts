@@ -15,7 +15,7 @@ test("plantilla abre archivos con el permiso files", async () => {
     await enableDeveloperMode(shell);
     await installTool(app, shell, pkg);
     await stubDialog(app, "open", { canceled: false, filePaths: [filePath] });
-    await shell.getByRole("button", { name: "Plantilla", exact: true }).click();
+    await shell.getByRole("button", { name: "Abrir Plantilla", exact: true }).click();
     const tool = await toolPage(app, "template");
     await tool.getByRole("button", { name: "Abrir archivo" }).click();
     await expect(tool.getByText("texto local de prueba", { exact: true })).toBeVisible();

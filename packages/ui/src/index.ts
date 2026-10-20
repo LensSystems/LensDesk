@@ -1,8 +1,10 @@
 export {
+  Ban,
   Braces,
   Bug,
   Calculator,
   Calendar,
+  CircleCheck,
   Clock,
   Code,
   Database,
@@ -14,6 +16,7 @@ export {
   Globe,
   Grid2x2Plus,
   Hash,
+  Info,
   Link,
   ListChecks,
   Lock,
@@ -27,6 +30,7 @@ export {
   SlidersHorizontal,
   StickyNote,
   Terminal,
+  Trash2,
   Wrench,
   X,
 } from "lucide-react";
