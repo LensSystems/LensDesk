@@ -23,7 +23,10 @@
 
 <div align="center">
 
-<img src="docs/images/notas.png" alt="LensDesk con la herramienta Notas abierta: lista de notas a la izquierda y la vista previa de una nota en Markdown" width="860">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/notas-dark.png">
+  <img src="docs/images/notas-light.png" alt="LensDesk con la herramienta Notas abierta: lista de notas a la izquierda y la vista previa de una nota en Markdown" width="860">
+</picture>
 
 </div>
 
@@ -62,19 +65,22 @@ firmado. Todo lo que haces se guarda en tu equipo: no hay cuentas, ni telemetrí
   temporal para el archivo que tú elegiste.
 - **Recuperación:** si una herramienta falla, solo se cierra su pestaña y puedes reabrirla con un
   clic; el resto sigue funcionando.
-- **Español e inglés, tema claro y oscuro,** o el del sistema.
+- **Español e inglés, tema claro y oscuro** (o el del sistema) y **color de acento azul o verde.**
 - **macOS (Apple Silicon e Intel) y Windows x64.**
 
 ## Herramientas incluidas
 
 | Herramienta | Qué hace |
 |---|---|
-| **Notas** | Notas en Markdown con editor, vista previa, búsqueda de texto completo, notas fijadas, papelera, e importación y exportación de archivos `.md`. |
+| **Notas** | Notas en Markdown con editor con resaltado de sintaxis, vista previa, búsqueda de texto completo que resalta lo encontrado, notas fijadas, papelera, e importación y exportación de archivos `.md`. |
 | **Convertidor** | Convierte documentos HTML, DOCX, CSV, PDF y XLSX a Markdown. Admite varios archivos a la vez, muestra el progreso, permite cancelar y guarda el resultado como `.md`. |
 
 <div align="center">
 
-<img src="docs/images/convertidor.png" alt="El Convertidor con dos archivos convertidos y la vista renderizada de una guía con títulos, listas y una tabla" width="860">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/convertidor-dark.png">
+  <img src="docs/images/convertidor-light.png" alt="El Convertidor con dos archivos convertidos y la vista renderizada de una guía con títulos, listas y una tabla" width="860">
+</picture>
 
 </div>
 
@@ -118,12 +124,18 @@ Desde el menú **⋯** de cada tarjeta puedes ver sus detalles, desactivarla o q
 
 <div align="center">
 
-<img src="docs/images/herramientas.png" alt="Página Herramientas con las tarjetas de Notas y del Convertidor y el botón Agregar herramienta" width="860">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/herramientas-dark.png">
+  <img src="docs/images/herramientas-light.png" alt="Página Herramientas con las tarjetas de Notas y del Convertidor y el botón Agregar herramienta" width="860">
+</picture>
 
 </div>
 
 Un paquete sin firma solo se instala con el **modo desarrollador** activo (en Ajustes), y su
 tarjeta lleva la insignia **sin firmar**.
+
+Las herramientas instaladas no se actualizan solas: al pasar a una versión nueva de LensDesk,
+instala también los `.lenspkg` de esa versión para tener sus mejoras.
 
 ## Atajos de teclado
 
@@ -252,14 +264,14 @@ accounts, no telemetry, no servers.
 - **Files without paths:** tools never see a real file path; they get a temporary grant for the
   file you picked.
 - **Recovery:** if a tool crashes, only its tab closes and you can reopen it with one click.
-- **Spanish and English, light and dark theme,** or the system one.
+- **Spanish and English, light and dark theme** (or the system one) and **blue or green accent color.**
 - **macOS (Apple Silicon and Intel) and Windows x64.**
 
 ## Included tools
 
 | Tool | What it does |
 |---|---|
-| **Notes** | Markdown notes with an editor, preview, full-text search, pinned notes, trash, and `.md` import and export. |
+| **Notes** | Markdown notes with a syntax-highlighting editor, preview, full-text search that highlights matches, pinned notes, trash, and `.md` import and export. |
 | **Converter** | Converts HTML, DOCX, CSV, PDF and XLSX documents to Markdown. Handles several files at once, shows progress, can cancel, and saves the result as `.md`. |
 
 ## Installation
@@ -285,6 +297,9 @@ On Windows, when SmartScreen appears, select **More info**, then **Run anyway**.
 
 In LensDesk, click **Add tool…** and choose the `.lenspkg` file you want to install. Unsigned
 packages need developer mode turned on in Settings, and show an **unsigned** badge.
+
+Installed tools do not update themselves: when you move to a new LensDesk version, also install
+that version's `.lenspkg` files to get their improvements.
 
 ## Keyboard shortcuts
 

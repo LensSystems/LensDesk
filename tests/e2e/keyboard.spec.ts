@@ -1,6 +1,5 @@
-import { resolve } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import { launchApp, shellPage, stubDialog, toolPage } from "./helpers.ts";
+import { launchApp, lenspkgPath, shellPage, stubDialog, toolPage } from "./helpers.ts";
 
 async function tabTo(page: Page, target: Locator) {
   for (let count = 0; count < 80; count += 1) {
@@ -30,7 +29,7 @@ test("instala, escribe y cierra Notas usando solo el teclado", async () => {
     await expect(install).toBeVisible();
     await stubDialog(app, "open", {
       canceled: false,
-      filePaths: [resolve(import.meta.dirname, "../../tools/notes/dist/notes-0.1.0.lenspkg")],
+      filePaths: [lenspkgPath("notes")],
     });
     await tabTo(shell, install);
     await shell.keyboard.press("Enter");

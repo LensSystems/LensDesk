@@ -1,14 +1,21 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { enableDeveloperMode, installTool, launchApp, stubDialog, toolPage } from "./helpers.ts";
+import {
+  enableDeveloperMode,
+  installTool,
+  launchApp,
+  lenspkgPath,
+  stubDialog,
+  toolPage,
+} from "./helpers.ts";
 
 test("plantilla abre archivos con el permiso files", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-template-files-e2e-"));
   const filePath = join(userDataDir, "contenido.txt");
   await writeFile(filePath, "texto local de prueba", "utf8");
-  const pkg = resolve(import.meta.dirname, "../../tools/_template/dist/template-0.1.0.lenspkg");
+  const pkg = lenspkgPath("_template");
   const app = await launchApp({ userDataDir });
   try {
     const shell = await app.firstWindow();

@@ -1,12 +1,19 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { enableDeveloperMode, launchApp, shellPage, stubDialog, toolPage } from "./helpers.ts";
+import {
+  enableDeveloperMode,
+  launchApp,
+  lenspkgPath,
+  shellPage,
+  stubDialog,
+  toolPage,
+} from "./helpers.ts";
 
 test("el acento cambia en Notas abierta y persiste al reiniciar", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-accent-e2e-"));
-  const pkg = resolve(import.meta.dirname, "../../tools/notes/dist/notes-0.1.0.lenspkg");
+  const pkg = lenspkgPath("notes");
   let app = await launchApp({ userDataDir });
   try {
     let shell = await app.firstWindow();

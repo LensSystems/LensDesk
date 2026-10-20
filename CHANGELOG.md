@@ -7,6 +7,48 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Sin publicar]
 
+## [0.2.0] - 2026-10-20
+
+Diseño nuevo para LensDesk y sus herramientas.
+
+### Para actualizar
+
+- Reinstala **Notas** y el **Convertidor** con los `.lenspkg` de esta versión para ver el diseño
+  nuevo: las herramientas instaladas conservan su aspecto anterior hasta que las reinstalas. Tus
+  notas y ajustes se mantienen.
+
+### Añadido
+
+- Barra de título integrada con los botones del sistema en macOS y Windows; en pantalla completa
+  de macOS la cabecera muestra «LensSystems - LensDesk».
+- Color de acento azul o verde en Ajustes → Apariencia, aplicado al momento en LensDesk y en las
+  herramientas abiertas.
+- Icono de la aplicación y logotipo nuevos, y sección «Acerca de» en Ajustes.
+- Notas: resaltado de lo encontrado al buscar, extracto de cada nota en la lista, coloreado de
+  Markdown y números de línea en el editor.
+- Paquete `@lensdesk/ui` con los componentes que comparten LensDesk y las herramientas, y una
+  galería para verlos (`pnpm ui:gallery`).
+- SDK: campo opcional `accent` en el contexto de la herramienta y código de error
+  `E_PACKAGE_INVALID` para paquetes dañados o que no son `.lenspkg`. La API v1 solo crece.
+
+### Cambiado
+
+- Estilo «Lienzo»: paleta Pizarra en oscuro y neutros fríos en claro, letra Manrope, cabecera de
+  52 px con pestañas centradas y paneles redondeados.
+- Página Herramientas con tarjetas; Ajustes organizados por secciones.
+- Los diálogos de una herramienta muestran sus permisos, su firma y el código de error.
+- Notas y el Convertidor a dos paneles; la cola del Convertidor muestra cada estado en su tarjeta.
+- Pantallas de recuperación con icono y botón principal.
+
+### Corregido
+
+- Accesibilidad: foco visible en todos los controles, lectores de pantalla sin nombres repetidos
+  en los botones de icono, título de ventana en las herramientas, nombre del editor de Notas y
+  avisos de estado en la cola del Convertidor.
+- Los títulos de nota y los nombres de archivo largos ya no ocultan botones ni ensanchan la lista.
+- Las herramientas usaban la letra del sistema en lugar de la incluida.
+- El estado de pantalla completa se mantiene al recargar la ventana.
+
 ## [0.1.0] - 2026-10-16
 
 Primera versión pública.
@@ -33,5 +75,6 @@ Primera versión pública.
 - Instaladores `.dmg`, `.zip` y `.exe` publicados por la CI con `SHA256SUMS.txt` y las
   herramientas firmadas.
 
-[Sin publicar]: https://github.com/LensSystems/LensDesk/compare/v0.1.0...HEAD
+[Sin publicar]: https://github.com/LensSystems/LensDesk/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/LensSystems/LensDesk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/LensSystems/LensDesk/releases/tag/v0.1.0

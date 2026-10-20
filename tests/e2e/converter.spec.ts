@@ -2,13 +2,13 @@ import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
-import { enableDeveloperMode, launchApp, stubDialog, toolPage } from "./helpers.ts";
+import { enableDeveloperMode, launchApp, lenspkgPath, stubDialog, toolPage } from "./helpers.ts";
 
 const toolDir = resolve(import.meta.dirname, "../../tools/md-converter");
 
 test("el Convertidor muestra una tabla GFM para HTML y CSV", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-converter-e2e-"));
-  const pkg = join(toolDir, "dist/md-converter-0.1.0.lenspkg");
+  const pkg = lenspkgPath("md-converter");
   const app = await launchApp({ userDataDir });
   try {
     const shell = await app.firstWindow();
@@ -55,7 +55,7 @@ test("el Convertidor muestra una tabla GFM para HTML y CSV", async () => {
 
 test("un nombre de archivo largo no ensancha la cola", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-converter-e2e-"));
-  const pkg = join(toolDir, "dist/md-converter-0.1.0.lenspkg");
+  const pkg = lenspkgPath("md-converter");
   const name = `${"documento-con-un-nombre-muy-largo-".repeat(6)}final.html`;
   const longFile = join(userDataDir, name);
   await copyFile(join(toolDir, "tests/fixtures/sample.html"), longFile);

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -6,6 +7,16 @@ import { type ElectronApplication, _electron as electron, type Page } from "@pla
 
 const require = createRequire(import.meta.url);
 const desktopPath = resolve(import.meta.dirname, "../../apps/desktop");
+const toolsPath = resolve(import.meta.dirname, "../../tools");
+
+// Ruta del .lenspkg que genera `pnpm tools:package`, con la versión del manifiesto.
+export function lenspkgPath(toolDir: string): string {
+  const manifest = JSON.parse(
+    readFileSync(join(toolsPath, toolDir, "lensdesk.tool.json"), "utf8"),
+  ) as { id: string; version: string };
+  return join(toolsPath, toolDir, "dist", `${manifest.id}-${manifest.version}.lenspkg`);
+}
+
 export async function launchApp(
   options: { userDataDir?: string } = {},
 ): Promise<ElectronApplication> {

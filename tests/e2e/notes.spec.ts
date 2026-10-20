@@ -1,12 +1,12 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { enableDeveloperMode, launchApp, stubDialog, toolPage } from "./helpers.ts";
+import { enableDeveloperMode, launchApp, lenspkgPath, stubDialog, toolPage } from "./helpers.ts";
 
 test("Notas conserva una nota después de reiniciar LensDesk", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-notes-e2e-"));
-  const pkg = resolve(import.meta.dirname, "../../tools/notes/dist/notes-0.1.0.lenspkg");
+  const pkg = lenspkgPath("notes");
   let app = await launchApp({ userDataDir });
   try {
     const shell = await app.firstWindow();
@@ -44,7 +44,7 @@ test("Notas conserva una nota después de reiniciar LensDesk", async () => {
 
 test("un título largo no saca de la lista los botones de fijar y borrar", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-notes-e2e-"));
-  const pkg = resolve(import.meta.dirname, "../../tools/notes/dist/notes-0.1.0.lenspkg");
+  const pkg = lenspkgPath("notes");
   const app = await launchApp({ userDataDir });
   try {
     const shell = await app.firstWindow();

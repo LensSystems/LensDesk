@@ -1,12 +1,12 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { enableDeveloperMode, installTool, launchApp, toolPage } from "./helpers.ts";
+import { enableDeveloperMode, installTool, launchApp, lenspkgPath, toolPage } from "./helpers.ts";
 
 test("plantilla conserva storage después de reiniciar LensDesk", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-template-e2e-"));
-  const pkg = resolve(import.meta.dirname, "../../tools/_template/dist/template-0.1.0.lenspkg");
+  const pkg = lenspkgPath("_template");
   let app = await launchApp({ userDataDir });
   try {
     const shell = await app.firstWindow();

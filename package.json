@@ -1,6 +1,6 @@
 {
   "name": "lensdesk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "LensDesk: contenedor de escritorio modular y 100% local para herramientas de desarrollo",
   "license": "MIT",
