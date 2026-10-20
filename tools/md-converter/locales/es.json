@@ -15,7 +15,9 @@
   "status": {
     "queued": "En cola",
     "converting": "Convirtiendo…",
-    "done": "Listo"
+    "done": "Listo",
+    "error": "Error",
+    "cancelled": "Cancelado"
   },
   "resultTabs": "Vista del resultado",
   "rendered": "Vista renderizada",
@@ -33,5 +35,6 @@
     "E_TOO_LARGE": "El archivo supera el tamaño máximo de 50 MB.",
     "E_CANCELLED": "Conversión cancelada.",
     "generic": "No se pudo completar la acción ({{code}})."
-  }
+  },
+  "dropMore": "Suelta más documentos aquí"
 }

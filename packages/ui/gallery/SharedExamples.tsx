@@ -82,6 +82,8 @@ export function SharedExamples() {
           />
           <ListItem
             variant="card"
+            footer="Detalle de la tarjeta"
+            containerClassName="border-danger"
             title="Tarjeta"
             secondaryText="Resumen"
             selected
@@ -99,6 +101,13 @@ export function SharedExamples() {
         />
       </Example>
       <Example names={["FileDropZone"]}>
+        <FileDropZone
+          size="compact"
+          buttonVariant="primary"
+          label="Suelta más documentos aquí"
+          buttonLabel="Elegir archivos"
+          onBrowse={() => setNotice("Selector solicitado")}
+        />
         <FileDropZone
           label="Suelta archivos"
           buttonLabel="Elegir archivos"

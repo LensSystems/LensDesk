@@ -15,7 +15,9 @@
   "status": {
     "queued": "Queued",
     "converting": "Converting…",
-    "done": "Done"
+    "done": "Done",
+    "error": "Error",
+    "cancelled": "Cancelled"
   },
   "resultTabs": "Result view",
   "rendered": "Rendered view",
@@ -33,5 +35,6 @@
     "E_TOO_LARGE": "The file is larger than the 50 MB limit.",
     "E_CANCELLED": "Conversion cancelled.",
     "generic": "The action could not be completed ({{code}})."
-  }
+  },
+  "dropMore": "Drop more documents here"
 }

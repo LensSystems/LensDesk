@@ -52,9 +52,6 @@ export function App({ client }: { client: Client }) {
     <UiLabelsProvider labels={{ loading: t("loading"), close: t("close"), dismiss: t("close") }}>
       <TooltipProvider>
         <main className="converter-app">
-          <header className="app-toolbar">
-            <h1>{t("title")}</h1>
-          </header>
           {error && <Notice tone="danger" title={error} />}
           <div className="workspace">
             <Queue

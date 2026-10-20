@@ -9,105 +9,142 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
-.app-toolbar,
-.preview-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--ld-border);
-}
-.app-toolbar h1 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-.row-error {
-  margin: 0;
-  color: var(--ld-danger);
-}
-.row-warning {
-  margin: 0;
-  color: var(--ld-warning);
+  gap: 12px;
+  padding: 12px;
 }
 .workspace {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 320px 1fr;
+  display: flex;
+  gap: 12px;
 }
 .queue-panel {
+  width: 340px;
+  flex: none;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px;
-  border-right: 1px solid var(--ld-border);
-  overflow: auto;
+  padding: 16px;
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+}
+.queue-panel h1 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.queue-panel > section {
+  flex-shrink: 0;
 }
 .queue-list {
+  min-height: 0;
+  overflow: auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   gap: 8px;
   margin: 0;
-  padding: 0;
+  padding: 2px;
   list-style: none;
 }
-.queue-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+.queue-status {
+  display: flex;
+  align-items: center;
   gap: 4px;
-  padding: 8px;
-  border: 1px solid var(--ld-border);
-  border-radius: 6px;
-}
-.queue-row.selected {
-  border-color: var(--ld-accent);
-}
-.queue-row p {
-  margin: 0;
+  min-height: 28px;
   font-size: 12px;
+  color: var(--ld-text-muted);
+  white-space: nowrap;
 }
-.queue-row-head,
-.queue-row-status {
+.queue-progress,
+.queue-progress > div {
+  height: 6px;
+  border-radius: 999px;
+}
+.queue-progress {
+  background: var(--ld-border);
+  overflow: hidden;
+}
+.queue-progress > div {
+  background: var(--ld-accent);
+}
+.preview-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+  overflow: hidden;
+}
+.preview-toolbar {
+  height: 56px;
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 0 16px 0 24px;
+  border-bottom: 1px solid var(--ld-border);
+  overflow-x: auto;
 }
-.queue-name {
-  flex: 1;
-  min-width: 0;
-  justify-content: flex-start;
-  text-align: left;
+.preview-toolbar > * {
+  flex-shrink: 0;
 }
-.queue-name > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.queue-row-status progress {
-  flex: 1;
-  height: 8px;
-  accent-color: var(--ld-accent);
-}
-.preview-panel {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+.result-notice {
+  margin: 12px 24px 0;
+  flex-shrink: 0;
 }
 .preview-body {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 12px;
+  padding: 28px 32px;
+}
+.result-column {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.result-empty {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--ld-text-muted);
 }
 .raw-markdown {
-  margin: 0;
   white-space: pre-wrap;
   font:
-    13px / 1.5 "JetBrains Mono Variable",
+    13px / 1.7 "JetBrains Mono Variable",
     monospace;
 }
-.muted {
-  color: var(--ld-text-muted);
+.preview-body .ld-markdown-view table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-md);
+  overflow: hidden;
+}
+.preview-body .ld-markdown-view th,
+.preview-body .ld-markdown-view td {
+  padding: 8px 14px;
+  border: 0;
+}
+.preview-body .ld-markdown-view td {
+  border-top: 1px solid var(--ld-border);
+}
+.preview-body .ld-markdown-view th {
+  background: var(--ld-surface-raised);
+  text-align: left;
+}
+.converter-app :focus-visible {
+  outline: 2px solid var(--ld-accent);
+  outline-offset: 2px;
 }

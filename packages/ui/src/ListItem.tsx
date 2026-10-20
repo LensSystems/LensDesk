@@ -3,6 +3,8 @@ import { cn } from "./cn.ts";
 
 export type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "title" | "children"> & {
   title: ReactNode;
+  footer?: ReactNode;
+  containerClassName?: string;
   secondaryText?: ReactNode;
   actions?: ReactNode;
   selected?: boolean;
@@ -10,6 +12,8 @@ export type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "title
 };
 export function ListItem({
   title,
+  footer,
+  containerClassName,
   secondaryText,
   actions,
   selected = false,
@@ -23,6 +27,7 @@ export function ListItem({
         className={cn(
           "grid min-w-0 grid-cols-[minmax(0,1fr)_auto] rounded-ld-lg border bg-surface-raised px-3.5 py-3",
           selected ? "border-accent" : "border-border",
+          containerClassName,
         )}
       >
         <button
@@ -37,6 +42,7 @@ export function ListItem({
             <span className="block truncate text-[13px] text-muted">{secondaryText}</span>
           )}
         </button>
+        {footer && <div className="col-span-2 min-w-0 pt-2">{footer}</div>}
         {actions && (
           <div className="col-start-2 row-start-1 flex shrink-0 items-start gap-1 pl-1">
             {actions}

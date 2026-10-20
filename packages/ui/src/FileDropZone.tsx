@@ -3,6 +3,8 @@ import { Button } from "./Button.tsx";
 import { cn } from "./cn.ts";
 
 export type FileDropZoneProps = {
+  size?: "md" | "compact";
+  buttonVariant?: "default" | "primary";
   onFiles?: (files: File[]) => void;
   onBrowse?: () => void;
   "aria-label"?: string;
@@ -15,6 +17,8 @@ export type FileDropZoneProps = {
   className?: string;
 };
 export function FileDropZone({
+  size = "md",
+  buttonVariant = "default",
   onFiles,
   onBrowse,
   "aria-label": accessibleLabel,
@@ -55,6 +59,7 @@ export function FileDropZone({
       data-dragging={!disabled && dragging}
       className={cn(
         "grid justify-items-start gap-2 rounded-ld-lg border-2 border-dashed border-border-control bg-surface p-3 text-text data-[dragging=true]:border-accent data-[dragging=true]:bg-accent-soft",
+        size === "compact" && "flex items-center gap-3 px-3.5",
         disabled && "opacity-60",
         className,
       )}
@@ -82,7 +87,9 @@ export function FileDropZone({
         if (onFiles) deliver(Array.from(event.dataTransfer.files));
       }}
     >
-      <p>{label}</p>
+      <p className={cn("text-[13px] text-muted", size === "compact" && "min-w-0 flex-1")}>
+        {label}
+      </p>
       {description && <p className="text-xs text-muted">{description}</p>}
       {!onBrowse && (
         <input
@@ -100,6 +107,8 @@ export function FileDropZone({
       )}
       <Button
         type="button"
+        variant={buttonVariant}
+        className="shrink-0"
         disabled={disabled}
         onClick={() => (onBrowse ? onBrowse() : input.current?.click())}
       >

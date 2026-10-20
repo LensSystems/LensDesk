@@ -1,6 +1,8 @@
 import type { createToolClient } from "@lensdesk/sdk";
 import {
   Button,
+  EmptyState,
+  FileText,
   MarkdownView,
   Notice,
   Tabs,
@@ -80,6 +82,7 @@ export function Preview({
         </TabsList>
         <Button
           type="button"
+          variant="ghost"
           disabled={!item}
           onClick={() =>
             item &&
@@ -114,17 +117,23 @@ export function Preview({
           {t("saveAll")}
         </Button>
       </header>
-      {notice && <Notice tone="info" title={notice} />}
+      {item && item.warnings.length > 0 && (
+        <Notice className="result-notice" tone="info" title={t("imagesOmitted")} />
+      )}
+      {notice && <Notice className="result-notice" tone="info" title={notice} />}
       {(["rendered", "raw"] as const).map((name) => (
         <TabsContent key={name} value={name} className="preview-body">
           {!item ? (
-            <p className="muted">{t("noResult")}</p>
+            <div className="result-empty">
+              <FileText size={32} aria-hidden="true" />
+              <EmptyState title={t("noResult")} />
+            </div>
           ) : name === "raw" ? (
-            <pre className="raw-markdown">
+            <pre className="result-column raw-markdown">
               <code>{item.markdown}</code>
             </pre>
           ) : (
-            <MarkdownView html={html} />
+            <MarkdownView className="result-column" html={html} />
           )}
         </TabsContent>
       ))}

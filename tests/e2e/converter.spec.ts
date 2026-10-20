@@ -80,11 +80,10 @@ test("un nombre de archivo largo no ensancha la cola", async () => {
     const preview = await tool.getByRole("tab", { name: "Markdown crudo" }).boundingBox();
     expect(rowBox && preview).toBeTruthy();
     if (!rowBox || !preview) return;
-    // La fila no invade la vista previa y la barra de progreso sigue visible.
+    // La fila y su nombre permanecen dentro de la cola.
     expect(rowBox.x + rowBox.width).toBeLessThan(preview.x);
-    await expect(tool.getByRole("progressbar", { name: `Progreso de ${name}` })).toBeInViewport({
-      ratio: 1,
-    });
+    await expect(queue.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
+    expect(await row.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   } finally {
     await app.close().catch(() => undefined);
     await rm(userDataDir, { recursive: true, force: true });

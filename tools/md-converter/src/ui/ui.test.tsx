@@ -78,7 +78,7 @@ describe("interfaz del Convertidor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Elegir archivos…" }));
 
     const progress = await screen.findByRole("progressbar", { name: "Progreso de lento.pdf" });
-    await waitFor(() => expect(progress).toHaveAttribute("value", "0.5"));
+    await waitFor(() => expect(progress).toHaveAttribute("aria-valuenow", "50"));
     expect(within(row("lento.pdf")).getByText("Convirtiendo…")).toBeInTheDocument();
     expect(within(row("lento.pdf")).getByText(/50\s?%/)).toBeInTheDocument();
     // La conversión es secuencial: el segundo espera en cola.
@@ -88,10 +88,14 @@ describe("interfaz del Convertidor", () => {
       expect.objectContaining({ multiple: true }),
     );
 
+    const started = performance.now();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar conversión de lento.pdf" }));
+    expect(fake.invoke.mock.calls[0]?.[2]?.signal?.aborted).toBe(true);
     await waitFor(() =>
       expect(within(row("lento.pdf")).getByText("Conversión cancelada.")).toBeInTheDocument(),
     );
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(within(row("lento.pdf")).getByText("Cancelado")).toHaveClass("bg-surface");
     await waitFor(() => expect(within(row("datos.csv")).getByText("Listo")).toBeInTheDocument());
     expect(fake.invoke).toHaveBeenLastCalledWith(
       "convert",
@@ -136,11 +140,19 @@ describe("interfaz del Convertidor", () => {
       expect(within(row("pagina-img.html")).getByText("Listo")).toBeInTheDocument(),
     );
     expect(
-      within(row("pagina-img.html")).getByText(
-        "El documento original tenía imágenes que se omitieron.",
-      ),
+      screen.getByText("El documento original tenía imágenes que se omitieron."),
     ).toBeInTheDocument();
-    expect(fake.invoke).toHaveBeenCalledTimes(2);
+    expect(within(row("notas.txt")).getByText("Error")).toHaveClass("text-danger");
+    expect(row("notas.txt").firstElementChild).toHaveClass("border-danger", "bg-danger-soft");
+    expect(within(row("pagina-img.html")).queryByText(es.imagesOmitted)).toBeNull();
+    fake.drop([handle("clean.html")]);
+    await waitFor(() =>
+      expect(within(row("clean.html")).getByText("Listo")).toHaveClass("bg-accent-soft"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "clean.html" }));
+    expect(screen.queryByText(es.imagesOmitted)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "pagina-img.html" }));
+    expect(screen.getByText(es.imagesOmitted).closest(".preview-panel")).toBeTruthy();
   });
 
   it("muestra la vista renderizada y la cruda, copia y guarda cada resultado", async () => {
@@ -193,10 +205,13 @@ describe("interfaz del Convertidor", () => {
     expect(screen.getByRole("region", { name: "Zona para soltar archivos" })).toHaveTextContent(
       es.dropHint,
     );
+    expect(screen.getByRole("region", { name: es.dropZone })).not.toHaveClass("flex");
     expect(container.querySelector('input[type="file"]')).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Elegir archivos…" }));
     expect(fake.client.files.pickOpen).toHaveBeenCalledOnce();
     await screen.findByRole("heading", { name: "sample.html" });
+    expect(screen.getByRole("region", { name: es.dropZone })).toHaveTextContent(es.dropMore);
+    expect(screen.getByRole("region", { name: es.dropZone })).toHaveClass("flex");
     expect(container.querySelector(".ld-markdown-view")).toBeInTheDocument();
     const rendered = screen.getByRole("tab", { name: "Vista renderizada" });
     const raw = screen.getByRole("tab", { name: "Markdown crudo" });
