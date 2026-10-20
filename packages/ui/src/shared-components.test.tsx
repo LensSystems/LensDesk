@@ -294,3 +294,25 @@ describe("componentes compartidos", () => {
     );
   });
 });
+
+it("ListItem admite resaltado visible con nombre accesible estable", () => {
+  render(
+    <ListItem
+      variant="card"
+      aria-label="Ideas para el sprint"
+      title={
+        <>
+          Ideas para el <mark>sprint</mark>
+        </>
+      }
+      secondaryText={
+        <>
+          Preparar el <mark>sprint</mark>
+        </>
+      }
+    />,
+  );
+  const button = screen.getByRole("button", { name: "Ideas para el sprint" });
+  expect(button.querySelectorAll("mark")).toHaveLength(2);
+  expect(button).toHaveAccessibleName("Ideas para el sprint");
+});

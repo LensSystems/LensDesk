@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@lensdesk/ui";
 import { tags } from "@lezer/highlight";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { EditorView } from "codemirror";
@@ -9,7 +10,7 @@ import en from "../../locales/en.json";
 import es from "../../locales/es.json";
 import { App } from "./App.tsx";
 import { markdownHighlightStyle } from "./markdown-highlight.ts";
-import type { Note } from "./NoteList.tsx";
+import { type Note, NoteList } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
 import { useAutosave } from "./use-autosave.ts";
 
@@ -481,5 +482,79 @@ describe("interfaz de Notas", () => {
     });
     vi.useRealTimers();
     expect(fake.invoke).not.toHaveBeenCalledWith("update", expect.anything());
+  });
+});
+
+describe("resaltado en la lista", () => {
+  it("resalta título y primera línea coincidente, y conserva el nombre accesible", () => {
+    const props = {
+      notes: [note("1", "Ideas Sprint\nResumen habitual\n- **Sprint** pendiente")],
+      selectedId: null,
+      trashed: false,
+      onSelect: vi.fn(),
+      onTrash: vi.fn(),
+      onPin: vi.fn(),
+    };
+    const { container, rerender } = render(<NoteList {...props} query="spr" />, {
+      wrapper: TooltipProvider,
+    });
+    const button = screen.getByRole("button", { name: "Ideas Sprint" });
+    // La primera línea del cuerpo también puede contener el título.
+    expect([...button.querySelectorAll("mark")].map((mark) => mark.textContent)).toEqual([
+      "Sprint",
+      "Sprint",
+    ]);
+    rerender(
+      <NoteList
+        {...props}
+        notes={[
+          { ...note("1", "Ideas Sprint"), body_md: "Resumen habitual\n- **Sprint** pendiente" },
+        ]}
+        query="spr"
+      />,
+    );
+    expect(button.textContent).toContain("Sprint pendiente");
+    expect(button.textContent).not.toContain("Resumen habitual");
+    rerender(<NoteList {...props} query="" />);
+    expect(container.querySelector("mark")).toBeNull();
+    expect(button.textContent).toContain("Resumen habitual");
+  });
+
+  it("mantiene el resumen habitual si solo coincide el título", () => {
+    render(
+      <NoteList
+        notes={[{ ...note("1", "Resumen habitual"), title: "Sprint" }]}
+        selectedId={null}
+        trashed={false}
+        query="spr"
+        onSelect={vi.fn()}
+        onTrash={vi.fn()}
+        onPin={vi.fn()}
+      />,
+      { wrapper: TooltipProvider },
+    );
+    const button = screen.getByRole("button", { name: "Sprint" });
+    expect(button.textContent).toContain("Resumen habitual");
+    expect(button.querySelectorAll("mark")).toHaveLength(1);
+  });
+
+  it("pinta etiquetas como texto seguro", () => {
+    const title = "<img src=x onerror=alert(1)>";
+    const { container } = render(
+      <NoteList
+        notes={[note("1", title)]}
+        selectedId={null}
+        trashed={false}
+        query="img"
+        onSelect={vi.fn()}
+        onTrash={vi.fn()}
+        onPin={vi.fn()}
+      />,
+      { wrapper: TooltipProvider },
+    );
+    const button = screen.getByRole("button", { name: title });
+    expect(button.textContent).toContain(title);
+    expect(button.querySelector("mark")?.textContent).toBe("img");
+    expect(container.querySelector("img")).toBeNull();
   });
 });

@@ -55,7 +55,7 @@ export function NotesSidebar({
           { value: "trash", label: t("trash") },
         ]}
       />
-      <NoteList {...list} />
+      <NoteList {...list} query={list.trashed ? "" : query} />
     </aside>
   );
 }

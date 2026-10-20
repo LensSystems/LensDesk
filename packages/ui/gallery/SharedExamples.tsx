@@ -89,6 +89,26 @@ export function SharedExamples() {
             selected
             actions={<Button>Acción de tarjeta</Button>}
           />
+          <ListItem
+            variant="card"
+            aria-label="Ideas para el sprint"
+            title={
+              <>
+                Ideas para el{" "}
+                <mark className="rounded-ld-sm bg-accent-soft px-0.5 text-accent-soft-fg">
+                  sprint
+                </mark>
+              </>
+            }
+            secondaryText={
+              <>
+                Preparar el{" "}
+                <mark className="rounded-ld-sm bg-accent-soft px-0.5 text-accent-soft-fg">
+                  sprint
+                </mark>
+              </>
+            }
+          />
           <ListItem title="Normal" />
           <ListItem title="Deshabilitado" disabled />
         </nav>

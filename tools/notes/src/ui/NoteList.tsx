@@ -1,5 +1,6 @@
 import { IconButton, ListItem, Star, Trash2 } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
+import { Highlighted } from "./Highlighted.tsx";
 import { noteSummary } from "./note-summary.ts";
 
 export type Note = {
@@ -14,6 +15,7 @@ export type Note = {
 
 export function NoteList({
   notes,
+  query = "",
   selectedId,
   trashed,
   onSelect,
@@ -21,6 +23,7 @@ export function NoteList({
   onPin,
 }: {
   notes: Note[];
+  query?: string;
   selectedId: string | null;
   trashed: boolean;
   onSelect: (id: string) => void;
@@ -34,8 +37,21 @@ export function NoteList({
         <ListItem
           key={note.id}
           variant="card"
-          title={note.title || t("untitled")}
-          secondaryText={noteSummary(note.body_md, note.title)}
+          aria-label={note.title || t("untitled")}
+          title={
+            query.trim() ? (
+              <Highlighted text={note.title || t("untitled")} query={query} />
+            ) : (
+              note.title || t("untitled")
+            )
+          }
+          secondaryText={
+            query.trim() ? (
+              <Highlighted text={noteSummary(note.body_md, note.title, query)} query={query} />
+            ) : (
+              noteSummary(note.body_md, note.title)
+            )
+          }
           selected={selectedId === note.id}
           onClick={() => onSelect(note.id)}
           actions={
