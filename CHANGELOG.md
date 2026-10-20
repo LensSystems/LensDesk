@@ -48,6 +48,10 @@ Diseño nuevo para LensDesk y sus herramientas.
 - Los títulos de nota y los nombres de archivo largos ya no ocultan botones ni ensanchan la lista.
 - Las herramientas usaban la letra del sistema en lugar de la incluida.
 - El estado de pantalla completa se mantiene al recargar la ventana.
+- Al actualizar una herramienta con su pestaña abierta, la pestaña se recarga con la versión
+  nueva; antes seguía mostrando la anterior hasta reiniciar LensDesk.
+- Sin empaquetar (`pnpm dev`), LensDesk no encontraba las claves de firma y rechazaba los paquetes
+  firmados.
 
 ## [0.1.0] - 2026-10-16
 
