@@ -35,7 +35,8 @@ describe("coloreado de Markdown", () => {
 
   it("solo usa colores del tema, nunca valores fijos", () => {
     const rules = markdownHighlightStyle.module?.getRules() ?? "";
-    expect(rules).toContain("var(--ld-");
+    expect(rules).toContain("var(--ld-code)");
+    expect(rules).not.toContain("var(--ld-success)");
     expect(rules).not.toMatch(/#[\da-f]{3,8}\b|rgb\(/i);
   });
 });

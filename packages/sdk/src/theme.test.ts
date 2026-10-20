@@ -14,6 +14,7 @@ const palette = {
   "--ld-accent-fg": ["#0A1E3F", "#FFFFFF"],
   "--ld-accent-soft": ["#2C3E5C", "#E3ECFD"],
   "--ld-accent-soft-fg": ["#BFD6FF", "#1E40AF"],
+  "--ld-code": ["#6EDC8C", "#197B35"],
   "--ld-success": ["#6EDC8C", "#197B35"],
   "--ld-success-soft": ["#2E4A3A", "#E3F4E8"],
   "--ld-warning": ["#F2C66D", "#8A5A00"],
@@ -84,6 +85,7 @@ describe("design tokens", () => {
       "--ld-text-muted",
       "--ld-accent",
       "--ld-success",
+      "--ld-code",
       "--ld-warning",
       "--ld-danger",
     ] as const;
@@ -143,6 +145,7 @@ describe("design tokens", () => {
       );
       expect(Object.keys(accent).sort()).toEqual(
         [
+          "--ld-code",
           "--ld-accent",
           "--ld-accent-hover",
           "--ld-accent-fg",
@@ -152,6 +155,9 @@ describe("design tokens", () => {
       );
       const values = { ...declarations(theme), ...accent };
       for (const ground of ["--ld-bg", "--ld-surface", "--ld-surface-raised"]) {
+        expect(
+          contrast(tokenValue(values, "--ld-code"), tokenValue(values, ground)),
+        ).toBeGreaterThanOrEqual(4.5);
         const ratio = contrast(tokenValue(values, "--ld-accent"), tokenValue(values, ground));
         expect(ratio, `${theme}: acento sobre ${ground}`).toBeGreaterThanOrEqual(4.5);
         expect(ratio, `${theme}: foco sobre ${ground}`).toBeGreaterThanOrEqual(3);

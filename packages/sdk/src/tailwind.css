@@ -9,6 +9,7 @@
   --color-accent: var(--ld-accent);
   --color-accent-hover: var(--ld-accent-hover);
   --color-accent-fg: var(--ld-accent-fg);
+  --color-code: var(--ld-code);
   --color-success: var(--ld-success);
   --color-warning: var(--ld-warning);
   --color-danger: var(--ld-danger);
