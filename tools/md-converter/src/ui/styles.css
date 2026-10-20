@@ -47,6 +47,7 @@ body {
 }
 .queue-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin: 0;
   padding: 0;
@@ -54,6 +55,7 @@ body {
 }
 .queue-row {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
   padding: 8px;
   border: 1px solid var(--ld-border);
@@ -75,9 +77,11 @@ body {
 .queue-name {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
   justify-content: flex-start;
   text-align: left;
+}
+.queue-name > span {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

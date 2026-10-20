@@ -44,7 +44,7 @@ export function Queue({
                   disabled={item.status !== "done"}
                   onClick={() => onSelect(item.id)}
                 >
-                  {item.file.name}
+                  <span>{item.file.name}</span>
                 </Button>
                 {(item.status === "queued" || item.status === "converting") && (
                   <Button

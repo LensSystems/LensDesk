@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
@@ -47,6 +47,44 @@ test("el Convertidor muestra una tabla GFM para HTML y CSV", async () => {
     await expect(raw).toContainText("| Nombre | Detalle |");
     await expect(raw).toContainText("| --- | --- |");
     await expect(raw).toContainText("| Ada | valor \\| uno |");
+  } finally {
+    await app.close().catch(() => undefined);
+    await rm(userDataDir, { recursive: true, force: true });
+  }
+});
+
+test("un nombre de archivo largo no ensancha la cola", async () => {
+  const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-converter-e2e-"));
+  const pkg = join(toolDir, "dist/md-converter-0.1.0.lenspkg");
+  const name = `${"documento-con-un-nombre-muy-largo-".repeat(6)}final.html`;
+  const longFile = join(userDataDir, name);
+  await copyFile(join(toolDir, "tests/fixtures/sample.html"), longFile);
+  const app = await launchApp({ userDataDir });
+  try {
+    const shell = await app.firstWindow();
+    await enableDeveloperMode(shell);
+    await stubDialog(app, "open", { canceled: false, filePaths: [pkg] });
+    await shell.getByRole("button", { name: "Herramientas" }).click();
+    await shell.getByRole("button", { name: "Agregar herramienta…" }).click();
+    await shell.getByText("Convertidor", { exact: true }).waitFor();
+    await shell.getByRole("button", { name: "Convertidor", exact: true }).click();
+    const tool = await toolPage(app, "md-converter");
+
+    await stubDialog(app, "open", { canceled: false, filePaths: [longFile] });
+    await tool.getByRole("button", { name: "Elegir archivos…" }).click();
+    const queue = tool.getByRole("list", { name: "Cola de conversión" });
+    const row = queue.getByRole("listitem").filter({ hasText: "Listo" });
+    await expect(row).toBeVisible();
+
+    const rowBox = await row.boundingBox();
+    const preview = await tool.getByRole("tab", { name: "Markdown crudo" }).boundingBox();
+    expect(rowBox && preview).toBeTruthy();
+    if (!rowBox || !preview) return;
+    // La fila no invade la vista previa y la barra de progreso sigue visible.
+    expect(rowBox.x + rowBox.width).toBeLessThan(preview.x);
+    await expect(tool.getByRole("progressbar", { name: `Progreso de ${name}` })).toBeInViewport({
+      ratio: 1,
+    });
   } finally {
     await app.close().catch(() => undefined);
     await rm(userDataDir, { recursive: true, force: true });
