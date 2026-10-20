@@ -62,7 +62,13 @@
     "exportLogsError": "No se pudieron exportar los registros.",
     "exportLogs": "Exportar registros",
     "openDataFolder": "Carpeta de datos",
-    "about": "Acerca de · LensDesk {{version}}"
+    "about": "Acerca de · LensDesk {{version}}",
+    "appearance": "Apariencia",
+    "general": "General",
+    "dataAndLogs": "Datos y registros",
+    "checkUpdatesDescription": "Una vez al día, LensDesk consulta si hay una versión nueva.",
+    "developerModeDescription": "Permite instalar herramientas sin firmar.",
+    "localDataDescription": "Tus datos viven solo en este equipo."
   },
   "ui": {
     "loading": "Cargando",

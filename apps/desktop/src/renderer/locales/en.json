@@ -62,7 +62,13 @@
     "exportLogsError": "Could not export the logs.",
     "exportLogs": "Export logs",
     "openDataFolder": "Data folder",
-    "about": "About · LensDesk {{version}}"
+    "about": "About · LensDesk {{version}}",
+    "appearance": "Appearance",
+    "general": "General",
+    "dataAndLogs": "Data and logs",
+    "checkUpdatesDescription": "Once a day, LensDesk checks for a new version.",
+    "developerModeDescription": "Allows you to install unsigned tools.",
+    "localDataDescription": "Your data stays on this computer."
   },
   "ui": {
     "loading": "Loading",

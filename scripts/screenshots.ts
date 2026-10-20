@@ -204,8 +204,10 @@ async function run() {
       await expect(updates).toHaveAttribute("aria-checked", "false");
       await shell.getByRole("combobox", { name: "Idioma", exact: true }).click();
       await shell.getByRole("option", { name: "Español", exact: true }).click();
-      await shell.getByRole("combobox", { name: "Tema", exact: true }).click();
-      await shell.getByRole("option", { name: label, exact: true }).click();
+      await shell
+        .getByRole("radiogroup", { name: "Tema", exact: true })
+        .getByRole("radio", { name: label, exact: true })
+        .click();
       await expect(shell.locator("html")).toHaveAttribute("data-theme", theme);
       const snap = async (name: string, tool?: Page) => {
         const relative = join(theme, `${name}.png`);
