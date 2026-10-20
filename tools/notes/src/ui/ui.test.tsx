@@ -297,6 +297,51 @@ describe("interfaz de Notas", () => {
     await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("restore", { id: "1" }));
   });
 
+  it("una carga lenta anterior no borra la nota recién creada", async () => {
+    const fake = fakeClient();
+    const original = fake.invoke.getMockImplementation();
+    let releaseList: (() => void) | undefined;
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "list" && !releaseList) {
+        const rows = await original?.(method, params);
+        await new Promise<void>((resolve) => {
+          releaseList = resolve;
+        });
+        return rows;
+      }
+      return original?.(method, params);
+    });
+    render(<App client={fake.client as never} />);
+    await waitFor(() => expect(releaseList).toBeDefined());
+    fireEvent.click(screen.getAllByRole("button", { name: "Nueva nota" })[0] as HTMLElement);
+    await waitFor(() => expect(document.querySelector(".cm-content")).not.toBeNull());
+    await act(async () => releaseList?.());
+    expect(document.querySelector(".cm-content")).not.toBeNull();
+  });
+
+  it("mover a la papelera mientras se abre la Papelera muestra la nota allí", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Archivar" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("button", { name: "Archivar" });
+    const original = fake.invoke.getMockImplementation();
+    let finishTrash: (() => void) | undefined;
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "trash")
+        await new Promise<void>((resolve) => {
+          finishTrash = resolve;
+        });
+      return original?.(method, params);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
+    await waitFor(() => expect(finishTrash).toBeDefined());
+    fireEvent.click(screen.getByRole("radio", { name: "Papelera" }));
+    await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("list", { trashed: true }));
+    await act(async () => finishTrash?.());
+    expect(await screen.findByRole("button", { name: "Archivar" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "Papelera" })).toHaveAttribute("aria-checked", "true");
+  });
+
   it("buscar no desmonta el cuadro de búsqueda ni pisa el texto sin guardar", async () => {
     const fake = fakeClient();
     await fake.invoke("create", { body_md: "# Borrador" });

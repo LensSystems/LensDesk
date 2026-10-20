@@ -50,6 +50,8 @@ Diseño nuevo para LensDesk y sus herramientas.
 - El estado de pantalla completa se mantiene al recargar la ventana.
 - Al actualizar una herramienta con su pestaña abierta, la pestaña se recarga con la versión
   nueva; antes seguía mostrando la anterior hasta reiniciar LensDesk.
+- Notas: con el backend lento, una nota recién creada podía desaparecer de la lista y la Papelera
+  podía mostrarse vacía justo después de mover una nota a ella.
 - Sin empaquetar (`pnpm dev`), LensDesk no encontraba las claves de firma y rechazaba los paquetes
   firmados.
 

@@ -33,15 +33,24 @@ export function useNotes(client: Client) {
   const notesRef = useRef(notes);
   notesRef.current = notes;
 
+  // Con un backend lento las respuestas pueden llegar desordenadas: solo cuenta la petición más
+  // reciente, y crear una nota descarta las cargas en curso para que no la borren de la lista.
+  const latestLoad = useRef(0);
+  // Vista visible ahora mismo: tras borrar o restaurar se recarga esta, no la de cuando se pulsó.
+  const view = useRef({ trashed, query });
+  view.current = { trashed, query };
+
   // Solo la primera carga muestra "Cargando": las siguientes conservan la lista, el cuadro de
   // búsqueda con su foco y el texto que el editor aún no ha guardado.
   const load = useCallback(
     async (inTrash = trashed, search = query): Promise<boolean> => {
+      const request = ++latestLoad.current;
       try {
         const rows =
           search.trim() && !inTrash
             ? await client.backend.invoke<Note[]>("search", { query: search })
             : await client.backend.invoke<Note[]>("list", { trashed: inTrash });
+        if (request !== latestLoad.current) return true;
         setNotes(rows);
         if (!rows.some((note) => note.id === selectedRef.current)) {
           setSelectedId(rows[0]?.id ?? null);
@@ -50,6 +59,7 @@ export function useNotes(client: Client) {
         setError("");
         return true;
       } catch (reason) {
+        if (request !== latestLoad.current) return true;
         setError(t("errors.generic", { code: errorCode(reason) }));
         return false;
       } finally {
@@ -109,6 +119,7 @@ export function useNotes(client: Client) {
   const create = async (content = "") => {
     try {
       const note = await client.backend.invoke<Note>("create", { body_md: content });
+      latestLoad.current++;
       setTrashed(false);
       setQuery("");
       setNotes((current) => [note, ...current]);
@@ -148,7 +159,7 @@ export function useNotes(client: Client) {
   const trashNote = async (id: string) => {
     try {
       await client.backend.invoke("trash", { id });
-      await load(false, query);
+      await load(view.current.trashed, view.current.query);
     } catch (reason) {
       await fail(reason);
     }
@@ -156,7 +167,7 @@ export function useNotes(client: Client) {
   const restore = async (id: string) => {
     try {
       await client.backend.invoke("restore", { id });
-      await load(true, "");
+      await load(view.current.trashed, view.current.query);
     } catch (reason) {
       await fail(reason);
     }
