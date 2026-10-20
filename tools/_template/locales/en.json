@@ -9,5 +9,10 @@
   "pingSuccess": "Successful response",
   "errors": {
     "generic": "The action could not be completed ({{code}})"
-  }
+  },
+  "storageDescription": "Saved with storage and kept after restarting.",
+  "backendLabel": "Backend",
+  "backendDescription": "Calls ping in the tool process.",
+  "filesLabel": "Files",
+  "filesDescription": "Opens a text file without receiving its path."
 }

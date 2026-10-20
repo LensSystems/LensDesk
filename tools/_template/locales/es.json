@@ -9,5 +9,10 @@
   "pingSuccess": "Respuesta correcta",
   "errors": {
     "generic": "No se pudo completar la acción ({{code}})"
-  }
+  },
+  "storageDescription": "Se guarda con storage y se conserva al reiniciar.",
+  "backendLabel": "Backend",
+  "backendDescription": "Llama a ping en el proceso de la herramienta.",
+  "filesLabel": "Archivos",
+  "filesDescription": "Abre un archivo de texto sin recibir su ruta."
 }
