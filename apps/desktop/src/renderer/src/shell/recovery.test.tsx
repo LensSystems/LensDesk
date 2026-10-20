@@ -6,6 +6,7 @@ import { useShellStore } from "../state/store.ts";
 import { App } from "./App.tsx";
 import { ErrorBoundary } from "./ErrorBoundary.tsx";
 import { SettingsPage } from "./SettingsPage.tsx";
+import { ToolCrashed } from "./ToolCrashed.tsx";
 
 function makeBridge() {
   const listeners = new Map<string, (payload: unknown) => void>();
@@ -57,10 +58,18 @@ describe("recuperación del shell", () => {
       throw new Error("fallo");
     }
     render(
-      <ErrorBoundary title="Error" description="Descripción" reloadLabel="Recargar">
+      <ErrorBoundary
+        title={rendererI18n.t("recovery.errorTitle")}
+        description={rendererI18n.t("recovery.errorDescription")}
+        reloadLabel={rendererI18n.t("recovery.reload")}
+      >
         <Broken />
       </ErrorBoundary>,
     );
+    expect(
+      screen.getByRole("heading", { level: 1, name: "LensDesk encontró un problema" }),
+    ).toBeTruthy();
+    expect(screen.getByText("La interfaz no pudo cargarse correctamente.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Recargar" }));
     expect(reload).toHaveBeenCalled();
     vi.unstubAllGlobals();
@@ -96,11 +105,38 @@ describe("recuperación del shell", () => {
     expect(useShellStore.getState().crashedToolId).toBe("otra");
     expect(screen.queryByRole("button", { name: "Reintentar" })).toBeNull();
     act(() => listeners.get("tool.crashed")?.({ toolId: "notas" }));
-    expect(await screen.findByRole("heading", { name: "Notas dejó de funcionar" })).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Notas dejó de funcionar" }),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     await waitFor(() => expect(invoke).toHaveBeenCalledWith("tabs.close", { toolId: "notas" }));
     await waitFor(() => expect(invoke).toHaveBeenCalledWith("tabs.open", { toolId: "notas" }));
     expect(useShellStore.getState().crashedToolId).toBeNull();
+  });
+
+  it("deshabilita el reintento y evita duplicar el cierre y la apertura", async () => {
+    await rendererI18n.changeLanguage("es");
+    let finishClose!: () => void;
+    const closing = new Promise<void>((resolve) => {
+      finishClose = resolve;
+    });
+    const invoke = vi.fn(async (channel: string) => {
+      if (channel === "tabs.close") await closing;
+      return { ok: true, data: { tabs: [] } };
+    });
+    const bridge = { invoke } as unknown as HostBridge;
+    render(<ToolCrashed toolId="notas" bridge={bridge} />);
+    const retry = screen.getByRole("button", { name: "Reintentar" });
+    fireEvent.click(retry);
+    expect((retry as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(retry);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenNthCalledWith(1, "tabs.close", { toolId: "notas" });
+    await act(async () => {
+      finishClose();
+    });
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(invoke).toHaveBeenNthCalledWith(2, "tabs.open", { toolId: "notas" });
   });
 
   it("ejecuta acciones de Ajustes e invoca settings.set", async () => {

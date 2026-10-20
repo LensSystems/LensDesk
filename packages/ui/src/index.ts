@@ -26,6 +26,7 @@ export {
   Plus,
   Puzzle,
   Regex,
+  RotateCw,
   Search,
   Settings,
   SlidersHorizontal,
