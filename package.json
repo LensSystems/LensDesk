@@ -25,6 +25,7 @@
     "dev": "pnpm --filter @lensdesk/desktop dev",
     "build": "pnpm --filter @lensdesk/desktop build",
     "smoke": "pnpm build && node scripts/smoke-check.ts",
+    "icons": "node scripts/build-icons.ts",
     "screenshots": "node scripts/screenshots.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check --error-on-warnings .",

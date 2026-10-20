@@ -52,7 +52,6 @@
     "accent": "Color de acento",
     "blue": "Azul",
     "green": "Verde",
-
     "title": "Ajustes",
     "language": "Idioma",
     "spanish": "Español",
@@ -67,13 +66,16 @@
     "exportLogsError": "No se pudieron exportar los registros.",
     "exportLogs": "Exportar registros",
     "openDataFolder": "Carpeta de datos",
-    "about": "Acerca de · LensDesk {{version}}",
     "appearance": "Apariencia",
     "general": "General",
     "dataAndLogs": "Datos y registros",
     "checkUpdatesDescription": "Una vez al día, LensDesk consulta si hay una versión nueva.",
     "developerModeDescription": "Permite instalar herramientas sin firmar.",
-    "localDataDescription": "Tus datos viven solo en este equipo."
+    "localDataDescription": "Tus datos viven solo en este equipo.",
+    "aboutTitle": "Acerca de",
+    "byline": "de LensSystems",
+    "appVersion": "Versión {{version}}",
+    "aboutDescription": "Escritorio de herramientas para desarrolladores. 100 % local. Licencia MIT."
   },
   "ui": {
     "loading": "Cargando",

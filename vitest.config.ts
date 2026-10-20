@@ -22,6 +22,7 @@ export default defineConfig({
             "tools/*/src/backend/**/*.test.ts",
             "tools/*/tests/**/*.test.ts",
             "tests/unit/**/*.test.ts",
+            "scripts/**/*.test.ts",
           ],
           exclude,
         },

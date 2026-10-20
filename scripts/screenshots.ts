@@ -264,7 +264,7 @@ async function run() {
       }
       await snap("herramientas");
       await shell.getByRole("button", { name: "Ajustes", exact: true }).click();
-      await expect(shell.getByText(/Acerca de · LensDesk/)).not.toContainText("Cargando");
+      await expect(shell.getByText(/^Versión /)).not.toContainText("Cargando");
       await snap("ajustes");
       const open = async (name: string, id: string) => {
         await shell.getByRole("button", { name: "Herramientas", exact: true }).click();

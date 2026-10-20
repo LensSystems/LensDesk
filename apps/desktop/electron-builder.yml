@@ -13,6 +13,7 @@ extraResources:
 artifactName: "${productName}-${version}-${os}-${arch}.${ext}"
 publish: null
 mac:
+  icon: build/icon.icns
   category: public.app-category.developer-tools
   identity: "-"
   hardenedRuntime: false
@@ -22,9 +23,12 @@ mac:
     - target: zip
       arch: [arm64, x64]
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch: [x64]
 nsis:
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
   oneClick: true
   perMachine: false

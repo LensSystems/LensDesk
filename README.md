@@ -1,6 +1,11 @@
 <div align="center">
 
-# LensDesk
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png">
+  <img src="docs/images/logo-light.png" alt="LensDesk" width="260">
+</picture>
+
+<h1>LensDesk</h1>
 
 **Un escritorio de herramientas para desarrolladores: modular, con pestañas y 100 % local.**
 

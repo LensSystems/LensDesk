@@ -43,6 +43,17 @@ export async function toolPage(app: ElectronApplication, toolId: string): Promis
   throw new Error(`No se abrió la vista de la herramienta ${toolId}`);
 }
 
+// Con herramientas abiertas al arrancar, la primera ventana puede ser una vista de herramienta.
+export async function shellPage(app: ElectronApplication): Promise<Page> {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    const found = app.windows().find((page) => !page.url().startsWith("lenstool://"));
+    if (found) return found;
+    await new Promise((resolveWait) => setTimeout(resolveWait, 100));
+  }
+  throw new Error("No se abrió la ventana de LensDesk");
+}
+
 export async function enableDeveloperMode(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Ajustes" }).click();
   const toggle = page.getByRole("switch", { name: "Modo desarrollador" });

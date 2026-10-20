@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import type { HostSettingKey } from "../../../shared/host-channels.ts";
 import { useShellStore } from "../state/store.ts";
 
+import { AppLogo } from "./AppLogo.tsx";
 import { PageFrame } from "./PageFrame.tsx";
 import { SettingsRow } from "./SettingsRow.tsx";
 import { SettingsSection } from "./SettingsSection.tsx";
@@ -126,9 +127,22 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
             </div>
           </SettingsRow>
         </SettingsSection>
-        <p className="text-[13px] text-muted">
-          {t("settingsPage.about", { version: version ?? t("ui.loading") })}
-        </p>
+        <SettingsSection title={t("settingsPage.aboutTitle")}>
+          <div className="flex items-center gap-4 p-4">
+            <AppLogo />
+            <div className="leading-tight">
+              <p className="text-[22px] font-extrabold tracking-tight">
+                <span className="text-text">Lens</span>
+                <span className="text-accent">Desk</span>
+              </p>
+              <p className="text-xs text-muted">{t("settingsPage.byline")}</p>
+              <p className="mt-1 font-mono text-xs text-muted">
+                {t("settingsPage.appVersion", { version: version ?? t("ui.loading") })}
+              </p>
+            </div>
+          </div>
+          <p className="px-4 pb-4 text-[13px] text-muted">{t("settingsPage.aboutDescription")}</p>
+        </SettingsSection>
       </div>
     </PageFrame>
   );

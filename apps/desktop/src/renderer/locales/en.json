@@ -52,7 +52,6 @@
     "accent": "Accent color",
     "blue": "Blue",
     "green": "Green",
-
     "title": "Settings",
     "language": "Language",
     "spanish": "Spanish",
@@ -67,13 +66,16 @@
     "exportLogsError": "Could not export the logs.",
     "exportLogs": "Export logs",
     "openDataFolder": "Data folder",
-    "about": "About · LensDesk {{version}}",
     "appearance": "Appearance",
     "general": "General",
     "dataAndLogs": "Data and logs",
     "checkUpdatesDescription": "Once a day, LensDesk checks for a new version.",
     "developerModeDescription": "Allows you to install unsigned tools.",
-    "localDataDescription": "Your data stays on this computer."
+    "localDataDescription": "Your data stays on this computer.",
+    "aboutTitle": "About",
+    "byline": "by LensSystems",
+    "appVersion": "Version {{version}}",
+    "aboutDescription": "A desktop of tools for developers. 100% local. MIT license."
   },
   "ui": {
     "loading": "Loading",

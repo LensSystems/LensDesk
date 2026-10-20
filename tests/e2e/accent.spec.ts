@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
-import { enableDeveloperMode, launchApp, stubDialog, toolPage } from "./helpers.ts";
+import { enableDeveloperMode, launchApp, shellPage, stubDialog, toolPage } from "./helpers.ts";
 
 test("el acento cambia en Notas abierta y persiste al reiniciar", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-accent-e2e-"));
@@ -28,7 +28,7 @@ test("el acento cambia en Notas abierta y persiste al reiniciar", async () => {
     await expect(notes.locator("html")).toHaveAttribute("data-accent", "green");
     await app.close();
     app = await launchApp({ userDataDir });
-    shell = await app.firstWindow();
+    shell = await shellPage(app);
     const reopened = await toolPage(app, "notes");
     await expect(shell.locator("html")).toHaveAttribute("data-accent", "green");
     await expect(reopened.locator("html")).toHaveAttribute("data-accent", "green");

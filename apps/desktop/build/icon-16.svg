@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <title>LensDesk</title>
+  <rect width="100" height="100" rx="22" fill="#2563EB"/>
+  <rect x="14" y="23" width="62" height="62" rx="9" fill="#FFFFFF"/>
+  <circle cx="45" cy="23" r="12" fill="#FFFFFF"/>
+  <circle cx="76" cy="54" r="12" fill="#FFFFFF"/>
+  <text x="45" y="67" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="800" font-size="36" letter-spacing="-2.2" fill="#2A2F36">L<tspan fill="#2563EB">D</tspan></text>
+</svg>
