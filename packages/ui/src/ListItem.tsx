@@ -16,7 +16,7 @@ export function ListItem({
   ...props
 }: ListItemProps) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex min-w-0 items-center gap-1">
       <button
         {...props}
         type="button"
@@ -32,7 +32,7 @@ export function ListItem({
           <span className="block truncate text-xs text-muted">{secondaryText}</span>
         )}
       </button>
-      {actions}
+      {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}
     </div>
   );
 }
