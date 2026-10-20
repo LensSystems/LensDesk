@@ -1,3 +1,4 @@
+import { Button } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import type { HostEventPayloads } from "../../../shared/host-channels.ts";
 
@@ -7,26 +8,31 @@ type Props = {
   onDismiss: () => void;
 };
 
-// Aviso compacto dentro del encabezado de 36 px: una línea, sin empujar el contenido.
+// Aviso compacto dentro del encabezado: una línea, sin empujar el contenido.
 export function UpdateBanner({ update, bridge, onDismiss }: Props) {
   const { t } = useTranslation();
   return (
-    <div className="flex h-7 min-w-0 items-center gap-1 text-xs" role="status">
+    <div
+      className="flex h-8 min-w-0 items-center gap-1 rounded-full bg-accent-soft pl-3 pr-1 text-xs text-accent-soft-fg"
+      role="status"
+    >
       <span className="truncate">{t("recovery.updateAvailable", { version: update.version })}</span>
-      <button
-        className="h-6 shrink-0 rounded bg-accent px-2 text-accent-fg"
+      <Button
+        variant="primary"
+        className="h-6 shrink-0 px-2 text-xs"
         onClick={() => void bridge.invoke("app.openExternal", { url: update.html_url })}
         type="button"
       >
         {t("recovery.viewUpdate")}
-      </button>
-      <button
-        className="h-6 shrink-0 rounded border border-border px-2"
+      </Button>
+      <Button
+        variant="ghost"
+        className="h-6 shrink-0 px-2 text-xs text-accent-soft-fg"
         onClick={onDismiss}
         type="button"
       >
         {t("ui.dismiss")}
-      </button>
+      </Button>
     </div>
   );
 }

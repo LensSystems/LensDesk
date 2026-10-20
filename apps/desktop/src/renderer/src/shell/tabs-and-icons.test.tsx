@@ -2,6 +2,7 @@ import { Puzzle, StickyNote, TooltipProvider } from "@lensdesk/ui";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HostBridge } from "../../../shared/host-channels.ts";
+import { HEADER_HEIGHT } from "../../../shared/layout.ts";
 import { rendererI18n } from "../i18n.ts";
 import { useShellStore } from "../state/store.ts";
 import { App } from "./App.tsx";
@@ -22,7 +23,7 @@ const tabs = [
   { toolId: "otra", position: 2, active: false },
 ];
 const tools = [
-  { id: "notas", manifest: { name: { es: "Notas", en: "Notes" } } },
+  { id: "notas", manifest: { icon: "sticky-note", name: { es: "Notas", en: "Notes" } } },
   { id: "conv", manifest: { name: { es: "Convertidor", en: "Converter" } } },
 ] as never;
 
@@ -68,6 +69,29 @@ describe("pestañas", () => {
     expect(screen.getByRole("button", { name: "Cerrar Notas" })).toBeTruthy();
     await act(() => rendererI18n.changeLanguage("en"));
     expect(screen.getByRole("tab", { name: "Notes" })).toBeTruthy();
+  });
+
+  it("sin pestañas no pinta la pista vacía", () => {
+    render(
+      <TooltipProvider>
+        <TabBar bridge={makeBridge().bridge} tabs={[]} />
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole("tablist").className).not.toContain("bg-surface");
+  });
+
+  it("muestra la marca, el icono y un cierre separado de la pestaña", () => {
+    renderBar(makeBridge().bridge);
+    expect(screen.getByRole("banner").contains(screen.getByText("LensDesk"))).toBe(true);
+    const tab = screen.getByRole("tab", { name: "Notas" });
+    const icon = tab.querySelector("svg.lucide-sticky-note");
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    expect(icon?.getAttribute("width")).toBe("15");
+    const close = screen.getByRole("button", { name: "Cerrar Notas" });
+    expect(close.tagName).toBe("BUTTON");
+    expect(tab.contains(close)).toBe(false);
+    expect(close.closest('[role="tab"]')).toBeNull();
+    expect(tab.parentElement?.contains(close)).toBe(true);
   });
 
   it("actualiza el nombre de la pestaña cuando cambia la lista de herramientas", async () => {
@@ -184,7 +208,7 @@ describe("avisos dentro del encabezado", () => {
     });
     render(<App bridge={makeBridge().bridge} />);
     const header = screen.getByRole("banner");
-    expect(header.className).toContain("h-9");
+    expect(header.style.height).toBe(`${HEADER_HEIGHT}px`);
     expect(header.contains(screen.getByText("LensDesk 9.0.0 está disponible."))).toBe(true);
     expect(header.contains(screen.getByRole("button", { name: "Ver actualización" }))).toBe(true);
     expect(header.contains(screen.getByText("Hecho"))).toBe(true);

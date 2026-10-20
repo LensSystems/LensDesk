@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { shell, WebContentsView } from "electron";
+import { HEADER_HEIGHT } from "../../shared/layout.ts";
 import { registerToolProtocolFor } from "./protocol.ts";
 
 export function toolWebPreferences(toolId: string): Electron.WebPreferences {
@@ -18,7 +19,12 @@ export function computeViewBounds(bounds: {
   width: number;
   height: number;
 }) {
-  return { x: 0, y: 36, width: bounds.width, height: Math.max(0, bounds.height - 36) };
+  return {
+    x: 0,
+    y: HEADER_HEIGHT,
+    width: bounds.width,
+    height: Math.max(0, bounds.height - HEADER_HEIGHT),
+  };
 }
 
 export function decideNavigation(url: string): "deny" | "external" {
