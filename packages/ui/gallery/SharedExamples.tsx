@@ -80,6 +80,13 @@ export function SharedExamples() {
             selected
             actions={<Button>Acción</Button>}
           />
+          <ListItem
+            variant="card"
+            title="Tarjeta"
+            secondaryText="Resumen"
+            selected
+            actions={<Button>Acción de tarjeta</Button>}
+          />
           <ListItem title="Normal" />
           <ListItem title="Deshabilitado" disabled />
         </nav>

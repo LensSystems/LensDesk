@@ -13,78 +13,117 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
-.app-toolbar,
-.editor-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--ld-border);
-}
-.app-toolbar h1,
-.editor-toolbar h1 {
-  margin: 0 auto 0 0;
-  font-size: 15px;
-  font-weight: 600;
+  gap: 12px;
+  padding: 0 12px 12px;
 }
 .workspace {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 240px 1fr;
+  display: flex;
+  gap: 12px;
 }
 .note-list {
+  width: 300px;
+  flex: none;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-right: 1px solid var(--ld-border);
-  overflow: auto;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+}
+.sidebar-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sidebar-heading h1 {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 700;
+}
+.sidebar-heading button {
+  flex-shrink: 0;
 }
 .note-list nav {
   display: grid;
   align-content: start;
-  gap: 4px;
+  gap: 8px;
 }
 .editor-panel {
+  flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+  overflow: hidden;
+}
+.editor-toolbar {
+  height: 56px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 0 24px;
+  border-bottom: 1px solid var(--ld-border);
+}
+.editor-toolbar h2 {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.editor-toolbar > :not(h2) {
+  flex-shrink: 0;
 }
 .code-editor {
   flex: 1;
+  min-height: 0;
   overflow: auto;
-  padding: 12px;
 }
 .cm-editor {
   height: 100%;
   font:
-    13px / 1.5 "JetBrains Mono Variable",
+    13px / 1.75 "JetBrains Mono Variable",
     monospace;
   color: var(--ld-text);
   background: var(--ld-bg);
 }
-.cm-scroller {
-  overflow: auto;
-}
-/* CodeMirror fija `monospace` en .cm-scroller con un selector propio: este gana por especificidad. */
 .code-editor .cm-editor .cm-scroller {
+  overflow: auto;
   font-family: "JetBrains Mono Variable", monospace;
 }
-.cm-gutters {
+.code-editor .cm-content {
+  padding: 16px 0;
+  caret-color: var(--ld-accent);
+}
+.code-editor .cm-line {
+  padding: 0 20px;
+}
+.code-editor .cm-gutters {
   color: var(--ld-text-muted);
   background: var(--ld-surface);
   border-right: 1px solid var(--ld-border);
 }
-.cm-cursor {
-  border-left-color: var(--ld-accent);
+.code-editor .cm-activeLine,
+.code-editor .cm-activeLineGutter {
+  background: var(--ld-surface);
+}
+.code-editor .cm-cursor {
+  border-left: 2px solid var(--ld-accent);
+}
+.code-editor .cm-selectionBackground,
+.code-editor .cm-content ::selection {
+  background: var(--ld-accent-soft);
 }
 .empty-state {
-  display: grid;
-  place-content: center;
-  justify-items: center;
-}
-.muted {
-  color: var(--ld-text-muted);
+  align-items: center;
+  justify-content: center;
 }

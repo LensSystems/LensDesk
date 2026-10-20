@@ -1,16 +1,11 @@
 import type { createToolClient } from "@lensdesk/sdk";
-import {
-  Button,
-  ConfirmDialog,
-  Notice,
-  SegmentedControl,
-  TooltipProvider,
-  UiLabelsProvider,
-} from "@lensdesk/ui";
+import { ConfirmDialog, Notice, TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Editor } from "./Editor.tsx";
-import { NoteList } from "./NoteList.tsx";
+import { EmptyNote } from "./EmptyNote.tsx";
+import { NotesSidebar } from "./NotesSidebar.tsx";
+import { TrashView } from "./TrashView.tsx";
 import { useAutosave } from "./use-autosave.ts";
 import { useNotes } from "./use-notes.ts";
 
@@ -27,26 +22,6 @@ export function App({ client }: { client: Client }) {
     <UiLabelsProvider labels={{ loading: t("loading"), close: t("close"), dismiss: t("close") }}>
       <TooltipProvider>
         <main className="notes-app">
-          <header className="app-toolbar">
-            <h1>{t("title")}</h1>
-            <SegmentedControl
-              aria-label={t("notesView")}
-              value={state.trashed ? "trash" : "notes"}
-              onValueChange={(value) => state.setTrashed(value === "trash")}
-              options={[
-                { value: "notes", label: t("notes") },
-                { value: "trash", label: t("trash") },
-              ]}
-            />
-            <Button type="button" onClick={state.importNotes}>
-              {t("import")}
-            </Button>
-            {state.trashed && (
-              <Button type="button" onClick={() => setConfirmingEmpty(true)}>
-                {t("emptyTrash")}
-              </Button>
-            )}
-          </header>
           {state.error && (
             <Notice
               tone={state.errorKind === "error" ? "danger" : "warning"}
@@ -62,17 +37,29 @@ export function App({ client }: { client: Client }) {
             <p>{t("loading")}</p>
           ) : (
             <div className="workspace">
-              <NoteList
+              <NotesSidebar
                 notes={state.notes}
                 selectedId={state.selectedId}
                 query={state.query}
                 trashed={state.trashed}
                 onQuery={state.setQuery}
                 onSelect={(id) => {
-                  state.setSelectedId(id);
-                  state.setBody(state.notes.find((note) => note.id === id)?.body_md ?? "");
+                  flush();
+                  state.selectNote(id);
                 }}
-                onCreate={() => void state.create()}
+                onImport={() => {
+                  flush();
+                  void state.importNotes();
+                }}
+                onEmpty={() => setConfirmingEmpty(true)}
+                onView={(trash) => {
+                  flush();
+                  state.setTrashed(trash);
+                }}
+                onCreate={() => {
+                  flush();
+                  void state.create();
+                }}
                 onTrash={(id) => void state.trashNote(id)}
                 onPin={(note) =>
                   void client.backend
@@ -83,14 +70,10 @@ export function App({ client }: { client: Client }) {
               />
               {state.selected ? (
                 state.trashed ? (
-                  <div className="empty-state">
-                    <Button
-                      type="button"
-                      onClick={() => void state.restore(state.selected?.id ?? "")}
-                    >
-                      {t("restore")}
-                    </Button>
-                  </div>
+                  <TrashView
+                    note={state.selected}
+                    onRestore={() => void state.restore(state.selected?.id ?? "")}
+                  />
                 ) : (
                   <Editor
                     key={state.selected.id}
@@ -101,14 +84,13 @@ export function App({ client }: { client: Client }) {
                   />
                 )
               ) : (
-                <div className="empty-state">
-                  <p>{t("emptyNotes")}</p>
-                  {!state.trashed && (
-                    <Button type="button" onClick={() => void state.create()}>
-                      {t("newNote")}
-                    </Button>
-                  )}
-                </div>
+                <EmptyNote
+                  trashed={state.trashed}
+                  onCreate={() => {
+                    flush();
+                    void state.create();
+                  }}
+                />
               )}
             </div>
           )}

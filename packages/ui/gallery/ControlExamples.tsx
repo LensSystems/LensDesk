@@ -7,6 +7,7 @@ import {
   Input,
   Plus,
   Progress,
+  Search,
   Switch,
 } from "@lensdesk/ui";
 import { Example } from "./Example.tsx";
@@ -70,6 +71,9 @@ export function ControlExamples() {
           )}
         </Example>
       ))}
+      <Example names={["Input"]}>
+        <Input label="Buscar" leadingIcon={<Search size={16} />} />
+      </Example>
       <Example names={["Badge"]}>
         <Badge>Sin firmar</Badge>
         {(["neutral", "accent", "success", "warning", "danger"] as const).map((tone) => (

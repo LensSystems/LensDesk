@@ -13,6 +13,7 @@
   "moveToTrash": "Move to trash",
   "import": "Import Markdown",
   "export": "Export",
+  "mode": "Mode",
   "preview": "Preview",
   "edit": "Edit",
   "markdownFiles": "Markdown files",

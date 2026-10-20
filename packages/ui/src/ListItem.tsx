@@ -6,15 +6,44 @@ export type ListItemProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "title
   secondaryText?: ReactNode;
   actions?: ReactNode;
   selected?: boolean;
+  variant?: "row" | "card";
 };
 export function ListItem({
   title,
   secondaryText,
   actions,
   selected = false,
+  variant = "row",
   className,
   ...props
 }: ListItemProps) {
+  if (variant === "card")
+    return (
+      <div
+        className={cn(
+          "grid min-w-0 grid-cols-[minmax(0,1fr)_auto] rounded-ld-lg border bg-surface-raised px-3.5 py-3",
+          selected ? "border-accent" : "border-border",
+        )}
+      >
+        <button
+          {...props}
+          type="button"
+          aria-label={props["aria-label"] ?? (typeof title === "string" ? title : undefined)}
+          aria-current={selected ? "true" : undefined}
+          className={cn("col-start-1 row-start-1 min-w-0 text-left text-text", className)}
+        >
+          <span className="block truncate font-bold leading-7">{title}</span>
+          {secondaryText && (
+            <span className="block truncate text-[13px] text-muted">{secondaryText}</span>
+          )}
+        </button>
+        {actions && (
+          <div className="col-start-2 row-start-1 flex shrink-0 items-start gap-1 pl-1">
+            {actions}
+          </div>
+        )}
+      </div>
+    );
   return (
     <div className="flex min-w-0 items-center gap-1">
       <button

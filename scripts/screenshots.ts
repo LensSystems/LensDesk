@@ -274,7 +274,7 @@ async function run() {
       await notes.waitForTimeout(1000);
       await expect(notes.getByRole("heading", { name: "Guía del proyecto" })).toBeVisible();
       await snap("notas-edicion", notes);
-      await notes.getByRole("button", { name: "Vista previa", exact: true }).click();
+      await notes.getByRole("radio", { name: "Vista previa", exact: true }).click();
       await snap("notas-vista-previa", notes);
       await notes.getByRole("radio", { name: "Papelera", exact: true }).click();
       await expect(

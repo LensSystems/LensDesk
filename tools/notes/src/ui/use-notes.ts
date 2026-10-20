@@ -12,6 +12,11 @@ export function useNotes(client: Client) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [body, setBody] = useState("");
+  const drafts = useRef(new Map<string, string>());
+  const editBody = useCallback((value: string) => {
+    if (selectedRef.current) drafts.current.set(selectedRef.current, value);
+    setBody(value);
+  }, []);
   const [query, setQuery] = useState("");
   const [trashed, setTrashed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -74,13 +79,21 @@ export function useNotes(client: Client) {
     [client, setError, t],
   );
 
+  // Guardados en curso por nota: el mismo contenido no se envía dos veces a la vez.
+  const pending = useRef(new Map<string, string>());
   const save = useCallback(
     (id: string, value: string) => {
       const known = notesRef.current.find((note) => note.id === id);
       if (known && known.body_md === value) return;
+      if (pending.current.get(id) === value) return;
+      pending.current.set(id, value);
       void client.backend
         .invoke<Note>("update", { id, body_md: value })
+        .finally(() => {
+          if (pending.current.get(id) === value) pending.current.delete(id);
+        })
         .then((updated) => {
+          if (drafts.current.get(id) === value) drafts.current.delete(id);
           setNotes((current) => current.map((note) => (note.id === id ? updated : note)));
           setError("");
         })
@@ -176,7 +189,11 @@ export function useNotes(client: Client) {
     save,
     selected,
     selectedId,
-    setBody,
+    setBody: editBody,
+    selectNote: (id: string) => {
+      setSelectedId(id);
+      setBody(drafts.current.get(id) ?? notes.find((note) => note.id === id)?.body_md ?? "");
+    },
     setError,
     setQuery,
     setSelectedId,

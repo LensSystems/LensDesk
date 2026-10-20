@@ -1,5 +1,6 @@
 import { markdown } from "@codemirror/lang-markdown";
-import { Button, MarkdownView } from "@lensdesk/ui";
+import { highlightActiveLine, highlightActiveLineGutter, lineNumbers } from "@codemirror/view";
+import { Button, Download, MarkdownView, SegmentedControl } from "@lensdesk/ui";
 import { EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,6 +31,9 @@ export function Editor({
       extensions: [
         EditorView.lineWrapping,
         markdown(),
+        lineNumbers(),
+        highlightActiveLine(),
+        highlightActiveLineGutter(),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) onChange(update.state.doc.toString());
         }),
@@ -55,18 +59,30 @@ export function Editor({
   return (
     <section className="editor-panel">
       <header className="editor-toolbar">
-        <h1>{note.title || t("untitled")}</h1>
-        <Button type="button" aria-pressed={preview} onClick={() => setPreview(!preview)}>
-          {preview ? t("edit") : t("preview")}
-        </Button>
+        <h2>{note.title || t("untitled")}</h2>
+        <SegmentedControl
+          aria-label={t("mode")}
+          value={preview ? "preview" : "edit"}
+          onValueChange={(value) => {
+            onBlur();
+            setPreview(value === "preview");
+          }}
+          options={[
+            { value: "edit", label: t("edit") },
+            { value: "preview", label: t("preview") },
+          ]}
+        />
         <Button type="button" onClick={onExport}>
+          <Download size={14} aria-hidden="true" />
           {t("export")}
         </Button>
       </header>
-      {preview ? (
-        <MarkdownView className="flex-1 overflow-auto p-3" html={renderPreview(note.body_md)} />
-      ) : (
-        <div className="code-editor" ref={host} />
+      <div className="code-editor" ref={host} hidden={preview} />
+      {preview && (
+        <MarkdownView
+          className="min-h-0 flex-1 overflow-auto p-6"
+          html={renderPreview(note.body_md)}
+        />
       )}
     </section>
   );

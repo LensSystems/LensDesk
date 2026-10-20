@@ -123,6 +123,55 @@ beforeEach(async () => {
 });
 
 describe("interfaz de Notas", () => {
+  it("conserva y guarda el texto al cambiar de nota antes del debounce", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# A" });
+    await fake.invoke("create", { body_md: "# B" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "A" });
+    act(() => {
+      const view = EditorView.findFromDOM(document.querySelector(".cm-content") as HTMLElement);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: "\nTexto pendiente" } });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "B" }));
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    expect(document.querySelector(".cm-content")).toHaveTextContent("Texto pendiente");
+    await waitFor(() =>
+      expect(fake.invoke).toHaveBeenCalledWith("update", {
+        id: "1",
+        body_md: "# A\nTexto pendiente",
+      }),
+    );
+  });
+
+  it("alterna vista previa y editor conservando contenido", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Documento\n**Contenido**" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Documento" });
+    const editor = document.querySelector(".cm-content");
+    fireEvent.click(screen.getByRole("radio", { name: "Vista previa" }));
+    expect(screen.getByRole("article").querySelector("strong")).toHaveTextContent("Contenido");
+    fireEvent.click(screen.getByRole("radio", { name: "Editar" }));
+    expect(screen.queryByRole("article")).toBeNull();
+    expect(document.querySelector(".cm-content")).toBe(editor);
+    expect(editor).toHaveTextContent("**Contenido**");
+  });
+
+  it("muestra resumen y acciones hermanas dentro de la tarjeta", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Tarjeta\n- **Resumen**" });
+    render(<App client={fake.client as never} />);
+    const main = await screen.findByRole("button", { name: "Tarjeta" });
+    const card = main.parentElement as HTMLElement;
+    expect(within(card).getByText("Resumen")).toBeInTheDocument();
+    for (const name of ["Fijar nota", "Mover a la papelera"]) {
+      const action = within(card).getByRole("button", { name });
+      expect(main.contains(action)).toBe(false);
+      expect(action.parentElement?.closest("button")).toBeNull();
+    }
+  });
+
   it("guarda tras 800 ms reiniciados y al perder el foco", () => {
     vi.useFakeTimers();
     const save = vi.fn();
@@ -194,6 +243,9 @@ describe("interfaz de Notas", () => {
     await screen.findByRole("button", { name: "Archivar" });
     fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
     fireEvent.click(await screen.findByRole("radio", { name: "Papelera" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Archivar" }));
+    expect(screen.getByRole("article")).toHaveTextContent("Archivar");
+    expect(document.querySelector(".cm-content")).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Restaurar" }));
     await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("restore", { id: "1" }));
   });
@@ -274,7 +326,7 @@ describe("interfaz de Notas", () => {
     fireEvent.keyDown(trash, { key: "ArrowLeft" });
     await waitFor(() => expect(notes).toHaveFocus());
     expect(notes).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(await screen.findByRole("button", { name: "Vista previa" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Vista previa" }));
     expect(screen.getByRole("article")).toHaveClass("ld-markdown-view");
     fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Vista" })).toBeNull());
@@ -349,6 +401,37 @@ describe("interfaz de Notas", () => {
     await waitFor(() =>
       expect(document.querySelector(".cm-content")?.textContent).toContain("texto valioso"),
     );
+  });
+
+  it("al cambiar de nota con un guardado en curso, el texto se recupera una sola vez", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Uno" });
+    await fake.invoke("create", { body_md: "# Dos" });
+    render(<App client={fake.client as never} />);
+    const selected = await screen.findByRole("heading", { level: 2 });
+    const other = selected.textContent === "Uno" ? "Dos" : "Uno";
+    const original = fake.invoke.getMockImplementation();
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "update") {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        throw Object.assign(new Error("x"), { code: "E_NOT_FOUND" });
+      }
+      return original?.(method, params);
+    });
+    const editor = document.querySelector(".cm-content") as HTMLElement;
+    act(() => {
+      const view = EditorView.findFromDOM(editor);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: "\ntexto único" } });
+    });
+    fireEvent.blur(editor);
+    fireEvent.click(screen.getByRole("button", { name: other }));
+    await screen.findByRole("alert");
+    const copies = fake.invoke.mock.calls.filter(
+      ([method, params]) =>
+        method === "create" &&
+        String((params as { body_md?: string }).body_md).includes("texto único"),
+    );
+    expect(copies).toHaveLength(1);
   });
 
   it("seleccionar una nota y esperar no llama a update", async () => {
