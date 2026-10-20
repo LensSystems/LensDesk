@@ -54,6 +54,24 @@ function setup(root: string, developerMode = false) {
   return { database, pair, installer };
 }
 describe("tool installer", () => {
+  it("conserva E_PACKAGE_INVALID para bytes aleatorios y zip truncado", async () => {
+    const root = await temp();
+    const { database, pair, installer } = setup(root);
+    try {
+      const file = await packageAt(root, "1.0.0", pair);
+      const bytes = await readFile(file);
+      for (const damaged of [
+        Buffer.from([17, 91, 0, 212, 38, 119]),
+        bytes.subarray(0, bytes.length - 12),
+      ]) {
+        await writeFile(file, damaged);
+        await expect(installer.install(file)).rejects.toMatchObject({ code: "E_PACKAGE_INVALID" });
+        expect(await readdir(join(root, "tools"))).toEqual([]);
+      }
+    } finally {
+      database.close();
+    }
+  });
   it("instala paquetes firmados y sin firma solo en modo desarrollador; limpia rechazos", async () => {
     const root = await temp();
     const { database, pair, installer } = setup(root);

@@ -95,6 +95,7 @@
   },
   "errors": {
     "E_SIGNATURE_INVALID": "La firma de la herramienta no es válida.",
+    "E_PACKAGE_INVALID": "El archivo no es un paquete de LensDesk válido o está dañado.",
     "E_HASH_MISMATCH": "El contenido de la herramienta no coincide con sus hashes.",
     "E_UNSIGNED": "La herramienta no está firmada.",
     "E_MANIFEST_INVALID": "El manifiesto de la herramienta no es válido.",

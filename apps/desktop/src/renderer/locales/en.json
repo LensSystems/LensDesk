@@ -95,6 +95,7 @@
   },
   "errors": {
     "E_SIGNATURE_INVALID": "The tool signature is invalid.",
+    "E_PACKAGE_INVALID": "The file is not a valid LensDesk package or it is damaged.",
     "E_HASH_MISMATCH": "The tool contents do not match their hashes.",
     "E_UNSIGNED": "The tool is unsigned.",
     "E_MANIFEST_INVALID": "The tool manifest is invalid.",

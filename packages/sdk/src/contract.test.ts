@@ -70,6 +70,7 @@ describe("public client contract", () => {
   it("incluye E_NOT_FOUND como código de error estable", () => {
     expect(LENS_ERROR_CODES).toContain("E_NOT_FOUND");
     expect(LENS_ERROR_CODES).toContain("E_INTERNAL");
+    expect(LENS_ERROR_CODES).toContain("E_PACKAGE_INVALID");
     expect(new LensError("E_NOT_FOUND", "x").code).toBe("E_NOT_FOUND");
   });
 });
