@@ -4,12 +4,21 @@ import { cn } from "./cn.ts";
 
 export const DropdownMenu = Primitive.Root;
 export const DropdownMenuTrigger = Primitive.Trigger;
-export function DropdownMenuItem({ className, ...props }: ComponentProps<typeof Primitive.Item>) {
+export type DropdownMenuItemProps = ComponentProps<typeof Primitive.Item> & {
+  destructive?: boolean;
+};
+
+export function DropdownMenuItem({
+  className,
+  destructive = false,
+  ...props
+}: DropdownMenuItemProps) {
   return (
     <Primitive.Item
       {...props}
       className={cn(
-        "flex h-7 cursor-default items-center rounded px-2 focus:bg-surface focus:text-text",
+        "flex cursor-default items-center rounded-ld-sm px-2.5 py-2 transition-colors duration-150 ease-out data-[highlighted]:bg-surface data-[disabled]:opacity-45 motion-reduce:transition-none",
+        destructive && "text-danger",
         className,
       )}
     />
@@ -19,7 +28,12 @@ export const DropdownMenuCheckboxItem = Primitive.CheckboxItem;
 export const DropdownMenuRadioGroup = Primitive.RadioGroup;
 export const DropdownMenuRadioItem = Primitive.RadioItem;
 export const DropdownMenuLabel = Primitive.Label;
-export const DropdownMenuSeparator = Primitive.Separator;
+export function DropdownMenuSeparator({
+  className,
+  ...props
+}: ComponentProps<typeof Primitive.Separator>) {
+  return <Primitive.Separator {...props} className={cn("my-1 h-px bg-border", className)} />;
+}
 
 export function DropdownMenuContent({
   className,
@@ -30,7 +44,7 @@ export function DropdownMenuContent({
       <Primitive.Content
         {...props}
         className={cn(
-          "ld-pop z-50 min-w-32 rounded-md border border-border bg-surface-raised p-1 text-text shadow-[0_8px_24px_rgb(0_0_0/0.24)] outline-none",
+          "ld-pop z-50 min-w-32 rounded-ld-lg border border-border bg-surface-raised p-1.5 text-[13px] text-text shadow-ld",
           className,
         )}
       />

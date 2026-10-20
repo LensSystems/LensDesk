@@ -4,6 +4,8 @@ import { Progress } from "./Progress.tsx";
 import { useUiLabels } from "./ui-labels.ts";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "default" | "primary" | "danger" | "ghost";
+  size?: "md" | "lg";
   loading?: boolean;
   loadingLabel?: string;
   children: ReactNode;
@@ -12,6 +14,8 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 export function Button({
   className,
   disabled,
+  variant = "default",
+  size = "md",
   loading = false,
   loadingLabel,
   children,
@@ -21,7 +25,15 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex h-7 items-center justify-center gap-2 rounded border border-border-control bg-surface px-3 text-text hover:bg-surface-raised disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center justify-center gap-2 rounded-full transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none",
+        size === "lg" ? "h-9 px-4 text-sm" : "h-8 px-3.5 text-[13px]",
+        {
+          default:
+            "border border-border-control bg-surface-raised font-semibold text-text hover:bg-surface",
+          primary: "border-0 bg-accent font-bold text-accent-fg hover:bg-accent-hover",
+          danger: "border-0 bg-danger font-bold text-danger-fg hover:bg-danger/90",
+          ghost: "border-0 bg-transparent font-semibold text-text hover:bg-surface",
+        }[variant],
         className,
       )}
       disabled={disabled || loading}

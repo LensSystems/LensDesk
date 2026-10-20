@@ -56,11 +56,27 @@ export function ControlExamples() {
                 );
               })}
           </div>
-          {name === "Button" && <Button loading>Guardando</Button>}
+          {name === "Button" && (
+            <>
+              <Button loading>Guardando</Button>
+              {(["default", "primary", "danger", "ghost"] as const).map((variant) =>
+                (["md", "lg"] as const).map((size) => (
+                  <Button key={`${variant}-${size}`} variant={variant} size={size}>
+                    {variant} · {size}
+                  </Button>
+                )),
+              )}
+            </>
+          )}
         </Example>
       ))}
       <Example names={["Badge"]}>
         <Badge>Sin firmar</Badge>
+        {(["neutral", "accent", "success", "warning", "danger"] as const).map((tone) => (
+          <Badge key={tone} tone={tone}>
+            {tone}
+          </Badge>
+        ))}
       </Example>
       <Example names={["Progress"]}>
         <Progress />

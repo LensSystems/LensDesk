@@ -25,7 +25,10 @@ export function Switch({
       {...props}
       aria-checked={isChecked}
       checked={isChecked}
-      className={cn("relative size-6 accent-accent", className)}
+      className={cn(
+        "ld-switch relative size-6 w-10 shrink-0 cursor-pointer appearance-none rounded-full border border-border-control bg-border transition-colors duration-150 ease-out checked:border-accent checked:bg-accent disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none",
+        className,
+      )}
       id={props.id ?? id}
       onChange={(event) => {
         if (checked === undefined) setInternalChecked(event.currentTarget.checked);

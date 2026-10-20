@@ -25,7 +25,8 @@ export function Input({ className, error, id: suppliedId, label, ...props }: Inp
         }
         aria-invalid={error ? true : props["aria-invalid"]}
         className={cn(
-          "h-7 rounded border border-border-control bg-surface px-2 text-text placeholder:text-muted",
+          "h-9 rounded-ld-md border border-border-control bg-bg px-3 text-text placeholder:text-muted transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none",
+          error && "border-danger",
           className,
         )}
         id={id}

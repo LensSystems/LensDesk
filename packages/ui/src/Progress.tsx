@@ -9,7 +9,7 @@ export function Progress({ className, label, ...props }: ProgressProps) {
     <span
       aria-label={label ?? labels.loading}
       className={cn(
-        "inline-block size-3 animate-spin rounded-full border-2 border-current border-r-transparent",
+        "inline-block size-3 animate-spin motion-reduce:animate-none rounded-full border-2 border-current border-r-transparent",
         className,
       )}
       role="progressbar"

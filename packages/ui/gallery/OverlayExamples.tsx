@@ -27,7 +27,9 @@ export function OverlayExamples() {
               <ui.DialogTitle>Confirmar cambios</ui.DialogTitle>
               <ui.DialogDescription>Revisa los datos antes de guardar.</ui.DialogDescription>
               <ui.DialogClose asChild>
-                <ui.Button>Entendido</ui.Button>
+                <ui.Button variant="primary" size="lg">
+                  Entendido
+                </ui.Button>
               </ui.DialogClose>
             </ui.DialogContent>
           </ui.Dialog>
@@ -56,6 +58,7 @@ export function OverlayExamples() {
             <ui.DropdownMenuContent>
               <ui.DropdownMenuLabel>Opciones</ui.DropdownMenuLabel>
               <ui.DropdownMenuItem>Normal</ui.DropdownMenuItem>
+              <ui.DropdownMenuItem destructive>Eliminar</ui.DropdownMenuItem>
               <ui.DropdownMenuItem data-gallery-state="Hover simulado">
                 Hover simulado
               </ui.DropdownMenuItem>

@@ -53,21 +53,20 @@ export function ConfirmDialog({
           }
         }}
       >
-        <DialogTitle className="mb-2 text-[15px] font-semibold">{title}</DialogTitle>
-        <DialogDescription className="mb-4 text-muted">{description}</DialogDescription>
+        <DialogTitle className="pr-6">{title}</DialogTitle>
+        <DialogDescription className="text-muted">{description}</DialogDescription>
         <div ref={cancelRef} className="flex justify-end gap-2">
           <DialogClose asChild>
-            <Button type="button">{cancelLabel}</Button>
+            <Button size="lg" type="button">
+              {cancelLabel}
+            </Button>
           </DialogClose>
           <Button
             type="button"
             disabled={busy}
             onClick={onConfirm}
-            className={
-              tone === "danger"
-                ? "border-danger bg-danger text-accent-fg hover:bg-danger"
-                : undefined
-            }
+            size="lg"
+            variant={tone === "danger" ? "danger" : "primary"}
           >
             {confirmLabel}
           </Button>

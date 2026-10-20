@@ -8,7 +8,7 @@ export function TabsList({ className, ...props }: ComponentProps<typeof Primitiv
   return (
     <Primitive.List
       {...props}
-      className={cn("inline-flex items-center gap-1 border-b border-border", className)}
+      className={cn("inline-flex items-center rounded-full bg-bg p-0.5", className)}
     />
   );
 }
@@ -18,7 +18,7 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof Primi
     <Primitive.Trigger
       {...props}
       className={cn(
-        "h-8 border-b-2 border-transparent px-3 text-muted transition-colors duration-150 ease-out hover:text-text data-[state=active]:border-accent data-[state=active]:text-text motion-reduce:transition-none",
+        "h-7 rounded-full px-3.5 text-[13px] text-muted transition-colors duration-150 ease-out hover:text-text data-[state=active]:bg-surface-raised data-[state=active]:font-semibold data-[state=active]:text-text data-[state=active]:shadow-sm disabled:opacity-45 motion-reduce:transition-none",
         className,
       )}
     />

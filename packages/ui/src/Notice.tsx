@@ -10,24 +10,24 @@ export type NoticeProps = {
   className?: string;
 };
 const colors = {
-  info: "text-accent",
-  success: "text-success",
-  warning: "text-warning",
-  danger: "text-danger",
+  info: "bg-accent-soft text-accent-soft-fg",
+  success: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-warning-soft-fg",
+  danger: "bg-danger-soft text-danger",
 };
 export function Notice({ tone = "info", title, text, action, className }: NoticeProps) {
   return (
     <div
       role={tone === "warning" || tone === "danger" ? "alert" : "status"}
       className={cn(
-        "flex items-center gap-3 rounded-md border border-border bg-surface px-3 py-2",
+        "flex items-center gap-3 rounded-ld-md px-3.5 py-2 text-[13px]",
         colors[tone],
         className,
       )}
     >
       <div className="min-w-0 flex-1">
         <p className="font-medium">{title}</p>
-        {text && <p className="text-muted">{text}</p>}
+        {text && <p>{text}</p>}
       </div>
       {action && (
         <Button type="button" onClick={action.onClick} disabled={action.disabled}>

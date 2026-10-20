@@ -54,7 +54,7 @@ export function FileDropZone({
       aria-disabled={disabled}
       data-dragging={!disabled && dragging}
       className={cn(
-        "grid justify-items-start gap-2 rounded-md border border-dashed border-border-control bg-surface p-3 text-text data-[dragging=true]:border-accent data-[dragging=true]:bg-surface-raised",
+        "grid justify-items-start gap-2 rounded-ld-lg border-2 border-dashed border-border-control bg-surface p-3 text-text data-[dragging=true]:border-accent data-[dragging=true]:bg-accent-soft",
         disabled && "opacity-60",
         className,
       )}

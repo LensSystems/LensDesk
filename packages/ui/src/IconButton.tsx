@@ -13,7 +13,7 @@ export function IconButton({ className, label, tooltipSide, children, ...props }
       <button
         aria-label={label}
         className={cn(
-          "inline-flex size-7 items-center justify-center rounded text-text hover:bg-surface-raised",
+          "inline-flex size-8 items-center justify-center rounded-full border-0 bg-transparent text-muted transition-colors duration-150 ease-out hover:bg-surface hover:text-text disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none",
           className,
         )}
         {...props}

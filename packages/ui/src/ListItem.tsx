@@ -22,7 +22,7 @@ export function ListItem({
         type="button"
         aria-current={selected ? "true" : undefined}
         className={cn(
-          "min-h-7 min-w-0 flex-1 rounded border border-border-control bg-surface px-2 text-left text-text transition-colors duration-150 ease-out hover:bg-surface-raised disabled:opacity-60 motion-reduce:transition-none",
+          "min-h-7 min-w-0 flex-1 rounded-ld-lg border border-border bg-surface-raised px-3.5 py-3 text-left text-text transition-colors duration-150 ease-out hover:bg-surface disabled:opacity-60 motion-reduce:transition-none",
           selected && "border-accent",
           className,
         )}

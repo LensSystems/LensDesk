@@ -7,10 +7,7 @@ export const ToastProvider = Primitive.Provider;
 
 export function ToastViewport({ className, ...props }: ComponentProps<typeof Primitive.Viewport>) {
   return (
-    <Primitive.Viewport
-      {...props}
-      className={cn("flex min-w-0 max-w-80 flex-col outline-none", className)}
-    />
+    <Primitive.Viewport {...props} className={cn("flex min-w-0 max-w-80 flex-col", className)} />
   );
 }
 
@@ -26,7 +23,7 @@ export function Toast({ className, title, description, dismissLabel, ...props }:
     <Primitive.Root
       {...props}
       className={cn(
-        "ld-slide flex h-7 min-w-0 items-center gap-1 rounded border border-border bg-surface-raised pl-2 text-xs text-text outline-none",
+        "ld-slide flex h-7 min-w-0 items-center gap-1 rounded-ld-md border border-border bg-surface-raised pl-2 text-xs shadow-ld text-text",
         className,
       )}
     >
@@ -36,7 +33,7 @@ export function Toast({ className, title, description, dismissLabel, ...props }:
       )}
       <Primitive.Close
         aria-label={dismissLabel ?? labels.dismiss}
-        className="size-6 shrink-0 rounded text-muted hover:bg-surface"
+        className="size-6 shrink-0 rounded-full text-muted hover:bg-surface"
       >
         ×
       </Primitive.Close>

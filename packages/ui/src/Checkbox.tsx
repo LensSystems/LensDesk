@@ -24,7 +24,10 @@ export function Checkbox({
     <input
       {...props}
       checked={isChecked}
-      className={cn("size-6 accent-accent", className)}
+      className={cn(
+        "ld-checkbox size-6 shrink-0 cursor-pointer appearance-none rounded-ld-sm disabled:cursor-not-allowed disabled:opacity-45",
+        className,
+      )}
       id={props.id ?? id}
       onChange={(event) => {
         const nextChecked = event.currentTarget.checked;

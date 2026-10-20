@@ -11,7 +11,7 @@ export function Panel({ title, actions, children, className, ...props }: PanelPr
     <section
       {...props}
       aria-labelledby={props["aria-labelledby"] ?? (title ? id : undefined)}
-      className={cn("rounded-md border border-border bg-surface text-text", className)}
+      className={cn("rounded-ld-lg border border-border bg-surface text-text", className)}
     >
       {(title || actions) && (
         <header className="flex items-center gap-2 border-b border-border px-3 py-2">

@@ -17,7 +17,7 @@ export function SelectTrigger({
     <Primitive.Trigger
       {...props}
       className={cn(
-        "inline-flex h-7 min-w-28 items-center justify-between gap-2 rounded border border-border-control bg-surface px-2 text-text",
+        "inline-flex h-9 min-w-28 items-center justify-between gap-2 rounded-ld-md border border-border-control bg-surface-raised px-3 text-text transition-colors duration-150 ease-out disabled:opacity-45 motion-reduce:transition-none",
         className,
       )}
     >
@@ -37,7 +37,7 @@ export function SelectContent({
       <Primitive.Content
         {...props}
         className={cn(
-          "ld-pop z-50 overflow-hidden rounded-md border border-border bg-surface-raised text-text shadow-[0_8px_24px_rgb(0_0_0/0.24)] outline-none",
+          "ld-pop z-50 overflow-hidden rounded-ld-lg border border-border bg-surface-raised text-text shadow-ld",
           className,
         )}
       >
@@ -56,7 +56,7 @@ export function SelectItem({
     <Primitive.Item
       {...props}
       className={cn(
-        "relative flex h-7 cursor-default select-none items-center rounded pr-2 pl-6 outline-none focus:bg-surface data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex h-7 cursor-default select-none items-center rounded-ld-sm pr-2 pl-6 focus:bg-surface data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
     >

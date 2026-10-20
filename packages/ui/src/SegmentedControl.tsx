@@ -23,17 +23,14 @@ export function SegmentedControl({
       onValueChange={onValueChange}
       aria-label={label}
       loop
-      className={cn(
-        "inline-flex gap-1 rounded border border-border-control bg-surface p-1",
-        className,
-      )}
+      className={cn("inline-flex rounded-full bg-bg p-0.5", className)}
     >
       {options.map((option) => (
         <Primitive.Item
           key={option.value}
           value={option.value}
           disabled={option.disabled}
-          className="h-7 rounded px-2 text-text transition-colors duration-150 ease-out hover:bg-surface-raised data-[state=checked]:bg-accent data-[state=checked]:text-accent-fg disabled:opacity-60 motion-reduce:transition-none"
+          className="h-7 rounded-full px-3.5 text-[13px] text-muted transition-colors duration-150 ease-out hover:text-text data-[state=checked]:bg-surface-raised data-[state=checked]:font-semibold data-[state=checked]:text-text data-[state=checked]:shadow-sm disabled:opacity-45 motion-reduce:transition-none"
         >
           {option.label}
         </Primitive.Item>

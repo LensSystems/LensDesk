@@ -21,7 +21,7 @@ export function Tooltip({ label, children, className, side = "bottom" }: Tooltip
       <Primitive.Portal>
         <Primitive.Content
           className={cn(
-            "ld-pop z-50 rounded border border-border bg-surface-raised px-2 py-1 text-xs text-text shadow-[0_8px_24px_rgb(0_0_0/0.24)]",
+            "ld-pop z-50 rounded-ld-md border border-border bg-surface-raised px-2 py-1 text-xs text-text shadow-ld",
             className,
           )}
           side={side}
