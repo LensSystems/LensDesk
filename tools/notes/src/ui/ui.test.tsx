@@ -25,7 +25,9 @@ const note = (id: string, body_md = "") => ({
 
 function fakeClient() {
   let rows: Note[] = [];
-  let contextListener: ((context: { locale: string; theme: string }) => void) | undefined;
+  let contextListener:
+    | ((context: { locale: string; theme: string; accent?: "blue" | "green" }) => void)
+    | undefined;
   const files = [
     { token: "import", name: "one.md", size: 12 },
     { token: "import2", name: "two.md", size: 12 },
@@ -91,16 +93,22 @@ function fakeClient() {
         hostVersion: "",
         toolVersion: "",
       })),
-      onContextChange: vi.fn((listener: (context: { locale: string; theme: string }) => void) => {
-        contextListener = listener;
-        return () => {};
-      }),
+      onContextChange: vi.fn(
+        (
+          listener: (context: { locale: string; theme: string; accent?: "blue" | "green" }) => void,
+        ) => {
+          contextListener = listener;
+          return () => {};
+        },
+      ),
     },
   };
   return {
     client,
     invoke,
     files: client.files,
+    changeAccent: (accent?: "blue" | "green") =>
+      contextListener?.({ locale: "es", theme: "dark", ...(accent ? { accent } : {}) }),
     changeLanguage: (locale: string) => contextListener?.({ locale, theme: "dark" }),
   };
 }
@@ -125,6 +133,16 @@ beforeEach(async () => {
 });
 
 describe("interfaz de Notas", () => {
+  it("actualiza el acento en vivo y acepta contexto sin acento", async () => {
+    const fake = fakeClient();
+    render(<App client={fake.client as never} />);
+    await waitFor(() => expect(fake.client.app.onContextChange).toHaveBeenCalled());
+    await act(async () => fake.changeAccent("green"));
+    expect(document.documentElement.dataset.accent).toBe("green");
+    await act(async () => fake.changeAccent());
+    expect(document.documentElement.hasAttribute("data-accent")).toBe(false);
+  });
+
   it("conserva y guarda el texto al cambiar de nota antes del debounce", async () => {
     const fake = fakeClient();
     await fake.invoke("create", { body_md: "# A" });

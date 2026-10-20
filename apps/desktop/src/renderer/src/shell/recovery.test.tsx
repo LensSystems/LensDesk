@@ -143,7 +143,13 @@ describe("recuperación del shell", () => {
     const { bridge, invoke } = makeBridge();
     useShellStore.setState({
       page: "settings",
-      settings: { locale: "es", theme: "system", developerMode: false, updatesCheck: false },
+      settings: {
+        locale: "es",
+        theme: "system",
+        accent: "blue",
+        developerMode: false,
+        updatesCheck: false,
+      },
     });
     render(<SettingsPage bridge={bridge} />);
     fireEvent.click(await screen.findByRole("button", { name: "Exportar registros" }));

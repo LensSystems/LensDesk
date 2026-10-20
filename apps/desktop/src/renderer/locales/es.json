@@ -49,6 +49,10 @@
     "cardVersion": "v{{version}}"
   },
   "settingsPage": {
+    "accent": "Color de acento",
+    "blue": "Azul",
+    "green": "Verde",
+
     "title": "Ajustes",
     "language": "Idioma",
     "spanish": "Español",

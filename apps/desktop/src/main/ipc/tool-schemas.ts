@@ -52,6 +52,7 @@ export const toolIpcSchemas = {
       .object({
         locale: z.string(),
         theme: z.string(),
+        accent: z.enum(["blue", "green"]).optional(),
         hostVersion: z.string(),
         toolVersion: z.string(),
       })

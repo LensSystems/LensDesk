@@ -15,7 +15,13 @@ describe("Ajustes", () => {
   beforeEach(async () => {
     await rendererI18n.changeLanguage("es");
     useShellStore.setState({
-      settings: { locale: "es", theme: "system", developerMode: false, updatesCheck: true },
+      settings: {
+        locale: "es",
+        theme: "system",
+        accent: "blue",
+        developerMode: false,
+        updatesCheck: true,
+      },
     });
   });
   afterEach(cleanup);
@@ -38,6 +44,15 @@ describe("Ajustes", () => {
     expect(screen.getByRole("switch", { name: "Modo desarrollador" })).toHaveAccessibleDescription(
       "Permite instalar herramientas sin firmar.",
     );
+    await screen.findByText("Acerca de · LensDesk 1.0.0");
+  });
+
+  it("guarda el acento Verde al pulsar su radio", async () => {
+    const invoke = renderSettings();
+    const group = screen.getByRole("radiogroup", { name: "Color de acento" });
+    fireEvent.click(within(group).getByRole("radio", { name: "Verde" }));
+    expect(invoke).toHaveBeenCalledWith("settings.set", { key: "accent", value: "green" });
+    expect(within(group).getByRole("radio", { name: "Azul" })).toBeTruthy();
     await screen.findByText("Acerca de · LensDesk 1.0.0");
   });
 

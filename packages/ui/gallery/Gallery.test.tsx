@@ -11,6 +11,7 @@ describe("galería", () => {
     const components = Object.entries(ui).filter(
       ([name, value]) =>
         name !== "cn" &&
+        name !== "applyDocumentContext" &&
         name !== "UiLabelsProvider" &&
         !iconExports.has(value) &&
         (typeof value === "function" ||

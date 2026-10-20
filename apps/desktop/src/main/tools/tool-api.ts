@@ -10,7 +10,7 @@ import type { FileTokens } from "./file-tokens.ts";
 const MAX_VALUE_BYTES = 1024 * 1024;
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 type Tool = { id: string; version: string; manifest: Record<string, unknown>; enabled: boolean };
-type Context = { locale: string; theme: string };
+type Context = { locale: string; theme: string; accent?: "blue" | "green" };
 type ToolView = { webContents: { id: number; send?(channel: string, payload: unknown): void } };
 type Result = { ok: true; data: unknown } | { ok: false; error: { code: string; message: string } };
 const fail = (code: string, message: string): Result => ({ ok: false, error: { code, message } });

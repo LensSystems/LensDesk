@@ -1,5 +1,11 @@
 import type { createToolClient } from "@lensdesk/sdk";
-import { Notice, TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
+import {
+  applyDocumentContext,
+  type DocumentContext,
+  Notice,
+  TooltipProvider,
+  UiLabelsProvider,
+} from "@lensdesk/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Preview } from "./Preview.tsx";
@@ -17,9 +23,8 @@ export function App({ client }: { client: Client }) {
 
   useEffect(() => {
     let alive = true;
-    const applyContext = (context: { locale: string; theme: string }) => {
-      document.documentElement.dataset.theme = context.theme;
-      document.documentElement.lang = context.locale;
+    const applyContext = (context: DocumentContext) => {
+      applyDocumentContext(context);
       void i18n.changeLanguage(context.locale);
     };
     void client.app

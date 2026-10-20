@@ -12,7 +12,10 @@ function fakeBridge() {
       };
     if (channel === "settings.get")
       return { ok: true as const, data: { key: "locale", value: "es" } };
-    return { ok: true as const, data: { locale: "es" as const, theme: "dark" as const } };
+    return {
+      ok: true as const,
+      data: { locale: "es" as const, theme: "dark" as const, accent: "blue" as const },
+    };
   });
   const bridge = {
     invoke,
@@ -35,11 +38,12 @@ describe("store del shell", () => {
     const unsubscribe = useShellStore.getState().subscribe(bridge);
     listeners.get("tabs.changed")?.({ tabs: [] });
     listeners.get("settings.changed")?.({ key: "developerMode", value: true });
-    listeners.get("context.changed")?.({ locale: "en", theme: "light" });
+    listeners.get("settings.changed")?.({ key: "accent", value: "green" });
+    listeners.get("context.changed")?.({ locale: "en", theme: "light", accent: "green" });
     expect(useShellStore.getState()).toMatchObject({
       tabs: [],
-      settings: { developerMode: true },
-      context: { locale: "en", theme: "light" },
+      settings: { developerMode: true, accent: "green" },
+      context: { locale: "en", theme: "light", accent: "green" },
     });
     unsubscribe();
     expect(listeners.size).toBe(0);
@@ -53,7 +57,10 @@ describe("store del shell", () => {
         await new Promise<void>((resolve) => {
           releaseContext = resolve;
         });
-        return { ok: true as const, data: { locale: "es" as const, theme: "dark" as const } };
+        return {
+          ok: true as const,
+          data: { locale: "es" as const, theme: "dark" as const, accent: "blue" as const },
+        };
       }
       if (channel === "tabs.list") return { ok: true as const, data: { tabs: [] } };
       return { ok: true as const, data: { key: "locale", value: "es" } };
@@ -61,10 +68,14 @@ describe("store del shell", () => {
     const unsubscribe = useShellStore.getState().subscribe(bridge);
     const hydrating = useShellStore.getState().hydrate(bridge);
     await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith("app.getContext", {}));
-    listeners.get("context.changed")?.({ locale: "en", theme: "light" });
+    listeners.get("context.changed")?.({ locale: "en", theme: "light", accent: "green" });
     releaseContext();
     await hydrating;
-    expect(useShellStore.getState().context).toEqual({ locale: "en", theme: "light" });
+    expect(useShellStore.getState().context).toEqual({
+      locale: "en",
+      theme: "light",
+      accent: "green",
+    });
     unsubscribe();
   });
 

@@ -111,7 +111,7 @@ toolWiring = createToolWiring({
   userData: app.getPath("userData"),
   version: packageJson.version,
   shellContents: () => shellContents,
-  context: () => settingsHandlers["app.getContext"]() as { locale: string; theme: string },
+  context: () => settingsHandlers["app.getContext"](),
   showingTab: () => showingTab,
   onShowActiveTool: (callback) => {
     showActiveTool = callback;

@@ -59,6 +59,7 @@ export type HostPayloads = {
 export type HostSettingKey =
   | "locale"
   | "theme"
+  | "accent"
   | "developerMode"
   | "updates.check"
   | "updates.lastCheckedAt"
@@ -69,7 +70,7 @@ export type HostResponses = {
   "app.getInfo": { version: string; platform: string };
   "settings.get": { key: HostSettingKey; value: HostSettingValue };
   "settings.set": { key: HostSettingKey; value: HostSettingValue };
-  "app.getContext": { locale: "es" | "en"; theme: "dark" | "light" };
+  "app.getContext": { locale: "es" | "en"; theme: "dark" | "light"; accent: "blue" | "green" };
   "tabs.list": { tabs: ShellTab[] };
   "tabs.open": { tabs: ShellTab[] };
   "tabs.close": { tabs: ShellTab[] };
@@ -114,7 +115,7 @@ export type HostEvent = (typeof HOST_EVENTS)[number];
 export type HostEventPayloads = {
   "window.fullScreenChanged": { fullScreen: boolean };
   "settings.changed": { key: HostSettingKey; value: HostSettingValue };
-  "context.changed": { locale: "es" | "en"; theme: "dark" | "light" };
+  "context.changed": { locale: "es" | "en"; theme: "dark" | "light"; accent: "blue" | "green" };
   "tabs.changed": { tabs: ShellTab[] };
   "tools.changed": ToolState;
   "tools.toast": { toolId: string; kind: string; message: string };

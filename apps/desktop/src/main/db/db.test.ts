@@ -62,6 +62,15 @@ describe("host database", () => {
     const database = open();
     expect(getSetting(database, "locale")).toBe("es");
     expect(getSetting(database, "theme")).toBe("system");
+    expect(getSetting(database, "accent")).toBe("blue");
+    setSetting(database, "accent", "green");
+    expect(getSetting(database, "accent")).toBe("green");
+    setSetting(database, "accent", "blue");
+    for (const value of ["red", "", null, 1]) {
+      expect(() => setSetting(database, "accent", value)).toThrowError(
+        expect.objectContaining({ code: "E_INVALID_PARAMS" }),
+      );
+    }
     expect(getSetting(database, "developerMode")).toBe(false);
     expect(getSetting(database, "updates.check")).toBe(true);
     setSetting(database, "locale", "en");

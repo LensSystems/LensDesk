@@ -134,6 +134,42 @@ describe("design tokens", () => {
     }
   });
 
+  it("mantiene AA y foco 3:1 con el acento verde en ambos temas", () => {
+    for (const theme of themes) {
+      const block = css.split(`[data-theme="${theme}"][data-accent="green"] {`)[1]?.split("}")[0];
+      expect(block).toBeDefined();
+      const accent = Object.fromEntries(
+        [...(block ?? "").matchAll(/(--ld-[\w-]+):\s*(#[\da-fA-F]{6})/g)].map((m) => [m[1], m[2]]),
+      );
+      expect(Object.keys(accent).sort()).toEqual(
+        [
+          "--ld-accent",
+          "--ld-accent-hover",
+          "--ld-accent-fg",
+          "--ld-accent-soft",
+          "--ld-accent-soft-fg",
+        ].sort(),
+      );
+      const values = { ...declarations(theme), ...accent };
+      for (const ground of ["--ld-bg", "--ld-surface", "--ld-surface-raised"]) {
+        const ratio = contrast(tokenValue(values, "--ld-accent"), tokenValue(values, ground));
+        expect(ratio, `${theme}: acento sobre ${ground}`).toBeGreaterThanOrEqual(4.5);
+        expect(ratio, `${theme}: foco sobre ${ground}`).toBeGreaterThanOrEqual(3);
+      }
+      for (const [text, fill] of [
+        ["--ld-accent-fg", "--ld-accent"],
+        ["--ld-accent-fg", "--ld-accent-hover"],
+        ["--ld-accent-soft-fg", "--ld-accent-soft"],
+        ["--ld-text", "--ld-accent-soft"],
+      ] as const) {
+        expect(
+          contrast(tokenValue(values, text), tokenValue(values, fill)),
+          `${theme}: ${text} sobre ${fill}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
   it("defines radii, a shadow per theme, Manrope and a 14 px base", () => {
     for (const [token, value] of [
       ["--ld-radius-sm", "6px"],

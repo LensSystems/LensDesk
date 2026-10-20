@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ToolBridge } from "./api.ts";
+import type { ToolBridge, ToolContext } from "./api.ts";
 import { createToolClient } from "./client.ts";
 import { LENS_ERROR_CODES, LensError } from "./errors.ts";
 
@@ -56,6 +56,15 @@ describe("public client contract", () => {
     expect(bridge.files.onDrop).toHaveBeenCalledOnce();
     expect(bridge.app.onContextChange).toHaveBeenCalledOnce();
     expect(bridge.ui.openExternal).toHaveBeenCalledWith("https://example.com");
+  });
+
+  it("acepta contextos v1 con y sin acento", () => {
+    const legacy: ToolContext = { locale: "es", theme: "dark", hostVersion: "1", toolVersion: "1" };
+    expect(legacy.accent).toBeUndefined();
+    const green: ToolContext = { ...legacy, accent: "green" };
+    const blue: ToolContext = { ...legacy, accent: "blue" };
+    expect(green.accent).toBe("green");
+    expect(blue.accent).toBe("blue");
   });
 
   it("incluye E_NOT_FOUND como código de error estable", () => {

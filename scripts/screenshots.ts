@@ -21,17 +21,28 @@ function options() {
   const args = process.argv.slice(2);
   let out = resolve(root, "screenshots");
   let compare: string | undefined;
+  let accent = "blue";
   while (args.length) {
     const flag = args.shift();
     const value = args.shift();
-    if ((flag !== "--out" && flag !== "--compare") || !value || value.startsWith("--")) {
-      throw new Error("Uso: pnpm screenshots [--out carpeta] [--compare carpeta]");
+    if (
+      (flag !== "--out" && flag !== "--compare" && flag !== "--accent") ||
+      !value ||
+      value.startsWith("--")
+    ) {
+      throw new Error(
+        "Uso: pnpm screenshots [--out carpeta] [--compare carpeta] [--accent blue|green]",
+      );
     }
     if (flag === "--out") out = resolve(value);
-    else compare = resolve(value);
+    else if (flag === "--compare") compare = resolve(value);
+    else {
+      if (value !== "blue" && value !== "green") throw new Error("Acento inválido");
+      accent = value;
+    }
   }
   if (out === compare) throw new Error("Salida y referencia deben ser carpetas diferentes.");
-  return { out, compare };
+  return { out, compare, accent };
 }
 
 async function packages() {
@@ -165,7 +176,7 @@ async function pngFiles(directory: string): Promise<string[]> {
 }
 
 async function run() {
-  const { out, compare } = options();
+  const { out, compare, accent } = options();
   const pkgs = await packages();
   if (compare) await access(compare);
   const generated = new Set<string>();
@@ -209,6 +220,12 @@ async function run() {
         .getByRole("radio", { name: label, exact: true })
         .click();
       await expect(shell.locator("html")).toHaveAttribute("data-theme", theme);
+      await shell
+        .getByRole("radiogroup", { name: "Color de acento", exact: true })
+        .getByRole("radio", { name: accent === "green" ? "Verde" : "Azul", exact: true })
+        .click();
+      if (accent === "green")
+        await expect(shell.locator("html")).toHaveAttribute("data-accent", "green");
       const snap = async (name: string, tool?: Page) => {
         const relative = join(theme, `${name}.png`);
         generated.add(relative);

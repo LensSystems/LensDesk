@@ -41,6 +41,7 @@ export {
   Wrench,
   X,
 } from "lucide-react";
+export { applyDocumentContext, type DocumentContext } from "./apply-document-context.ts";
 export * from "./Badge.tsx";
 export * from "./Button.tsx";
 export * from "./Checkbox.tsx";

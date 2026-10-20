@@ -36,7 +36,7 @@ export function registerToolApi(options: {
   db: SqliteDatabase;
   registry: { get(id: string): InstalledTool | undefined };
   views: { getToolIdForContents(id: number): string | undefined; getViews(): ToolView[] };
-  context: () => { locale: string; theme: string };
+  context: () => { locale: string; theme: string; accent?: "blue" | "green" };
   hostVersion: string;
   shellContents: () => WebContents | undefined;
   clipboard: (text: string) => void;

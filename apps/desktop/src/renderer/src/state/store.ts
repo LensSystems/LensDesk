@@ -12,6 +12,7 @@ import { rendererI18n } from "../i18n.ts";
 type SettingValues = {
   locale: "es" | "en";
   theme: "system" | "dark" | "light";
+  accent: "blue" | "green";
   developerMode: boolean;
   updatesCheck: boolean;
 };
@@ -48,6 +49,7 @@ type State = {
 const defaults: SettingValues = {
   locale: "es",
   theme: "system",
+  accent: "blue",
   developerMode: false,
   updatesCheck: false,
 };
@@ -60,7 +62,7 @@ export const useShellStore = create<State>((set) => ({
   tools: [],
   pendingDowngrade: null,
   settings: defaults,
-  context: { locale: "es", theme: "dark" },
+  context: { locale: "es", theme: "dark", accent: "blue" },
   page: "tools",
   toasts: [],
   update: null,
@@ -86,7 +88,7 @@ export const useShellStore = create<State>((set) => ({
   },
   async hydrate(bridge) {
     const before = { ...eventCounts };
-    const [tabs, locale, theme, developerMode, updatesCheck, context, tools, dismissed] =
+    const [tabs, locale, theme, developerMode, updatesCheck, context, tools, dismissed, accent] =
       await Promise.all([
         bridge.invoke("tabs.list", {}),
         bridge.invoke("settings.get", { key: "locale" }),
@@ -96,6 +98,7 @@ export const useShellStore = create<State>((set) => ({
         bridge.invoke("app.getContext", {}),
         bridge.invoke("tools.list", {}),
         bridge.invoke("settings.get", { key: "updates.dismissedVersion" }),
+        bridge.invoke("settings.get", { key: "accent" }),
       ]);
     const dismissedVersion =
       dismissed.ok &&
@@ -126,6 +129,7 @@ export const useShellStore = create<State>((set) => ({
                 theme.data.value === "light")
                 ? theme.data.value
                 : defaults.theme,
+            accent: accent.ok && accent.data.value === "green" ? "green" : "blue",
             developerMode:
               developerMode.ok && typeof developerMode.data.value === "boolean"
                 ? developerMode.data.value
@@ -157,6 +161,7 @@ export const useShellStore = create<State>((set) => ({
         if (
           key === "locale" ||
           key === "theme" ||
+          key === "accent" ||
           key === "developerMode" ||
           key === "updates.check"
         )

@@ -1,5 +1,5 @@
 import type { createToolClient } from "@lensdesk/sdk";
-import { Puzzle } from "@lensdesk/ui";
+import { applyDocumentContext, type DocumentContext, Puzzle } from "@lensdesk/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActionRow } from "./ActionRow.tsx";
@@ -29,10 +29,9 @@ export function App({ client }: { client: Client }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: Se suscribe una sola vez al montar.
   useEffect(() => {
     let alive = true;
-    const applyContext = (next: typeof context) => {
+    const applyContext = (next: typeof context & DocumentContext) => {
       setContext(next);
-      document.documentElement.dataset.theme = next.theme;
-      document.documentElement.lang = next.locale;
+      applyDocumentContext(next);
       void i18n.changeLanguage(next.locale);
     };
     void client.app

@@ -28,7 +28,7 @@ export function createToolWiring(options: {
   userData: string;
   version: string;
   shellContents: () => Electron.WebContents | undefined;
-  context: () => { locale: string; theme: string };
+  context: () => { locale: string; theme: string; accent?: "blue" | "green" };
   showingTab: () => boolean;
   onShowActiveTool(callback: () => void): void;
   logger: Logger;
@@ -156,7 +156,7 @@ export function createToolWiring(options: {
       showActive();
       return api;
     },
-    publishContext(context: { locale: string; theme: string }) {
+    publishContext(context: { locale: string; theme: string; accent?: "blue" | "green" }) {
       api?.publishContext(context);
     },
     close(toolId: string) {

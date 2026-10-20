@@ -23,6 +23,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
   const { t, i18n } = useTranslation();
   const updatesDescriptionId = useId();
   const developerDescriptionId = useId();
+  const theme = useShellStore((state) => state.context.theme);
   const settings = useShellStore((state) => state.settings);
   const [version, setVersion] = useState<string | null>(null);
   useEffect(() => {
@@ -68,6 +69,24 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
                 { value: "light", label: t("settingsPage.light") },
                 { value: "dark", label: t("settingsPage.dark") },
               ]}
+            />
+          </SettingsRow>
+          <SettingsRow label={t("settingsPage.accent")}>
+            <SegmentedControl
+              aria-label={t("settingsPage.accent")}
+              value={settings.accent}
+              onValueChange={(value) => update("accent", value)}
+              options={(["blue", "green"] as const).map((accent) => ({
+                value: accent,
+                label: (
+                  <span className="inline-flex items-center gap-2">
+                    <span data-theme={theme} data-accent={accent} aria-hidden="true">
+                      <span className="block size-3 rounded-full bg-accent" />
+                    </span>
+                    {t(`settingsPage.${accent}`)}
+                  </span>
+                ),
+              }))}
             />
           </SettingsRow>
         </SettingsSection>

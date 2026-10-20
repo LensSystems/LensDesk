@@ -55,7 +55,13 @@ export const ipcSchemas = {
   },
   "app.getContext": {
     request: z.object({}).strict(),
-    response: z.object({ locale: z.enum(["es", "en"]), theme: z.enum(["dark", "light"]) }).strict(),
+    response: z
+      .object({
+        locale: z.enum(["es", "en"]),
+        theme: z.enum(["dark", "light"]),
+        accent: z.enum(["blue", "green"]),
+      })
+      .strict(),
   },
   "tabs.list": {
     request: z.object({}).strict(),

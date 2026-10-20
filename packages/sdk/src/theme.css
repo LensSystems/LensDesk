@@ -48,6 +48,22 @@
   --ld-shadow: 0 8px 24px rgb(16 24 40 / 0.1);
 }
 
+[data-theme="dark"][data-accent="green"] {
+  --ld-accent: #6cc69a;
+  --ld-accent-hover: #8ad5af;
+  --ld-accent-fg: #0b2a1d;
+  --ld-accent-soft: #2c4a3e;
+  --ld-accent-soft-fg: #b8e8cf;
+}
+
+[data-theme="light"][data-accent="green"] {
+  --ld-accent: #2d7857;
+  --ld-accent-hover: #26674a;
+  --ld-accent-fg: #ffffff;
+  --ld-accent-soft: #e1f1e9;
+  --ld-accent-soft-fg: #1d5a40;
+}
+
 :root {
   --ld-radius-sm: 6px;
   --ld-radius-md: 10px;
