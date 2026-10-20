@@ -47,6 +47,23 @@ describe("Tooltip", () => {
     );
     act(() => screen.getByRole("button", { name: "Cerrar pestaña" }).focus());
     expect(screen.getByRole("tooltip").textContent).toBe("Cerrar pestaña");
+    expect(
+      screen.getByRole("button", { name: "Cerrar pestaña" }).getAttribute("aria-describedby"),
+    ).toBeNull();
+  });
+
+  it("conserva una descripción explícita aunque el tooltip repita el nombre", () => {
+    render(
+      <TooltipProvider>
+        <p id="help">Acción irreversible</p>
+        <IconButton label="Quitar" aria-describedby="help">
+          x
+        </IconButton>
+      </TooltipProvider>,
+    );
+    const trigger = screen.getByRole("button", { name: "Quitar" });
+    act(() => trigger.focus());
+    expect(trigger.getAttribute("aria-describedby")).toBe("help");
   });
 
   it("IconButton sirve como trigger asChild de un menú", async () => {

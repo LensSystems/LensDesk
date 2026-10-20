@@ -1,6 +1,6 @@
 import type { createToolClient } from "@lensdesk/sdk";
 import { ConfirmDialog, Notice, TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Editor } from "./Editor.tsx";
 import { EmptyNote } from "./EmptyNote.tsx";
@@ -14,6 +14,9 @@ type Client = ReturnType<typeof createToolClient>;
 export function App({ client }: { client: Client }) {
   const { t } = useTranslation();
   const state = useNotes(client);
+  useEffect(() => {
+    document.title = t("title");
+  }, [t]);
   const [confirmingEmpty, setConfirmingEmpty] = useState(false);
   const flush = useAutosave(state.selected?.id ?? null, state.body, state.save);
   const updateBody = useCallback((value: string) => state.setBody(value), [state.setBody]);

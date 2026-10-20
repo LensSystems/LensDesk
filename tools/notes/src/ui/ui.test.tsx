@@ -9,6 +9,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import es from "../../locales/es.json";
 import { App } from "./App.tsx";
+import { Editor } from "./Editor.tsx";
 import { markdownHighlightStyle } from "./markdown-highlight.ts";
 import { type Note, NoteList } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
@@ -144,6 +145,29 @@ describe("interfaz de Notas", () => {
     expect(document.documentElement.hasAttribute("data-accent")).toBe(false);
   });
 
+  it("actualiza idioma y nombre del editor sin recrearlo ni perder el texto", async () => {
+    render(
+      <TooltipProvider>
+        <Editor
+          note={note("one", "# Documento")}
+          onChange={vi.fn()}
+          onBlur={vi.fn()}
+          onExport={vi.fn()}
+        />
+      </TooltipProvider>,
+    );
+    const editor = await screen.findByRole("textbox", { name: "Editar" });
+    act(() => {
+      const view = EditorView.findFromDOM(editor);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: "\nTexto nuevo" } });
+    });
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+    expect(screen.getByRole("textbox", { name: en.edit })).toBe(editor);
+    expect(editor).toHaveTextContent("Texto nuevo");
+  });
+
   it("conserva y guarda el texto al cambiar de nota antes del debounce", async () => {
     const fake = fakeClient();
     await fake.invoke("create", { body_md: "# A" });
@@ -170,6 +194,8 @@ describe("interfaz de Notas", () => {
     await fake.invoke("create", { body_md: "# Documento\n**Contenido**" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("heading", { name: "Documento" });
+    expect(document.title).toBe("Notas");
+    expect(screen.getByRole("textbox", { name: "Editar" })).toBeTruthy();
     const editor = document.querySelector(".cm-content");
     fireEvent.click(screen.getByRole("radio", { name: "Vista previa" }));
     expect(screen.getByRole("article").querySelector("strong")).toHaveTextContent("Contenido");

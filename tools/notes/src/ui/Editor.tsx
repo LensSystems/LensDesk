@@ -21,6 +21,7 @@ export function Editor({
 }) {
   const { t } = useTranslation();
   const host = useRef<HTMLDivElement>(null);
+  const editorLabel = useRef(t("edit"));
   const initialBody = useRef(note.body_md);
   const view = useRef<EditorView | null>(null);
   const [preview, setPreview] = useState(false);
@@ -31,6 +32,7 @@ export function Editor({
       doc: initialBody.current,
       extensions: [
         EditorView.lineWrapping,
+        EditorView.contentAttributes.of(() => ({ "aria-label": editorLabel.current })),
         markdown(),
         markdownHighlighting,
         lineNumbers(),
@@ -51,6 +53,11 @@ export function Editor({
       view.current = null;
     };
   }, [onChange, onBlur]);
+
+  useEffect(() => {
+    editorLabel.current = t("edit");
+    view.current?.dispatch({});
+  }, [t]);
 
   useEffect(() => {
     const editor = view.current;

@@ -32,7 +32,12 @@ export function Queue({
       {items.length === 0 ? (
         <p className="text-muted">{t("emptyQueue")}</p>
       ) : (
-        <ul className="queue-list" aria-label={t("queue")}>
+        <ul
+          className="queue-list"
+          aria-label={t("queue")}
+          aria-live="polite"
+          aria-relevant="text additions"
+        >
           {items.map((item) => (
             <QueueCard
               key={item.id}

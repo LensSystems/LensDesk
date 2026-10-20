@@ -95,6 +95,7 @@ describe("design tokens", () => {
       ["--ld-accent-fg", "--ld-accent-hover"],
       ["--ld-accent-soft-fg", "--ld-accent-soft"],
       ["--ld-text", "--ld-accent-soft"],
+      ["--ld-text-muted", "--ld-accent-soft"],
       ["--ld-success", "--ld-success-soft"],
       ["--ld-text", "--ld-success-soft"],
       ["--ld-warning-soft-fg", "--ld-warning-soft"],
@@ -167,6 +168,7 @@ describe("design tokens", () => {
         ["--ld-accent-fg", "--ld-accent-hover"],
         ["--ld-accent-soft-fg", "--ld-accent-soft"],
         ["--ld-text", "--ld-accent-soft"],
+        ["--ld-text-muted", "--ld-accent-soft"],
       ] as const) {
         expect(
           contrast(tokenValue(values, text), tokenValue(values, fill)),

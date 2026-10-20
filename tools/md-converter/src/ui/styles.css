@@ -45,7 +45,7 @@ body {
   align-content: start;
   gap: 8px;
   margin: 0;
-  padding: 2px;
+  padding: 4px;
   list-style: none;
 }
 .queue-status {

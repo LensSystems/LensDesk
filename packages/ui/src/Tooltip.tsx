@@ -1,6 +1,7 @@
 import { Tooltip as Primitive } from "radix-ui";
 import type { ComponentProps, ReactElement } from "react";
 import { cn } from "./cn.ts";
+import { TooltipTarget } from "./TooltipTarget.tsx";
 
 export function TooltipProvider(props: ComponentProps<typeof Primitive.Provider>) {
   return <Primitive.Provider delayDuration={300} skipDelayDuration={200} {...props} />;
@@ -17,7 +18,13 @@ export type TooltipProps = {
 export function Tooltip({ label, children, className, side = "bottom" }: TooltipProps) {
   return (
     <Primitive.Root>
-      <Primitive.Trigger asChild>{children}</Primitive.Trigger>
+      <Primitive.Trigger asChild>
+        <TooltipTarget
+          {...children.props}
+          element={children}
+          redundant={children.props["aria-label"] === label}
+        />
+      </Primitive.Trigger>
       <Primitive.Portal>
         <Primitive.Content
           className={cn(

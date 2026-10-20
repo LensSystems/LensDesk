@@ -75,8 +75,13 @@ describe("interfaz del Convertidor", () => {
   it("convierte en orden, muestra el progreso y cancela solo la fila elegida", async () => {
     const fake = fakeClient([handle("lento.pdf"), handle("datos.csv")]);
     render(<App client={fake.client as never} />);
+    expect(document.title).toBe(es.title);
     fireEvent.click(screen.getByRole("button", { name: "Elegir archivos…" }));
 
+    expect(await screen.findByRole("list", { name: es.queue })).toHaveAttribute(
+      "aria-live",
+      "polite",
+    );
     const progress = await screen.findByRole("progressbar", { name: "Progreso de lento.pdf" });
     await waitFor(() => expect(progress).toHaveAttribute("aria-valuenow", "50"));
     expect(within(row("lento.pdf")).getByText("Convirtiendo…")).toBeInTheDocument();

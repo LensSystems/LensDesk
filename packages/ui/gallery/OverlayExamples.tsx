@@ -77,6 +77,7 @@ export function OverlayExamples() {
         ))}
       </Example>
       <Example names={["Tooltip", "TooltipProvider"]}>
+        <ui.IconButton label="Información">i</ui.IconButton>
         <ui.Tooltip label="Información adicional">
           <ui.Button>Pasa el puntero o enfoca</ui.Button>
         </ui.Tooltip>

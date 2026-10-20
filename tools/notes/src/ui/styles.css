@@ -5,9 +5,14 @@ body {
   min-width: 640px;
   min-height: 100vh;
 }
-.cm-content:focus-visible {
+.code-editor:focus-within {
   outline: 2px solid var(--ld-accent);
-  outline-offset: 2px;
+  /* Hacia dentro: el editor llena su panel y un anillo exterior quedaría recortado. */
+  outline-offset: -2px;
+}
+.code-editor .cm-content:focus-visible,
+.code-editor .cm-editor.cm-focused {
+  outline: none;
 }
 .notes-app {
   height: 100vh;
@@ -50,6 +55,7 @@ body {
 .note-list nav {
   display: grid;
   align-content: start;
+  padding: 4px;
   gap: 8px;
 }
 .editor-panel {

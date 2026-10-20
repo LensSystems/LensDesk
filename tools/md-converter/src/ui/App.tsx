@@ -19,6 +19,9 @@ const EXTENSIONS = ["html", "htm", "docx", "csv", "pdf", "xlsx"];
 export function App({ client }: { client: Client }) {
   const { t, i18n } = useTranslation();
   const queue = useQueue(client);
+  useEffect(() => {
+    document.title = t("title");
+  }, [t]);
   const [error, setError] = useState("");
 
   useEffect(() => {
