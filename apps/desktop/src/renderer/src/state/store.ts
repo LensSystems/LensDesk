@@ -55,7 +55,7 @@ const defaults: SettingValues = {
 };
 // Cuenta los eventos recibidos por campo: si uno llega mientras hydrate espera, su dato es más
 // reciente que la respuesta de hydrate y no se pisa.
-const eventCounts = { tabs: 0, settings: 0, context: 0 };
+const eventCounts = { tabs: 0, settings: 0, context: 0, fullScreen: 0 };
 export const useShellStore = create<State>((set) => ({
   fullScreen: false,
   tabs: [],
@@ -88,18 +88,29 @@ export const useShellStore = create<State>((set) => ({
   },
   async hydrate(bridge) {
     const before = { ...eventCounts };
-    const [tabs, locale, theme, developerMode, updatesCheck, context, tools, dismissed, accent] =
-      await Promise.all([
-        bridge.invoke("tabs.list", {}),
-        bridge.invoke("settings.get", { key: "locale" }),
-        bridge.invoke("settings.get", { key: "theme" }),
-        bridge.invoke("settings.get", { key: "developerMode" }),
-        bridge.invoke("settings.get", { key: "updates.check" }),
-        bridge.invoke("app.getContext", {}),
-        bridge.invoke("tools.list", {}),
-        bridge.invoke("settings.get", { key: "updates.dismissedVersion" }),
-        bridge.invoke("settings.get", { key: "accent" }),
-      ]);
+    const [
+      info,
+      tabs,
+      locale,
+      theme,
+      developerMode,
+      updatesCheck,
+      context,
+      tools,
+      dismissed,
+      accent,
+    ] = await Promise.all([
+      bridge.invoke("app.getInfo", {}),
+      bridge.invoke("tabs.list", {}),
+      bridge.invoke("settings.get", { key: "locale" }),
+      bridge.invoke("settings.get", { key: "theme" }),
+      bridge.invoke("settings.get", { key: "developerMode" }),
+      bridge.invoke("settings.get", { key: "updates.check" }),
+      bridge.invoke("app.getContext", {}),
+      bridge.invoke("tools.list", {}),
+      bridge.invoke("settings.get", { key: "updates.dismissedVersion" }),
+      bridge.invoke("settings.get", { key: "accent" }),
+    ]);
     const dismissedVersion =
       dismissed.ok &&
       dismissed.data.key === "updates.dismissedVersion" &&
@@ -109,6 +120,7 @@ export const useShellStore = create<State>((set) => ({
     const stale = (field: keyof typeof eventCounts) => eventCounts[field] !== before[field];
     set((state) => ({
       ...state,
+      fullScreen: info.ok && !stale("fullScreen") ? info.data.fullScreen : state.fullScreen,
       ...(tabs.ok && !stale("tabs")
         ? {
             tabs: tabs.data.tabs,
@@ -149,7 +161,10 @@ export const useShellStore = create<State>((set) => ({
   },
   subscribe(bridge) {
     const unsubscribers = [
-      bridge.on("window.fullScreenChanged", ({ fullScreen }) => set({ fullScreen })),
+      bridge.on("window.fullScreenChanged", ({ fullScreen }) => {
+        eventCounts.fullScreen += 1;
+        set({ fullScreen });
+      }),
       bridge.on("tabs.changed", ({ tabs }) => {
         eventCounts.tabs += 1;
         set({ tabs, page: tabs.some((tab) => tab.active) ? "tab" : "tools" });

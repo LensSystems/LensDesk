@@ -43,7 +43,9 @@ const toolStateSchema = z
 export const ipcSchemas = {
   "app.getInfo": {
     request: z.object({}).strict(),
-    response: z.object({ version: z.string(), platform: z.string() }).strict(),
+    response: z
+      .object({ version: z.string(), platform: z.string(), fullScreen: z.boolean() })
+      .strict(),
   },
   "settings.get": {
     request: z.object({ key: settingKeySchema }).strict(),

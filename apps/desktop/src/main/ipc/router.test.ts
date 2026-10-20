@@ -43,22 +43,32 @@ describe("IPC router", () => {
   });
 
   it("valida la respuesta de app.getInfo", async () => {
+    expect(
+      ipcSchemas["app.getInfo"].response.safeParse({ version: "1", platform: "darwin" }).success,
+    ).toBe(false);
+    expect(
+      ipcSchemas["app.getInfo"].response.safeParse({
+        version: "1",
+        platform: "darwin",
+        fullScreen: "true",
+      }).success,
+    ).toBe(false);
     const router = createRouter({
       schemas: ipcSchemas,
       handlers: {
         ...unusedHandlers,
-        "app.getInfo": () => ({ version: "1.0.0", platform: "darwin" }),
+        "app.getInfo": () => ({ version: "1.0.0", platform: "darwin", fullScreen: false }),
       },
       isShellSender: () => true,
     });
     await expect(router({}, "app.getInfo", {})).resolves.toEqual({
       ok: true,
-      data: { version: "1.0.0", platform: "darwin" },
+      data: { version: "1.0.0", platform: "darwin", fullScreen: false },
     });
   });
 
   it("rechaza parámetros no válidos antes de ejecutar el handler", async () => {
-    const handler = vi.fn(() => ({ version: "1.0.0", platform: "darwin" }));
+    const handler = vi.fn(() => ({ version: "1.0.0", platform: "darwin", fullScreen: false }));
     const router = createRouter({
       schemas: ipcSchemas,
       handlers: { ...unusedHandlers, "app.getInfo": handler },
@@ -72,7 +82,7 @@ describe("IPC router", () => {
   });
 
   it("rechaza emisores ajenos al shell", async () => {
-    const handler = vi.fn(() => ({ version: "1.0.0", platform: "darwin" }));
+    const handler = vi.fn(() => ({ version: "1.0.0", platform: "darwin", fullScreen: false }));
     const router = createRouter({
       schemas: ipcSchemas,
       handlers: { ...unusedHandlers, "app.getInfo": handler },
@@ -90,7 +100,7 @@ describe("IPC router", () => {
       schemas: ipcSchemas,
       handlers: {
         ...unusedHandlers,
-        "app.getInfo": () => ({ version: "1", platform: "darwin" }),
+        "app.getInfo": () => ({ version: "1", platform: "darwin", fullScreen: false }),
       },
       isShellSender: () => true,
     });
@@ -106,7 +116,7 @@ describe("IPC router", () => {
       schemas: ipcSchemas,
       handlers: {
         ...unusedHandlers,
-        "app.getInfo": () => ({ version: "1", platform: "darwin" }),
+        "app.getInfo": () => ({ version: "1", platform: "darwin", fullScreen: false }),
         "app.openExternal": handler,
       },
       isShellSender: () => true,

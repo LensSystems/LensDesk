@@ -5,6 +5,8 @@ import { useShellStore } from "./store.ts";
 function fakeBridge() {
   const listeners = new Map<string, (payload: unknown) => void>();
   const invoke = vi.fn(async (channel: string) => {
+    if (channel === "app.getInfo")
+      return { ok: true as const, data: { version: "1", platform: "darwin", fullScreen: true } };
     if (channel === "tabs.list")
       return {
         ok: true as const,
@@ -31,6 +33,8 @@ describe("store del shell", () => {
   it("hidrata por el puente y solo aplica los cambios recibidos como eventos", async () => {
     const { bridge, listeners, invoke } = fakeBridge();
     await useShellStore.getState().hydrate(bridge);
+    expect(invoke).toHaveBeenCalledWith("app.getInfo", {});
+    expect(useShellStore.getState().fullScreen).toBe(true);
     expect(invoke).toHaveBeenCalledWith("tabs.list", {});
     expect(invoke).toHaveBeenCalledWith("settings.get", { key: "locale" });
     expect(invoke).toHaveBeenCalledWith("app.getContext", {});
@@ -76,6 +80,30 @@ describe("store del shell", () => {
       theme: "light",
       accent: "green",
     });
+    unsubscribe();
+  });
+
+  it("conserva el evento de pantalla completa recibido antes de la respuesta", async () => {
+    const { bridge, listeners, invoke } = fakeBridge();
+    let release: () => void = () => {};
+    const original = invoke.getMockImplementation();
+    invoke.mockImplementation(async (channel: string) => {
+      if (channel === "app.getInfo") {
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        return { ok: true as const, data: { version: "1", platform: "darwin", fullScreen: false } };
+      }
+      if (!original) throw new Error("Falta el puente");
+      return original(channel);
+    });
+    useShellStore.setState({ fullScreen: false });
+    const unsubscribe = useShellStore.getState().subscribe(bridge);
+    const hydrating = useShellStore.getState().hydrate(bridge);
+    listeners.get("window.fullScreenChanged")?.({ fullScreen: true });
+    release();
+    await hydrating;
+    expect(useShellStore.getState().fullScreen).toBe(true);
     unsubscribe();
   });
 

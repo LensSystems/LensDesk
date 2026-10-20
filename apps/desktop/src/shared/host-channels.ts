@@ -67,7 +67,7 @@ export type HostSettingKey =
   | "window.bounds";
 export type HostSettingValue = unknown;
 export type HostResponses = {
-  "app.getInfo": { version: string; platform: string };
+  "app.getInfo": { version: string; platform: string; fullScreen: boolean };
   "settings.get": { key: HostSettingKey; value: HostSettingValue };
   "settings.set": { key: HostSettingKey; value: HostSettingValue };
   "app.getContext": { locale: "es" | "en"; theme: "dark" | "light"; accent: "blue" | "green" };

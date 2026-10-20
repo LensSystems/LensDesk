@@ -155,7 +155,11 @@ const tabHandlers = createTabHandlers({
 });
 registerHostIpc(ipcMain, {
   handlers: {
-    "app.getInfo": () => ({ version: packageJson.version, platform: process.platform }),
+    "app.getInfo": () => ({
+      version: packageJson.version,
+      platform: process.platform,
+      fullScreen: shellWindow?.isFullScreen() ?? false,
+    }),
     "settings.get": settingsHandlers["settings.get"],
     "settings.set": settingsHandlers["settings.set"],
     "app.getContext": settingsHandlers["app.getContext"],
