@@ -1,12 +1,14 @@
 import { join } from "node:path";
 import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
+import { HEADER_HEIGHT } from "../shared/layout.ts";
 import { createAppActions } from "./app-actions.ts";
-import type { createSettingsHandlers } from "./context.ts";
+import type { createSettingsHandlers, ResolvedTheme } from "./context.ts";
 import type { SqliteDatabase } from "./db/database.ts";
 import { createRouter } from "./ipc/router.ts";
 import { ipcSchemas } from "./ipc/schemas.ts";
 import { exportLogs } from "./log/export.ts";
 import { createLogger, type Logger } from "./log/logger.ts";
+import { titleBarColors, titleBarOverlayFor } from "./shell/title-bar.ts";
 import { createUpdateService } from "./updates/update-service.ts";
 
 type SettingsHandlers = Pick<
@@ -138,9 +140,31 @@ export function schemaTooNewDialog(
 }
 
 // Opciones de la ventana del shell: aislada, con sandbox y sin Node.
-export function shellWindowOptions(bounds: object, show: boolean, preload: string) {
+export function shellWindowOptions(
+  bounds: object,
+  show: boolean,
+  preload: string,
+  platform: string,
+  theme: ResolvedTheme,
+) {
+  const titleOptions =
+    platform === "darwin"
+      ? {
+          titleBarStyle: "hiddenInset" as const,
+          // Los semáforos miden 14 px de alto: (52 - 14) / 2 = 19 px.
+          trafficLightPosition: { x: 16, y: (HEADER_HEIGHT - 14) / 2 },
+          backgroundColor: titleBarColors[theme].color,
+        }
+      : platform === "win32"
+        ? {
+            titleBarStyle: "hidden" as const,
+            titleBarOverlay: titleBarOverlayFor(theme),
+            backgroundColor: titleBarColors[theme].color,
+          }
+        : {};
   return {
     ...bounds,
+    ...titleOptions,
     show,
     webPreferences: {
       preload,

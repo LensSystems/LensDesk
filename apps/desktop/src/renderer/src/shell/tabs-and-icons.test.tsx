@@ -1,5 +1,5 @@
 import { Puzzle, StickyNote, TooltipProvider } from "@lensdesk/ui";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HostBridge } from "../../../shared/host-channels.ts";
 import { HEADER_HEIGHT } from "../../../shared/layout.ts";
@@ -61,6 +61,25 @@ describe("pestañas", () => {
     useShellStore.setState({ tabs, tools, page: "tab" });
   });
   afterEach(cleanup);
+
+  it.each(["darwin", "win32", "linux"])(
+    "reserva controles desde el primer pintado en %s",
+    (platform) => {
+      renderBar({ ...makeBridge().bridge, platform });
+      const header = screen.getByRole("banner");
+      expect(header.classList.contains("ld-drag")).toBe(true);
+      expect(header.style.paddingLeft).toBe(platform === "darwin" ? "80px" : "");
+      expect(header.style.paddingRight).toBe(platform === "win32" ? "154px" : "");
+      expect(header.style.height).toBe("52px");
+      for (const item of [
+        ...within(header).getAllByRole("button"),
+        ...within(header).getAllByRole("tab"),
+        ...within(header).queryAllByRole("link"),
+      ]) {
+        expect(item.closest(".ld-no-drag")).not.toBeNull();
+      }
+    },
+  );
 
   it("muestra el nombre localizado y cae al id sin manifiesto", async () => {
     renderBar(makeBridge().bridge);
@@ -209,6 +228,13 @@ describe("avisos dentro del encabezado", () => {
     render(<App bridge={makeBridge().bridge} />);
     const header = screen.getByRole("banner");
     expect(header.style.height).toBe(`${HEADER_HEIGHT}px`);
+    for (const item of [
+      ...within(header).getAllByRole("button"),
+      ...within(header).queryAllByRole("tab"),
+      ...within(header).queryAllByRole("link"),
+    ]) {
+      expect(item.closest(".ld-no-drag")).not.toBeNull();
+    }
     expect(header.contains(screen.getByText("LensDesk 9.0.0 está disponible."))).toBe(true);
     expect(header.contains(screen.getByRole("button", { name: "Ver actualización" }))).toBe(true);
     expect(header.contains(screen.getByText("Hecho"))).toBe(true);

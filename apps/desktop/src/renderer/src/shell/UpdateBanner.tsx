@@ -19,7 +19,7 @@ export function UpdateBanner({ update, bridge, onDismiss }: Props) {
       <span className="truncate">{t("recovery.updateAvailable", { version: update.version })}</span>
       <Button
         variant="primary"
-        className="h-6 shrink-0 px-2 text-xs"
+        className="ld-no-drag h-6 shrink-0 px-2 text-xs"
         onClick={() => void bridge.invoke("app.openExternal", { url: update.html_url })}
         type="button"
       >
@@ -27,7 +27,7 @@ export function UpdateBanner({ update, bridge, onDismiss }: Props) {
       </Button>
       <Button
         variant="ghost"
-        className="h-6 shrink-0 px-2 text-xs text-accent-soft-fg"
+        className="ld-no-drag h-6 shrink-0 px-2 text-xs text-accent-soft-fg"
         onClick={onDismiss}
         type="button"
       >

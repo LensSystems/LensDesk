@@ -122,6 +122,7 @@ export type HostEventPayloads = {
 };
 
 export type HostBridge = {
+  readonly platform: string;
   invoke<C extends HostChannel>(
     channel: C,
     payload: HostPayloads[C],

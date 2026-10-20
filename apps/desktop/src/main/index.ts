@@ -24,6 +24,7 @@ import { buildMenuTemplate } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 import { createTabHandlers } from "./shell/tab-handlers.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
+import { updateTitleBar } from "./shell/title-bar.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 import { createToolWiring } from "./tools/wire-tools.ts";
 import {
@@ -44,6 +45,7 @@ const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (pa
   app.setPath("userData", path),
 );
 const { logger, logsDir } = createMainLogger(app.getPath("userData"));
+let shellWindow: BrowserWindow | undefined;
 let shellContents: Electron.WebContents | undefined;
 // Aviso al shell por errores no capturados, como mucho uno cada 10 s y sin detalles.
 logProcessErrors(
@@ -87,6 +89,13 @@ const settingsHandlers = createSettingsHandlers({
   },
   emit: (event, payload) => {
     if (event === "context.changed") {
+      if (shellWindow && !shellWindow.isDestroyed()) {
+        updateTitleBar(
+          shellWindow,
+          process.platform,
+          (payload as HostEventPayloads["context.changed"]).theme,
+        );
+      }
       setNativeMenu((payload as HostEventPayloads["context.changed"]).locale);
       toolWiring?.publishContext(payload as HostEventPayloads["context.changed"]);
     }
@@ -177,8 +186,15 @@ void app.whenReady().then(async () => {
     screen.getAllDisplays().map(({ bounds: rect }) => rect),
   );
   const window = new BrowserWindow(
-    shellWindowOptions(bounds, !smoke, resolve(import.meta.dirname, "../preload/host.cjs")),
+    shellWindowOptions(
+      bounds,
+      !smoke,
+      resolve(import.meta.dirname, "../preload/host.cjs"),
+      process.platform,
+      settingsHandlers["app.getContext"]().theme,
+    ),
   );
+  shellWindow = window;
   window.on("resize", showActiveTool);
   followTabs(tabsStore().list());
 

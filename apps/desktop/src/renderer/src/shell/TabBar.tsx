@@ -2,7 +2,11 @@ import { Grid2x2Plus, IconButton, SlidersHorizontal, X } from "@lensdesk/ui";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ShellTab } from "../../../shared/host-channels.ts";
-import { HEADER_HEIGHT } from "../../../shared/layout.ts";
+import {
+  HEADER_HEIGHT,
+  MAC_TRAFFIC_LIGHTS_WIDTH,
+  WIN_CONTROLS_WIDTH,
+} from "../../../shared/layout.ts";
 import { useShellStore } from "../state/store.ts";
 import { HeaderNotices } from "./HeaderNotices.tsx";
 import { toolIcon } from "./tool-icons.ts";
@@ -29,7 +33,15 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
   };
   const moveFocus = (index: number) => tabRefs.current[index]?.focus();
   return (
-    <header style={{ height: HEADER_HEIGHT }} className="flex items-center gap-3 bg-bg px-4">
+    <header
+      data-platform={bridge.platform}
+      style={{
+        height: HEADER_HEIGHT,
+        paddingLeft: bridge.platform === "darwin" ? MAC_TRAFFIC_LIGHTS_WIDTH : undefined,
+        paddingRight: bridge.platform === "win32" ? WIN_CONTROLS_WIDTH + 16 : undefined,
+      }}
+      className="ld-drag flex items-center gap-3 bg-bg px-4"
+    >
       <div className="min-w-0 flex-1">
         <span className="block truncate font-bold text-muted">{t("shell.label")}</span>
       </div>
@@ -53,7 +65,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
             >
               <button
                 aria-selected={selected}
-                className="flex h-full min-w-0 items-center gap-2 rounded-full px-3 text-[13px]"
+                className="ld-no-drag flex h-full min-w-0 items-center gap-2 rounded-full px-3 text-[13px]"
                 onClick={() => void bridge.invoke("tabs.activate", { toolId: tab.toolId })}
                 onFocus={() => setFocusedIndex(index)}
                 onKeyDown={(event) => {
@@ -75,11 +87,11 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
                 tabIndex={rovingIndex === index ? 0 : -1}
                 type="button"
               >
-                <Icon aria-hidden="true" className="shrink-0" size={15} />
+                <Icon aria-hidden="true" className="ld-no-drag shrink-0" size={15} />
                 <span className="truncate">{nameOf(tab.toolId)}</span>
               </button>
               <IconButton
-                className="size-6 shrink-0"
+                className="ld-no-drag size-6 shrink-0"
                 tooltipSide="left"
                 label={t("shell.closeTab", { name: nameOf(tab.toolId) })}
                 onClick={() => void bridge.invoke("tabs.close", { toolId: tab.toolId })}
@@ -93,7 +105,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
         <HeaderNotices bridge={bridge} />
         <IconButton
-          className="shrink-0"
+          className="ld-no-drag shrink-0"
           label={t("shell.toolsPage")}
           tooltipSide="left"
           onClick={() => void showPage(bridge, "tools")}
@@ -101,7 +113,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
           <Grid2x2Plus aria-hidden size={17} />
         </IconButton>
         <IconButton
-          className="shrink-0"
+          className="ld-no-drag shrink-0"
           label={t("shell.settingsPage")}
           tooltipSide="left"
           onClick={() => void showPage(bridge, "settings")}
