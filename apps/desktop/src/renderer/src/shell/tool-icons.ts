@@ -23,7 +23,7 @@ import {
   StickyNote,
   Terminal,
   Wrench,
-} from "lucide-react";
+} from "@lensdesk/ui";
 
 // Mapa fijo por nombre en kebab-case: solo se incluyen estos iconos en el bundle.
 const toolIcons: Record<string, LucideIcon> = {

@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { HEADER_HEIGHT } from "../../shared/layout.ts";
 
 vi.mock("electron", () => ({
   WebContentsView: class {},
@@ -52,11 +53,13 @@ describe("tool view helpers", () => {
       nodeIntegration: false,
       preload: join(import.meta.dirname, "../preload/tool.cjs"),
     });
+    expect(HEADER_HEIGHT).toBe(52);
+    expect(computeViewBounds({ width: 800, height: 600 }).y).toBe(HEADER_HEIGHT);
     expect(computeViewBounds({ width: 800, height: 600 })).toEqual({
       x: 0,
-      y: 36,
+      y: 52,
       width: 800,
-      height: 564,
+      height: 548,
     });
   });
   it("denies internal navigation and only allows http(s) external links", () => {

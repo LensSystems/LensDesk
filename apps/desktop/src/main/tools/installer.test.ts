@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -54,6 +55,24 @@ function setup(root: string, developerMode = false) {
   return { database, pair, installer };
 }
 describe("tool installer", () => {
+  it("conserva E_PACKAGE_INVALID para bytes aleatorios y zip truncado", async () => {
+    const root = await temp();
+    const { database, pair, installer } = setup(root);
+    try {
+      const file = await packageAt(root, "1.0.0", pair);
+      const bytes = await readFile(file);
+      for (const damaged of [
+        Buffer.from([17, 91, 0, 212, 38, 119]),
+        bytes.subarray(0, bytes.length - 12),
+      ]) {
+        await writeFile(file, damaged);
+        await expect(installer.install(file)).rejects.toMatchObject({ code: "E_PACKAGE_INVALID" });
+        expect(await readdir(join(root, "tools"))).toEqual([]);
+      }
+    } finally {
+      database.close();
+    }
+  });
   it("instala paquetes firmados y sin firma solo en modo desarrollador; limpia rechazos", async () => {
     const root = await temp();
     const { database, pair, installer } = setup(root);
@@ -79,6 +98,27 @@ describe("tool installer", () => {
     const devInstall = await dev.installer.install(unsigned);
     expect(devInstall).toMatchObject({ signed: false, keyId: null });
     dev.database.close();
+  });
+  it("avisa al actualizar, antes de borrar la versión anterior, y no al instalar", async () => {
+    const root = await temp();
+    const database = openHostDatabase(root);
+    const pair = generateKeyPair();
+    const seen: Array<{ id: string; oldStillThere: boolean }> = [];
+    const installer = createToolInstaller({
+      database,
+      userData: root,
+      trustedKeys: () => new Map(),
+      developerMode: () => true,
+      hostVersion: "0.1.0",
+      onToolUpdated: (id) =>
+        seen.push({ id, oldStillThere: existsSync(join(root, "tools", id, "1.0.0")) }),
+    });
+    await installer.install(await packageAt(root, "1.0.0", pair, false));
+    expect(seen).toEqual([]);
+    await installer.install(await packageAt(root, "2.0.0", pair, false));
+    expect(seen).toEqual([{ id: "sample-tool", oldStillThere: true }]);
+    expect(existsSync(join(root, "tools", "sample-tool", "1.0.0"))).toBe(false);
+    database.close();
   });
   it("actualiza atómicamente, conserva datos y exige confirmación para downgrade", async () => {
     const root = await temp();

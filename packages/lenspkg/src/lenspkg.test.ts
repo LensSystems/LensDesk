@@ -78,6 +78,19 @@ async function zip(
   await writeFile(out, bytes);
 }
 describe("@lensdesk/lenspkg", () => {
+  it("rechaza bytes aleatorios y un zip truncado con E_PACKAGE_INVALID", async () => {
+    const dir = await temp();
+    const file = path.join(dir, "damaged.lenspkg");
+    await writeFile(file, Buffer.from([17, 91, 0, 212, 38, 119]));
+    expect(await verifyPackage(file)).toMatchObject({ ok: false, code: "E_PACKAGE_INVALID" });
+    await zip(file, [{ name: "ui/index.html", data: "content" }]);
+    const bytes = await readFile(file);
+    await writeFile(file, bytes.subarray(0, bytes.length - 12));
+    expect(await verifyPackage(file)).toMatchObject({ ok: false, code: "E_PACKAGE_INVALID" });
+    await expect(extractPackage(file, path.join(dir, "extracted"))).rejects.toMatchObject({
+      code: "E_PACKAGE_INVALID",
+    });
+  });
   it("ordena rutas por unidades de código al firmar y verifica archivos B y a", async () => {
     const dir = await temp();
     await source(dir);

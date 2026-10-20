@@ -1,3 +1,5 @@
+import { TooltipProvider } from "@lensdesk/ui";
+import { tags } from "@lezer/highlight";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { EditorView } from "codemirror";
 import i18n from "i18next";
@@ -7,8 +9,9 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import es from "../../locales/es.json";
 import { App } from "./App.tsx";
-import { ConfirmDialog } from "./ConfirmDialog.tsx";
-import type { Note } from "./NoteList.tsx";
+import { Editor } from "./Editor.tsx";
+import { markdownHighlightStyle } from "./markdown-highlight.ts";
+import { type Note, NoteList } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
 import { useAutosave } from "./use-autosave.ts";
 
@@ -24,7 +27,9 @@ const note = (id: string, body_md = "") => ({
 
 function fakeClient() {
   let rows: Note[] = [];
-  let contextListener: ((context: { locale: string; theme: string }) => void) | undefined;
+  let contextListener:
+    | ((context: { locale: string; theme: string; accent?: "blue" | "green" }) => void)
+    | undefined;
   const files = [
     { token: "import", name: "one.md", size: 12 },
     { token: "import2", name: "two.md", size: 12 },
@@ -90,16 +95,22 @@ function fakeClient() {
         hostVersion: "",
         toolVersion: "",
       })),
-      onContextChange: vi.fn((listener: (context: { locale: string; theme: string }) => void) => {
-        contextListener = listener;
-        return () => {};
-      }),
+      onContextChange: vi.fn(
+        (
+          listener: (context: { locale: string; theme: string; accent?: "blue" | "green" }) => void,
+        ) => {
+          contextListener = listener;
+          return () => {};
+        },
+      ),
     },
   };
   return {
     client,
     invoke,
     files: client.files,
+    changeAccent: (accent?: "blue" | "green") =>
+      contextListener?.({ locale: "es", theme: "dark", ...(accent ? { accent } : {}) }),
     changeLanguage: (locale: string) => contextListener?.({ locale, theme: "dark" }),
   };
 }
@@ -124,6 +135,90 @@ beforeEach(async () => {
 });
 
 describe("interfaz de Notas", () => {
+  it("actualiza el acento en vivo y acepta contexto sin acento", async () => {
+    const fake = fakeClient();
+    render(<App client={fake.client as never} />);
+    await waitFor(() => expect(fake.client.app.onContextChange).toHaveBeenCalled());
+    await act(async () => fake.changeAccent("green"));
+    expect(document.documentElement.dataset.accent).toBe("green");
+    await act(async () => fake.changeAccent());
+    expect(document.documentElement.hasAttribute("data-accent")).toBe(false);
+  });
+
+  it("actualiza idioma y nombre del editor sin recrearlo ni perder el texto", async () => {
+    render(
+      <TooltipProvider>
+        <Editor
+          note={note("one", "# Documento")}
+          onChange={vi.fn()}
+          onBlur={vi.fn()}
+          onExport={vi.fn()}
+        />
+      </TooltipProvider>,
+    );
+    const editor = await screen.findByRole("textbox", { name: "Editar" });
+    act(() => {
+      const view = EditorView.findFromDOM(editor);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: "\nTexto nuevo" } });
+    });
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
+    expect(screen.getByRole("textbox", { name: en.edit })).toBe(editor);
+    expect(editor).toHaveTextContent("Texto nuevo");
+  });
+
+  it("conserva y guarda el texto al cambiar de nota antes del debounce", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# A" });
+    await fake.invoke("create", { body_md: "# B" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "A" });
+    act(() => {
+      const view = EditorView.findFromDOM(document.querySelector(".cm-content") as HTMLElement);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: "\nTexto pendiente" } });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "B" }));
+    fireEvent.click(screen.getByRole("button", { name: "A" }));
+    expect(document.querySelector(".cm-content")).toHaveTextContent("Texto pendiente");
+    await waitFor(() =>
+      expect(fake.invoke).toHaveBeenCalledWith("update", {
+        id: "1",
+        body_md: "# A\nTexto pendiente",
+      }),
+    );
+  });
+
+  it("alterna vista previa y editor conservando contenido", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Documento\n**Contenido**" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Documento" });
+    expect(document.title).toBe("Notas");
+    expect(screen.getByRole("textbox", { name: "Editar" })).toBeTruthy();
+    const editor = document.querySelector(".cm-content");
+    fireEvent.click(screen.getByRole("radio", { name: "Vista previa" }));
+    expect(screen.getByRole("article").querySelector("strong")).toHaveTextContent("Contenido");
+    fireEvent.click(screen.getByRole("radio", { name: "Editar" }));
+    expect(screen.queryByRole("article")).toBeNull();
+    expect(document.querySelector(".cm-content")).toBe(editor);
+    expect(editor).toHaveTextContent("**Contenido**");
+  });
+
+  it("muestra resumen y acciones hermanas dentro de la tarjeta", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Tarjeta\n- **Resumen**" });
+    render(<App client={fake.client as never} />);
+    const main = await screen.findByRole("button", { name: "Tarjeta" });
+    const card = main.parentElement as HTMLElement;
+    expect(within(card).getByText("Resumen")).toBeInTheDocument();
+    for (const name of ["Fijar nota", "Mover a la papelera"]) {
+      const action = within(card).getByRole("button", { name });
+      expect(main.contains(action)).toBe(false);
+      expect(action.parentElement?.closest("button")).toBeNull();
+    }
+  });
+
   it("guarda tras 800 ms reiniciados y al perder el foco", () => {
     vi.useFakeTimers();
     const save = vi.fn();
@@ -194,9 +289,57 @@ describe("interfaz de Notas", () => {
     render(<App client={fake.client as never} />);
     await screen.findByRole("button", { name: "Archivar" });
     fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Papelera" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Papelera" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Archivar" }));
+    expect(screen.getByRole("article")).toHaveTextContent("Archivar");
+    expect(document.querySelector(".cm-content")).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Restaurar" }));
     await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("restore", { id: "1" }));
+  });
+
+  it("una carga lenta anterior no borra la nota recién creada", async () => {
+    const fake = fakeClient();
+    const original = fake.invoke.getMockImplementation();
+    let releaseList: (() => void) | undefined;
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "list" && !releaseList) {
+        const rows = await original?.(method, params);
+        await new Promise<void>((resolve) => {
+          releaseList = resolve;
+        });
+        return rows;
+      }
+      return original?.(method, params);
+    });
+    render(<App client={fake.client as never} />);
+    await waitFor(() => expect(releaseList).toBeDefined());
+    fireEvent.click(screen.getAllByRole("button", { name: "Nueva nota" })[0] as HTMLElement);
+    await waitFor(() => expect(document.querySelector(".cm-content")).not.toBeNull());
+    await act(async () => releaseList?.());
+    expect(document.querySelector(".cm-content")).not.toBeNull();
+  });
+
+  it("mover a la papelera mientras se abre la Papelera muestra la nota allí", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Archivar" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("button", { name: "Archivar" });
+    const original = fake.invoke.getMockImplementation();
+    let finishTrash: (() => void) | undefined;
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "trash")
+        await new Promise<void>((resolve) => {
+          finishTrash = resolve;
+        });
+      return original?.(method, params);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
+    await waitFor(() => expect(finishTrash).toBeDefined());
+    fireEvent.click(screen.getByRole("radio", { name: "Papelera" }));
+    await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("list", { trashed: true }));
+    await act(async () => finishTrash?.());
+    expect(await screen.findByRole("button", { name: "Archivar" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "Papelera" })).toHaveAttribute("aria-checked", "true");
   });
 
   it("buscar no desmonta el cuadro de búsqueda ni pisa el texto sin guardar", async () => {
@@ -228,25 +371,25 @@ describe("interfaz de Notas", () => {
     expect(en.untitled).toBe("Untitled");
   });
 
-  it("vaciar la papelera pide confirmación en un diálogo propio con foco en Cancelar", async () => {
+  it("vaciar la papelera pide confirmación en un diálogo con foco en Cancelar", async () => {
     const confirm = vi.spyOn(window, "confirm");
     const fake = fakeClient();
     await fake.invoke("create", { body_md: "# Vieja" });
     await fake.invoke("trash", { id: "1" });
     render(<App client={fake.client as never} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Papelera" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Papelera" }));
     fireEvent.click(await screen.findByRole("button", { name: "Vaciar papelera" }));
     const dialog = await screen.findByRole("dialog", { name: "¿Vaciar la papelera?" });
     expect(dialog).toHaveTextContent("Esta acción no se puede deshacer.");
     expect(screen.getByRole("button", { name: "Cancelar" })).toHaveFocus();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash", expect.anything());
-    expect(dialog).not.toHaveAttribute("open");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
     fireEvent.click(screen.getByRole("button", { name: "Vaciar papelera" }));
     const reopened = await screen.findByRole("dialog");
-    fireEvent(reopened, new Event("cancel", { cancelable: true }));
-    expect(reopened).not.toHaveAttribute("open");
+    fireEvent.keyDown(reopened, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash", expect.anything());
 
     fireEvent.click(screen.getByRole("button", { name: "Vaciar papelera" }));
@@ -260,19 +403,30 @@ describe("interfaz de Notas", () => {
     expect(confirm).not.toHaveBeenCalled();
   });
 
-  it("ConfirmDialog solo se abre cuando open es true", () => {
-    const props = {
-      title: "T",
-      message: "M",
-      confirmLabel: "Sí",
-      cancelLabel: "No",
-      onConfirm: vi.fn(),
-      onCancel: vi.fn(),
-    };
-    const { rerender } = render(<ConfirmDialog {...props} open={false} />);
-    expect(document.querySelector("dialog")).not.toHaveAttribute("open");
-    rerender(<ConfirmDialog {...props} open />);
-    expect(document.querySelector("dialog")).toHaveAttribute("open");
+  it("usa los componentes compartidos y cancela el vaciado con Escape", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Vista" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Vista" });
+    const group = screen.getByRole("radiogroup", { name: "Vista de notas" });
+    const notes = within(group).getByRole("radio", { name: "Notas" });
+    const trash = within(group).getByRole("radio", { name: "Papelera" });
+    notes.focus();
+    fireEvent.keyDown(notes, { key: "ArrowRight" });
+    await waitFor(() => expect(trash).toHaveFocus());
+    expect(trash).toHaveAttribute("aria-checked", "true");
+    fireEvent.keyDown(trash, { key: "ArrowLeft" });
+    await waitFor(() => expect(notes).toHaveFocus());
+    expect(notes).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(await screen.findByRole("radio", { name: "Vista previa" }));
+    expect(screen.getByRole("article")).toHaveClass("ld-markdown-view");
+    fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Vista" })).toBeNull());
+    fireEvent.click(trash);
+    fireEvent.click(await screen.findByRole("button", { name: "Vaciar papelera" }));
+    fireEvent.keyDown(await screen.findByRole("dialog"), { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(fake.invoke).not.toHaveBeenCalledWith("emptyTrash", expect.anything());
   });
 
   it("avisa y recarga la lista cuando una acción responde E_NOT_FOUND", async () => {
@@ -341,6 +495,51 @@ describe("interfaz de Notas", () => {
     );
   });
 
+  it("al cambiar de nota con un guardado en curso, el texto se recupera una sola vez", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Uno" });
+    await fake.invoke("create", { body_md: "# Dos" });
+    render(<App client={fake.client as never} />);
+    const selected = await screen.findByRole("heading", { level: 2 });
+    const other = selected.textContent === "Uno" ? "Dos" : "Uno";
+    const original = fake.invoke.getMockImplementation();
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "update") {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        throw Object.assign(new Error("x"), { code: "E_NOT_FOUND" });
+      }
+      return original?.(method, params);
+    });
+    const editor = document.querySelector(".cm-content") as HTMLElement;
+    act(() => {
+      const view = EditorView.findFromDOM(editor);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: "\ntexto único" } });
+    });
+    fireEvent.blur(editor);
+    fireEvent.click(screen.getByRole("button", { name: other }));
+    await screen.findByRole("alert");
+    const copies = fake.invoke.mock.calls.filter(
+      ([method, params]) =>
+        method === "create" &&
+        String((params as { body_md?: string }).body_md).includes("texto único"),
+    );
+    expect(copies).toHaveLength(1);
+  });
+
+  it("el editor colorea los títulos de Markdown", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Coloreado" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Coloreado" });
+    const heading = markdownHighlightStyle.style([tags.heading]) ?? "sin-clase";
+    await waitFor(() => {
+      const span = [...document.querySelectorAll(".cm-line span")].find((node) =>
+        node.textContent?.includes("Coloreado"),
+      );
+      expect(span?.className).toContain(heading);
+    });
+  });
+
   it("seleccionar una nota y esperar no llama a update", async () => {
     const fake = fakeClient();
     await fake.invoke("create", { body_md: "# Uno" });
@@ -354,5 +553,79 @@ describe("interfaz de Notas", () => {
     });
     vi.useRealTimers();
     expect(fake.invoke).not.toHaveBeenCalledWith("update", expect.anything());
+  });
+});
+
+describe("resaltado en la lista", () => {
+  it("resalta título y primera línea coincidente, y conserva el nombre accesible", () => {
+    const props = {
+      notes: [note("1", "Ideas Sprint\nResumen habitual\n- **Sprint** pendiente")],
+      selectedId: null,
+      trashed: false,
+      onSelect: vi.fn(),
+      onTrash: vi.fn(),
+      onPin: vi.fn(),
+    };
+    const { container, rerender } = render(<NoteList {...props} query="spr" />, {
+      wrapper: TooltipProvider,
+    });
+    const button = screen.getByRole("button", { name: "Ideas Sprint" });
+    // La primera línea del cuerpo también puede contener el título.
+    expect([...button.querySelectorAll("mark")].map((mark) => mark.textContent)).toEqual([
+      "Sprint",
+      "Sprint",
+    ]);
+    rerender(
+      <NoteList
+        {...props}
+        notes={[
+          { ...note("1", "Ideas Sprint"), body_md: "Resumen habitual\n- **Sprint** pendiente" },
+        ]}
+        query="spr"
+      />,
+    );
+    expect(button.textContent).toContain("Sprint pendiente");
+    expect(button.textContent).not.toContain("Resumen habitual");
+    rerender(<NoteList {...props} query="" />);
+    expect(container.querySelector("mark")).toBeNull();
+    expect(button.textContent).toContain("Resumen habitual");
+  });
+
+  it("mantiene el resumen habitual si solo coincide el título", () => {
+    render(
+      <NoteList
+        notes={[{ ...note("1", "Resumen habitual"), title: "Sprint" }]}
+        selectedId={null}
+        trashed={false}
+        query="spr"
+        onSelect={vi.fn()}
+        onTrash={vi.fn()}
+        onPin={vi.fn()}
+      />,
+      { wrapper: TooltipProvider },
+    );
+    const button = screen.getByRole("button", { name: "Sprint" });
+    expect(button.textContent).toContain("Resumen habitual");
+    expect(button.querySelectorAll("mark")).toHaveLength(1);
+  });
+
+  it("pinta etiquetas como texto seguro", () => {
+    const title = "<img src=x onerror=alert(1)>";
+    const { container } = render(
+      <NoteList
+        notes={[note("1", title)]}
+        selectedId={null}
+        trashed={false}
+        query="img"
+        onSelect={vi.fn()}
+        onTrash={vi.fn()}
+        onPin={vi.fn()}
+      />,
+      { wrapper: TooltipProvider },
+    );
+    const button = screen.getByRole("button", { name: title });
+    expect(button.textContent).toContain(title);
+    expect(button.querySelector("mark")?.textContent).toBe("img");
+    expect(container.querySelector("img")).toBeNull();
   });
 });

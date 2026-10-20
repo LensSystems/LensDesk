@@ -1,6 +1,17 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 
+// Sin empaquetar, main se ejecuta desde out/main/ y las claves están en resources/keys.
+export function trustedKeysDirectory(options: {
+  isPackaged: boolean;
+  resourcesPath: string;
+  mainDirectory: string;
+}): string {
+  return options.isPackaged
+    ? join(options.resourcesPath, "keys")
+    : join(options.mainDirectory, "../../resources/keys");
+}
+
 export function loadTrustedKeys(options: {
   directory: string;
   developerMode: boolean;

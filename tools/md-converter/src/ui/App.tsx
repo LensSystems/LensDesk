@@ -1,4 +1,11 @@
 import type { createToolClient } from "@lensdesk/sdk";
+import {
+  applyDocumentContext,
+  type DocumentContext,
+  Notice,
+  TooltipProvider,
+  UiLabelsProvider,
+} from "@lensdesk/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Preview } from "./Preview.tsx";
@@ -12,13 +19,15 @@ const EXTENSIONS = ["html", "htm", "docx", "csv", "pdf", "xlsx"];
 export function App({ client }: { client: Client }) {
   const { t, i18n } = useTranslation();
   const queue = useQueue(client);
+  useEffect(() => {
+    document.title = t("title");
+  }, [t]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let alive = true;
-    const applyContext = (context: { locale: string; theme: string }) => {
-      document.documentElement.dataset.theme = context.theme;
-      document.documentElement.lang = context.locale;
+    const applyContext = (context: DocumentContext) => {
+      applyDocumentContext(context);
       void i18n.changeLanguage(context.locale);
     };
     void client.app
@@ -48,29 +57,26 @@ export function App({ client }: { client: Client }) {
   };
 
   return (
-    <main className="converter-app">
-      <header className="app-toolbar">
-        <h1>{t("title")}</h1>
-      </header>
-      {error && (
-        <p className="app-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="workspace">
-        <Queue
-          items={queue.items}
-          selectedId={queue.selected?.id ?? null}
-          onChoose={() => void choose()}
-          onSelect={queue.setSelectedId}
-          onCancel={queue.cancel}
-        />
-        <Preview
-          client={client}
-          item={queue.selected}
-          results={queue.items.filter((item) => item.status === "done")}
-        />
-      </div>
-    </main>
+    <UiLabelsProvider labels={{ loading: t("loading"), close: t("close"), dismiss: t("close") }}>
+      <TooltipProvider>
+        <main className="converter-app">
+          {error && <Notice tone="danger" title={error} />}
+          <div className="workspace">
+            <Queue
+              items={queue.items}
+              selectedId={queue.selected?.id ?? null}
+              onChoose={() => void choose()}
+              onSelect={queue.setSelectedId}
+              onCancel={queue.cancel}
+            />
+            <Preview
+              client={client}
+              item={queue.selected}
+              results={queue.items.filter((item) => item.status === "done")}
+            />
+          </div>
+        </main>
+      </TooltipProvider>
+    </UiLabelsProvider>
   );
 }

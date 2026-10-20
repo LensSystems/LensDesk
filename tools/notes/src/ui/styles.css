@@ -1,280 +1,135 @@
 @import "tailwindcss";
-@import "@lensdesk/sdk/fonts.css";
-@import "@lensdesk/sdk/theme.css";
-@import "@lensdesk/sdk/tailwind.css";
+@import "@lensdesk/ui/styles.css";
 
-:root {
-  font:
-    13px / 1.45 Inter,
-    sans-serif;
-  color: var(--ld-text);
-  background: var(--ld-bg);
-}
-* {
-  box-sizing: border-box;
-}
 body {
-  margin: 0;
   min-width: 640px;
   min-height: 100vh;
 }
-button,
-input {
-  min-height: 28px;
-  padding: 4px 8px;
-  border: 1px solid var(--ld-border-control);
-  border-radius: 4px;
-  color: var(--ld-text);
-  background: var(--ld-surface);
-  font: inherit;
-}
-button {
-  cursor: pointer;
-  transition: background-color 120ms ease-out;
-}
-button:hover {
-  background: var(--ld-surface-raised);
-}
-button:focus-visible,
-input:focus-visible,
-.cm-content:focus-visible {
+.code-editor:focus-within {
   outline: 2px solid var(--ld-accent);
-  outline-offset: 2px;
+  /* Hacia dentro: el editor llena su panel y un anillo exterior quedaría recortado. */
+  outline-offset: -2px;
+}
+.code-editor .cm-content:focus-visible,
+.code-editor .cm-editor.cm-focused {
+  outline: none;
 }
 .notes-app {
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
-.app-toolbar,
-.editor-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--ld-border);
-}
-.app-toolbar h1,
-.editor-toolbar h1 {
-  margin: 0 auto 0 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-.notice {
-  display: flex;
-  align-items: center;
   gap: 12px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--ld-border);
-  color: var(--ld-danger);
-}
-.notice span {
-  flex: 1;
+  padding: 0 12px 12px;
 }
 .workspace {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 240px 1fr;
+  display: flex;
+  gap: 12px;
 }
 .note-list {
+  width: 300px;
+  flex: none;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-right: 1px solid var(--ld-border);
-  overflow: auto;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+}
+.sidebar-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sidebar-heading h1 {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 700;
+}
+.sidebar-heading button {
+  flex-shrink: 0;
 }
 .note-list nav {
   display: grid;
   align-content: start;
-  gap: 4px;
-}
-.note-row {
-  display: flex;
-  gap: 4px;
-}
-.note-title {
-  flex: 1;
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.note-row.selected .note-title {
-  border-color: var(--ld-accent);
+  padding: 4px;
+  gap: 8px;
 }
 .editor-panel {
+  flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+  overflow: hidden;
 }
-.code-editor,
-.preview {
+.editor-toolbar {
+  height: 56px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 0 24px;
+  border-bottom: 1px solid var(--ld-border);
+}
+.editor-toolbar h2 {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.editor-toolbar > :not(h2) {
+  flex-shrink: 0;
+}
+.code-editor {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
-  padding: 12px;
 }
 .cm-editor {
   height: 100%;
   font:
-    13px / 1.5 "JetBrains Mono",
+    13px / 1.75 "JetBrains Mono Variable",
     monospace;
   color: var(--ld-text);
   background: var(--ld-bg);
 }
-.cm-scroller {
+.code-editor .cm-editor .cm-scroller {
   overflow: auto;
+  font-family: "JetBrains Mono Variable", monospace;
 }
-.cm-gutters {
+.code-editor .cm-content {
+  padding: 16px 0;
+  caret-color: var(--ld-accent);
+}
+.code-editor .cm-line {
+  padding: 0 20px;
+}
+.code-editor .cm-gutters {
   color: var(--ld-text-muted);
   background: var(--ld-surface);
   border-right: 1px solid var(--ld-border);
 }
-.cm-cursor {
-  border-left-color: var(--ld-accent);
-}
-.preview img {
-  max-width: 100%;
-}
-.preview pre {
-  overflow: auto;
-  padding: 12px;
+.code-editor .cm-activeLine,
+.code-editor .cm-activeLineGutter {
   background: var(--ld-surface);
 }
-.preview a {
-  color: var(--ld-accent);
+.code-editor .cm-cursor {
+  border-left: 2px solid var(--ld-accent);
+}
+.code-editor .cm-selectionBackground,
+.code-editor .cm-content ::selection {
+  background: var(--ld-accent-soft);
 }
 .empty-state {
-  display: grid;
-  place-content: center;
-  justify-items: center;
-}
-.muted {
-  color: var(--ld-text-muted);
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-.confirm-dialog {
-  margin: auto;
-  max-width: 400px;
-  padding: 16px;
-  border: 1px solid var(--ld-border);
-  border-radius: 6px;
-  color: var(--ld-text);
-  background: var(--ld-surface-raised);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.24);
-}
-.confirm-dialog::backdrop {
-  background: rgb(0 0 0 / 0.4);
-}
-.confirm-dialog h2 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  font-weight: 600;
-}
-.confirm-dialog p {
-  margin: 0 0 16px;
-}
-.confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-button.danger {
-  border-color: var(--ld-danger);
-  color: var(--ld-accent-fg);
-  background: var(--ld-danger);
-}
-button.danger:hover {
-  background: var(--ld-danger);
-  opacity: 0.9;
-}
-@media (prefers-reduced-motion: reduce) {
-  button {
-    transition: none;
-  }
-}
-
-/* Formato del Markdown renderizado: el reset de Tailwind quita tamaños, márgenes y viñetas. */
-.preview > :first-child {
-  margin-top: 0;
-}
-.preview h1,
-.preview h2,
-.preview h3,
-.preview h4 {
-  margin: 16px 0 8px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-.preview h1 {
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--ld-border);
-  font-size: 20px;
-}
-.preview h2 {
-  font-size: 16px;
-}
-.preview h3 {
-  font-size: 14px;
-}
-.preview h4 {
-  font-size: 13px;
-}
-.preview p,
-.preview ul,
-.preview ol,
-.preview pre,
-.preview table,
-.preview blockquote {
-  margin: 0 0 12px;
-}
-.preview ul {
-  padding-left: 24px;
-  list-style: disc;
-}
-.preview ol {
-  padding-left: 24px;
-  list-style: decimal;
-}
-.preview li + li {
-  margin-top: 4px;
-}
-.preview code {
-  padding: 0 4px;
-  border-radius: 4px;
-  background: var(--ld-surface);
-  font:
-    12px / 1.45 "JetBrains Mono",
-    monospace;
-}
-.preview pre {
-  border: 1px solid var(--ld-border);
-  border-radius: 6px;
-}
-.preview pre code {
-  padding: 0;
-  background: none;
-}
-.preview blockquote {
-  padding-left: 12px;
-  border-left: 4px solid var(--ld-border);
-  color: var(--ld-text-muted);
-}
-.preview hr {
-  margin: 16px 0;
-  border: 0;
-  border-top: 1px solid var(--ld-border);
-}
-.preview a {
-  text-decoration: underline;
+  align-items: center;
+  justify-content: center;
 }

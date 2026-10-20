@@ -12,6 +12,7 @@ import { rendererI18n } from "../i18n.ts";
 type SettingValues = {
   locale: "es" | "en";
   theme: "system" | "dark" | "light";
+  accent: "blue" | "green";
   developerMode: boolean;
   updatesCheck: boolean;
 };
@@ -26,6 +27,7 @@ const maxToasts = 3;
 const toastKinds = ["success", "error", "info"] as const;
 let nextToastId = 1;
 type State = {
+  fullScreen: boolean;
   tabs: ShellTab[];
   tools: ToolSummary[];
   pendingDowngrade: PendingDowngrade | null;
@@ -47,18 +49,20 @@ type State = {
 const defaults: SettingValues = {
   locale: "es",
   theme: "system",
+  accent: "blue",
   developerMode: false,
   updatesCheck: false,
 };
 // Cuenta los eventos recibidos por campo: si uno llega mientras hydrate espera, su dato es más
 // reciente que la respuesta de hydrate y no se pisa.
-const eventCounts = { tabs: 0, settings: 0, context: 0 };
+const eventCounts = { tabs: 0, settings: 0, context: 0, fullScreen: 0 };
 export const useShellStore = create<State>((set) => ({
+  fullScreen: false,
   tabs: [],
   tools: [],
   pendingDowngrade: null,
   settings: defaults,
-  context: { locale: "es", theme: "dark" },
+  context: { locale: "es", theme: "dark", accent: "blue" },
   page: "tools",
   toasts: [],
   update: null,
@@ -84,17 +88,29 @@ export const useShellStore = create<State>((set) => ({
   },
   async hydrate(bridge) {
     const before = { ...eventCounts };
-    const [tabs, locale, theme, developerMode, updatesCheck, context, tools, dismissed] =
-      await Promise.all([
-        bridge.invoke("tabs.list", {}),
-        bridge.invoke("settings.get", { key: "locale" }),
-        bridge.invoke("settings.get", { key: "theme" }),
-        bridge.invoke("settings.get", { key: "developerMode" }),
-        bridge.invoke("settings.get", { key: "updates.check" }),
-        bridge.invoke("app.getContext", {}),
-        bridge.invoke("tools.list", {}),
-        bridge.invoke("settings.get", { key: "updates.dismissedVersion" }),
-      ]);
+    const [
+      info,
+      tabs,
+      locale,
+      theme,
+      developerMode,
+      updatesCheck,
+      context,
+      tools,
+      dismissed,
+      accent,
+    ] = await Promise.all([
+      bridge.invoke("app.getInfo", {}),
+      bridge.invoke("tabs.list", {}),
+      bridge.invoke("settings.get", { key: "locale" }),
+      bridge.invoke("settings.get", { key: "theme" }),
+      bridge.invoke("settings.get", { key: "developerMode" }),
+      bridge.invoke("settings.get", { key: "updates.check" }),
+      bridge.invoke("app.getContext", {}),
+      bridge.invoke("tools.list", {}),
+      bridge.invoke("settings.get", { key: "updates.dismissedVersion" }),
+      bridge.invoke("settings.get", { key: "accent" }),
+    ]);
     const dismissedVersion =
       dismissed.ok &&
       dismissed.data.key === "updates.dismissedVersion" &&
@@ -104,6 +120,7 @@ export const useShellStore = create<State>((set) => ({
     const stale = (field: keyof typeof eventCounts) => eventCounts[field] !== before[field];
     set((state) => ({
       ...state,
+      fullScreen: info.ok && !stale("fullScreen") ? info.data.fullScreen : state.fullScreen,
       ...(tabs.ok && !stale("tabs")
         ? {
             tabs: tabs.data.tabs,
@@ -124,6 +141,7 @@ export const useShellStore = create<State>((set) => ({
                 theme.data.value === "light")
                 ? theme.data.value
                 : defaults.theme,
+            accent: accent.ok && accent.data.value === "green" ? "green" : "blue",
             developerMode:
               developerMode.ok && typeof developerMode.data.value === "boolean"
                 ? developerMode.data.value
@@ -143,6 +161,10 @@ export const useShellStore = create<State>((set) => ({
   },
   subscribe(bridge) {
     const unsubscribers = [
+      bridge.on("window.fullScreenChanged", ({ fullScreen }) => {
+        eventCounts.fullScreen += 1;
+        set({ fullScreen });
+      }),
       bridge.on("tabs.changed", ({ tabs }) => {
         eventCounts.tabs += 1;
         set({ tabs, page: tabs.some((tab) => tab.active) ? "tab" : "tools" });
@@ -154,6 +176,7 @@ export const useShellStore = create<State>((set) => ({
         if (
           key === "locale" ||
           key === "theme" ||
+          key === "accent" ||
           key === "developerMode" ||
           key === "updates.check"
         )

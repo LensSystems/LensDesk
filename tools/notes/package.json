@@ -1,6 +1,6 @@
 {
   "name": "@lensdesk/tool-notes",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Herramienta Notas de LensDesk",
   "license": "MIT",
@@ -11,9 +11,12 @@
   },
   "devDependencies": {
     "@codemirror/lang-markdown": "6.5.2",
+    "@codemirror/language": "6.13.1",
     "@codemirror/state": "6.7.6",
     "@codemirror/view": "6.43.14",
     "@lensdesk/sdk": "workspace:*",
+    "@lensdesk/ui": "workspace:*",
+    "@lezer/highlight": "1.2.5",
     "@types/markdown-it": "14.2.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

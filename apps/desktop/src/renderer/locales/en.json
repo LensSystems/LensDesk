@@ -1,6 +1,7 @@
 {
   "shell": {
     "label": "LensDesk",
+    "labelFullScreen": "LensSystems - LensDesk",
     "tabsLabel": "Open tabs",
     "closeTab": "Close {{name}}",
     "toolsPage": "Tools",
@@ -20,8 +21,10 @@
     "details": "View details",
     "remove": "Remove",
     "detailsTitle": "{{name}} details",
+    "signature": "Signature",
+    "errorCode": "Error code",
     "version": "Version",
-    "signed": "Signed",
+    "signed": "signed",
     "permissions": "Permissions",
     "noPermissions": "None",
     "removeTitle": "Remove {{name}}",
@@ -29,7 +32,7 @@
     "deleteData": "Also delete data",
     "installError": "Could not install the tool",
     "downgradeTitle": "Install an older version",
-    "downgradeDescription": "The installed version is {{installed}} and the incoming version is {{incoming}}. Continue?",
+    "downgradeDescription": "The installed version is <version>{{installed}}</version> and the incoming version is <version>{{incoming}}</version>. Continue?",
     "cancel": "Cancel",
     "confirm": "Continue",
     "actionError": "The action could not be completed",
@@ -37,9 +40,18 @@
       "storage": "Storage",
       "files": "Files",
       "backend": "Background process"
-    }
+    },
+    "open": "Open",
+    "openTool": "Open {{name}}",
+    "disabledDescription": "Disabled. Turn it on from the menu to open it.",
+    "chooseFile": "Choose a .lenspkg file",
+    "subtitle": "Each one keeps its data separately, on your computer.",
+    "cardVersion": "v{{version}}"
   },
   "settingsPage": {
+    "accent": "Accent color",
+    "blue": "Blue",
+    "green": "Green",
     "title": "Settings",
     "language": "Language",
     "spanish": "Spanish",
@@ -54,7 +66,16 @@
     "exportLogsError": "Could not export the logs.",
     "exportLogs": "Export logs",
     "openDataFolder": "Data folder",
-    "about": "About · LensDesk {{version}}"
+    "appearance": "Appearance",
+    "general": "General",
+    "dataAndLogs": "Data and logs",
+    "checkUpdatesDescription": "Once a day, LensDesk checks for a new version.",
+    "developerModeDescription": "Allows you to install unsigned tools.",
+    "localDataDescription": "Your data stays on this computer.",
+    "aboutTitle": "About",
+    "byline": "by LensSystems",
+    "appVersion": "Version {{version}}",
+    "aboutDescription": "A desktop of tools for developers. 100% local. MIT license."
   },
   "ui": {
     "loading": "Loading",
@@ -74,6 +95,7 @@
   },
   "errors": {
     "E_SIGNATURE_INVALID": "The tool signature is invalid.",
+    "E_PACKAGE_INVALID": "The file is not a valid LensDesk package or it is damaged.",
     "E_HASH_MISMATCH": "The tool contents do not match their hashes.",
     "E_UNSIGNED": "The tool is unsigned.",
     "E_MANIFEST_INVALID": "The tool manifest is invalid.",

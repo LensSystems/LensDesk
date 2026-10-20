@@ -1,282 +1,150 @@
 @import "tailwindcss";
-@import "@lensdesk/sdk/fonts.css";
-@import "@lensdesk/sdk/theme.css";
-@import "@lensdesk/sdk/tailwind.css";
+@import "@lensdesk/ui/styles.css";
 
-:root {
-  font:
-    13px / 1.45 Inter,
-    sans-serif;
-  color: var(--ld-text);
-  background: var(--ld-bg);
-}
-* {
-  box-sizing: border-box;
-}
 body {
-  margin: 0;
   min-width: 640px;
   min-height: 100vh;
-}
-button {
-  min-height: 28px;
-  padding: 4px 8px;
-  border: 1px solid var(--ld-border-control);
-  border-radius: 4px;
-  color: var(--ld-text);
-  background: var(--ld-surface);
-  font: inherit;
-  cursor: pointer;
-  transition: background-color 120ms ease-out;
-}
-button:hover:not(:disabled) {
-  background: var(--ld-surface-raised);
-}
-button:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-button.primary {
-  border-color: var(--ld-accent);
-  color: var(--ld-accent-fg);
-  background: var(--ld-accent);
-}
-button.primary:hover {
-  background: var(--ld-accent-hover);
-}
-button:focus-visible,
-.preview-body:focus-visible {
-  outline: 2px solid var(--ld-accent);
-  outline-offset: 2px;
-}
-@media (prefers-reduced-motion: reduce) {
-  button {
-    transition: none;
-  }
 }
 .converter-app {
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
-.app-toolbar,
-.preview-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--ld-border);
-}
-.app-toolbar h1 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-.app-error,
-.row-error {
-  margin: 0;
-  color: var(--ld-danger);
-}
-.app-error {
-  padding: 8px 12px;
-}
-.row-warning {
-  margin: 0;
-  color: var(--ld-warning);
+  gap: 12px;
+  padding: 0 12px 12px;
 }
 .workspace {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 320px 1fr;
+  display: flex;
+  gap: 12px;
 }
 .queue-panel {
+  width: 340px;
+  flex: none;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px;
-  border-right: 1px solid var(--ld-border);
-  overflow: auto;
-}
-.drop-zone {
-  display: grid;
-  justify-items: start;
-  gap: 8px;
-  padding: 12px;
-  border: 1px dashed var(--ld-border-control);
-  border-radius: 6px;
+  padding: 16px;
+  border-radius: var(--ld-radius-lg);
   background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
 }
-.drop-zone p {
-  margin: 0;
+.queue-panel h1 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.queue-panel > section {
+  flex-shrink: 0;
 }
 .queue-list {
+  min-height: 0;
+  overflow: auto;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   gap: 8px;
   margin: 0;
-  padding: 0;
+  padding: 4px;
   list-style: none;
 }
-.queue-row {
-  display: grid;
+.queue-status {
+  display: flex;
+  align-items: center;
   gap: 4px;
-  padding: 8px;
-  border: 1px solid var(--ld-border);
-  border-radius: 6px;
-}
-.queue-row.selected {
-  border-color: var(--ld-accent);
-}
-.queue-row p {
-  margin: 0;
+  min-height: 28px;
   font-size: 12px;
+  color: var(--ld-text-muted);
+  white-space: nowrap;
 }
-.queue-row-head,
-.queue-row-status {
+.queue-progress,
+.queue-progress > div {
+  height: 6px;
+  border-radius: 999px;
+}
+.queue-progress {
+  background: var(--ld-border);
+  overflow: hidden;
+}
+.queue-progress > div {
+  background: var(--ld-accent);
+}
+.preview-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+  overflow: hidden;
+}
+.preview-toolbar {
+  height: 56px;
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 0 16px 0 24px;
+  border-bottom: 1px solid var(--ld-border);
+  overflow-x: auto;
 }
-.queue-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.preview-toolbar > * {
+  flex-shrink: 0;
 }
-.queue-row-status progress {
-  flex: 1;
-  height: 8px;
-  accent-color: var(--ld-accent);
-}
-.preview-panel {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-.tabs {
-  display: flex;
-  gap: 4px;
-  margin-right: auto;
-}
-.tabs [aria-selected="true"] {
-  border-color: var(--ld-accent);
-  color: var(--ld-accent);
-}
-.notice {
-  min-height: 16px;
-  margin: 0;
-  padding: 4px 12px 0;
-  font-size: 12px;
+.result-notice {
+  margin: 12px 24px 0;
+  flex-shrink: 0;
 }
 .preview-body {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 12px;
+  padding: 28px 32px;
+}
+.result-column {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.result-empty {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--ld-text-muted);
 }
 .raw-markdown {
-  margin: 0;
   white-space: pre-wrap;
   font:
-    13px / 1.5 "JetBrains Mono",
+    13px / 1.7 "JetBrains Mono Variable",
     monospace;
 }
-.rendered-markdown table {
-  border-collapse: collapse;
-}
-.rendered-markdown th,
-.rendered-markdown td {
-  padding: 4px 8px;
+.preview-body .ld-markdown-view table {
+  border-collapse: separate;
+  border-spacing: 0;
   border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-md);
+  overflow: hidden;
 }
-.rendered-markdown pre {
-  overflow: auto;
-  padding: 12px;
-  background: var(--ld-surface);
-}
-.rendered-markdown img {
-  max-width: 100%;
-}
-.rendered-markdown a {
-  color: var(--ld-accent);
-}
-.muted {
-  color: var(--ld-text-muted);
-}
-
-/* Formato del Markdown renderizado: el reset de Tailwind quita tamaños, márgenes y viñetas. */
-.rendered-markdown > :first-child {
-  margin-top: 0;
-}
-.rendered-markdown h1,
-.rendered-markdown h2,
-.rendered-markdown h3,
-.rendered-markdown h4 {
-  margin: 16px 0 8px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-.rendered-markdown h1 {
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--ld-border);
-  font-size: 20px;
-}
-.rendered-markdown h2 {
-  font-size: 16px;
-}
-.rendered-markdown h3 {
-  font-size: 14px;
-}
-.rendered-markdown h4 {
-  font-size: 13px;
-}
-.rendered-markdown p,
-.rendered-markdown ul,
-.rendered-markdown ol,
-.rendered-markdown pre,
-.rendered-markdown table,
-.rendered-markdown blockquote {
-  margin: 0 0 12px;
-}
-.rendered-markdown ul {
-  padding-left: 24px;
-  list-style: disc;
-}
-.rendered-markdown ol {
-  padding-left: 24px;
-  list-style: decimal;
-}
-.rendered-markdown li + li {
-  margin-top: 4px;
-}
-.rendered-markdown code {
-  padding: 0 4px;
-  border-radius: 4px;
-  background: var(--ld-surface);
-  font:
-    12px / 1.45 "JetBrains Mono",
-    monospace;
-}
-.rendered-markdown pre {
-  border: 1px solid var(--ld-border);
-  border-radius: 6px;
-}
-.rendered-markdown pre code {
-  padding: 0;
-  background: none;
-}
-.rendered-markdown blockquote {
-  padding-left: 12px;
-  border-left: 4px solid var(--ld-border);
-  color: var(--ld-text-muted);
-}
-.rendered-markdown hr {
-  margin: 16px 0;
+.preview-body .ld-markdown-view th,
+.preview-body .ld-markdown-view td {
+  padding: 8px 14px;
   border: 0;
+}
+.preview-body .ld-markdown-view td {
   border-top: 1px solid var(--ld-border);
 }
-.rendered-markdown a {
-  text-decoration: underline;
+.preview-body .ld-markdown-view th {
+  background: var(--ld-surface-raised);
+  text-align: left;
+}
+.converter-app :focus-visible {
+  outline: 2px solid var(--ld-accent);
+  outline-offset: 2px;
 }

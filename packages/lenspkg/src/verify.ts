@@ -20,6 +20,9 @@ export const DEFAULT_LIMITS: Limits = {
   uncompressedBytes: 500 * 1024 * 1024,
   entries: 5000,
 };
+function invalidPackage(): LensError {
+  return new LensError("E_PACKAGE_INVALID", "Invalid or damaged LensDesk package");
+}
 type EntryData = { path: string; bytes: Buffer; mode: number };
 async function readEntries(file: string, limits: Limits): Promise<EntryData[]> {
   const stat = await fs.stat(file);
@@ -27,13 +30,16 @@ async function readEntries(file: string, limits: Limits): Promise<EntryData[]> {
     throw new LensError("E_TOO_LARGE", "Package exceeds compressed size limit");
   const zip = await new Promise<yauzl.ZipFile>((resolve, reject) =>
     yauzl.open(file, { lazyEntries: true, decodeStrings: false }, (err, value) =>
-      err || !value ? reject(err ?? new Error("Invalid zip")) : resolve(value),
+      err || !value ? reject(invalidPackage()) : resolve(value),
     ),
   );
   return new Promise((resolve, reject) => {
     const entries: EntryData[] = [];
     let total = 0;
-    zip.on("error", reject);
+    zip.on("error", () => {
+      zip.close();
+      reject(invalidPackage());
+    });
     zip.on("entry", (entry) => {
       if (entries.length + 1 > limits.entries) {
         zip.close();
@@ -64,12 +70,15 @@ async function readEntries(file: string, limits: Limits): Promise<EntryData[]> {
       zip.openReadStream(entry, (err, stream) => {
         if (err || !stream) {
           zip.close();
-          reject(err ?? new Error("Unreadable zip entry"));
+          reject(invalidPackage());
           return;
         }
         const chunks: Buffer[] = [];
         stream.on("data", (chunk: Buffer) => chunks.push(chunk));
-        stream.on("error", reject);
+        stream.on("error", () => {
+          zip.close();
+          reject(invalidPackage());
+        });
         stream.on("end", () => {
           entries.push({
             path: entryPath,

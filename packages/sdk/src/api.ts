@@ -4,6 +4,7 @@ export type FileHandle = { token: string; name: string; size: number };
 export type ToolContext = {
   locale: string;
   theme: string;
+  accent?: "blue" | "green";
   hostVersion: string;
   toolVersion: string;
 };

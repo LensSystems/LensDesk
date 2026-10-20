@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
@@ -60,5 +60,28 @@ describe("documentación de CI y publicación", () => {
     }
     expect(readme).not.toMatch(/(?<![p])\bnpm\b/);
     expect(readme).not.toMatch(/\bnpx\b/);
+  });
+
+  test("la app tiene una sola versión y el CHANGELOG la documenta", () => {
+    const version = (path: string) =>
+      (JSON.parse(readFileSync(resolve(root, path), "utf8")) as { version: string }).version;
+    const app = version("package.json");
+    expect(version("apps/desktop/package.json")).toBe(app);
+    for (const tool of ["notes", "md-converter"]) {
+      expect(version(`tools/${tool}/lensdesk.tool.json`)).toBe(
+        version(`tools/${tool}/package.json`),
+      );
+    }
+    const changelog = readFileSync(resolve(root, "CHANGELOG.md"), "utf8");
+    expect(changelog).toContain(`## [${app}] - `);
+    expect(changelog).toContain(`[${app}]: https://github.com/LensSystems/LensDesk/`);
+  });
+
+  test("las imágenes que enlaza el README existen", () => {
+    const images = [...readme.matchAll(/(?:src|srcset)="(docs\/images\/[^"]+)"/g)].map(
+      (match) => match[1] as string,
+    );
+    expect(images.length).toBeGreaterThan(0);
+    for (const image of images) expect(existsSync(resolve(root, image)), image).toBe(true);
   });
 });

@@ -20,7 +20,7 @@ import { createToolDialogs, registerToolApi } from "./register-tool-api.ts";
 import { publishTabsChanged } from "./tool-events.ts";
 import { createToolHandlers } from "./tool-handlers.ts";
 import { createToolViews, type ViewHost } from "./tool-views.ts";
-import { loadTrustedKeys } from "./trusted-keys.ts";
+import { loadTrustedKeys, trustedKeysDirectory } from "./trusted-keys.ts";
 
 export function createToolWiring(options: {
   app: Electron.App;
@@ -28,7 +28,7 @@ export function createToolWiring(options: {
   userData: string;
   version: string;
   shellContents: () => Electron.WebContents | undefined;
-  context: () => { locale: string; theme: string };
+  context: () => { locale: string; theme: string; accent?: "blue" | "green" };
   showingTab: () => boolean;
   onShowActiveTool(callback: () => void): void;
   logger: Logger;
@@ -105,12 +105,21 @@ export function createToolWiring(options: {
       developerToolsDirectory: string | undefined,
     ) {
       window = targetWindow;
-      const keysDirectory = options.app.isPackaged
-        ? `${process.resourcesPath}/keys`
-        : `${import.meta.dirname}/../../../resources/keys`;
+      const keysDirectory = trustedKeysDirectory({
+        isPackaged: options.app.isPackaged,
+        resourcesPath: process.resourcesPath,
+        mainDirectory: import.meta.dirname,
+      });
       installer = createToolInstaller({
         database: db,
         userData: options.userData,
+        onToolUpdated: (id) => {
+          // La pestaña abierta vuelve a cargarse con la versión nueva.
+          backend.terminate(id);
+          fileTokens.revoke(id);
+          views?.close(id);
+          showActive();
+        },
         onToolRemoved: (id) => {
           backend.terminate(id);
           fileTokens.revoke(id);
@@ -156,7 +165,7 @@ export function createToolWiring(options: {
       showActive();
       return api;
     },
-    publishContext(context: { locale: string; theme: string }) {
+    publishContext(context: { locale: string; theme: string; accent?: "blue" | "green" }) {
       api?.publishContext(context);
     },
     close(toolId: string) {

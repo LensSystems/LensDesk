@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld(
   "lensdeskHost",
   Object.freeze({
     ...bridge,
+    platform: process.platform,
     pathForFile: (file: File) => webUtils.getPathForFile(file),
   }),
 );

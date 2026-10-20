@@ -1,6 +1,6 @@
 {
   "name": "lensdesk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "LensDesk: contenedor de escritorio modular y 100% local para herramientas de desarrollo",
   "license": "MIT",
@@ -25,6 +25,8 @@
     "dev": "pnpm --filter @lensdesk/desktop dev",
     "build": "pnpm --filter @lensdesk/desktop build",
     "smoke": "pnpm build && node scripts/smoke-check.ts",
+    "icons": "node scripts/build-icons.ts",
+    "screenshots": "node scripts/screenshots.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check --error-on-warnings .",
     "format": "biome check --write .",
@@ -35,7 +37,8 @@
     "lenspkg": "node packages/lenspkg/src/cli.ts",
     "tools:package": "pnpm --filter \"./tools/*\" run package",
     "dist": "pnpm --filter @lensdesk/desktop dist",
-    "dist:dir": "pnpm --filter @lensdesk/desktop dist:dir"
+    "dist:dir": "pnpm --filter @lensdesk/desktop dist:dir",
+    "ui:gallery": "vite --config packages/ui/gallery/vite.config.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

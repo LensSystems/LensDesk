@@ -1,4 +1,5 @@
 import type { createToolClient } from "@lensdesk/sdk";
+import { applyDocumentContext, type DocumentContext } from "@lensdesk/ui";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -9,9 +10,8 @@ export function useAppContext(client: Client) {
   const { i18n } = useTranslation();
   useEffect(() => {
     let alive = true;
-    const applyContext = (context: { locale: string; theme: string }) => {
-      document.documentElement.dataset.theme = context.theme;
-      document.documentElement.lang = context.locale;
+    const applyContext = (context: DocumentContext) => {
+      applyDocumentContext(context);
       void i18n.changeLanguage(context.locale);
     };
     void client.app

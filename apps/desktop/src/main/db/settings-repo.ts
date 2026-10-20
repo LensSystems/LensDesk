@@ -5,6 +5,7 @@ import type { SqliteDatabase } from "./database.ts";
 export const settingSchemas = {
   locale: z.enum(["es", "en"]),
   theme: z.enum(["system", "dark", "light"]),
+  accent: z.enum(["blue", "green"]),
   developerMode: z.boolean(),
   "updates.check": z.boolean(),
   "updates.lastCheckedAt": z.string().datetime().nullable(),
@@ -24,6 +25,7 @@ export type SettingKey = keyof typeof settingSchemas;
 const defaults: { [K in SettingKey]: z.infer<(typeof settingSchemas)[K]> } = {
   locale: "es",
   theme: "system",
+  accent: "blue",
   developerMode: false,
   "updates.check": true,
   "updates.lastCheckedAt": null,

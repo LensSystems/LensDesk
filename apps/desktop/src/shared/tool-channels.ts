@@ -26,6 +26,7 @@ export type ToolEvent = (typeof TOOL_EVENTS)[number];
 export type ToolContextPayload = {
   locale: string;
   theme: string;
+  accent?: "blue" | "green";
   hostVersion: string;
   toolVersion: string;
 };

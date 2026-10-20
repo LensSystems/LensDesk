@@ -46,12 +46,13 @@ describe("contexto y ajustes", () => {
     expect(buildContext({ locale: "en", themeSetting: "system", systemIsDark: true })).toEqual({
       locale: "en",
       theme: "dark",
+      accent: "blue",
     });
   });
 
   it("devuelve el contexto por defecto usando el tema del sistema", () => {
     const { handlers } = createFixture(true);
-    expect(handlers["app.getContext"]()).toEqual({ locale: "es", theme: "dark" });
+    expect(handlers["app.getContext"]()).toEqual({ locale: "es", theme: "dark", accent: "blue" });
   });
 
   it("no consulta el tema del sistema cuando hay un tema explícito", () => {
@@ -66,7 +67,11 @@ describe("contexto y ajustes", () => {
       emit: vi.fn(),
       getSystemIsDark,
     });
-    expect(explicitThemeHandlers["app.getContext"]()).toEqual({ locale: "es", theme: "light" });
+    expect(explicitThemeHandlers["app.getContext"]()).toEqual({
+      locale: "es",
+      theme: "light",
+      accent: "blue",
+    });
     expect(getSystemIsDark).not.toHaveBeenCalled();
   });
 
@@ -79,13 +84,24 @@ describe("contexto y ajustes", () => {
     expect(getSetting(database, "theme")).toBe("dark");
     expect(emit.mock.calls).toEqual([
       ["settings.changed", { key: "theme", value: "dark" }],
-      ["context.changed", { locale: "es", theme: "dark" }],
+      ["context.changed", { locale: "es", theme: "dark", accent: "blue" }],
     ]);
 
     handlers["settings.set"]({ key: "developerMode", value: true });
     expect(emit).toHaveBeenLastCalledWith("settings.changed", {
       key: "developerMode",
       value: true,
+    });
+  });
+
+  it("publica y devuelve el acento persistido", () => {
+    const { handlers, emit } = createFixture();
+    handlers["settings.set"]({ key: "accent", value: "green" });
+    expect(handlers["app.getContext"]()).toEqual({ locale: "es", theme: "light", accent: "green" });
+    expect(emit).toHaveBeenLastCalledWith("context.changed", {
+      locale: "es",
+      theme: "light",
+      accent: "green",
     });
   });
 
@@ -120,6 +136,10 @@ describe("contexto y ajustes", () => {
       ok: false,
       error: { code: "E_INVALID_PARAMS" },
     });
+    await expect(
+      router({}, "settings.set", { key: "accent", value: "red" }),
+    ).resolves.toMatchObject({ ok: false, error: { code: "E_INVALID_PARAMS" } });
+    expect(getSetting(database, "accent")).toBe("blue");
     expect(getSetting(database, "theme")).toBe("system");
     expect(emit).not.toHaveBeenCalled();
   });

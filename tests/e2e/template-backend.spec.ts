@@ -1,18 +1,18 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { enableDeveloperMode, installTool, launchApp, toolPage } from "./helpers.ts";
+import { enableDeveloperMode, installTool, launchApp, lenspkgPath, toolPage } from "./helpers.ts";
 
 test("la plantilla reinicia el backend después de terminar el proceso", async () => {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-backend-e2e-"));
-  const pkg = resolve(import.meta.dirname, "../../tools/_template/dist/template-0.1.0.lenspkg");
+  const pkg = lenspkgPath("_template");
   const app = await launchApp({ userDataDir });
   try {
     const shell = await app.firstWindow();
     await enableDeveloperMode(shell);
     await installTool(app, shell, pkg);
-    await shell.getByRole("button", { name: "Plantilla", exact: true }).click();
+    await shell.getByRole("button", { name: "Abrir Plantilla", exact: true }).click();
     const tool = await toolPage(app, "template");
     const ping = async () => {
       const output = tool.locator("output");

@@ -43,7 +43,9 @@ const toolStateSchema = z
 export const ipcSchemas = {
   "app.getInfo": {
     request: z.object({}).strict(),
-    response: z.object({ version: z.string(), platform: z.string() }).strict(),
+    response: z
+      .object({ version: z.string(), platform: z.string(), fullScreen: z.boolean() })
+      .strict(),
   },
   "settings.get": {
     request: z.object({ key: settingKeySchema }).strict(),
@@ -55,7 +57,13 @@ export const ipcSchemas = {
   },
   "app.getContext": {
     request: z.object({}).strict(),
-    response: z.object({ locale: z.enum(["es", "en"]), theme: z.enum(["dark", "light"]) }).strict(),
+    response: z
+      .object({
+        locale: z.enum(["es", "en"]),
+        theme: z.enum(["dark", "light"]),
+        accent: z.enum(["blue", "green"]),
+      })
+      .strict(),
   },
   "tabs.list": {
     request: z.object({}).strict(),

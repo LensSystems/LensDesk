@@ -1,6 +1,11 @@
-export type RendererContext = { locale: "es" | "en"; theme: "dark" | "light" };
+import { applyDocumentContext } from "@lensdesk/ui";
+
+export type RendererContext = {
+  locale: "es" | "en";
+  theme: "dark" | "light";
+  accent?: "blue" | "green";
+};
 
 export function applyContext(context: RendererContext, root: HTMLElement): void {
-  root.dataset.theme = context.theme;
-  root.lang = context.locale;
+  applyDocumentContext(context, root);
 }

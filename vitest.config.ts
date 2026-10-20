@@ -22,6 +22,7 @@ export default defineConfig({
             "tools/*/src/backend/**/*.test.ts",
             "tools/*/tests/**/*.test.ts",
             "tests/unit/**/*.test.ts",
+            "scripts/**/*.test.ts",
           ],
           exclude,
         },
@@ -34,6 +35,8 @@ export default defineConfig({
           environment: "jsdom",
           include: [
             "apps/desktop/src/renderer/**/*.test.{ts,tsx}",
+            "packages/*/src/**/*.test.tsx",
+            "packages/ui/gallery/**/*.test.tsx",
             "tools/*/src/ui/**/*.test.{ts,tsx}",
           ],
           exclude,

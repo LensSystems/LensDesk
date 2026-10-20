@@ -1,0 +1,151 @@
+@import "@lensdesk/sdk/fonts.css";
+@import "@lensdesk/sdk/theme.css";
+@import "@lensdesk/sdk/tailwind.css";
+
+@source "./";
+
+/* Formato del Markdown renderizado: el reset de Tailwind quita tamaños, márgenes y viñetas. */
+.ld-markdown-view > :first-child {
+  margin-top: 0;
+}
+.ld-markdown-view h1,
+.ld-markdown-view h2,
+.ld-markdown-view h3,
+.ld-markdown-view h4 {
+  margin: 16px 0 8px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.ld-markdown-view h1 {
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--ld-border);
+  font-size: 20px;
+}
+.ld-markdown-view h2 {
+  font-size: 16px;
+}
+.ld-markdown-view h3 {
+  font-size: 14px;
+}
+.ld-markdown-view h4 {
+  font-size: 13px;
+}
+.ld-markdown-view p,
+.ld-markdown-view ul,
+.ld-markdown-view ol,
+.ld-markdown-view pre,
+.ld-markdown-view table,
+.ld-markdown-view blockquote {
+  margin: 0 0 12px;
+}
+.ld-markdown-view ul {
+  padding-left: 24px;
+  list-style: disc;
+}
+.ld-markdown-view ol {
+  padding-left: 24px;
+  list-style: decimal;
+}
+.ld-markdown-view li + li {
+  margin-top: 4px;
+}
+.ld-markdown-view code {
+  padding: 0 4px;
+  border-radius: var(--ld-radius-sm);
+  background: var(--ld-surface);
+  font:
+    12px / 1.45 "JetBrains Mono Variable",
+    monospace;
+}
+.ld-markdown-view pre {
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-sm);
+}
+.ld-markdown-view pre code {
+  padding: 0;
+  background: none;
+}
+.ld-markdown-view blockquote {
+  padding-left: 12px;
+  border-left: 4px solid var(--ld-border);
+  color: var(--ld-text-muted);
+}
+.ld-markdown-view hr {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid var(--ld-border);
+}
+.ld-markdown-view a {
+  text-decoration: underline;
+}
+
+.ld-markdown-view {
+  color: var(--ld-text);
+}
+.ld-markdown-view img {
+  max-width: 100%;
+}
+.ld-markdown-view a {
+  color: var(--ld-accent);
+}
+.ld-markdown-view pre {
+  overflow: auto;
+  padding: 12px;
+  background: var(--ld-surface);
+}
+.ld-markdown-view table {
+  border-collapse: collapse;
+}
+.ld-markdown-view th,
+.ld-markdown-view td {
+  padding: 4px 8px;
+  border: 1px solid var(--ld-border);
+}
+.ld-markdown-view h5,
+.ld-markdown-view h6 {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ld-checkbox {
+  position: relative;
+}
+.ld-checkbox::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--ld-border-control);
+  border-radius: var(--ld-radius-sm);
+  background: var(--ld-bg);
+}
+.ld-checkbox:checked::before {
+  border-color: var(--ld-accent);
+  background: var(--ld-accent);
+}
+.ld-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 6px;
+  width: 6px;
+  height: 10px;
+  border: solid var(--ld-accent-fg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.ld-switch::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ld-text-muted);
+}
+.ld-switch:checked::before {
+  left: 17px;
+  background: var(--ld-accent-fg);
+}

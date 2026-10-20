@@ -1,4 +1,7 @@
+import { IconButton, ListItem, Star, Trash2 } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
+import { Highlighted } from "./Highlighted.tsx";
+import { noteSummary } from "./note-summary.ts";
 
 export type Note = {
   id: string;
@@ -12,66 +15,68 @@ export type Note = {
 
 export function NoteList({
   notes,
+  query = "",
   selectedId,
-  query,
   trashed,
-  onQuery,
   onSelect,
-  onCreate,
   onTrash,
   onPin,
 }: {
   notes: Note[];
+  query?: string;
   selectedId: string | null;
-  query: string;
   trashed: boolean;
-  onQuery: (value: string) => void;
   onSelect: (id: string) => void;
-  onCreate: () => void;
   onTrash: (id: string) => void;
   onPin: (note: Note) => void;
 }) {
   const { t } = useTranslation();
   return (
-    <aside className="note-list">
-      <label className="sr-only" htmlFor="note-search">
-        {t("search")}
-      </label>
-      <input
-        id="note-search"
-        value={query}
-        onChange={(event) => onQuery(event.target.value)}
-        placeholder={t("search")}
-      />
-      {!trashed && (
-        <button type="button" onClick={onCreate}>
-          {t("newNote")}
-        </button>
-      )}
-      <nav aria-label={t("notesList")}>
-        {notes.map((note) => (
-          <div className={`note-row${selectedId === note.id ? " selected" : ""}`} key={note.id}>
-            <button className="note-title" type="button" onClick={() => onSelect(note.id)}>
-              {note.title || t("untitled")}
-            </button>
-            {!trashed && (
-              <button
-                type="button"
-                aria-label={note.pinned ? t("unpin") : t("pin")}
-                onClick={() => onPin(note)}
-              >
-                {note.pinned ? "★" : "☆"}
-              </button>
-            )}
-            {!trashed && (
-              <button type="button" aria-label={t("moveToTrash")} onClick={() => onTrash(note.id)}>
-                ×
-              </button>
-            )}
-          </div>
-        ))}
-        {notes.length === 0 && <p className="muted">{t("emptyNotes")}</p>}
-      </nav>
-    </aside>
+    <nav aria-label={t("notesList")} className="min-h-0 overflow-auto">
+      {notes.map((note) => (
+        <ListItem
+          key={note.id}
+          variant="card"
+          aria-label={note.title || t("untitled")}
+          title={
+            query.trim() ? (
+              <Highlighted text={note.title || t("untitled")} query={query} />
+            ) : (
+              note.title || t("untitled")
+            )
+          }
+          secondaryText={
+            query.trim() ? (
+              <Highlighted text={noteSummary(note.body_md, note.title, query)} query={query} />
+            ) : (
+              noteSummary(note.body_md, note.title)
+            )
+          }
+          selected={selectedId === note.id}
+          onClick={() => onSelect(note.id)}
+          actions={
+            !trashed && (
+              <>
+                <IconButton
+                  className="size-7"
+                  label={note.pinned ? t("unpin") : t("pin")}
+                  onClick={() => onPin(note)}
+                >
+                  <Star size={14} fill={note.pinned ? "currentColor" : "none"} aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  className="size-7"
+                  label={t("moveToTrash")}
+                  onClick={() => onTrash(note.id)}
+                >
+                  <Trash2 size={14} aria-hidden="true" />
+                </IconButton>
+              </>
+            )
+          }
+        />
+      ))}
+      {notes.length === 0 && <p className="text-muted">{t("emptyNotes")}</p>}
+    </nav>
   );
 }

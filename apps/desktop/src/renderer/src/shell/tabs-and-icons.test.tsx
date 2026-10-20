@@ -1,8 +1,8 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Puzzle, StickyNote } from "lucide-react";
+import { Puzzle, StickyNote, TooltipProvider } from "@lensdesk/ui";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HostBridge } from "../../../shared/host-channels.ts";
-import { TooltipProvider } from "../components/ui/Tooltip.tsx";
+import { HEADER_HEIGHT } from "../../../shared/layout.ts";
 import { rendererI18n } from "../i18n.ts";
 import { useShellStore } from "../state/store.ts";
 import { App } from "./App.tsx";
@@ -23,7 +23,7 @@ const tabs = [
   { toolId: "otra", position: 2, active: false },
 ];
 const tools = [
-  { id: "notas", manifest: { name: { es: "Notas", en: "Notes" } } },
+  { id: "notas", manifest: { icon: "sticky-note", name: { es: "Notas", en: "Notes" } } },
   { id: "conv", manifest: { name: { es: "Convertidor", en: "Converter" } } },
 ] as never;
 
@@ -58,9 +58,52 @@ function makeBridge(dismissed: string | null = null) {
 describe("pestañas", () => {
   beforeEach(async () => {
     await rendererI18n.changeLanguage("es");
-    useShellStore.setState({ tabs, tools, page: "tab" });
+    useShellStore.setState({ tabs, tools, page: "tab", fullScreen: false });
   });
   afterEach(cleanup);
+
+  it.each(["darwin", "win32", "linux"])(
+    "reserva controles desde el primer pintado en %s",
+    (platform) => {
+      renderBar({ ...makeBridge().bridge, platform });
+      const header = screen.getByRole("banner");
+      expect(header.classList.contains("ld-drag")).toBe(true);
+      expect(header.style.paddingLeft).toBe(platform === "darwin" ? "96px" : "");
+      expect(header.style.paddingRight).toBe(platform === "win32" ? "154px" : "");
+      expect(header.style.height).toBe("52px");
+      for (const item of [
+        ...within(header).getAllByRole("button"),
+        ...within(header).getAllByRole("tab"),
+        ...within(header).queryAllByRole("link"),
+      ]) {
+        expect(item.closest(".ld-no-drag")).not.toBeNull();
+      }
+    },
+  );
+
+  it.each(["darwin", "win32", "linux"])(
+    "el evento de pantalla completa actualiza la marca y las reservas en %s",
+    (platform) => {
+      const { bridge, listeners } = makeBridge();
+      const unsubscribe = useShellStore.getState().subscribe(bridge);
+      renderBar({ ...bridge, platform });
+      expect(screen.getByText("LensDesk")).toBeTruthy();
+      act(() => listeners.get("window.fullScreenChanged")?.({ fullScreen: true }));
+      expect(useShellStore.getState().fullScreen).toBe(true);
+      const brand = screen.getByText("LensSystems - LensDesk");
+      expect(brand.classList.contains("truncate")).toBe(true);
+      const header = screen.getByRole("banner");
+      expect(header.style.paddingLeft).toBe("");
+      expect(header.style.paddingRight).toBe("");
+      act(() => listeners.get("window.fullScreenChanged")?.({ fullScreen: false }));
+      expect(useShellStore.getState().fullScreen).toBe(false);
+      expect(screen.getByText("LensDesk")).toBeTruthy();
+      expect(header.style.paddingLeft).toBe(platform === "darwin" ? "96px" : "");
+      expect(header.style.paddingRight).toBe(platform === "win32" ? "154px" : "");
+      unsubscribe();
+      expect(listeners.has("window.fullScreenChanged")).toBe(false);
+    },
+  );
 
   it("muestra el nombre localizado y cae al id sin manifiesto", async () => {
     renderBar(makeBridge().bridge);
@@ -69,6 +112,29 @@ describe("pestañas", () => {
     expect(screen.getByRole("button", { name: "Cerrar Notas" })).toBeTruthy();
     await act(() => rendererI18n.changeLanguage("en"));
     expect(screen.getByRole("tab", { name: "Notes" })).toBeTruthy();
+  });
+
+  it("sin pestañas no pinta la pista vacía", () => {
+    render(
+      <TooltipProvider>
+        <TabBar bridge={makeBridge().bridge} tabs={[]} />
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole("tablist").className).not.toContain("bg-surface");
+  });
+
+  it("muestra la marca, el icono y un cierre separado de la pestaña", () => {
+    renderBar(makeBridge().bridge);
+    expect(screen.getByRole("banner").contains(screen.getByText("LensDesk"))).toBe(true);
+    const tab = screen.getByRole("tab", { name: "Notas" });
+    const icon = tab.querySelector("svg.lucide-sticky-note");
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    expect(icon?.getAttribute("width")).toBe("15");
+    const close = screen.getByRole("button", { name: "Cerrar Notas" });
+    expect(close.tagName).toBe("BUTTON");
+    expect(tab.contains(close)).toBe(false);
+    expect(close.closest('[role="tab"]')).toBeNull();
+    expect(tab.parentElement?.contains(close)).toBe(true);
   });
 
   it("actualiza el nombre de la pestaña cuando cambia la lista de herramientas", async () => {
@@ -185,7 +251,14 @@ describe("avisos dentro del encabezado", () => {
     });
     render(<App bridge={makeBridge().bridge} />);
     const header = screen.getByRole("banner");
-    expect(header.className).toContain("h-9");
+    expect(header.style.height).toBe(`${HEADER_HEIGHT}px`);
+    for (const item of [
+      ...within(header).getAllByRole("button"),
+      ...within(header).queryAllByRole("tab"),
+      ...within(header).queryAllByRole("link"),
+    ]) {
+      expect(item.closest(".ld-no-drag")).not.toBeNull();
+    }
     expect(header.contains(screen.getByText("LensDesk 9.0.0 está disponible."))).toBe(true);
     expect(header.contains(screen.getByRole("button", { name: "Ver actualización" }))).toBe(true);
     expect(header.contains(screen.getByText("Hecho"))).toBe(true);

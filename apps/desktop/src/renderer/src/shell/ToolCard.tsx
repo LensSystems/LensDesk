@@ -1,15 +1,20 @@
-import { MoreHorizontal } from "lucide-react";
-import { useId } from "react";
-import { useTranslation } from "react-i18next";
-import type { ToolSummary } from "../../../shared/host-channels.ts";
-import { Badge } from "../components/ui/Badge.tsx";
-
 import {
+  Badge,
+  Ban,
+  Button,
+  CircleCheck,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../components/ui/DropdownMenu.tsx";
+  IconButton,
+  Info,
+  MoreHorizontal,
+  Trash2,
+} from "@lensdesk/ui";
+import { useTranslation } from "react-i18next";
+import type { ToolSummary } from "../../../shared/host-channels.ts";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 
@@ -25,50 +30,64 @@ export function ToolCard({
 }) {
   const { t, i18n } = useTranslation();
   const { name, description } = toolText(tool, i18n.resolvedLanguage);
-  const nameId = useId();
-  const descriptionId = useId();
   const Icon = toolIcon((tool.manifest as { icon?: unknown }).icon);
+  const EnabledIcon = tool.enabled ? Ban : CircleCheck;
   return (
     <article
-      className={`relative rounded-md border border-border bg-surface-raised p-3 ${tool.enabled ? "" : "opacity-50"}`}
+      className={`flex min-w-0 flex-col gap-4 rounded-ld-lg border bg-surface p-5 ${tool.enabled ? "border-border" : "border-dashed border-border-control"}`}
     >
-      <button
-        type="button"
-        aria-describedby={description ? descriptionId : undefined}
-        aria-labelledby={nameId}
-        disabled={!tool.enabled}
-        onClick={onOpen}
-        className="flex w-full items-start gap-3 rounded text-left"
-      >
-        <Icon aria-hidden="true" className="size-5 shrink-0" />
-        <span className="min-w-0">
-          <span className="block font-medium" id={nameId}>
-            {name}
-          </span>
-          <span className="mt-1 block text-xs text-muted" id={descriptionId}>
-            {description}
-          </span>
+      <div className="flex items-start justify-between gap-4">
+        <div
+          className={`grid size-11 shrink-0 place-items-center rounded-ld-md ${tool.enabled ? "bg-accent-soft text-accent-soft-fg" : "bg-bg text-muted"}`}
+        >
+          <Icon aria-hidden size={22} />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <IconButton label={t("toolsPage.actions", { name })}>
+              <MoreHorizontal aria-hidden size={16} />
+            </IconButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem className="gap-2" onSelect={actions.details}>
+              <Info aria-hidden size={15} />
+              {t("toolsPage.details")}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2" onSelect={actions.enabled}>
+              <EnabledIcon aria-hidden size={15} />
+              {tool.enabled ? t("toolsPage.disable") : t("toolsPage.enable")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem destructive className="gap-2" onSelect={actions.remove}>
+              <Trash2 aria-hidden size={15} />
+              {t("toolsPage.remove")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="min-w-0 space-y-1">
+        <h2 className={`truncate text-base font-bold ${tool.enabled ? "text-text" : "text-muted"}`}>
+          {name}
+        </h2>
+        <p className="line-clamp-2 text-muted">
+          {tool.enabled ? description : t("toolsPage.disabledDescription")}
+        </p>
+      </div>
+      <div className="mt-auto flex flex-wrap items-center gap-2">
+        <Button
+          disabled={!tool.enabled}
+          onClick={onOpen}
+          aria-label={t("toolsPage.openTool", { name })}
+        >
+          {t("toolsPage.open")}
+        </Button>
+        <span className="min-w-0 break-all text-xs text-muted">
+          {t("toolsPage.cardVersion", { version: tool.version })}
         </span>
-      </button>
-      {!tool.signed && <Badge className="mt-2">{t("toolsPage.unsigned")}</Badge>}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label={t("toolsPage.actions", { name })}
-            className="absolute right-2 top-2 rounded p-1 text-muted"
-          >
-            <MoreHorizontal aria-hidden="true" size={16} />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={actions.enabled}>
-            {tool.enabled ? t("toolsPage.disable") : t("toolsPage.enable")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={actions.details}>{t("toolsPage.details")}</DropdownMenuItem>
-          <DropdownMenuItem onSelect={actions.remove}>{t("toolsPage.remove")}</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <Badge tone={tool.signed ? "accent" : "warning"}>
+          {t(tool.signed ? "toolsPage.signed" : "toolsPage.unsigned")}
+        </Badge>
+      </div>
     </article>
   );
 }

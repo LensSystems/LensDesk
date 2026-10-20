@@ -32,7 +32,7 @@ function fixture(permissions = ["storage"], extra: Record<string, unknown> = {})
       get: () => ({ id: "test-tool", version: "1.2.3", enabled: true, manifest: { permissions } }),
     },
     db,
-    context: () => ({ locale: "es", theme: "dark" }),
+    context: () => ({ locale: "es", theme: "dark", accent: "green" }),
     views: () => [view],
     viewId: (id) => (id === 5 ? "test-tool" : undefined),
     hostVersion: "0.1.0",
@@ -97,12 +97,18 @@ describe("tool API", () => {
     const { api, view } = fixture();
     expect(await api.invoke({ id: 5 }, "app.getContext", {})).toEqual({
       ok: true,
-      data: { locale: "es", theme: "dark", hostVersion: "0.1.0", toolVersion: "1.2.3" },
+      data: {
+        locale: "es",
+        theme: "dark",
+        accent: "green",
+        hostVersion: "0.1.0",
+        toolVersion: "1.2.3",
+      },
     });
-    api.publishContext({ locale: "en", theme: "light" });
+    api.publishContext({ locale: "en", theme: "light", accent: "green" });
     expect(view.webContents.send).toHaveBeenCalledWith(
       "lensdesk:tool-event:app.contextChanged",
-      expect.objectContaining({ locale: "en", toolVersion: "1.2.3" }),
+      expect.objectContaining({ locale: "en", accent: "green", toolVersion: "1.2.3" }),
     );
     expect(
       errorCode(await api.invoke({ id: 5 }, "ui.openExternal", { url: "http://example.com" })),

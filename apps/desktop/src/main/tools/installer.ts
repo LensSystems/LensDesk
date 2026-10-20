@@ -22,6 +22,8 @@ export function createToolInstaller(options: {
   verify?: typeof verifyPackage;
   extract?: typeof extractPackage;
   onToolRemoved?: (toolId: string) => void;
+  // Al actualizar: se avisa antes de borrar la versión anterior para cerrar lo que la usa.
+  onToolUpdated?: (toolId: string) => void;
 }) {
   const fs = options.fs ?? importFs;
   const verify = options.verify ?? verifyPackage;
@@ -103,6 +105,7 @@ export function createToolInstaller(options: {
           installedAt: previous?.installedAt ?? now,
           updatedAt: now,
         });
+        if (previous) options.onToolUpdated?.(id);
         if (movedOld) await fs.rm(backup, { recursive: true, force: true }).catch(() => undefined);
         if (previous && previous.installPath !== target && inside(previous.installPath))
           await fs

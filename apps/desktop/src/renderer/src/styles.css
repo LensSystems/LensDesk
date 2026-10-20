@@ -1,4 +1,11 @@
 @import "tailwindcss";
-@import "@lensdesk/sdk/fonts.css";
-@import "@lensdesk/sdk/theme.css";
-@import "@lensdesk/sdk/tailwind.css";
+@import "@lensdesk/ui/styles.css";
+
+.ld-drag {
+  -webkit-app-region: drag;
+}
+
+.ld-no-drag,
+.ld-no-drag * {
+  -webkit-app-region: no-drag;
+}

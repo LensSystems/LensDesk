@@ -1,7 +1,7 @@
 import type { HostEventPayloads, HostSettingKey } from "../shared/host-channels.ts";
 
 export type ResolvedTheme = "dark" | "light";
-export type AppContext = { locale: "es" | "en"; theme: ResolvedTheme };
+export type AppContext = { locale: "es" | "en"; theme: ResolvedTheme; accent: "blue" | "green" };
 type SettingsRepo = {
   get(key: HostSettingKey): unknown;
   set(key: HostSettingKey, value: unknown): void;
@@ -16,9 +16,11 @@ export function resolveTheme(setting: unknown, systemIsDark: boolean): ResolvedT
 export function buildContext(input: {
   locale: unknown;
   themeSetting: unknown;
+  accent?: unknown;
   systemIsDark: boolean;
 }): AppContext {
   return {
+    accent: input.accent === "green" ? "green" : "blue",
     locale: input.locale === "en" ? "en" : "es",
     theme: resolveTheme(input.themeSetting, input.systemIsDark),
   };
@@ -34,6 +36,7 @@ export function createSettingsHandlers(options: {
     return buildContext({
       locale: options.repo.get("locale"),
       themeSetting,
+      accent: options.repo.get("accent"),
       systemIsDark: themeSetting === "system" ? options.getSystemIsDark() : false,
     });
   };
@@ -45,7 +48,7 @@ export function createSettingsHandlers(options: {
       options.repo.set(key, value);
       const setting = { key, value: options.repo.get(key) };
       options.emit("settings.changed", setting);
-      if (key === "locale" || key === "theme") {
+      if (key === "locale" || key === "theme" || key === "accent") {
         options.emit("context.changed", contextPayload());
       }
       return setting;

@@ -1,6 +1,7 @@
 {
   "shell": {
     "label": "LensDesk",
+    "labelFullScreen": "LensSystems - LensDesk",
     "tabsLabel": "Pestañas abiertas",
     "closeTab": "Cerrar {{name}}",
     "toolsPage": "Herramientas",
@@ -20,8 +21,10 @@
     "details": "Ver detalles",
     "remove": "Quitar",
     "detailsTitle": "Detalles de {{name}}",
+    "signature": "Firma",
+    "errorCode": "Código de error",
     "version": "Versión",
-    "signed": "Firmada",
+    "signed": "firmada",
     "permissions": "Permisos",
     "noPermissions": "Ninguno",
     "removeTitle": "Quitar {{name}}",
@@ -29,7 +32,7 @@
     "deleteData": "Eliminar también los datos",
     "installError": "No se pudo instalar la herramienta",
     "downgradeTitle": "Instalar una versión anterior",
-    "downgradeDescription": "La versión instalada es {{installed}} y la nueva versión es {{incoming}}. ¿Continuar?",
+    "downgradeDescription": "La versión instalada es <version>{{installed}}</version> y la nueva versión es <version>{{incoming}}</version>. ¿Continuar?",
     "cancel": "Cancelar",
     "confirm": "Continuar",
     "actionError": "No se pudo completar la acción",
@@ -37,9 +40,18 @@
       "storage": "Almacenamiento",
       "files": "Archivos",
       "backend": "Proceso en segundo plano"
-    }
+    },
+    "open": "Abrir",
+    "openTool": "Abrir {{name}}",
+    "disabledDescription": "Desactivada. Actívala desde el menú para abrirla.",
+    "chooseFile": "Elige un archivo .lenspkg",
+    "subtitle": "Cada una guarda sus datos aparte, en tu equipo.",
+    "cardVersion": "v{{version}}"
   },
   "settingsPage": {
+    "accent": "Color de acento",
+    "blue": "Azul",
+    "green": "Verde",
     "title": "Ajustes",
     "language": "Idioma",
     "spanish": "Español",
@@ -54,7 +66,16 @@
     "exportLogsError": "No se pudieron exportar los registros.",
     "exportLogs": "Exportar registros",
     "openDataFolder": "Carpeta de datos",
-    "about": "Acerca de · LensDesk {{version}}"
+    "appearance": "Apariencia",
+    "general": "General",
+    "dataAndLogs": "Datos y registros",
+    "checkUpdatesDescription": "Una vez al día, LensDesk consulta si hay una versión nueva.",
+    "developerModeDescription": "Permite instalar herramientas sin firmar.",
+    "localDataDescription": "Tus datos viven solo en este equipo.",
+    "aboutTitle": "Acerca de",
+    "byline": "de LensSystems",
+    "appVersion": "Versión {{version}}",
+    "aboutDescription": "Escritorio de herramientas para desarrolladores. 100 % local. Licencia MIT."
   },
   "ui": {
     "loading": "Cargando",
@@ -74,6 +95,7 @@
   },
   "errors": {
     "E_SIGNATURE_INVALID": "La firma de la herramienta no es válida.",
+    "E_PACKAGE_INVALID": "El archivo no es un paquete de LensDesk válido o está dañado.",
     "E_HASH_MISMATCH": "El contenido de la herramienta no coincide con sus hashes.",
     "E_UNSIGNED": "La herramienta no está firmada.",
     "E_MANIFEST_INVALID": "El manifiesto de la herramienta no es válido.",
