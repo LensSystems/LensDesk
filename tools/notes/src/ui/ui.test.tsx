@@ -1,3 +1,4 @@
+import { tags } from "@lezer/highlight";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { EditorView } from "codemirror";
 import i18n from "i18next";
@@ -7,6 +8,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import es from "../../locales/es.json";
 import { App } from "./App.tsx";
+import { markdownHighlightStyle } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
 import { useAutosave } from "./use-autosave.ts";
@@ -432,6 +434,20 @@ describe("interfaz de Notas", () => {
         String((params as { body_md?: string }).body_md).includes("texto único"),
     );
     expect(copies).toHaveLength(1);
+  });
+
+  it("el editor colorea los títulos de Markdown", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { body_md: "# Coloreado" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Coloreado" });
+    const heading = markdownHighlightStyle.style([tags.heading]) ?? "sin-clase";
+    await waitFor(() => {
+      const span = [...document.querySelectorAll(".cm-line span")].find((node) =>
+        node.textContent?.includes("Coloreado"),
+      );
+      expect(span?.className).toContain(heading);
+    });
   });
 
   it("seleccionar una nota y esperar no llama a update", async () => {

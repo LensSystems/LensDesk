@@ -314,6 +314,9 @@ importers:
       '@codemirror/lang-markdown':
         specifier: 6.5.2
         version: 6.5.2
+      '@codemirror/language':
+        specifier: 6.13.1
+        version: 6.13.1
       '@codemirror/state':
         specifier: 6.7.6
         version: 6.7.6
@@ -326,6 +329,9 @@ importers:
       '@lensdesk/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@lezer/highlight':
+        specifier: 1.2.5
+        version: 1.2.5
       '@types/markdown-it':
         specifier: 14.2.0
         version: 14.2.0

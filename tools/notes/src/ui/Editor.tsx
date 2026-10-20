@@ -4,6 +4,7 @@ import { Button, Download, MarkdownView, SegmentedControl } from "@lensdesk/ui";
 import { EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { markdownHighlighting } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
 
@@ -31,6 +32,7 @@ export function Editor({
       extensions: [
         EditorView.lineWrapping,
         markdown(),
+        markdownHighlighting,
         lineNumbers(),
         highlightActiveLine(),
         highlightActiveLineGutter(),
