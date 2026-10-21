@@ -12,7 +12,7 @@
   "toolsPage": {
     "title": "Tools",
     "emptyTitle": "No tools yet",
-    "emptyDescription": "Add a tool to get started.",
+    "emptyDescription": "Install a tool from a .lenspkg file to begin.",
     "addTool": "Add tool…",
     "unsigned": "unsigned",
     "actions": "Actions for {{name}}",
@@ -28,7 +28,7 @@
     "permissions": "Permissions",
     "noPermissions": "None",
     "removeTitle": "Remove {{name}}",
-    "removeDescription": "Do you want to remove this tool?",
+    "removeDescription": "The tool will be removed from LensDesk. Continue?",
     "deleteData": "Also delete data",
     "installError": "Could not install the tool",
     "downgradeTitle": "Install an older version",
@@ -43,9 +43,9 @@
     },
     "open": "Open",
     "openTool": "Open {{name}}",
-    "disabledDescription": "Disabled. Turn it on from the menu to open it.",
+    "disabledDescription": "Tool disabled. Turn it on from the actions menu to use it.",
     "chooseFile": "Choose a .lenspkg file",
-    "subtitle": "Each one keeps its data separately, on your computer.",
+    "subtitle": "Each installed tool keeps its data separately and only on your computer.",
     "cardVersion": "v{{version}}"
   },
   "settingsPage": {
@@ -69,9 +69,9 @@
     "appearance": "Appearance",
     "general": "General",
     "dataAndLogs": "Data and logs",
-    "checkUpdatesDescription": "Once a day, LensDesk checks for a new version.",
+    "checkUpdatesDescription": "LensDesk checks once a day whether a new version exists.",
     "developerModeDescription": "Allows you to install unsigned tools.",
-    "localDataDescription": "Your data stays on this computer.",
+    "localDataDescription": "Your data is stored only on this computer.",
     "aboutTitle": "About",
     "byline": "by LensSystems",
     "appVersion": "Version {{version}}",
@@ -90,7 +90,7 @@
     "updateAvailable": "LensDesk {{version}} is available.",
     "viewUpdate": "View update",
     "toolCrashedTitle": "{{name}} stopped working",
-    "toolCrashedDescription": "You can reopen it to continue.",
+    "toolCrashedDescription": "Reopen the tool to continue where you left off.",
     "retry": "Retry"
   },
   "errors": {

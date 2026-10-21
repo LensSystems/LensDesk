@@ -273,7 +273,7 @@ describe("interfaz de Notas", () => {
   it("importa cada Markdown y exporta el cuerpo con el token elegido", async () => {
     const fake = fakeClient();
     render(<App client={fake.client as never} />);
-    await screen.findAllByText("No hay notas. Crea una para empezar.");
+    await screen.findAllByText("Aún no hay notas. Crea una nota nueva para comenzar.");
     fireEvent.click(screen.getByRole("button", { name: "Importar Markdown" }));
     await screen.findByRole("button", { name: "Uno" });
     await screen.findByRole("button", { name: "Dos" });

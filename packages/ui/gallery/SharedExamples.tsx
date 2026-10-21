@@ -124,7 +124,7 @@ export function SharedExamples() {
         <FileDropZone
           size="compact"
           buttonVariant="primary"
-          label="Suelta más documentos aquí"
+          label="Arrastra más documentos a esta zona"
           buttonLabel="Elegir archivos"
           onBrowse={() => setNotice("Selector solicitado")}
         />

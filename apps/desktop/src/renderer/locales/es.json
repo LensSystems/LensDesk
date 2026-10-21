@@ -12,7 +12,7 @@
   "toolsPage": {
     "title": "Herramientas",
     "emptyTitle": "Aún no hay herramientas",
-    "emptyDescription": "Agrega una herramienta para empezar.",
+    "emptyDescription": "Instala una herramienta desde un archivo .lenspkg para comenzar.",
     "addTool": "Agregar herramienta…",
     "unsigned": "sin firmar",
     "actions": "Acciones de {{name}}",
@@ -28,7 +28,7 @@
     "permissions": "Permisos",
     "noPermissions": "Ninguno",
     "removeTitle": "Quitar {{name}}",
-    "removeDescription": "¿Quieres quitar esta herramienta?",
+    "removeDescription": "La herramienta se quitará de LensDesk. ¿Continuar?",
     "deleteData": "Eliminar también los datos",
     "installError": "No se pudo instalar la herramienta",
     "downgradeTitle": "Instalar una versión anterior",
@@ -43,9 +43,9 @@
     },
     "open": "Abrir",
     "openTool": "Abrir {{name}}",
-    "disabledDescription": "Desactivada. Actívala desde el menú para abrirla.",
+    "disabledDescription": "Herramienta desactivada. Actívala desde el menú de acciones para usarla.",
     "chooseFile": "Elige un archivo .lenspkg",
-    "subtitle": "Cada una guarda sus datos aparte, en tu equipo.",
+    "subtitle": "Cada herramienta instalada guarda sus datos por separado y solo en tu equipo.",
     "cardVersion": "v{{version}}"
   },
   "settingsPage": {
@@ -69,9 +69,9 @@
     "appearance": "Apariencia",
     "general": "General",
     "dataAndLogs": "Datos y registros",
-    "checkUpdatesDescription": "Una vez al día, LensDesk consulta si hay una versión nueva.",
+    "checkUpdatesDescription": "LensDesk comprueba una vez al día si existe una versión nueva.",
     "developerModeDescription": "Permite instalar herramientas sin firmar.",
-    "localDataDescription": "Tus datos viven solo en este equipo.",
+    "localDataDescription": "Tus datos se almacenan únicamente en este equipo.",
     "aboutTitle": "Acerca de",
     "byline": "de LensSystems",
     "appVersion": "Versión {{version}}",
@@ -90,7 +90,7 @@
     "updateAvailable": "LensDesk {{version}} está disponible.",
     "viewUpdate": "Ver actualización",
     "toolCrashedTitle": "{{name}} dejó de funcionar",
-    "toolCrashedDescription": "Puedes volver a abrirla para continuar.",
+    "toolCrashedDescription": "Vuelve a abrir la herramienta para continuar donde lo dejaste.",
     "retry": "Reintentar"
   },
   "errors": {

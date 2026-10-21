@@ -82,7 +82,9 @@ describe("página Herramientas", () => {
       </TooltipProvider>,
     );
     expect(screen.getByRole("button", { name: "Abrir Notas" }).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByText("Desactivada. Actívala desde el menú para abrirla.")).toBeTruthy();
+    expect(
+      screen.getByText("Herramienta desactivada. Actívala desde el menú de acciones para usarla."),
+    ).toBeTruthy();
     const trigger = screen.getByRole("button", { name: "Acciones de Notas" });
     expect(trigger.hasAttribute("disabled")).toBe(false);
     trigger.focus();

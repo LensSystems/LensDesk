@@ -4,7 +4,7 @@
   "title": "Converter",
   "chooseFiles": "Choose files…",
   "dropZone": "File drop zone",
-  "dropHint": "Drop HTML, DOCX, CSV, PDF or XLSX documents here, or choose them to convert them to Markdown.",
+  "dropHint": "Drag HTML, DOCX, CSV, PDF or XLSX documents to this area, or choose files to convert them to Markdown.",
   "supportedFiles": "Supported documents",
   "markdownFiles": "Markdown files",
   "queue": "Conversion queue",
@@ -36,5 +36,5 @@
     "E_CANCELLED": "Conversion cancelled.",
     "generic": "The action could not be completed ({{code}})."
   },
-  "dropMore": "Drop more documents here"
+  "dropMore": "Drag more documents to this area"
 }

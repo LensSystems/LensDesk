@@ -61,7 +61,7 @@ describe("Ajustes", () => {
     renderSettings();
     expect(
       screen.getByRole("switch", { name: "Buscar actualizaciones" }),
-    ).toHaveAccessibleDescription("Una vez al día, LensDesk consulta si hay una versión nueva.");
+    ).toHaveAccessibleDescription("LensDesk comprueba una vez al día si existe una versión nueva.");
     expect(screen.getByRole("switch", { name: "Modo desarrollador" })).toHaveAccessibleDescription(
       "Permite instalar herramientas sin firmar.",
     );
