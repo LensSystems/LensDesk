@@ -77,6 +77,9 @@ export function createToolClient(bridge: ToolBridge = window.lensdesk) {
       },
     },
     app: {
+      // En un host anterior sin el evento, la suscripción no hace nada.
+      onVisibilityChange: (callback: (visible: boolean) => void): (() => void) =>
+        bridge.app.onVisibilityChange?.(callback) ?? (() => undefined),
       getContext: async () => unwrap<ToolContext>(await bridge.app.getContext()),
       onContextChange: (callback: (context: ToolContext) => void) =>
         bridge.app.onContextChange(callback),

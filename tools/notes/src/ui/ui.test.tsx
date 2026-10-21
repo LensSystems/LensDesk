@@ -29,6 +29,7 @@ const note = (id: string, body_md = "") => ({
 
 function fakeClient() {
   let rows: Note[] = [];
+  let visibilityListener: ((visible: boolean) => void) | undefined;
   let contextListener:
     | ((context: { locale: string; theme: string; accent?: "blue" | "green" }) => void)
     | undefined;
@@ -101,7 +102,14 @@ function fakeClient() {
       readText: vi.fn(async (token: string) => (token === "import" ? "# Uno" : "# Dos")),
       writeText: vi.fn(async () => undefined),
     },
+    ui: { copyText: vi.fn(async () => undefined) },
     app: {
+      onVisibilityChange: vi.fn((callback: (visible: boolean) => void) => {
+        visibilityListener = callback;
+        return () => {
+          visibilityListener = undefined;
+        };
+      }),
       getContext: vi.fn(async () => ({
         locale: "es",
         theme: "dark",
@@ -122,6 +130,7 @@ function fakeClient() {
     client,
     invoke,
     files: client.files,
+    visibility: (visible: boolean) => visibilityListener?.(visible),
     changeAccent: (accent?: "blue" | "green") =>
       contextListener?.({ locale: "es", theme: "dark", ...(accent ? { accent } : {}) }),
     changeLanguage: (locale: string) => contextListener?.({ locale, theme: "dark" }),
@@ -148,6 +157,50 @@ beforeEach(async () => {
 });
 
 describe("interfaz de Notas", () => {
+  it("cambia a Ver al seleccionar u ocultar, crea en Editar y copia el borrador", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Uno", body_md: "Cuerpo" });
+    await fake.invoke("create", { title: "Dos", body_md: "Segundo" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Uno" });
+    const editor = document.querySelector(".cm-content") as HTMLElement;
+    act(() => {
+      const view = EditorView.findFromDOM(editor);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: " pendiente" } });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Copiar nota" }));
+    await screen.findByRole("button", { name: "Copiado" });
+    expect(fake.client.ui.copyText).toHaveBeenCalledWith("# Uno\n\nCuerpo pendiente");
+    vi.useFakeTimers();
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Copiado" }));
+      await act(async () => {});
+      act(() => vi.advanceTimersByTime(1999));
+      expect(screen.getByRole("button", { name: "Copiado" })).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.getByRole("button", { name: "Copiar nota" })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Dos" }));
+    expect(screen.getByRole("radio", { name: "Ver" })).toHaveAttribute("aria-checked", "true");
+    expect(fake.invoke).toHaveBeenCalledWith("update", { id: "1", body_md: "Cuerpo pendiente" });
+    fireEvent.click(screen.getByRole("radio", { name: "Editar" }));
+    await act(async () => fake.visibility(true));
+    expect(screen.getByRole("radio", { name: "Editar" })).toHaveAttribute("aria-checked", "true");
+    act(() => {
+      const view = EditorView.findFromDOM(document.querySelector(".cm-content") as HTMLElement);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: " oculto" } });
+    });
+    await act(async () => fake.visibility(false));
+    expect(fake.invoke).toHaveBeenCalledWith("update", { id: "2", body_md: "Segundo oculto" });
+    expect(screen.getByRole("radio", { name: "Ver" })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Nueva nota" }));
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: "Editar" })).toHaveAttribute("aria-checked", "true"),
+    );
+  });
+
   it("edita con lápiz, cancela con Escape y guarda con Intro o al perder foco", async () => {
     const fake = fakeClient();
     await fake.invoke("create", { title: "Inicial", body_md: "Solo cuerpo" });
@@ -238,6 +291,9 @@ describe("interfaz de Notas", () => {
       <TooltipProvider>
         <Editor
           note={note("one", "# Documento")}
+          preview={false}
+          onMode={vi.fn()}
+          onCopy={vi.fn(async () => true)}
           onChange={vi.fn()}
           onBlur={vi.fn()}
           onRename={vi.fn(async () => {})}
@@ -286,7 +342,7 @@ describe("interfaz de Notas", () => {
     expect(document.title).toBe("Notas");
     expect(screen.getByRole("textbox", { name: "Editar" })).toBeTruthy();
     const editor = document.querySelector(".cm-content");
-    fireEvent.click(screen.getByRole("radio", { name: "Vista previa" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Ver" }));
     expect(screen.getByRole("article").querySelector("strong")).toHaveTextContent("Contenido");
     fireEvent.click(screen.getByRole("radio", { name: "Editar" }));
     expect(screen.queryByRole("article")).toBeNull();
@@ -544,7 +600,7 @@ describe("interfaz de Notas", () => {
     fireEvent.keyDown(trash, { key: "ArrowLeft" });
     await waitFor(() => expect(notes).toHaveFocus());
     expect(notes).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(await screen.findByRole("radio", { name: "Vista previa" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Ver" }));
     expect(screen.getByRole("article")).toHaveClass("ld-markdown-view");
     fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Vista" })).toBeNull());

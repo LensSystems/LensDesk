@@ -40,7 +40,7 @@ test("el título no se selecciona y la vista previa de Notas sí", async () => {
     const notes = await toolPage(app, "notes");
     await notes.getByRole("button", { name: "Nueva nota" }).first().click();
     await notes.locator(".cm-content").fill("# Texto seleccionable\nContenido para copiar");
-    await notes.getByRole("radio", { name: "Vista previa", exact: true }).click();
+    await notes.getByRole("radio", { name: "Ver", exact: true }).click();
     const preview = notes
       .locator(".ld-markdown-view")
       .getByRole("heading", { name: "Texto seleccionable" });

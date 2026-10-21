@@ -17,7 +17,7 @@
   "import": "Import Markdown",
   "export": "Export",
   "mode": "Mode",
-  "preview": "Preview",
+  "preview": "View",
   "edit": "Edit",
   "markdownFiles": "Markdown files",
   "restore": "Restore",
@@ -34,5 +34,7 @@
   "confirmEmptyMessage": "Notes in the trash will be deleted permanently. This cannot be undone.",
   "close": "Close",
   "editTitle": "Edit title",
-  "noteTitle": "Note title"
+  "noteTitle": "Note title",
+  "copyNote": "Copy note",
+  "copied": "Copied"
 }

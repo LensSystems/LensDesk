@@ -34,6 +34,7 @@ function fakeView(id: number) {
     webContents: {
       id,
       close: vi.fn(),
+      send: vi.fn(),
       on: vi.fn((event: string, listener: (...args: never[]) => void) =>
         handlers.set(event, listener),
       ),
@@ -86,8 +87,26 @@ describe("tool view helpers", () => {
     manager.show("one", { width: 800, height: 600 });
     manager.show("two", { width: 900, height: 700 });
     expect(host.addChildView).toHaveBeenCalledTimes(2);
+    manager.show("two", { width: 900, height: 700 });
+    expect(second.view.webContents.send).toHaveBeenCalledTimes(1);
+    expect(first.view.webContents.send).toHaveBeenLastCalledWith(
+      "lensdesk:tool-event:app.visibilityChanged",
+      false,
+    );
     manager.hideAll();
+    manager.hideAll();
+    expect(second.view.webContents.send).toHaveBeenCalledTimes(2);
+    expect(second.view.webContents.send).toHaveBeenLastCalledWith(
+      "lensdesk:tool-event:app.visibilityChanged",
+      false,
+    );
     expect(host.removeChildView).toHaveBeenCalledTimes(2);
+    manager.show("two", { width: 900, height: 700 });
+    expect(second.view.webContents.send).toHaveBeenCalledTimes(3);
+    expect(second.view.webContents.send).toHaveBeenLastCalledWith(
+      "lensdesk:tool-event:app.visibilityChanged",
+      true,
+    );
     manager.close("one");
     expect(first.view.webContents.close).toHaveBeenCalledOnce();
     expect(manager.getToolIdForContents(1)).toBeUndefined();

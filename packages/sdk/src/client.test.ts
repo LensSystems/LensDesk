@@ -35,6 +35,7 @@ function makeBridge() {
         data: { locale: "es", theme: "dark", hostVersion: "1.0.0", toolVersion: "1.0.0" },
       })),
       onContextChange: vi.fn(() => () => {}),
+      onVisibilityChange: vi.fn(() => () => {}),
     },
     ui: {
       toast: vi.fn(async () => ({ ok: true as const, data: undefined })),
@@ -119,5 +120,13 @@ describe("createToolClient backend invoke", () => {
       client.backend.invoke("never", {}, { signal: alreadyAborted.signal }),
     ).rejects.toMatchObject({ code: "E_CANCELLED" });
     expect(bridge.backend.invoke).not.toHaveBeenCalled();
+  });
+
+  it("en un host sin el evento de visibilidad, suscribirse no falla", () => {
+    const { bridge } = makeBridge();
+    const { onVisibilityChange: _absent, ...oldApp } = bridge.app;
+    const client = createToolClient({ ...bridge, app: oldApp });
+    const unsubscribe = client.app.onVisibilityChange(() => undefined);
+    expect(() => unsubscribe()).not.toThrow();
   });
 });

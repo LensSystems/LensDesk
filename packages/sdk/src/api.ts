@@ -43,6 +43,8 @@ export type ToolBridge = {
     onProgress: (callback: (event: BackendProgressEvent) => void) => () => void;
   };
   app: {
+    // Opcional: los hosts anteriores no lo tienen.
+    onVisibilityChange?: (callback: (visible: boolean) => void) => () => void;
     getContext: () => Promise<Result<ToolContext>>;
     onContextChange: (callback: (context: ToolContext) => void) => () => void;
   };

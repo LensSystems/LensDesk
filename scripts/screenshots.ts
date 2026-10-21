@@ -15,7 +15,7 @@ const css =
 // El aviso de versiones depende de la red y no forma parte de las pantallas.
 const shellCss = `${css}header > [role="status"]{display:none!important}`;
 const sample =
-  "# Guía del proyecto\n\nTodo queda guardado localmente.\n\n- Revisar cambios\n- Ejecutar pruebas\n\n```ts\nconst saludo = 'Hola, LensDesk';\nconsole.log(saludo);\n```";
+  "Todo queda guardado localmente.\n\n- Revisar cambios\n- Ejecutar pruebas\n\n```ts\nconst saludo = 'Hola, LensDesk';\nconsole.log(saludo);\n```";
 
 function options() {
   const args = process.argv.slice(2);
@@ -288,10 +288,15 @@ async function run() {
         return tool;
       };
       const notes = await open("Notas", "notes");
-      await notes.getByRole("button", { name: "Nueva nota" }).first().click();
-      await notes
-        .locator(".cm-content")
-        .fill("# Borrador archivado\n\nIdeas para revisar más adelante.");
+      // El título se escribe aparte del cuerpo.
+      const newNote = async (title: string, body: string) => {
+        await notes.getByRole("button", { name: "Nueva nota" }).first().click();
+        const titleInput = notes.getByRole("textbox", { name: "Título de la nota" });
+        await titleInput.fill(title);
+        await titleInput.press("Enter");
+        await notes.locator(".cm-content").fill(body);
+      };
+      await newNote("Borrador archivado", "Ideas para revisar más adelante.");
       await notes.waitForTimeout(1000);
       await expect(
         notes.getByRole("button", { name: "Borrador archivado", exact: true }),
@@ -300,12 +305,11 @@ async function run() {
       await expect(
         notes.getByRole("button", { name: "Borrador archivado", exact: true }),
       ).toHaveCount(0);
-      await notes.getByRole("button", { name: "Nueva nota" }).first().click();
-      await notes.locator(".cm-content").fill(sample);
+      await newNote("Guía del proyecto", sample);
       await notes.waitForTimeout(1000);
       await expect(notes.getByRole("heading", { name: "Guía del proyecto" })).toBeVisible();
       await snap("notas-edicion", notes);
-      await notes.getByRole("radio", { name: "Vista previa", exact: true }).click();
+      await notes.getByRole("radio", { name: "Ver", exact: true }).click();
       await snap("notas-vista-previa", notes);
       await notes.getByRole("radio", { name: "Papelera", exact: true }).click();
       await expect(

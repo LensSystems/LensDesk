@@ -60,6 +60,13 @@ export function createToolViews(options: {
   external?: (url: string) => Promise<void>;
 }) {
   const views = new Map<string, ToolView>();
+  const visible = new Set<ToolView>();
+  const visibility = (view: ToolView, next: boolean) => {
+    if (visible.has(view) === next) return;
+    if (next) visible.add(view);
+    else visible.delete(view);
+    view.webContents.send?.("lensdesk:tool-event:app.visibilityChanged", next);
+  };
   const contentsToTool = new Map<number, string>();
   const factory =
     options.factory ??
@@ -68,6 +75,7 @@ export function createToolViews(options: {
   const remove = (toolId: string): void => {
     const view = views.get(toolId);
     if (!view) return;
+    visibility(view, false);
     options.host.removeChildView(view);
     contentsToTool.delete(view.webContents.id);
     view.webContents.close();
@@ -77,7 +85,10 @@ export function createToolViews(options: {
     getToolIdForContents: (id: number) => contentsToTool.get(id),
     getViews: () => [...views.values()],
     hideAll(): void {
-      for (const view of views.values()) options.host.removeChildView(view);
+      for (const view of visible) {
+        visibility(view, false);
+        options.host.removeChildView(view);
+      }
     },
     close(toolId: string): void {
       remove(toolId);
@@ -114,7 +125,13 @@ export function createToolViews(options: {
         });
         void view.webContents.loadURL(`lenstool://${toolId}/`);
       }
+      for (const other of visible) {
+        if (other === view) continue;
+        visibility(other, false);
+        options.host.removeChildView(other);
+      }
       options.host.addChildView(view);
+      visibility(view, true);
       view.setBounds(computeViewBounds(bounds));
     },
     destroyAll(): void {

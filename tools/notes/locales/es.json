@@ -17,7 +17,7 @@
   "import": "Importar Markdown",
   "export": "Exportar",
   "mode": "Modo",
-  "preview": "Vista previa",
+  "preview": "Ver",
   "edit": "Editar",
   "markdownFiles": "Archivos Markdown",
   "restore": "Restaurar",
@@ -34,5 +34,7 @@
   "confirmEmptyMessage": "Las notas de la papelera se borrarán para siempre. Esta acción no se puede deshacer.",
   "close": "Cerrar",
   "editTitle": "Editar título",
-  "noteTitle": "Título de la nota"
+  "noteTitle": "Título de la nota",
+  "copyNote": "Copiar nota",
+  "copied": "Copiado"
 }

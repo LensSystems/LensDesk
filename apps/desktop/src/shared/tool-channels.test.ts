@@ -26,6 +26,14 @@ describe("tool bridge", () => {
     const client = createToolClient(bridge);
     await expect(client.storage.get("x")).resolves.toEqual({ saved: true });
     await expect(client.storage.set("x", 1)).rejects.toBeInstanceOf(LensError);
+    const visibility = vi.fn();
+    const stopVisibility = client.app.onVisibilityChange(visibility);
+    listeners.get("app.visibilityChanged")?.(false);
+    listeners.get("app.visibilityChanged")?.(true);
+    listeners.get("app.visibilityChanged")?.("false");
+    expect(visibility.mock.calls).toEqual([[false], [true]]);
+    stopVisibility();
+    expect(listeners.has("app.visibilityChanged")).toBe(false);
     const onContextChange = vi.fn();
     const unsubscribe = client.app.onContextChange(onContextChange);
     listeners.get("app.contextChanged")?.({

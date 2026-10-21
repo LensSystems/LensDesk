@@ -17,8 +17,25 @@ export function App({ client }: { client: Client }) {
   useEffect(() => {
     document.title = t("title");
   }, [t]);
+  const [preview, setPreview] = useState(false);
   const [confirmingEmpty, setConfirmingEmpty] = useState(false);
   const flush = useAutosave(state.selected?.id ?? null, state.body, state.save);
+  useEffect(
+    () =>
+      client.app.onVisibilityChange((visible) => {
+        if (!visible) {
+          flush();
+          setPreview(true);
+        }
+      }),
+    [client, flush],
+  );
+  const create = () => {
+    flush();
+    void state.create().then((created) => {
+      if (created) setPreview(false);
+    });
+  };
   const updateBody = useCallback((value: string) => state.setBody(value), [state.setBody]);
 
   return (
@@ -48,6 +65,7 @@ export function App({ client }: { client: Client }) {
                 onQuery={state.setQuery}
                 onSelect={(id) => {
                   flush();
+                  if (id !== state.selectedId) setPreview(true);
                   state.selectNote(id);
                 }}
                 onImport={() => {
@@ -59,10 +77,7 @@ export function App({ client }: { client: Client }) {
                   flush();
                   state.setTrashed(trash);
                 }}
-                onCreate={() => {
-                  flush();
-                  void state.create();
-                }}
+                onCreate={create}
                 onTrash={(id) => void state.trashNote(id)}
                 onPin={(note) =>
                   void client.backend
@@ -80,6 +95,9 @@ export function App({ client }: { client: Client }) {
                 ) : (
                   <Editor
                     key={state.selected.id}
+                    preview={preview}
+                    onMode={setPreview}
+                    onCopy={state.copyNote}
                     note={{ ...state.selected, body_md: state.body }}
                     onChange={updateBody}
                     onBlur={flush}
@@ -88,14 +106,7 @@ export function App({ client }: { client: Client }) {
                   />
                 )
               ) : (
-                <EmptyNote
-                  query={state.query}
-                  trashed={state.trashed}
-                  onCreate={() => {
-                    flush();
-                    void state.create();
-                  }}
-                />
+                <EmptyNote query={state.query} trashed={state.trashed} onCreate={create} />
               )}
             </div>
           )}

@@ -136,6 +136,7 @@ export function useNotes(client: Client) {
       setSelectedId(note.id);
       setBody(note.body_md);
       setError("");
+      return true;
     } catch (reason) {
       await fail(reason);
     }
@@ -173,6 +174,22 @@ export function useNotes(client: Client) {
       }
     } catch (reason) {
       await fail(reason);
+    }
+  };
+
+  const copyNote = async () => {
+    if (!selected) return false;
+    try {
+      const updated = await renaming.current.get(selected.id);
+      const title =
+        updated?.title ??
+        notesRef.current.find((note) => note.id === selected.id)?.title ??
+        selected.title;
+      await client.ui.copyText(`# ${title}\n\n${body}`);
+      return true;
+    } catch (reason) {
+      await fail(reason);
+      return false;
     }
   };
 
@@ -223,6 +240,7 @@ export function useNotes(client: Client) {
 
   return {
     body,
+    copyNote,
     create,
     emptyTrash,
     fail,

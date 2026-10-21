@@ -18,7 +18,12 @@ export const TOOL_CHANNELS = [
   "ui.copyText",
   "ui.openExternal",
 ] as const;
-export const TOOL_EVENTS = ["files.drop", "backend.progress", "app.contextChanged"] as const;
+export const TOOL_EVENTS = [
+  "files.drop",
+  "backend.progress",
+  "app.contextChanged",
+  "app.visibilityChanged",
+] as const;
 export const TOOL_IPC_CHANNEL = "lensdesk:tool-invoke";
 export const TOOL_DROP_REGISTER_CHANNEL = "lensdesk:tool-drop-register-internal";
 export type ToolChannel = (typeof TOOL_CHANNELS)[number];
@@ -92,6 +97,10 @@ export function createToolBridge(invoke: Invoker, subscribe: Subscriber) {
         ),
     },
     app: {
+      onVisibilityChange: (callback: (visible: boolean) => void) =>
+        listen("app.visibilityChanged", (payload) => {
+          if (typeof payload === "boolean") callback(payload);
+        }),
       getContext: () => call<ToolContextPayload>("app.getContext", {}),
       onContextChange: (callback: (context: ToolContextPayload) => void) =>
         listen("app.contextChanged", (payload) => callback(payload as ToolContextPayload)),

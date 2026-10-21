@@ -32,6 +32,7 @@ describe("public client contract", () => {
           data: { locale: "es", theme: "dark", hostVersion: "1", toolVersion: "1" },
         })),
         onContextChange: vi.fn(() => () => {}),
+        onVisibilityChange: vi.fn(() => () => {}),
       },
       ui: { toast: vi.fn(done), copyText: vi.fn(done), openExternal: vi.fn(done) },
     };
@@ -49,12 +50,14 @@ describe("public client contract", () => {
     await client.backend.invoke("ping", {});
     await client.app.getContext();
     client.app.onContextChange(vi.fn());
+    client.app.onVisibilityChange(vi.fn());
     await client.ui.toast({ kind: "info", message: "x" });
     await client.ui.copyText("x");
     await client.ui.openExternal("https://example.com");
     expect(bridge.storage.get).toHaveBeenCalledWith("k");
     expect(bridge.files.onDrop).toHaveBeenCalledOnce();
     expect(bridge.app.onContextChange).toHaveBeenCalledOnce();
+    expect(bridge.app.onVisibilityChange).toHaveBeenCalledOnce();
     expect(bridge.ui.openExternal).toHaveBeenCalledWith("https://example.com");
   });
 

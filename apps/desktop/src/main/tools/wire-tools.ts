@@ -71,12 +71,15 @@ export function createToolWiring(options: {
   const showActive = () => {
     const db = options.database();
     if (!views || !window || !db) return;
-    views.hideAll();
-    if (!options.showingTab()) return;
+    if (!options.showingTab()) {
+      views.hideAll();
+      return;
+    }
     const active = createTabsStore(db, () => undefined)
       .list()
       .find((tab) => tab.active);
     if (active) views.show(active.toolId, window.getContentBounds());
+    else views.hideAll();
   };
   options.onShowActiveTool(showActive);
   const handlers = createToolHandlers({
