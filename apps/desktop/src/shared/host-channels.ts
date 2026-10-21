@@ -8,6 +8,7 @@ export const HOST_CHANNELS = [
   "tabs.list",
   "tabs.open",
   "tabs.close",
+  "tabs.undoClose",
   "tabs.activate",
   "shell.showPage",
   "tools.list",
@@ -25,6 +26,7 @@ export const HOST_EVENTS = [
   "settings.changed",
   "context.changed",
   "tabs.changed",
+  "tabs.closedForLimit",
   "tools.changed",
   "tools.toast",
   "update.available",
@@ -43,6 +45,7 @@ export type HostPayloads = {
   "tabs.list": Record<string, never>;
   "tabs.open": { toolId: string };
   "tabs.close": { toolId: string };
+  "tabs.undoClose": { toolId: string };
   "tabs.activate": { toolId: string };
   "shell.showPage": { page: "tools" | "settings" };
   "tools.list": Record<string, never>;
@@ -74,6 +77,7 @@ export type HostResponses = {
   "tabs.list": { tabs: ShellTab[] };
   "tabs.open": { tabs: ShellTab[] };
   "tabs.close": { tabs: ShellTab[] };
+  "tabs.undoClose": { tabs: ShellTab[] };
   "tabs.activate": { tabs: ShellTab[] };
   "shell.showPage": { page: "tools" | "settings" };
   "tools.list": ToolState;
@@ -117,6 +121,7 @@ export type HostEventPayloads = {
   "settings.changed": { key: HostSettingKey; value: HostSettingValue };
   "context.changed": { locale: "es" | "en"; theme: "dark" | "light"; accent: "blue" | "green" };
   "tabs.changed": { tabs: ShellTab[] };
+  "tabs.closedForLimit": { toolId: string };
   "tools.changed": ToolState;
   "tools.toast": { toolId: string; kind: string; message: string };
   "update.available": { version: string; html_url: string };

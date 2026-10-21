@@ -7,11 +7,12 @@ export function HeaderNotices({ bridge }: { bridge: Window["lensdeskHost"] }) {
   const update = useShellStore((state) => state.update);
   const dismissUpdate = useShellStore((state) => state.dismissUpdate);
   return (
-    <div className="ld-no-drag flex min-w-0 items-center gap-1">
+    // Los envoltorios de Radix también deben poder encogerse para que el texto del aviso se recorte.
+    <div className="ld-no-drag flex min-w-0 items-center gap-1 [&>*]:min-w-0">
       {update && (
         <UpdateBanner bridge={bridge} onDismiss={() => dismissUpdate(bridge)} update={update} />
       )}
-      <ToastRegion />
+      <ToastRegion bridge={bridge} />
     </div>
   );
 }

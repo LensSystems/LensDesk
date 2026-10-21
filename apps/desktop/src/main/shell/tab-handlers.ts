@@ -6,28 +6,34 @@ export function createTabHandlers(options: {
   tabsStore(): {
     list(): Tabs;
     open(toolId: string): Tabs;
+    undoClose(toolId: string): Tabs;
     close(toolId: string): Tabs;
     activate(toolId: string): Tabs;
   };
   follow(tabs: Tabs): void;
+  notifyClosed(toolId: string): void;
   closeTool(toolId: string): void;
   hideAll(): void;
   leaveTab(): void;
 }) {
-  const apply = (compute: (store: ReturnType<typeof options.tabsStore>) => Tabs) => {
-    const tabs = compute(options.tabsStore());
+  const apply = (compute: (store: ReturnType<typeof options.tabsStore>) => Tabs, notify = true) => {
+    const store = options.tabsStore();
+    const before = store.list();
+    const tabs = compute(store);
+    for (const tab of before) {
+      if (!tabs.some((current) => current.toolId === tab.toolId)) {
+        options.closeTool(tab.toolId);
+        if (notify) options.notifyClosed(tab.toolId);
+      }
+    }
     options.follow(tabs);
     return { tabs };
   };
   return {
     "tabs.list": () => ({ tabs: options.tabsStore().list() }),
     "tabs.open": ({ toolId }: { toolId: string }) => apply((store) => store.open(toolId)),
-    "tabs.close": ({ toolId }: { toolId: string }) =>
-      apply((store) => {
-        const tabs = store.close(toolId);
-        options.closeTool(toolId);
-        return tabs;
-      }),
+    "tabs.undoClose": ({ toolId }: { toolId: string }) => apply((store) => store.undoClose(toolId)),
+    "tabs.close": ({ toolId }: { toolId: string }) => apply((store) => store.close(toolId), false),
     "tabs.activate": ({ toolId }: { toolId: string }) => apply((store) => store.activate(toolId)),
     "shell.showPage": ({ page }: { page: "tools" | "settings" }) => {
       options.leaveTab();

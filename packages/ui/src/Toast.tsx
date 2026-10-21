@@ -11,7 +11,7 @@ export function ToastViewport({ className, ...props }: ComponentProps<typeof Pri
   );
 }
 
-export type ToastProps = Omit<ComponentProps<typeof Primitive.Root>, "children"> & {
+export type ToastProps = Omit<ComponentProps<typeof Primitive.Root>, "children" | "title"> & {
   title: ReactNode;
   description?: ReactNode;
   dismissLabel?: string;

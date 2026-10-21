@@ -112,8 +112,11 @@ const settingsHandlers = createSettingsHandlers({
   },
   getSystemIsDark: () => nativeTheme.shouldUseDarkColors,
 });
+let persistentTabs: ReturnType<typeof createTabsStore> | undefined;
 const tabsStore = () =>
-  createTabsStore(requireDatabase(), (tabs) => shellContents?.send("tabs.changed", { tabs }));
+  (persistentTabs ??= createTabsStore(requireDatabase(), (tabs) =>
+    shellContents?.send("tabs.changed", { tabs }),
+  ));
 toolWiring = createToolWiring({
   app,
   database: () => database,
@@ -155,6 +158,7 @@ const { updates, appActions } = wireAppServices({
 });
 const tabHandlers = createTabHandlers({
   tabsStore,
+  notifyClosed: (toolId) => shellContents?.send("tabs.closedForLimit", { toolId }),
   follow: followTabs,
   closeTool: (toolId) => toolWiring.close(toolId),
   hideAll: () => toolWiring.hideAll(),

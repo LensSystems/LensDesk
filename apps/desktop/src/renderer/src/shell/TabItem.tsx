@@ -1,0 +1,74 @@
+import { IconButton, X } from "@lensdesk/ui";
+import type { ComponentType, KeyboardEventHandler, Ref } from "react";
+import { useTranslation } from "react-i18next";
+import type { HostBridge, ShellTab } from "../../../shared/host-channels.ts";
+
+type Props = {
+  tab: ShellTab;
+  bridge: HostBridge;
+  name: string;
+  Icon: ComponentType<{ size?: number; className?: string }>;
+  selected: boolean;
+  compact: boolean;
+  tabIndex: number;
+  buttonRef: Ref<HTMLButtonElement>;
+  onFocus(): void;
+  onKeyDown: KeyboardEventHandler<HTMLButtonElement>;
+};
+
+export function TabItem({
+  tab,
+  bridge,
+  name,
+  Icon,
+  selected,
+  compact,
+  tabIndex,
+  buttonRef,
+  onFocus,
+  onKeyDown,
+}: Props) {
+  const { t } = useTranslation();
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: El cierre central abarca ambos botones; el teclado usa el botón de cierre.
+    <div
+      className={`group flex h-[30px] min-w-0 max-w-48 items-center rounded-full transition-colors duration-150 ease-out motion-reduce:transition-none ${compact ? "w-[30px] shrink-0" : "shrink pr-1"} ${selected ? "bg-border font-semibold text-text" : "bg-transparent text-muted hover:bg-surface-raised"}`}
+      onAuxClick={(event) => {
+        if (event.button === 1) void bridge.invoke("tabs.close", { toolId: tab.toolId });
+      }}
+      onMouseDown={(event) => {
+        if (event.button === 1) event.preventDefault();
+      }}
+      role="presentation"
+    >
+      <button
+        aria-selected={selected}
+        aria-label={name}
+        title={name}
+        className={`ld-no-drag flex h-full min-w-0 items-center rounded-full text-[13px] ${compact ? "w-full justify-center" : "gap-2 px-3"}`}
+        onClick={() => void bridge.invoke("tabs.activate", { toolId: tab.toolId })}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
+        ref={buttonRef}
+        role="tab"
+        tabIndex={tabIndex}
+        type="button"
+      >
+        <Icon aria-hidden="true" className="ld-no-drag shrink-0" size={15} />
+        <span data-tab-name className={compact ? "sr-only whitespace-nowrap" : "truncate"}>
+          {name}
+        </span>
+      </button>
+      {!compact && (
+        <IconButton
+          className="ld-no-drag size-6 shrink-0 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 motion-reduce:transition-none"
+          tooltipSide="left"
+          label={t("shell.closeTab", { name })}
+          onClick={() => void bridge.invoke("tabs.close", { toolId: tab.toolId })}
+        >
+          <X aria-hidden size={14} />
+        </IconButton>
+      )}
+    </div>
+  );
+}

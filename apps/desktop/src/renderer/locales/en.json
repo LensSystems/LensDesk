@@ -7,7 +7,9 @@
     "toolsPage": "Tools",
     "settingsPage": "Settings",
     "unexpectedError": "An unexpected error occurred. Details are in the logs.",
-    "activeTool": "Active tool"
+    "activeTool": "Active tool",
+    "tabClosedForLimit": "{{name}} was closed to keep no more than {{count}} tabs open.",
+    "undoCloseTab": "Undo"
   },
   "toolsPage": {
     "title": "Tools",

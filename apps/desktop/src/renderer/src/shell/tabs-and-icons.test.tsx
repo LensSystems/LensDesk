@@ -62,6 +62,59 @@ describe("pestañas", () => {
   });
   afterEach(cleanup);
 
+  it("con más de cinco pestañas conserva solo el nombre de la activa", () => {
+    const many = Array.from({ length: 8 }, (_, position) => ({
+      toolId: `tool-${position}`,
+      position,
+      active: position === 7,
+    }));
+    render(
+      <TooltipProvider>
+        <TabBar bridge={makeBridge().bridge} tabs={many} />
+      </TooltipProvider>,
+    );
+    for (const tab of many) {
+      const button = screen.getByRole("tab", { name: tab.toolId });
+      expect(button.querySelector("[data-tab-name]")?.className).toBe(
+        tab.active ? "truncate" : "sr-only whitespace-nowrap",
+      );
+      expect(button.title).toBe(tab.toolId);
+    }
+    expect(screen.getByRole("tablist").className).toContain("overflow-hidden");
+  });
+
+  it("compacta cuando el ancho disponible no alcanza", () => {
+    let resize: ResizeObserverCallback | undefined;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resize = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    try {
+      renderBar(makeBridge().bridge);
+      act(() =>
+        resize?.([{ contentRect: { width: 300 } }] as ResizeObserverEntry[], {} as ResizeObserver),
+      );
+      expect(
+        screen.getByRole("tab", { name: "Notas" }).querySelector("[data-tab-name]")?.className,
+      ).toContain("sr-only");
+      expect(screen.getByRole("tab", { name: "Convertidor" }).textContent).toBe("Convertidor");
+      act(() =>
+        resize?.([{ contentRect: { width: 1000 } }] as ResizeObserverEntry[], {} as ResizeObserver),
+      );
+      expect(
+        screen.getByRole("tab", { name: "Notas" }).querySelector("[data-tab-name]")?.className,
+      ).toBe("truncate");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it.each(["darwin", "win32", "linux"])(
     "reserva controles desde el primer pintado en %s",
     (platform) => {

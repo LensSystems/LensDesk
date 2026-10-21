@@ -7,7 +7,9 @@
     "toolsPage": "Herramientas",
     "settingsPage": "Ajustes",
     "unexpectedError": "Ocurrió un error inesperado. Los detalles están en los registros.",
-    "activeTool": "Herramienta activa"
+    "activeTool": "Herramienta activa",
+    "tabClosedForLimit": "Se cerró {{name}} para no superar {{count}} pestañas.",
+    "undoCloseTab": "Deshacer"
   },
   "toolsPage": {
     "title": "Herramientas",

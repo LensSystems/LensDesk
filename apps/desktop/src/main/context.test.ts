@@ -115,6 +115,7 @@ describe("contexto y ajustes", () => {
         "tabs.list": () => ({ tabs: [] }),
         "tabs.open": () => ({ tabs: [] }),
         "tabs.close": () => ({ tabs: [] }),
+        "tabs.undoClose": () => ({ tabs: [] }),
         "tabs.activate": () => ({ tabs: [] }),
         "shell.showPage": ({ page }) => ({ page }),
         "tools.list": () => ({ tools: [], pendingDowngrade: null }),

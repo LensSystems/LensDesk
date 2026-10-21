@@ -37,6 +37,38 @@ describe("avisos del shell", () => {
     expect(useShellStore.getState().toasts).toHaveLength(0);
   });
 
+  it("pausa el aviso al pasar el ratón y conserva el tiempo restante", () => {
+    vi.useFakeTimers();
+    render(<ToastRegion />);
+    act(() => useShellStore.getState().pushToast("info", "En pausa"));
+    const viewport = screen.getByRole("region", { name: /Notificaciones/ });
+    act(() => vi.advanceTimersByTime(3000));
+    fireEvent.pointerMove(viewport);
+    act(() => vi.advanceTimersByTime(10000));
+    expect(screen.getByRole("status")).toBeTruthy();
+    expect(screen.getByText("En pausa")).toBeTruthy();
+    fireEvent.pointerLeave(viewport);
+    act(() => vi.advanceTimersByTime(1999));
+    expect(screen.getByText("En pausa")).toBeTruthy();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByRole("status").style.opacity).toBe("0");
+    act(() => vi.advanceTimersByTime(200));
+    expect(screen.queryByText("En pausa")).toBeNull();
+  });
+
+  it("localiza el cierre automático y deshacer pide restaurarlo", () => {
+    const { bridge, invoke } = bridgeWith({});
+    useShellStore.setState({
+      toasts: [{ id: 999, kind: "info", message: "", closedToolId: "notas" }],
+      tools: [{ id: "notas", manifest: { name: { es: "Notas", en: "Notes" } } }] as never,
+    });
+    render(<ToastRegion bridge={bridge} />);
+    expect(screen.getByText("Se cerró Notas para no superar 8 pestañas.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
+    expect(invoke).toHaveBeenCalledWith("tabs.undoClose", { toolId: "notas" });
+    expect(useShellStore.getState().toasts).toHaveLength(0);
+  });
+
   it("conserva el borde de peligro de un error del shell", () => {
     render(<ToastRegion />);
     act(() => useShellStore.getState().pushToast("error", "Falló"));

@@ -73,6 +73,10 @@ export const ipcSchemas = {
     request: z.object({ toolId: z.string().min(1) }).strict(),
     response: tabsResponseSchema,
   },
+  "tabs.undoClose": {
+    request: z.object({ toolId: z.string().min(1) }).strict(),
+    response: tabsResponseSchema,
+  },
   "tabs.close": {
     request: z.object({ toolId: z.string().min(1) }).strict(),
     response: tabsResponseSchema,

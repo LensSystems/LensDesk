@@ -21,6 +21,7 @@ export type ShellToast = {
   kind: "success" | "error" | "info";
   message: string;
   source?: string;
+  closedToolId?: string;
 };
 // Máximo de avisos en cola: al superarlo se descarta el más antiguo.
 const maxToasts = 3;
@@ -190,6 +191,14 @@ export const useShellStore = create<State>((set) => ({
       bridge.on("context.changed", (context) => {
         eventCounts.context += 1;
         set({ context });
+      }),
+      bridge.on("tabs.closedForLimit", ({ toolId }) => {
+        set((state) => ({
+          toasts: [
+            ...state.toasts,
+            { id: nextToastId++, kind: "info" as const, message: "", closedToolId: toolId },
+          ].slice(-maxToasts),
+        }));
       }),
       bridge.on("tools.changed", ({ tools, pendingDowngrade }) => set({ tools, pendingDowngrade })),
       bridge.on("update.available", (update) =>

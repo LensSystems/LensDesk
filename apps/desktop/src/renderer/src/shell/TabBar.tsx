@@ -1,5 +1,5 @@
-import { Grid2x2Plus, IconButton, SlidersHorizontal, X } from "@lensdesk/ui";
-import { useRef, useState } from "react";
+import { Grid2x2Plus, IconButton, SlidersHorizontal } from "@lensdesk/ui";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ShellTab } from "../../../shared/host-channels.ts";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../../../shared/layout.ts";
 import { useShellStore } from "../state/store.ts";
 import { HeaderNotices } from "./HeaderNotices.tsx";
+import { TabItem } from "./TabItem.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 
@@ -16,11 +17,41 @@ type TabBarProps = { tabs: ShellTab[]; bridge: Window["lensdeskHost"] };
 
 export function TabBar({ tabs, bridge }: TabBarProps) {
   const { t, i18n } = useTranslation();
+  const listRef = useRef<HTMLDivElement>(null);
+  const [space, setSpace] = useState({ available: Infinity, required: 0 });
+  const compact = tabs.length > 5 || space.available < space.required;
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const fullScreen = useShellStore((state) => state.fullScreen);
   const page = useShellStore((state) => state.page);
   const showPage = useShellStore((state) => state.showPage);
   const tools = useShellStore((state) => state.tools);
+  const names = useMemo(
+    () =>
+      tabs.map((tab) => {
+        const tool = tools.find((candidate) => candidate.id === tab.toolId);
+        return tool ? toolText(tool, i18n.resolvedLanguage).name : tab.toolId;
+      }),
+    [tabs, tools, i18n.resolvedLanguage],
+  );
+  useEffect(() => {
+    const container = listRef.current;
+    if (!container || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const labels = [...container.querySelectorAll<HTMLElement>("[data-tab-name]")];
+      const widths = names.map((_, index) => labels[index]?.scrollWidth ?? 0);
+      // Icono, cierre, relleno y separación de cada pestaña desplegada.
+      const required = widths.every((width) => width > 0)
+        ? widths.reduce(
+            (sum, width) => sum + Math.min(192, width + 75),
+            8 + Math.max(0, widths.length - 1) * 4,
+          )
+        : names.length * 192;
+      setSpace({ available: entry.contentRect.width, required });
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [names]);
   const activeIndex = Math.max(
     0,
     tabs.findIndex((tab) => tab.active),
@@ -28,10 +59,6 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
   // Mientras el foco está dentro de la barra manda el índice enfocado; fuera de ella, la pestaña activa.
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const rovingIndex = Math.min(focusedIndex ?? activeIndex, Math.max(0, tabs.length - 1));
-  const nameOf = (toolId: string) => {
-    const tool = tools.find((candidate) => candidate.id === toolId);
-    return tool ? toolText(tool, i18n.resolvedLanguage).name : toolId;
-  };
   const moveFocus = (index: number) => tabRefs.current[index]?.focus();
   return (
     <header
@@ -43,7 +70,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
         paddingRight:
           !fullScreen && bridge.platform === "win32" ? WIN_CONTROLS_WIDTH + 16 : undefined,
       }}
-      className="ld-drag flex items-center gap-3 bg-bg px-4"
+      className="ld-drag relative flex items-center gap-3 bg-bg px-4"
     >
       <div className="min-w-0 flex-1">
         <span className="block truncate font-bold text-muted">
@@ -51,34 +78,34 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
         </span>
       </div>
       <div
-        aria-label={t("shell.tabsLabel")}
-        className={`flex min-w-0 max-w-1/2 shrink items-center gap-1 overflow-x-auto rounded-full ${tabs.length > 0 ? "bg-surface p-1" : ""}`}
-        onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) setFocusedIndex(null);
-        }}
-        role="tablist"
+        ref={listRef}
+        className={`flex min-w-0 shrink-0 justify-center ${tabs.length > 5 ? "w-max max-w-[60%]" : "w-1/2"}`}
       >
-        {tabs.map((tab, index) => {
-          const tool = tools.find((candidate) => candidate.id === tab.toolId);
-          const Icon = toolIcon((tool?.manifest as { icon?: unknown } | undefined)?.icon);
-          const selected = page === "tab" && tab.active;
-          return (
-            // biome-ignore lint/a11y/noStaticElementInteractions: El cierre central abarca ambos botones; el teclado usa el botón de cierre.
-            <div
-              className={`group flex h-[30px] min-w-0 max-w-48 shrink-0 items-center rounded-full pr-1 transition-colors duration-150 ease-out motion-reduce:transition-none ${selected ? "bg-border font-semibold text-text" : "bg-transparent text-muted hover:bg-surface-raised"}`}
-              onAuxClick={(event) => {
-                if (event.button === 1) void bridge.invoke("tabs.close", { toolId: tab.toolId });
-              }}
-              onMouseDown={(event) => {
-                if (event.button === 1) event.preventDefault();
-              }}
-              key={tab.toolId}
-              role="presentation"
-            >
-              <button
-                aria-selected={selected}
-                className="ld-no-drag flex h-full min-w-0 items-center gap-2 rounded-full px-3 text-[13px]"
-                onClick={() => void bridge.invoke("tabs.activate", { toolId: tab.toolId })}
+        <div
+          aria-label={t("shell.tabsLabel")}
+          className={`flex min-w-0 max-w-full shrink items-center gap-1 overflow-hidden rounded-full ${tabs.length > 0 ? "bg-surface p-1" : ""}`}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setFocusedIndex(null);
+          }}
+          role="tablist"
+        >
+          {tabs.map((tab, index) => {
+            const tool = tools.find((candidate) => candidate.id === tab.toolId);
+            const Icon = toolIcon((tool?.manifest as { icon?: unknown } | undefined)?.icon);
+            const selected = page === "tab" && tab.active;
+            return (
+              <TabItem
+                key={tab.toolId}
+                tab={tab}
+                bridge={bridge}
+                name={names[index] ?? tab.toolId}
+                Icon={Icon}
+                selected={selected}
+                compact={compact && !tab.active}
+                tabIndex={rovingIndex === index ? 0 : -1}
+                buttonRef={(node) => {
+                  tabRefs.current[index] = node;
+                }}
                 onFocus={() => setFocusedIndex(index)}
                 onKeyDown={(event) => {
                   let target = index;
@@ -92,29 +119,12 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
                   setFocusedIndex(target);
                   moveFocus(target);
                 }}
-                ref={(node) => {
-                  tabRefs.current[index] = node;
-                }}
-                role="tab"
-                tabIndex={rovingIndex === index ? 0 : -1}
-                type="button"
-              >
-                <Icon aria-hidden="true" className="ld-no-drag shrink-0" size={15} />
-                <span className="truncate">{nameOf(tab.toolId)}</span>
-              </button>
-              <IconButton
-                className="ld-no-drag size-6 shrink-0 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 motion-reduce:transition-none"
-                tooltipSide="left"
-                label={t("shell.closeTab", { name: nameOf(tab.toolId) })}
-                onClick={() => void bridge.invoke("tabs.close", { toolId: tab.toolId })}
-              >
-                <X aria-hidden size={14} />
-              </IconButton>
-            </div>
-          );
-        })}
+              />
+            );
+          })}
+        </div>
       </div>
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
+      <div className="flex min-w-0 flex-auto items-center justify-end gap-1">
         <HeaderNotices bridge={bridge} />
         <IconButton
           className="ld-no-drag shrink-0"
