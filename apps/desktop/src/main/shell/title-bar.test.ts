@@ -24,6 +24,17 @@ describe("barra de título", () => {
   });
   it.each(["darwin", "win32", "linux"])("opciones aisladas en %s", (platform) => {
     const options = shellWindowOptions({ width: 900 }, false, "host.cjs", platform, "light");
+    expect(options.minWidth).toBe(760);
+    expect(options.minHeight).toBe(520);
+    // En un área de trabajo menor que el mínimo, el mínimo baja al tamaño restaurado.
+    const small = shellWindowOptions(
+      { width: 640, height: 480 },
+      false,
+      "host.cjs",
+      platform,
+      "light",
+    );
+    expect([small.minWidth, small.minHeight]).toEqual([640, 480]);
     expect(options).toMatchObject({
       width: 900,
       show: false,

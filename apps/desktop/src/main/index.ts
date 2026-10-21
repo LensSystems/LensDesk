@@ -200,7 +200,7 @@ void app.whenReady().then(async () => {
   nativeTheme.on("updated", settingsHandlers.emitContextChanged);
   const bounds = restoreWindowBounds(
     database,
-    screen.getAllDisplays().map(({ bounds: rect }) => rect),
+    screen.getAllDisplays().map(({ workArea }) => workArea),
   );
   const window = new BrowserWindow(
     shellWindowOptions(

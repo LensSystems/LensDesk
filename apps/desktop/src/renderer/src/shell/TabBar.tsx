@@ -70,16 +70,22 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
         paddingRight:
           !fullScreen && bridge.platform === "win32" ? WIN_CONTROLS_WIDTH + 16 : undefined,
       }}
-      className="ld-drag relative flex items-center gap-3 bg-bg px-4"
+      className="ld-drag @container relative flex items-center gap-2 bg-bg px-4 @max-[1000px]:gap-1"
     >
-      <div className="min-w-0 flex-1">
-        <span className="block truncate font-bold text-muted">
+      <div
+        data-brand
+        className="w-48 shrink-0 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none @max-[1000px]:w-8"
+      >
+        <span className="block truncate font-bold text-muted @max-[1000px]:hidden">
           {t(fullScreen ? "shell.labelFullScreen" : "shell.label")}
+        </span>
+        <span className="hidden font-bold text-muted @max-[1000px]:block">
+          {t("shell.labelCompact")}
         </span>
       </div>
       <div
         ref={listRef}
-        className={`flex min-w-0 shrink-0 justify-center ${tabs.length > 5 ? "w-max max-w-[60%]" : "w-1/2"}`}
+        className="flex min-w-0 flex-1 justify-center transition-[width,padding] duration-150 ease-out motion-reduce:transition-none"
       >
         <div
           aria-label={t("shell.tabsLabel")}
@@ -124,7 +130,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
           })}
         </div>
       </div>
-      <div className="flex min-w-0 flex-auto items-center justify-end gap-1">
+      <div className="flex min-w-0 w-64 shrink-0 items-center justify-end gap-1 @max-[1000px]:w-56">
         <HeaderNotices bridge={bridge} />
         <IconButton
           className="ld-no-drag shrink-0"

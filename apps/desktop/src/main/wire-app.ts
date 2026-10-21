@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
-import { HEADER_HEIGHT } from "../shared/layout.ts";
+import { HEADER_HEIGHT, MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "../shared/layout.ts";
 import { createAppActions } from "./app-actions.ts";
 import type { createSettingsHandlers, ResolvedTheme } from "./context.ts";
 import type { SqliteDatabase } from "./db/database.ts";
@@ -141,7 +141,7 @@ export function schemaTooNewDialog(
 
 // Opciones de la ventana del shell: aislada, con sandbox y sin Node.
 export function shellWindowOptions(
-  bounds: object,
+  bounds: { width?: number; height?: number },
   show: boolean,
   preload: string,
   platform: string,
@@ -165,6 +165,9 @@ export function shellWindowOptions(
   return {
     ...bounds,
     ...titleOptions,
+    // Si el área de trabajo es menor que el mínimo, el mínimo baja al tamaño restaurado.
+    minWidth: Math.min(MIN_WINDOW_WIDTH, bounds.width ?? MIN_WINDOW_WIDTH),
+    minHeight: Math.min(MIN_WINDOW_HEIGHT, bounds.height ?? MIN_WINDOW_HEIGHT),
     show,
     webPreferences: {
       preload,

@@ -44,8 +44,8 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
     void bridge.invoke("settings.set", { key, value });
   return (
     <PageFrame>
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-        <h1 className="text-[28px] font-bold leading-tight tracking-tight">
+      <div className="grid grid-cols-1 items-start gap-4 @min-[44rem]:grid-cols-2 @min-[68rem]:grid-cols-3">
+        <h1 className="col-span-full text-[28px] font-bold leading-tight tracking-tight">
           {t("settingsPage.title")}
         </h1>
         <SettingsSection title={t("settingsPage.appearance")}>

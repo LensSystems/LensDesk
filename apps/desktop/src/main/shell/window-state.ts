@@ -1,3 +1,4 @@
+import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "../../shared/layout.ts";
 import type { SqliteDatabase } from "../db/database.ts";
 import { getSetting, setSetting } from "../db/settings-repo.ts";
 
@@ -28,8 +29,9 @@ export function restoreWindowBounds(
         saved.y < screen.y + screen.height &&
         saved.y + saved.height > screen.y,
     ) ?? primary;
-  const width = Math.min(saved.width, display.width);
-  const height = Math.min(saved.height, display.height);
+  // El mínimo nunca supera el área de trabajo: en pantallas pequeñas la ventana cabe entera.
+  const width = Math.min(display.width, Math.max(MIN_WINDOW_WIDTH, saved.width));
+  const height = Math.min(display.height, Math.max(MIN_WINDOW_HEIGHT, saved.height));
   return {
     x: Math.max(display.x, Math.min(saved.x, display.x + display.width - width)),
     y: Math.max(display.y, Math.min(saved.y, display.y + display.height - height)),

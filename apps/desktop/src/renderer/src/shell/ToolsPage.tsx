@@ -74,7 +74,7 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
       ) : (
         <section
           aria-label={t("toolsPage.title")}
-          className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4"
+          className="grid grid-cols-1 items-start gap-4 @min-[44rem]:grid-cols-2 @min-[68rem]:grid-cols-3"
         >
           {tools.map((tool) => (
             <ToolCard

@@ -1,6 +1,7 @@
 {
   "shell": {
     "label": "LensDesk",
+    "labelCompact": "LD",
     "labelFullScreen": "LensSystems - LensDesk",
     "tabsLabel": "Open tabs",
     "closeTab": "Close {{name}}",

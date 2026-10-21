@@ -22,27 +22,39 @@ function options() {
   let out = resolve(root, "screenshots");
   let compare: string | undefined;
   let accent = "blue";
+  let size: [number, number] | undefined;
   while (args.length) {
     const flag = args.shift();
     const value = args.shift();
     if (
-      (flag !== "--out" && flag !== "--compare" && flag !== "--accent") ||
+      (flag !== "--out" && flag !== "--compare" && flag !== "--accent" && flag !== "--size") ||
       !value ||
       value.startsWith("--")
     ) {
       throw new Error(
-        "Uso: pnpm screenshots [--out carpeta] [--compare carpeta] [--accent blue|green]",
+        "Uso: pnpm screenshots [--out carpeta] [--compare carpeta] [--accent blue|green] [--size ANCHOxALTO (760x520)]",
       );
     }
     if (flag === "--out") out = resolve(value);
     else if (flag === "--compare") compare = resolve(value);
-    else {
+    else if (flag === "--size") {
+      if (!/^[1-9]\d*x[1-9]\d*$/.test(value)) throw new Error("Tamaño inválido");
+      const [width = 0, height = 0] = value.split("x").map(Number);
+      if (
+        !Number.isSafeInteger(width) ||
+        !Number.isSafeInteger(height) ||
+        width < 760 ||
+        height < 520
+      )
+        throw new Error("Tamaño mínimo: 760x520");
+      size = [width, height];
+    } else {
       if (value !== "blue" && value !== "green") throw new Error("Acento inválido");
       accent = value;
     }
   }
   if (out === compare) throw new Error("Salida y referencia deben ser carpetas diferentes.");
-  return { out, compare, accent };
+  return { out, compare, accent, size };
 }
 
 async function packages() {
@@ -176,7 +188,7 @@ async function pngFiles(directory: string): Promise<string[]> {
 }
 
 async function run() {
-  const { out, compare, accent } = options();
+  const { out, compare, accent, size } = options();
   const pkgs = await packages();
   if (compare) await access(compare);
   const generated = new Set<string>();
@@ -206,9 +218,11 @@ async function run() {
         },
       });
       const shell = await app.firstWindow();
-      await app.evaluate(({ BrowserWindow }) =>
-        BrowserWindow.getAllWindows()[0]?.setContentSize(1280, 800),
-      );
+      await app.evaluate(({ BrowserWindow }, size) => {
+        const window = BrowserWindow.getAllWindows()[0];
+        if (size) window?.setSize(...size);
+        else window?.setContentSize(1280, 800);
+      }, size);
       await shell.getByRole("button", { name: "Ajustes", exact: true }).click();
       const updates = shell.getByRole("switch", { name: "Buscar actualizaciones", exact: true });
       if ((await updates.getAttribute("aria-checked")) === "true") await updates.click();

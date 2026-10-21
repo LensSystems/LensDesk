@@ -12,6 +12,26 @@ afterEach(() => {
 });
 
 describe("window state", () => {
+  it.each([
+    { width: 1280, height: 800 },
+    { width: 640, height: 480 },
+  ])("eleva los límites guardados al mínimo incluso en pantallas pequeñas: %o", (display) => {
+    const directory = mkdtempSync(join(tmpdir(), "lensdesk-window-"));
+    directories.push(directory);
+    const database = openHostDatabase(directory);
+    saveWindowBounds(database, { x: 1200, y: 900, width: 400, height: 300 });
+    const restored = restoreWindowBounds(database, [{ x: 0, y: 0, ...display }]);
+    expect(restored).toEqual({
+      x: Math.max(0, display.width - 760),
+      y: Math.max(0, display.height - 520),
+      width: Math.min(760, display.width),
+      height: Math.min(520, display.height),
+    });
+    // Toda la ventana queda dentro del área de trabajo.
+    expect(restored.x + restored.width).toBeLessThanOrEqual(display.width);
+    expect(restored.y + restored.height).toBeLessThanOrEqual(display.height);
+    database.close();
+  });
   it("restores saved bounds within a visible display", () => {
     const directory = mkdtempSync(join(tmpdir(), "lensdesk-window-"));
     directories.push(directory);
