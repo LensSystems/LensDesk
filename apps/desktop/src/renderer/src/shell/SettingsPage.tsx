@@ -17,6 +17,7 @@ import { AppLogo } from "./AppLogo.tsx";
 import { PageFrame } from "./PageFrame.tsx";
 import { SettingsRow } from "./SettingsRow.tsx";
 import { SettingsSection } from "./SettingsSection.tsx";
+import { SettingsUpdateCheck } from "./SettingsUpdateCheck.tsx";
 
 type SettingsPageProps = { bridge: Window["lensdeskHost"] };
 
@@ -26,10 +27,14 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
   const developerDescriptionId = useId();
   const theme = useShellStore((state) => state.context.theme);
   const settings = useShellStore((state) => state.settings);
+  const [releasesRepo, setReleasesRepo] = useState("");
   const [version, setVersion] = useState<string | null>(null);
   useEffect(() => {
     void bridge.invoke("app.getInfo", {}).then((result) => {
-      if (result.ok) setVersion(result.data.version);
+      if (result.ok) {
+        setVersion(result.data.version);
+        setReleasesRepo(result.data.releasesRepo ?? "");
+      }
     });
   }, [bridge]);
   const pushToast = useShellStore((state) => state.pushToast);
@@ -97,6 +102,9 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
             description={t("settingsPage.checkUpdatesDescription")}
             descriptionId={updatesDescriptionId}
           >
+            {releasesRepo !== "" && settings.updatesCheck && (
+              <SettingsUpdateCheck bridge={bridge} version={version ?? ""} />
+            )}
             <Switch
               aria-label={t("settingsPage.checkUpdates")}
               aria-describedby={updatesDescriptionId}

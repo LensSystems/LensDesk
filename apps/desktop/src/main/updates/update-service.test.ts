@@ -77,8 +77,18 @@ describe("servicio de actualizaciones", () => {
         throw new Error("sin red");
       }),
     });
-    await expect(service.run()).resolves.toEqual({ kind: "none" });
+    await expect(service.run()).resolves.toEqual({ kind: "error" });
     expect(emit).not.toHaveBeenCalled();
     expect(log).toHaveBeenCalledWith(expect.stringContaining("sin red"));
+  });
+
+  it("dos búsquedas a la vez comparten una sola consulta y la siguiente vuelve a consultar", async () => {
+    const { service, fetch, emit } = setup({});
+    const [manual, automatic] = await Promise.all([service.run(true), service.run()]);
+    expect(manual).toEqual(automatic);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(emit).toHaveBeenCalledTimes(1);
+    await service.run(true);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

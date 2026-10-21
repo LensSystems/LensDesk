@@ -15,30 +15,38 @@ export function createUpdateService(options: {
   emit(payload: { version: string; html_url: string }): void;
   log(message: string): void;
 }) {
+  // Una consulta a la vez: la búsqueda manual y la automática comparten la que esté en curso.
+  let running: Promise<UpdateCheckResult> | null = null;
+  const check = async (force: boolean): Promise<UpdateCheckResult> => {
+    const result = await checkForUpdate({
+      repo: options.repo,
+      enabled: options.settings.enabled(),
+      lastCheckedAt: force ? null : options.settings.lastCheckedAt(),
+      now: options.now,
+      currentVersion: options.currentVersion,
+      fetch: options.fetch,
+      log: options.log,
+    });
+    if (result.kind === "skipped") return result;
+    try {
+      options.settings.setLastCheckedAt(options.now().toISOString());
+    } catch (error) {
+      options.log(
+        `No se pudo guardar la hora de la comprobación: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    if (result.kind === "available")
+      options.emit({ version: result.version, html_url: result.url });
+    return result;
+  };
   return {
-    // `force` ignora el intervalo de 24 h (botón "Comprobar ahora"), nunca el repositorio vacío
+    // `force` ignora el intervalo de 24 h (botón "Buscar ahora"), nunca el repositorio vacío
     // ni el ajuste desactivado.
-    async run(force = false): Promise<UpdateCheckResult> {
-      const result = await checkForUpdate({
-        repo: options.repo,
-        enabled: options.settings.enabled(),
-        lastCheckedAt: force ? null : options.settings.lastCheckedAt(),
-        now: options.now,
-        currentVersion: options.currentVersion,
-        fetch: options.fetch,
-        log: options.log,
+    run(force = false): Promise<UpdateCheckResult> {
+      running ??= check(force).finally(() => {
+        running = null;
       });
-      if (result.kind === "skipped") return result;
-      try {
-        options.settings.setLastCheckedAt(options.now().toISOString());
-      } catch (error) {
-        options.log(
-          `No se pudo guardar la hora de la comprobación: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-      if (result.kind === "available")
-        options.emit({ version: result.version, html_url: result.url });
-      return result;
+      return running;
     },
   };
 }

@@ -188,6 +188,7 @@ registerHostIpc(ipcMain, {
       version: packageJson.version,
       platform: process.platform,
       fullScreen: shellWindow?.isFullScreen() ?? false,
+      releasesRepo: __RELEASES_REPO__,
     }),
     "settings.get": settingsHandlers["settings.get"],
     "settings.set": settingsHandlers["settings.set"],

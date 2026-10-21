@@ -18,7 +18,7 @@ export function SettingsRow({ label, description, descriptionId, children }: Set
           </p>
         )}
       </div>
-      {children}
+      <div className="flex shrink-0 flex-wrap items-center gap-2">{children}</div>
     </div>
   );
 }

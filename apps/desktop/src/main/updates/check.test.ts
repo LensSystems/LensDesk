@@ -80,7 +80,7 @@ describe("checkForUpdate", () => {
     }
   });
 
-  it("registra y devuelve none cuando la petición falla", async () => {
+  it("registra y devuelve error cuando la petición falla", async () => {
     const cases: UpdateFetch[] = [
       vi.fn(async () => {
         throw new Error("sin red");
@@ -92,7 +92,7 @@ describe("checkForUpdate", () => {
     ];
     for (const fetch of cases) {
       const log = vi.fn();
-      await expect(checkForUpdate({ ...base, fetch, log })).resolves.toEqual({ kind: "none" });
+      await expect(checkForUpdate({ ...base, fetch, log })).resolves.toEqual({ kind: "error" });
       expect(log).toHaveBeenCalledTimes(1);
     }
   });

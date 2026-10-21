@@ -23,7 +23,7 @@ export function releasesUrl(repo: string): string {
 }
 
 // Única petición de red de la app. Sin repositorio, desactivada o con una comprobación hace menos
-// de 24 h no llama a `fetch`. Cualquier fallo se registra y se trata como "sin novedades".
+// de 24 h no llama a `fetch`. Cualquier fallo se registra y se devuelve como error.
 export async function checkForUpdate(options: {
   repo: string;
   enabled: boolean;
@@ -52,17 +52,17 @@ export async function checkForUpdate(options: {
     });
     if (!response.ok) {
       options.log?.(`La consulta de versiones respondió ${response.status}.`);
-      return { kind: "none" };
+      return { kind: "error" };
     }
     const release = releaseSchema.safeParse(await response.json());
     if (!release.success) {
       options.log?.("La respuesta de versiones no tiene tag_name y html_url válidos.");
-      return { kind: "none" };
+      return { kind: "error" };
     }
     const version = semver.valid(release.data.tag_name.replace(/^v/, ""));
     if (!version) {
       options.log?.(`La etiqueta ${release.data.tag_name.slice(0, 64)} no es semver.`);
-      return { kind: "none" };
+      return { kind: "error" };
     }
     if (semver.gt(version, options.currentVersion))
       return { kind: "available", version, url: release.data.html_url };
@@ -71,6 +71,6 @@ export async function checkForUpdate(options: {
     options.log?.(
       `Falló la consulta de versiones: ${error instanceof Error ? error.message : String(error)}`,
     );
-    return { kind: "none" };
+    return { kind: "error" };
   }
 }

@@ -44,7 +44,12 @@ export const ipcSchemas = {
   "app.getInfo": {
     request: z.object({}).strict(),
     response: z
-      .object({ version: z.string(), platform: z.string(), fullScreen: z.boolean() })
+      .object({
+        version: z.string(),
+        platform: z.string(),
+        fullScreen: z.boolean(),
+        releasesRepo: z.string().optional(),
+      })
       .strict(),
   },
   "settings.get": {
@@ -134,6 +139,7 @@ export const ipcSchemas = {
     response: z.discriminatedUnion("kind", [
       z.object({ kind: z.literal("skipped") }).strict(),
       z.object({ kind: z.literal("none") }).strict(),
+      z.object({ kind: z.literal("error") }).strict(),
       z
         .object({
           kind: z.literal("available"),
