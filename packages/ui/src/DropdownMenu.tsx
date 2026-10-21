@@ -17,7 +17,7 @@ export function DropdownMenuItem({
     <Primitive.Item
       {...props}
       className={cn(
-        "flex cursor-default items-center rounded-ld-sm px-2.5 py-2 transition-colors duration-150 ease-out data-[highlighted]:bg-surface data-[disabled]:opacity-45 motion-reduce:transition-none",
+        "flex items-center rounded-ld-sm px-2.5 py-2 transition-colors duration-150 ease-out data-[highlighted]:bg-surface data-[disabled]:opacity-45 motion-reduce:transition-none",
         destructive && "text-danger",
         className,
       )}

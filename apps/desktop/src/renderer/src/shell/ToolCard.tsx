@@ -81,7 +81,7 @@ export function ToolCard({
         >
           {t("toolsPage.open")}
         </Button>
-        <span className="min-w-0 break-all text-xs text-muted">
+        <span className="ld-selectable min-w-0 break-all text-xs text-muted">
           {t("toolsPage.cardVersion", { version: tool.version })}
         </span>
         <Badge tone={tool.signed ? "accent" : "warning"}>

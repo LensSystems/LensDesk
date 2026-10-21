@@ -25,7 +25,8 @@ export function Notice({ tone = "info", title, text, action, className }: Notice
         className,
       )}
     >
-      <div className="min-w-0 flex-1">
+      {/* El texto del aviso se puede copiar: suele llevar el detalle de un error. */}
+      <div className="ld-selectable min-w-0 flex-1">
         <p className="font-medium">{title}</p>
         {text && <p>{text}</p>}
       </div>

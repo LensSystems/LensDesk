@@ -70,6 +70,11 @@ describe("estilos compartidos", () => {
     ).toBe(true);
   });
 
+  it("el texto de Notice se puede seleccionar para copiar errores", () => {
+    render(<Notice tone="danger" title="Falló la conversión" text="Detalle" />);
+    expect(screen.getByText("Falló la conversión").parentElement).toHaveClass("ld-selectable");
+  });
+
   const files = readdirSync(import.meta.dirname).filter(
     (name) => name.endsWith(".tsx") && !name.includes(".test."),
   );

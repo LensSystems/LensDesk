@@ -98,3 +98,41 @@
     }
   }
 }
+
+@layer base {
+  :where(
+    button:not(:disabled),
+    a[href],
+    [role="tab"],
+    [role="menuitem"],
+    [role="menuitemradio"],
+    [role="option"],
+    [role="radio"],
+    [role="switch"],
+    [role="checkbox"],
+    label[for],
+    summary,
+    select
+  ) {
+    cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled="true"],
+  [data-disabled] {
+    cursor: not-allowed;
+  }
+
+  body {
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable],
+  .cm-content,
+  .ld-markdown-view,
+  .ld-selectable {
+    user-select: text;
+  }
+}

@@ -136,7 +136,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
                 <span className="text-accent">Desk</span>
               </p>
               <p className="text-xs text-muted">{t("settingsPage.byline")}</p>
-              <p className="mt-1 font-mono text-xs text-muted">
+              <p className="ld-selectable mt-1 font-mono text-xs text-muted">
                 {t("settingsPage.appVersion", { version: version ?? t("ui.loading") })}
               </p>
             </div>

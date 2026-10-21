@@ -78,7 +78,7 @@ export function ToolDialogs({
               </div>
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
                 <dt className="text-muted">{t("toolsPage.version")}</dt>
-                <dd className="font-mono text-text">{tool.version}</dd>
+                <dd className="ld-selectable font-mono text-text">{tool.version}</dd>
                 <dt className="text-muted">{t("toolsPage.signature")}</dt>
                 <dd className="text-text">
                   <Badge tone={tool.signed ? "accent" : "warning"}>
@@ -140,13 +140,13 @@ export function ToolDialogs({
                   {t(state.install ? "toolsPage.installError" : "toolsPage.actionError")}
                 </DialogTitle>
               </div>
-              <DialogDescription className="text-muted">
+              <DialogDescription className="ld-selectable text-muted">
                 {t(`errors.${state.code}`, { defaultValue: t("errors.E_INTERNAL") })}
               </DialogDescription>
               <dl>
                 <dt className="sr-only">{t("toolsPage.errorCode")}</dt>
                 <dd>
-                  <code className="select-text rounded-ld-sm bg-surface px-2 py-1 font-mono text-xs">
+                  <code className="ld-selectable rounded-ld-sm bg-surface px-2 py-1 font-mono text-xs">
                     {state.code}
                   </code>
                 </dd>

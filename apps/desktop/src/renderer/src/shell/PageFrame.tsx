@@ -6,6 +6,7 @@ export function PageFrame({ children, ...props }: ComponentProps<"main">) {
     const heading = element?.querySelector("h1");
     if (heading) {
       heading.tabIndex = -1;
+      heading.style.outline = "none";
       heading.focus();
     }
   }, []);
