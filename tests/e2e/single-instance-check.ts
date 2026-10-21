@@ -51,12 +51,13 @@ export async function checkSingleInstance(executablePath: string, args: string[]
             return {
               count: windows.length,
               minimized: window?.isMinimized(),
+              // El foco no se comprueba: macOS no lo da si el usuario está en otra app. La
+              // llamada a focus() la cubre single-instance.test.ts.
               visible: window?.isVisible(),
-              focused: window?.isFocused(),
             };
           }),
         )
-        .toEqual({ count: 1, minimized: false, visible: true, focused: true });
+        .toEqual({ count: 1, minimized: false, visible: true });
       expect(first.process().exitCode).toBeNull();
     } finally {
       if (second.exitCode === null && second.signalCode === null) second.kill();
