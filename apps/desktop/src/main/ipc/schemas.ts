@@ -49,6 +49,7 @@ export const ipcSchemas = {
         platform: z.string(),
         fullScreen: z.boolean(),
         releasesRepo: z.string().optional(),
+        isPackaged: z.boolean().optional(),
       })
       .strict(),
   },

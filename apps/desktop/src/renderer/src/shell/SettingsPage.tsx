@@ -15,6 +15,7 @@ import { useShellStore } from "../state/store.ts";
 
 import { AppLogo } from "./AppLogo.tsx";
 import { PageFrame } from "./PageFrame.tsx";
+import { SettingsLoginItem } from "./SettingsLoginItem.tsx";
 import { SettingsRow } from "./SettingsRow.tsx";
 import { SettingsSection } from "./SettingsSection.tsx";
 import { SettingsUpdateCheck } from "./SettingsUpdateCheck.tsx";
@@ -97,6 +98,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
         </SettingsSection>
         <SettingsSection title={t("settingsPage.general")}>
+          <SettingsLoginItem bridge={bridge} />
           <SettingsRow
             label={t("settingsPage.checkUpdates")}
             description={t("settingsPage.checkUpdatesDescription")}

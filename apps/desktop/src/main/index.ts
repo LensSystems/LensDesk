@@ -156,6 +156,11 @@ logRendererCrashes(app as never, {
   },
 });
 const { updates, appActions } = wireAppServices({
+  loginItem: {
+    isPackaged: app.isPackaged,
+    getLoginItemSettings: () => app.getLoginItemSettings(),
+    setLoginItemSettings: (settings) => app.setLoginItemSettings(settings),
+  },
   // Sin `lensdesk.releasesRepo` la comprobación se omite siempre y no hay red.
   repo: __RELEASES_REPO__,
   currentVersion: packageJson.version,
@@ -189,9 +194,8 @@ registerHostIpc(ipcMain, {
       platform: process.platform,
       fullScreen: shellWindow?.isFullScreen() ?? false,
       releasesRepo: __RELEASES_REPO__,
+      isPackaged: app.isPackaged,
     }),
-    "settings.get": settingsHandlers["settings.get"],
-    "settings.set": settingsHandlers["settings.set"],
     "app.getContext": settingsHandlers["app.getContext"],
     ...tabHandlers,
     ...toolWiring.handlers,

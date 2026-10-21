@@ -1,7 +1,9 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { expect, test } from "@playwright/test";
+import { _electron as electron, expect, test } from "@playwright/test";
 
 import { checkSingleInstance } from "./single-instance-check.ts";
 
@@ -57,4 +59,29 @@ test("la aplicación empaquetada solo permite una instancia desde la terminal", 
       : resolve(root, "apps/desktop/release/win-unpacked/LensDesk.exe");
   expect(existsSync(executable)).toBe(true);
   await checkSingleInstance(executable, []);
+});
+
+test("la app instalada permite configurar el inicio de sesión", async () => {
+  const executablePath =
+    process.platform === "darwin"
+      ? resolve(
+          root,
+          "apps/desktop/release",
+          process.arch === "arm64" ? "mac-arm64" : "mac",
+          "LensDesk.app/Contents/MacOS/LensDesk",
+        )
+      : resolve(root, "apps/desktop/release/win-unpacked/LensDesk.exe");
+  const userData = await mkdtemp(resolve(tmpdir(), "lensdesk-login-"));
+  const app = await electron.launch({
+    executablePath,
+    env: { ...process.env, LENSDESK_USER_DATA: userData },
+  });
+  try {
+    const page = await app.firstWindow();
+    await page.getByRole("button", { name: "Ajustes", exact: true }).click();
+    await expect(page.getByRole("switch", { name: "Abrir al iniciar sesión" })).toBeEnabled();
+  } finally {
+    await app.close();
+    await rm(userData, { recursive: true, force: true });
+  }
 });

@@ -58,6 +58,24 @@ describe("host database", () => {
     database.close();
   });
 
+  it("guarda el inicio de sesión como booleano y empieza desactivado", () => {
+    const database = open();
+    try {
+      expect(getSetting(database, "app.openAtLogin")).toBe(false);
+      for (const value of [true, false]) {
+        setSetting(database, "app.openAtLogin", value);
+        expect(getSetting(database, "app.openAtLogin")).toBe(value);
+      }
+      for (const value of ["true", 1, null]) {
+        expect(() => setSetting(database, "app.openAtLogin", value)).toThrowError(
+          expect.objectContaining({ code: "E_INVALID_PARAMS" }),
+        );
+      }
+    } finally {
+      database.close();
+    }
+  });
+
   it("returns defaults and validates writes", () => {
     const database = open();
     expect(getSetting(database, "locale")).toBe("es");

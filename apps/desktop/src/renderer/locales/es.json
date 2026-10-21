@@ -53,6 +53,8 @@
     "cardVersion": "v{{version}}"
   },
   "settingsPage": {
+    "openAtLogin": "Abrir al iniciar sesión",
+    "installedAppOnly": "Disponible en la app instalada",
     "accent": "Color de acento",
     "blue": "Azul",
     "green": "Verde",

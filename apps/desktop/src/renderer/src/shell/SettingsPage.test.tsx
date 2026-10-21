@@ -23,9 +23,11 @@ function renderSettings(
           }
         : channel === "updates.checkNow"
           ? await (options.check?.() ?? Promise.resolve({ kind: "none" }))
-          : channel === "settings.set"
-            ? payload
-            : {};
+          : channel === "settings.get"
+            ? { key: "app.openAtLogin", value: false }
+            : channel === "settings.set"
+              ? payload
+              : {};
     return { ok: true, data: ipcSchemas[channel].response.parse(data) };
   });
   render(<SettingsPage bridge={{ invoke } as unknown as HostBridge} />);

@@ -1,4 +1,7 @@
 import { LensError } from "@lensdesk/sdk/errors";
+import type { HostSettingKey } from "../shared/host-channels.ts";
+import type { createSettingsHandlers } from "./context.ts";
+import type { createLoginItem } from "./login-item.ts";
 import type { UpdateCheckResult } from "./updates/check.ts";
 
 export function isHttpsUrl(value: string): boolean {
@@ -52,5 +55,23 @@ export function createAppActions(options: {
       return {};
     },
     "updates.checkNow": () => options.checkNow(),
+  };
+}
+
+export function createLoginSettingsActions(
+  settings: Pick<ReturnType<typeof createSettingsHandlers>, "settings.get" | "settings.set">,
+  loginItem: ReturnType<typeof createLoginItem>,
+) {
+  return {
+    "settings.get": ({ key }: { key: HostSettingKey }) =>
+      key === "app.openAtLogin"
+        ? { key, value: loginItem.read() }
+        : settings["settings.get"]({ key }),
+    "settings.set": ({ key, value }: { key: HostSettingKey; value: unknown }) => {
+      // Se guarda y responde el estado confirmado por el sistema, no el pedido.
+      if (key === "app.openAtLogin")
+        return settings["settings.set"]({ key, value: loginItem.write(value) });
+      return settings["settings.set"]({ key, value });
+    },
   };
 }
