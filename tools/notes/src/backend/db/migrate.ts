@@ -26,6 +26,20 @@ export function migrate(database: Db): void {
     if (applied.has(item.version)) continue;
     database.transaction(() => {
       database.exec(item.sql);
+      if (item.version === 2) {
+        for (const row of database.all<{ id: string; title: string; body_md: string }>(
+          "SELECT id, title, body_md FROM notes",
+        )) {
+          const lines = row.body_md.match(/[^\n]*\n|[^\n]+$/g) ?? [];
+          const first = lines.findIndex((line) => line.trim() !== "");
+          const heading = lines[first]?.replace(/\r?\n$/, "").match(/^ {0,3}#[ \t]+(.*)$/);
+          if (!heading || heading[1]?.replace(/[ \t]+#+[ \t]*$/, "").trim() !== row.title) continue;
+          let count = 1;
+          if (lines[first + 1]?.trim() === "") count++;
+          lines.splice(first, count);
+          database.run("UPDATE notes SET body_md = ? WHERE id = ?", lines.join(""), row.id);
+        }
+      }
       database.run(
         "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
         item.version,

@@ -83,6 +83,7 @@ export function App({ client }: { client: Client }) {
                     note={{ ...state.selected, body_md: state.body }}
                     onChange={updateBody}
                     onBlur={flush}
+                    onRename={(title) => state.rename(state.selected?.id ?? "", title)}
                     onExport={() => void state.exportNote()}
                   />
                 )

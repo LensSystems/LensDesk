@@ -2,6 +2,7 @@ import type { createToolClient } from "@lensdesk/sdk";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Note } from "./NoteList.tsx";
+import { exportMarkdown, importMarkdown } from "./note-markdown.ts";
 import { useAppContext } from "./use-app-context.ts";
 import { errorCode, useFail, useNotice } from "./use-failure.ts";
 
@@ -80,7 +81,10 @@ export function useNotes(client: Client) {
   // Si la nota desapareció mientras se editaba, el texto se conserva como nota nueva.
   const recover = useCallback(
     async (id: string, value: string) => {
-      const note = await client.backend.invoke<Note>("create", { body_md: value });
+      const note = await client.backend.invoke<Note>("create", {
+        body_md: value,
+        title: notesRef.current.find((note) => note.id === id)?.title ?? "",
+      });
       setNotes((current) => [note, ...current.filter((item) => item.id !== id)]);
       setSelectedId(note.id);
       setBody(note.body_md);
@@ -104,7 +108,13 @@ export function useNotes(client: Client) {
         })
         .then((updated) => {
           if (drafts.current.get(id) === value) drafts.current.delete(id);
-          setNotes((current) => current.map((note) => (note.id === id ? updated : note)));
+          setNotes((current) =>
+            current.map((note) =>
+              note.id === id
+                ? { ...note, body_md: updated.body_md, updated_at: updated.updated_at }
+                : note,
+            ),
+          );
           setError("");
         })
         .catch((reason: unknown) =>
@@ -116,9 +126,9 @@ export function useNotes(client: Client) {
     [client, fail, recover, setError],
   );
 
-  const create = async (content = "") => {
+  const create = async (content = "", title = "") => {
     try {
-      const note = await client.backend.invoke<Note>("create", { body_md: content });
+      const note = await client.backend.invoke<Note>("create", { body_md: content, title });
       latestLoad.current++;
       setTrashed(false);
       setQuery("");
@@ -131,13 +141,36 @@ export function useNotes(client: Client) {
     }
   };
 
+  const renaming = useRef(new Map<string, Promise<Note>>());
+  const rename = async (id: string, title: string) => {
+    const request = client.backend.invoke<Note>("rename", { id, title });
+    renaming.current.set(id, request);
+    try {
+      const updated = await request;
+      notesRef.current = notesRef.current.map((note) =>
+        note.id === id ? { ...note, title: updated.title } : note,
+      );
+      setNotes((current) =>
+        current.map((note) => (note.id === id ? { ...note, title: updated.title } : note)),
+      );
+    } catch (reason) {
+      await fail(reason);
+      throw reason;
+    } finally {
+      if (renaming.current.get(id) === request) renaming.current.delete(id);
+    }
+  };
+
   const importNotes = async () => {
     try {
       const files = await client.files.pickOpen({
         multiple: true,
         filters: [{ name: t("markdownFiles"), extensions: ["md", "markdown"] }],
       });
-      for (const file of files) await create(await client.files.readText(file.token));
+      for (const file of files) {
+        const imported = importMarkdown(await client.files.readText(file.token), file.name);
+        await create(imported.body_md, imported.title);
+      }
     } catch (reason) {
       await fail(reason);
     }
@@ -146,11 +179,16 @@ export function useNotes(client: Client) {
   const exportNote = async () => {
     if (!selected) return;
     try {
+      const updated = await renaming.current.get(selected.id);
+      const title =
+        updated?.title ??
+        notesRef.current.find((note) => note.id === selected.id)?.title ??
+        selected.title;
       const file = await client.files.pickSave({
-        defaultName: `${selected.title || t("untitled")}.md`,
+        defaultName: `${title || t("untitled")}.md`,
         filters: [{ name: t("markdownFiles"), extensions: ["md"] }],
       });
-      if (file) await client.files.writeText(file.token, body);
+      if (file) await client.files.writeText(file.token, exportMarkdown(title, body));
     } catch (reason) {
       await fail(reason);
     }
@@ -197,6 +235,7 @@ export function useNotes(client: Client) {
     notes,
     query,
     restore,
+    rename,
     save,
     selected,
     selectedId,

@@ -28,8 +28,12 @@ describe("backend de Notas", () => {
     for (const table of ["notes", "notes_fts", "schema_migrations"]) {
       expect(db.get("SELECT name FROM sqlite_master WHERE name = ?", table)).toBeTruthy();
     }
-    expect(db.get<{ version: number }>("SELECT version FROM schema_migrations")).toEqual({
-      version: 1,
+    expect(
+      db.get<{ version: number }>(
+        "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
+      ),
+    ).toEqual({
+      version: 2,
     });
     db.close();
   });
@@ -43,6 +47,30 @@ describe("backend de Notas", () => {
     expect(repo.search({ query: "Nue" })).toHaveLength(1);
     db.run("DELETE FROM notes WHERE id = ?", item.id);
     expect(repo.search({ query: "Nue" })).toHaveLength(0);
+    db.close();
+  });
+
+  it("valida títulos y los conserva al actualizar solo el cuerpo", () => {
+    const { db, repo } = setup();
+    const item = repo.create({ body_md: "# Cuerpo" });
+    expect(item.title).toBe("");
+    expect(repo.rename({ id: item.id, title: "a".repeat(200) }).title).toHaveLength(200);
+    expect(repo.update({ id: item.id, body_md: "otro" }).title).toHaveLength(200);
+    expect(repo.update({ id: item.id, body_md: "otro", title: "Explícito" }).title).toBe(
+      "Explícito",
+    );
+    expect(repo.search({ query: "Explíc" })).toHaveLength(1);
+    for (const title of ["a".repeat(201), "a\nb", "a\rb", 42, null]) {
+      for (const call of [
+        () => repo.rename({ id: item.id, title }),
+        () => repo.create({ body_md: "", title }),
+        () => repo.update({ id: item.id, body_md: "", title }),
+      ])
+        expect(call).toThrow(expect.objectContaining({ code: "E_INVALID_PARAMS" }));
+    }
+    expect(() => repo.rename({ id: "ausente", title: "x" })).toThrow(
+      expect.objectContaining({ code: "E_NOT_FOUND" }),
+    );
     db.close();
   });
 
@@ -89,9 +117,9 @@ describe("backend de Notas", () => {
     db.close();
   });
 
-  it("ordena las fijadas primero y deriva el título desde el cuerpo", () => {
+  it("ordena las fijadas primero y conserva el título independiente", () => {
     const { db, repo } = setup();
-    const first = repo.create({ body_md: "  \n\n### Título inicial\nTexto" });
+    const first = repo.create({ title: "Título inicial", body_md: "  \n\n### Otro título\nTexto" });
     const second = repo.create({ body_md: "\n  \n" });
     repo.setPinned({ id: first.id, pinned: true });
     expect(first.title).toBe("Título inicial");
@@ -123,6 +151,13 @@ describe("backend de Notas", () => {
     }
     durations.sort((a, b) => a - b);
     expect(durations[2]).toBeLessThan(100);
+    db.close();
+  });
+
+  it("guarda el título sin espacios al principio ni al final", () => {
+    const { db, repo } = setup();
+    const created = repo.create({ body_md: "x", title: "  Tema ### " });
+    expect(created.title).toBe("Tema ###");
     db.close();
   });
 });

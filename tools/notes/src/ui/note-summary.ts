@@ -1,6 +1,6 @@
 import { searchHighlight } from "./search-highlight.ts";
 
-export function noteSummary(body: string, title: string, query = ""): string {
+export function noteSummary(body: string, _title: string, query = ""): string {
   const lines = body.split("\n").map((line) =>
     line
       .trim()
@@ -10,11 +10,9 @@ export function noteSummary(body: string, title: string, query = ""): string {
   );
   return (
     (query.trim()
-      ? lines.find(
-          (line) => line !== title && searchHighlight(line, query).some((span) => span.match),
-        )
+      ? lines.find((line) => searchHighlight(line, query).some((span) => span.match))
       : undefined) ??
-    lines.find((line) => line && line !== title) ??
+    lines.find((line) => line) ??
     ""
   );
 }

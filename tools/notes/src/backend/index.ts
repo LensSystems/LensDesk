@@ -14,6 +14,7 @@ function getRepository(dataDir: string) {
 export const methods = {
   create: (params, ctx) => getRepository(ctx.dataDir).create(params),
   update: (params, ctx) => getRepository(ctx.dataDir).update(params),
+  rename: (params, ctx) => getRepository(ctx.dataDir).rename(params),
   get: (params, ctx) => getRepository(ctx.dataDir).get(params),
   list: (params, ctx) => getRepository(ctx.dataDir).list(params),
   search: (params, ctx) => getRepository(ctx.dataDir).search(params),

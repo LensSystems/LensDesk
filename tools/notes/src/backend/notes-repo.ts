@@ -31,15 +31,38 @@ function string(value: unknown, key: string): string {
   if (typeof value !== "string") throw new LensError("E_INVALID_PARAMS", `${key} must be a string`);
   return value;
 }
-function titleFromBody(body: string): string {
-  return (
-    body
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .find((line) => line.length > 0)
-      ?.replace(/^#+/, "")
-      .trim() ?? ""
-  );
+function title(value: unknown): string {
+  // Una sola línea de hasta 200 caracteres, sin espacios al principio ni al final.
+  const text = string(value, "title").trim();
+  if (text.length > 200 || /[\r\n\u2028\u2029]/.test(text))
+    throw new LensError("E_INVALID_PARAMS", "Invalid note title");
+  return text;
+}
+type Validator<T> = (params: unknown) => T;
+export const createSchema: Validator<{ body_md: string; title?: string }> = (params) => {
+  const values = assertObject(params, ["body_md"], ["title"]);
+  return {
+    body_md: string(values.body_md, "body_md"),
+    ...(values.title === undefined ? {} : { title: title(values.title) }),
+  };
+};
+export const updateSchema: Validator<{ id: string; body_md: string; title?: string }> = (
+  params,
+) => {
+  const values = assertObject(params, ["id", "body_md"], ["title"]);
+  return {
+    id: string(values.id, "id"),
+    body_md: string(values.body_md, "body_md"),
+    ...(values.title === undefined ? {} : { title: title(values.title) }),
+  };
+};
+export const renameSchema: Validator<{ id: string; title: string }> = (params) => {
+  const values = assertObject(params, ["id", "title"]);
+  return { id: string(values.id, "id"), title: title(values.title) };
+};
+
+export function parse<T>(validate: Validator<T>, params: unknown): T {
+  return validate(params);
 }
 function note(row: StoredNote | undefined): Note | null {
   return row ? { ...row, pinned: Boolean(row.pinned) } : null;
@@ -53,14 +76,14 @@ function requiredNote(db: Db, id: string): Note {
 export function createNotesRepository(db: Db, now: () => Date = () => new Date()) {
   return {
     create(params: unknown) {
-      const values = assertObject(params, ["body_md"]);
+      const values = parse(createSchema, params);
       const body = string(values.body_md, "body_md");
       const timestamp = now().toISOString();
       const id = randomUUID();
       db.run(
         "INSERT INTO notes (id, title, body_md, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
         id,
-        titleFromBody(body),
+        values.title ?? "",
         body,
         timestamp,
         timestamp,
@@ -68,15 +91,25 @@ export function createNotesRepository(db: Db, now: () => Date = () => new Date()
       return requiredNote(db, id);
     },
     update(params: unknown) {
-      const values = assertObject(params, ["id", "body_md"]);
+      const values = parse(updateSchema, params);
       const id = string(values.id, "id");
       const body = string(values.body_md, "body_md");
       const timestamp = now().toISOString();
       db.run(
         "UPDATE notes SET title = ?, body_md = ?, updated_at = ? WHERE id = ?",
-        titleFromBody(body),
+        values.title ?? requiredNote(db, id).title,
         body,
         timestamp,
+        id,
+      );
+      return requiredNote(db, id);
+    },
+    rename(params: unknown) {
+      const { id, title } = parse(renameSchema, params);
+      db.run(
+        "UPDATE notes SET title = ?, updated_at = ? WHERE id = ?",
+        title,
+        now().toISOString(),
         id,
       );
       return requiredNote(db, id);

@@ -32,5 +32,7 @@
     "notFoundRecovered": "La nota ya no existía; tu texto se guardó como nota nueva."
   },
   "confirmEmptyMessage": "Las notas de la papelera se borrarán para siempre. Esta acción no se puede deshacer.",
-  "close": "Cerrar"
+  "close": "Cerrar",
+  "editTitle": "Editar título",
+  "noteTitle": "Título de la nota"
 }

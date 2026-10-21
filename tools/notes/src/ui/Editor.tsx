@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { markdownHighlighting } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
+import { NoteTitle } from "./NoteTitle.tsx";
 import { renderPreview } from "./preview.ts";
 
 export function Editor({
@@ -13,11 +14,13 @@ export function Editor({
   onChange,
   onBlur,
   onExport,
+  onRename,
 }: {
   note: Note;
   onChange: (value: string) => void;
   onBlur: () => void;
   onExport: () => void;
+  onRename: (title: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const host = useRef<HTMLDivElement>(null);
@@ -68,7 +71,7 @@ export function Editor({
   return (
     <section className="editor-panel">
       <header className="editor-toolbar">
-        <h2>{note.title || t("untitled")}</h2>
+        <NoteTitle title={note.title} onRename={onRename} />
         <SegmentedControl
           aria-label={t("mode")}
           value={preview ? "preview" : "edit"}

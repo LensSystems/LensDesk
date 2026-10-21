@@ -32,5 +32,7 @@
     "notFoundRecovered": "The note no longer existed; your text was saved as a new note."
   },
   "confirmEmptyMessage": "Notes in the trash will be deleted permanently. This cannot be undone.",
-  "close": "Close"
+  "close": "Close",
+  "editTitle": "Edit title",
+  "noteTitle": "Note title"
 }

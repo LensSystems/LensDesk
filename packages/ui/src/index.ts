@@ -25,6 +25,7 @@ export {
   Lock,
   type LucideIcon,
   MoreHorizontal,
+  Pencil,
   Plus,
   Puzzle,
   Regex,

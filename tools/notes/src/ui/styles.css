@@ -86,7 +86,7 @@ body {
   white-space: nowrap;
   font-weight: 700;
 }
-.editor-toolbar > :not(h2) {
+.editor-toolbar > :not(.note-title) {
   flex-shrink: 0;
 }
 .code-editor {

@@ -8,6 +8,7 @@ import { initReactI18next } from "react-i18next";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import es from "../../locales/es.json";
+import { createSchema, parse, renameSchema, updateSchema } from "../backend/notes-repo.ts";
 import { App } from "./App.tsx";
 import { Editor } from "./Editor.tsx";
 import { EmptyNote } from "./EmptyNote.tsx";
@@ -40,26 +41,37 @@ function fakeClient() {
     if (typeof params !== "object" || params === null)
       throw Object.assign(new Error("Expected an object"), { code: "E_INVALID_PARAMS" });
     const args = (params ?? {}) as {
+      title?: string;
       id?: string;
       body_md?: string;
       query?: string;
       trashed?: boolean;
       pinned?: boolean;
     };
+    if (method === "create") parse(createSchema, params);
+    if (method === "update") parse(updateSchema, params);
+    if (method === "rename") parse(renameSchema, params);
     if (method === "list")
       return rows.filter((row) => Boolean(row.deleted_at) === (args.trashed === true));
     if (method === "search")
       return rows.filter(
         (row) =>
-          !row.deleted_at && row.body_md.toLowerCase().includes(args.query?.toLowerCase() ?? ""),
+          !row.deleted_at &&
+          `${row.title} ${row.body_md}`.toLowerCase().includes(args.query?.toLowerCase() ?? ""),
       );
     if (method === "create") {
-      const created = note(String(rows.length + 1), args.body_md);
+      const created = { ...note(String(rows.length + 1), args.body_md), title: args.title ?? "" };
       rows.push(created);
       return created;
     }
-    if (method === "update") {
-      const updated = note(args.id ?? "", args.body_md);
+    if (method === "update" || method === "rename") {
+      const found = rows.find((row) => row.id === args.id);
+      if (!found) throw Object.assign(new Error("Note not found"), { code: "E_NOT_FOUND" });
+      const updated = {
+        ...found,
+        title: args.title ?? found.title,
+        body_md: method === "update" ? (args.body_md as string) : found.body_md,
+      };
       rows = rows.map((row) => (row.id === args.id ? updated : row));
       return updated;
     }
@@ -136,6 +148,81 @@ beforeEach(async () => {
 });
 
 describe("interfaz de Notas", () => {
+  it("edita con lápiz, cancela con Escape y guarda con Intro o al perder foco", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Inicial", body_md: "Solo cuerpo" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Inicial" });
+    expect(document.querySelector(".cm-content")).not.toHaveTextContent("Inicial");
+    fireEvent.click(screen.getByRole("button", { name: "Editar título" }));
+    const input = screen.getByRole("textbox", { name: "Título de la nota" });
+    fireEvent.change(input, { target: { value: "Cancelado" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(fake.invoke).not.toHaveBeenCalledWith("rename", expect.anything());
+    fireEvent.click(screen.getByRole("heading", { level: 2 }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Título de la nota" }), {
+      target: { value: "Nuevo" },
+    });
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Título de la nota" }), { key: "Enter" });
+    await screen.findByRole("heading", { name: "Nuevo" });
+    expect(screen.getByRole("button", { name: "Nuevo" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Editar título" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Título de la nota" }), {
+      target: { value: "Final" },
+    });
+    fireEvent.blur(screen.getByRole("textbox", { name: "Título de la nota" }));
+    await screen.findByRole("heading", { name: "Final" });
+    expect(screen.getByRole("button", { name: "Final" })).toBeInTheDocument();
+  });
+
+  it("valida los títulos del doble con los esquemas reales", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Inicial", body_md: "Cuerpo" });
+    for (const title of ["a".repeat(201), "a\nb", 3]) {
+      for (const [method, params] of [
+        ["create", { title, body_md: "" }],
+        ["update", { id: "1", title, body_md: "" }],
+        ["rename", { id: "1", title }],
+      ] as const) {
+        await expect(fake.invoke(method, params)).rejects.toMatchObject({
+          code: "E_INVALID_PARAMS",
+        });
+      }
+    }
+  });
+
+  it("una respuesta de autoguardado anterior no deshace el título nuevo", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Inicial", body_md: "Cuerpo" });
+    const original = fake.invoke.getMockImplementation();
+    let finish: (() => void) | undefined;
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      const result = await original?.(method, params);
+      if (method === "update")
+        await new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+      return result;
+    });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Inicial" });
+    const editor = document.querySelector(".cm-content") as HTMLElement;
+    act(() => {
+      const view = EditorView.findFromDOM(editor);
+      view?.dispatch({ changes: { from: view.state.doc.length, insert: " nuevo" } });
+    });
+    fireEvent.blur(editor);
+    await waitFor(() => expect(finish).toBeDefined());
+    fireEvent.click(screen.getByRole("button", { name: "Editar título" }));
+    const input = screen.getByRole("textbox", { name: "Título de la nota" });
+    fireEvent.change(input, { target: { value: "Renombrado" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await screen.findByRole("heading", { name: "Renombrado" });
+    await act(async () => finish?.());
+    expect(screen.getByRole("heading", { name: "Renombrado" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Renombrado" })).toBeInTheDocument();
+  });
+
   it("actualiza el acento en vivo y acepta contexto sin acento", async () => {
     const fake = fakeClient();
     render(<App client={fake.client as never} />);
@@ -153,6 +240,7 @@ describe("interfaz de Notas", () => {
           note={note("one", "# Documento")}
           onChange={vi.fn()}
           onBlur={vi.fn()}
+          onRename={vi.fn(async () => {})}
           onExport={vi.fn()}
         />
       </TooltipProvider>,
@@ -171,8 +259,8 @@ describe("interfaz de Notas", () => {
 
   it("conserva y guarda el texto al cambiar de nota antes del debounce", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# A" });
-    await fake.invoke("create", { body_md: "# B" });
+    await fake.invoke("create", { title: "A", body_md: "# A" });
+    await fake.invoke("create", { title: "B", body_md: "# B" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("heading", { name: "A" });
     act(() => {
@@ -192,7 +280,7 @@ describe("interfaz de Notas", () => {
 
   it("alterna vista previa y editor conservando contenido", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Documento\n**Contenido**" });
+    await fake.invoke("create", { title: "Documento", body_md: "# Documento\n**Contenido**" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("heading", { name: "Documento" });
     expect(document.title).toBe("Notas");
@@ -208,7 +296,7 @@ describe("interfaz de Notas", () => {
 
   it("muestra resumen y acciones hermanas dentro de la tarjeta", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Tarjeta\n- **Resumen**" });
+    await fake.invoke("create", { title: "Tarjeta", body_md: "- **Resumen**" });
     render(<App client={fake.client as never} />);
     const main = await screen.findByRole("button", { name: "Tarjeta" });
     const card = main.parentElement as HTMLElement;
@@ -271,6 +359,38 @@ describe("interfaz de Notas", () => {
     expect(host.querySelector("b")?.hasAttribute("onclick")).toBe(false);
   });
 
+  it("espera el renombrado al exportar inmediatamente tras perder el foco", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Inicial", body_md: "Cuerpo" });
+    const original = fake.invoke.getMockImplementation();
+    let finish: (() => void) | undefined;
+    fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
+      if (method === "rename") {
+        parse(renameSchema, params);
+        await new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+      }
+      return original?.(method, params);
+    });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Inicial" });
+    fireEvent.click(screen.getByRole("button", { name: "Editar título" }));
+    const input = screen.getByRole("textbox", { name: "Título de la nota" });
+    fireEvent.change(input, { target: { value: "Confirmado" } });
+    fireEvent.blur(input);
+    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    expect(finish).toBeDefined();
+    expect(fake.files.pickSave).not.toHaveBeenCalled();
+    await act(async () => finish?.());
+    await waitFor(() =>
+      expect(fake.files.writeText).toHaveBeenCalledWith("save", "# Confirmado\n\nCuerpo"),
+    );
+    expect(fake.files.pickSave).toHaveBeenCalledWith(
+      expect.objectContaining({ defaultName: "Confirmado.md" }),
+    );
+  });
+
   it("importa cada Markdown y exporta el cuerpo con el token elegido", async () => {
     const fake = fakeClient();
     render(<App client={fake.client as never} />);
@@ -284,13 +404,13 @@ describe("interfaz de Notas", () => {
     const exportButton = screen.getByRole("button", { name: "Exportar" });
     expect(exportButton.querySelector("svg")).toHaveClass("lucide-upload");
     fireEvent.click(exportButton);
-    await waitFor(() => expect(fake.files.writeText).toHaveBeenCalledWith("save", "# Dos"));
+    await waitFor(() => expect(fake.files.writeText).toHaveBeenCalledWith("save", "# Dos\n\n"));
     expect(fake.files.pickOpen).toHaveBeenCalledWith(expect.objectContaining({ multiple: true }));
   });
 
   it("mueve una nota a Papelera y permite restaurarla", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Archivar" });
+    await fake.invoke("create", { title: "Archivar", body_md: "# Archivar" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("button", { name: "Archivar" });
     fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
@@ -326,7 +446,7 @@ describe("interfaz de Notas", () => {
 
   it("mover a la papelera mientras se abre la Papelera muestra la nota allí", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Archivar" });
+    await fake.invoke("create", { title: "Archivar", body_md: "# Archivar" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("button", { name: "Archivar" });
     const original = fake.invoke.getMockImplementation();
@@ -349,7 +469,7 @@ describe("interfaz de Notas", () => {
 
   it("buscar no desmonta el cuadro de búsqueda ni pisa el texto sin guardar", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Borrador" });
+    await fake.invoke("create", { title: "Borrador", body_md: "# Borrador" });
     render(<App client={fake.client as never} />);
     const search = await screen.findByRole("textbox", { name: "Buscar notas" });
     await screen.findByRole("heading", { name: "Borrador" });
@@ -371,7 +491,8 @@ describe("interfaz de Notas", () => {
     const fake = fakeClient();
     await fake.invoke("create", { body_md: "" });
     render(<App client={fake.client as never} />);
-    await screen.findByRole("heading", { name: "Sin título" });
+    await screen.findByRole("textbox", { name: "Título de la nota" });
+    expect(screen.getByRole("textbox", { name: "Título de la nota" })).toHaveFocus();
     expect(es.untitled).toBe("Sin título");
     expect(en.untitled).toBe("Untitled");
   });
@@ -379,7 +500,7 @@ describe("interfaz de Notas", () => {
   it("vaciar la papelera pide confirmación en un diálogo con foco en Cancelar", async () => {
     const confirm = vi.spyOn(window, "confirm");
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Vieja" });
+    await fake.invoke("create", { title: "Vieja", body_md: "# Vieja" });
     await fake.invoke("trash", { id: "1" });
     render(<App client={fake.client as never} />);
     fireEvent.click(await screen.findByRole("radio", { name: "Papelera" }));
@@ -410,7 +531,7 @@ describe("interfaz de Notas", () => {
 
   it("usa los componentes compartidos y cancela el vaciado con Escape", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Vista" });
+    await fake.invoke("create", { title: "Vista", body_md: "# Vista" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("heading", { name: "Vista" });
     const group = screen.getByRole("radiogroup", { name: "Vista de notas" });
@@ -436,7 +557,7 @@ describe("interfaz de Notas", () => {
 
   it("avisa y recarga la lista cuando una acción responde E_NOT_FOUND", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Fantasma" });
+    await fake.invoke("create", { title: "Fantasma", body_md: "# Fantasma" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("button", { name: "Fantasma" });
     const original = fake.invoke.getMockImplementation();
@@ -460,12 +581,15 @@ describe("interfaz de Notas", () => {
 
   it("no avisa de nota inexistente si la recarga también falla", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Uno" });
+    await fake.invoke("create", { title: "Uno", body_md: "# Uno" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("button", { name: "Uno" });
     const original = fake.invoke.getMockImplementation();
     fake.invoke.mockImplementation(async (method: string, params?: unknown) => {
       if (method === "trash") throw Object.assign(new Error("x"), { code: "E_NOT_FOUND" });
+      if (method === "create") parse(createSchema, params);
+      if (method === "update") parse(updateSchema, params);
+      if (method === "rename") parse(renameSchema, params);
       if (method === "list") throw Object.assign(new Error("x"), { code: "E_INTERNAL" });
       return original?.(method, params);
     });
@@ -477,7 +601,7 @@ describe("interfaz de Notas", () => {
 
   it("conserva el texto como nota nueva si el autoguardado recibe E_NOT_FOUND", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Original" });
+    await fake.invoke("create", { title: "Original", body_md: "# Original" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("heading", { name: "Original" });
     const original = fake.invoke.getMockImplementation();
@@ -494,7 +618,10 @@ describe("interfaz de Notas", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("La nota ya no existía; tu texto se guardó como nota nueva.");
     expect(within(alert).queryByRole("button", { name: "Reintentar" })).toBeNull();
-    expect(fake.invoke).toHaveBeenCalledWith("create", { body_md: "# Original\ntexto valioso" });
+    expect(fake.invoke).toHaveBeenCalledWith("create", {
+      title: "Original",
+      body_md: "# Original\ntexto valioso",
+    });
     await waitFor(() =>
       expect(document.querySelector(".cm-content")?.textContent).toContain("texto valioso"),
     );
@@ -502,8 +629,8 @@ describe("interfaz de Notas", () => {
 
   it("al cambiar de nota con un guardado en curso, el texto se recupera una sola vez", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Uno" });
-    await fake.invoke("create", { body_md: "# Dos" });
+    await fake.invoke("create", { title: "Uno", body_md: "# Uno" });
+    await fake.invoke("create", { title: "Dos", body_md: "# Dos" });
     render(<App client={fake.client as never} />);
     const selected = await screen.findByRole("heading", { level: 2 });
     const other = selected.textContent === "Uno" ? "Dos" : "Uno";
@@ -533,7 +660,7 @@ describe("interfaz de Notas", () => {
 
   it("el editor colorea los títulos de Markdown", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Coloreado" });
+    await fake.invoke("create", { title: "Coloreado", body_md: "# Coloreado" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("heading", { name: "Coloreado" });
     const heading = markdownHighlightStyle.style([tags.heading]) ?? "sin-clase";
@@ -547,8 +674,8 @@ describe("interfaz de Notas", () => {
 
   it("seleccionar una nota y esperar no llama a update", async () => {
     const fake = fakeClient();
-    await fake.invoke("create", { body_md: "# Uno" });
-    await fake.invoke("create", { body_md: "# Dos" });
+    await fake.invoke("create", { title: "Uno", body_md: "# Uno" });
+    await fake.invoke("create", { title: "Dos", body_md: "# Dos" });
     render(<App client={fake.client as never} />);
     await screen.findByRole("button", { name: "Dos" });
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -593,7 +720,7 @@ describe("resaltado en la lista", () => {
     expect(button.textContent).not.toContain("Resumen habitual");
     rerender(<NoteList {...props} query="" />);
     expect(container.querySelector("mark")).toBeNull();
-    expect(button.textContent).toContain("Resumen habitual");
+    expect(button.textContent).toContain("Ideas Sprint");
   });
 
   it("mantiene el resumen habitual si solo coincide el título", () => {
