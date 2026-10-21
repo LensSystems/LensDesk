@@ -70,6 +70,13 @@ describe("estilos compartidos", () => {
     ).toBe(true);
   });
 
+  it("las etiquetas y su contenedor no capturan el puntero", () => {
+    const css = readFileSync(`${import.meta.dirname}/styles.css`, "utf8");
+    expect(css).toMatch(
+      /\[data-radix-popper-content-wrapper\]:has\(> \.ld-tooltip\),\s*\.ld-tooltip \{\s*pointer-events: none;/,
+    );
+  });
+
   it("el texto de Notice se puede seleccionar para copiar errores", () => {
     render(<Notice tone="danger" title="Falló la conversión" text="Detalle" />);
     expect(screen.getByText("Falló la conversión").parentElement).toHaveClass("ld-selectable");

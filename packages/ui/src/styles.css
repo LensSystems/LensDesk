@@ -149,3 +149,15 @@
   left: 17px;
   background: var(--ld-accent-fg);
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ld-tooltip[data-state="closed"] {
+    animation: ld-pop-out 100ms ease-out;
+  }
+}
+
+/* Las etiquetas no capturan el puntero: si tapan el control vecino, este recibe el paso del ratón. */
+[data-radix-popper-content-wrapper]:has(> .ld-tooltip),
+.ld-tooltip {
+  pointer-events: none;
+}
