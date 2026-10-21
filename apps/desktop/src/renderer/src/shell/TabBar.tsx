@@ -63,8 +63,15 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
           const Icon = toolIcon((tool?.manifest as { icon?: unknown } | undefined)?.icon);
           const selected = page === "tab" && tab.active;
           return (
+            // biome-ignore lint/a11y/noStaticElementInteractions: El cierre central abarca ambos botones; el teclado usa el botón de cierre.
             <div
-              className={`flex h-[30px] min-w-0 max-w-48 shrink-0 items-center rounded-full pr-1 transition-colors duration-150 ease-out motion-reduce:transition-none ${selected ? "bg-border font-semibold text-text" : "bg-transparent text-muted hover:bg-surface-raised"}`}
+              className={`group flex h-[30px] min-w-0 max-w-48 shrink-0 items-center rounded-full pr-1 transition-colors duration-150 ease-out motion-reduce:transition-none ${selected ? "bg-border font-semibold text-text" : "bg-transparent text-muted hover:bg-surface-raised"}`}
+              onAuxClick={(event) => {
+                if (event.button === 1) void bridge.invoke("tabs.close", { toolId: tab.toolId });
+              }}
+              onMouseDown={(event) => {
+                if (event.button === 1) event.preventDefault();
+              }}
               key={tab.toolId}
               role="presentation"
             >
@@ -96,7 +103,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
                 <span className="truncate">{nameOf(tab.toolId)}</span>
               </button>
               <IconButton
-                className="ld-no-drag size-6 shrink-0"
+                className="ld-no-drag size-6 shrink-0 opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 motion-reduce:transition-none"
                 tooltipSide="left"
                 label={t("shell.closeTab", { name: nameOf(tab.toolId) })}
                 onClick={() => void bridge.invoke("tabs.close", { toolId: tab.toolId })}

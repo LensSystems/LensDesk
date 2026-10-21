@@ -137,6 +137,40 @@ describe("pestañas", () => {
     expect(tab.parentElement?.contains(close)).toBe(true);
   });
 
+  it("revela el cierre con hover o foco y lo conserva accesible y enfocable", () => {
+    renderBar(makeBridge().bridge);
+    const close = screen.getByRole("button", { name: "Cerrar Notas" });
+    expect(close.tabIndex).toBe(0);
+    expect(close.hasAttribute("disabled")).toBe(false);
+    expect(close.parentElement?.classList.contains("group")).toBe(true);
+    for (const name of [
+      "opacity-0",
+      "group-hover:opacity-100",
+      "group-has-[:focus-visible]:opacity-100",
+      "transition-opacity",
+      "duration-150",
+      "ease-out",
+      "motion-reduce:transition-none",
+    ])
+      expect(close.classList.contains(name)).toBe(true);
+    act(() => close.focus());
+    expect(document.activeElement).toBe(close);
+  });
+
+  it("solo el botón central evita autoscroll y cierra sin activar", () => {
+    const { bridge, invoke } = makeBridge();
+    renderBar(bridge);
+    const tab = screen.getByRole("tab", { name: "Notas" });
+    for (const button of [0, 2]) {
+      expect(fireEvent.mouseDown(tab, { button })).toBe(true);
+      fireEvent(tab, new MouseEvent("auxclick", { button, bubbles: true }));
+    }
+    expect(invoke).not.toHaveBeenCalled();
+    expect(fireEvent.mouseDown(tab, { button: 1 })).toBe(false);
+    fireEvent(tab, new MouseEvent("auxclick", { button: 1, bubbles: true }));
+    expect(invoke).toHaveBeenCalledExactlyOnceWith("tabs.close", { toolId: "notas" });
+  });
+
   it("actualiza el nombre de la pestaña cuando cambia la lista de herramientas", async () => {
     const { bridge, listeners } = makeBridge();
     render(<App bridge={bridge} />);
