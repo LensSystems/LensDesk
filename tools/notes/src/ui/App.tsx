@@ -88,6 +88,7 @@ export function App({ client }: { client: Client }) {
                 )
               ) : (
                 <EmptyNote
+                  query={state.query}
                   trashed={state.trashed}
                   onCreate={() => {
                     flush();

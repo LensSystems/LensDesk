@@ -10,16 +10,19 @@ for (const width of [1100, 760]) {
       const shell = await shellPage(app);
       const window = await app.browserWindow(shell);
       await window.evaluate((browserWindow, width) => browserWindow.setSize(width, 600), width);
-      // Simula el aviso que emite la comprobación de versiones, sin red.
-      await app.evaluate(({ BrowserWindow }, release) => {
-        BrowserWindow.getAllWindows()[0]?.webContents.send("update.available", {
-          version: "0.3.0",
-          html_url: `${release}/tag/v0.3.0`,
-          installerUrl: `${release}/download/v0.3.0/LensDesk-0.3.0-mac-arm64.dmg`,
-        });
-      }, release);
       const banner = shell.locator("header [role=status]").filter({ hasText: "0.3.0" });
-      await expect(banner).toBeVisible();
+      // Simula el aviso que emite la comprobación de versiones, sin red. Se reenvía hasta que la
+      // interfaz ya escucha los eventos (justo al arrancar aún puede no estar suscrita).
+      await expect(async () => {
+        await app.evaluate(({ BrowserWindow }, release) => {
+          BrowserWindow.getAllWindows()[0]?.webContents.send("update.available", {
+            version: "0.3.0",
+            html_url: `${release}/tag/v0.3.0`,
+            installerUrl: `${release}/download/v0.3.0/LensDesk-0.3.0-mac-arm64.dmg`,
+          });
+        }, release);
+        await expect(banner).toBeVisible({ timeout: 500 });
+      }).toPass();
       const parts = [
         banner,
         shell.getByRole("button", { name: "Herramientas", exact: true }),

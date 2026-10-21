@@ -1,4 +1,4 @@
-import { Button, IconButton, Input, Plus, Search, SegmentedControl, Upload } from "@lensdesk/ui";
+import { Button, Download, IconButton, Input, Plus, Search, SegmentedControl } from "@lensdesk/ui";
 import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 import { NoteList } from "./NoteList.tsx";
@@ -25,7 +25,7 @@ export function NotesSidebar({
       <div className="sidebar-heading">
         <h1>{t("title")}</h1>
         <IconButton label={t("import")} onClick={onImport}>
-          <Upload size={16} aria-hidden="true" />
+          <Download size={16} aria-hidden="true" />
         </IconButton>
         {list.trashed ? (
           <Button variant="danger" onClick={onEmpty}>

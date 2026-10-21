@@ -58,14 +58,18 @@ export function NoteList({
             !trashed && (
               <>
                 <IconButton
-                  className="size-7"
+                  className={
+                    note.pinned
+                      ? "size-7 text-warning hover:text-warning"
+                      : "size-7 hover:text-warning"
+                  }
                   label={note.pinned ? t("unpin") : t("pin")}
                   onClick={() => onPin(note)}
                 >
                   <Star size={14} fill={note.pinned ? "currentColor" : "none"} aria-hidden="true" />
                 </IconButton>
                 <IconButton
-                  className="size-7"
+                  className="size-7 hover:text-danger"
                   label={t("moveToTrash")}
                   onClick={() => onTrash(note.id)}
                 >
@@ -76,7 +80,18 @@ export function NoteList({
           }
         />
       ))}
-      {notes.length === 0 && <p className="text-muted">{t("emptyNotes")}</p>}
+      {notes.length === 0 && (
+        <div className="text-muted">
+          <p>
+            {trashed
+              ? t("emptyTrashTitle")
+              : query.trim()
+                ? t("noResults", { query })
+                : t("emptyNotes")}
+          </p>
+          {trashed && <p>{t("emptyTrashDescription")}</p>}
+        </div>
+      )}
     </nav>
   );
 }

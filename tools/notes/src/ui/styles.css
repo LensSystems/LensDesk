@@ -118,6 +118,10 @@ body {
   background: var(--ld-surface);
   border-right: 1px solid var(--ld-border);
 }
+.code-editor .cm-gutterElement {
+  text-align: center;
+  min-width: 3ch;
+}
 .code-editor .cm-activeLine,
 .code-editor .cm-activeLineGutter {
   background: var(--ld-surface);

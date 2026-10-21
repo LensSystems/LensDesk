@@ -10,6 +10,7 @@ import en from "../../locales/en.json";
 import es from "../../locales/es.json";
 import { App } from "./App.tsx";
 import { Editor } from "./Editor.tsx";
+import { EmptyNote } from "./EmptyNote.tsx";
 import { markdownHighlightStyle } from "./markdown-highlight.ts";
 import { type Note, NoteList } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
@@ -274,11 +275,15 @@ describe("interfaz de Notas", () => {
     const fake = fakeClient();
     render(<App client={fake.client as never} />);
     await screen.findAllByText("Aún no hay notas. Crea una nota nueva para comenzar.");
-    fireEvent.click(screen.getByRole("button", { name: "Importar Markdown" }));
+    const importButton = screen.getByRole("button", { name: "Importar Markdown" });
+    expect(importButton.querySelector("svg")).toHaveClass("lucide-download");
+    fireEvent.click(importButton);
     await screen.findByRole("button", { name: "Uno" });
     await screen.findByRole("button", { name: "Dos" });
     fireEvent.click(screen.getByRole("button", { name: "Dos" }));
-    fireEvent.click(screen.getByRole("button", { name: "Exportar" }));
+    const exportButton = screen.getByRole("button", { name: "Exportar" });
+    expect(exportButton.querySelector("svg")).toHaveClass("lucide-upload");
+    fireEvent.click(exportButton);
     await waitFor(() => expect(fake.files.writeText).toHaveBeenCalledWith("save", "# Dos"));
     expect(fake.files.pickOpen).toHaveBeenCalledWith(expect.objectContaining({ multiple: true }));
   });
@@ -627,5 +632,80 @@ describe("resaltado en la lista", () => {
     expect(button.textContent).toContain(title);
     expect(button.querySelector("mark")?.textContent).toBe("img");
     expect(container.querySelector("img")).toBeNull();
+  });
+});
+
+describe("estados vacíos y colores de la lista", () => {
+  const props = {
+    notes: [],
+    selectedId: null,
+    trashed: false,
+    onSelect: vi.fn(),
+    onTrash: vi.fn(),
+    onPin: vi.fn(),
+  };
+
+  it.each(["es", "en"])("distingue notas, papelera y búsqueda en %s", async (language) => {
+    await act(async () => {
+      await i18n.changeLanguage(language);
+    });
+    const texts = language === "es" ? es : en;
+    const { rerender } = render(<NoteList {...props} />);
+    expect(screen.getByText(texts.emptyNotes)).toBeInTheDocument();
+    rerender(<NoteList {...props} trashed query="pendiente" />);
+    expect(screen.getByText(texts.emptyTrashTitle)).toBeInTheDocument();
+    expect(screen.getByText(texts.emptyTrashDescription)).toBeInTheDocument();
+    expect(screen.queryByText(texts.emptyNotes)).toBeNull();
+    rerender(<NoteList {...props} query="pendiente" />);
+    expect(screen.getByText(i18n.t("noResults", { query: "pendiente" }))).toBeInTheDocument();
+    expect(screen.queryByText(texts.emptyNotes)).toBeNull();
+    rerender(<NoteList {...props} query="   " />);
+    expect(screen.getByText(texts.emptyNotes)).toBeInTheDocument();
+  });
+
+  it("propaga la búsqueda al panel vacío y distingue la papelera al cambiar de vista", async () => {
+    const fake = fakeClient();
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: es.emptyNotes });
+    fireEvent.change(screen.getByRole("textbox", { name: "Buscar notas" }), {
+      target: { value: "pendiente" },
+    });
+    const message = "No hay notas que coincidan con «pendiente».";
+    await screen.findByRole("heading", { name: message });
+    expect(
+      within(screen.getByRole("navigation", { name: "Lista de notas" })).getByText(message),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Papelera" }));
+    await screen.findByRole("heading", { name: es.emptyTrashTitle });
+    expect(screen.queryByText(message)).toBeNull();
+    expect(screen.queryByText(es.emptyNotes)).toBeNull();
+  });
+
+  it("el panel vacío muestra papelera o búsqueda sin invitar a comenzar", () => {
+    const { rerender } = render(<EmptyNote trashed onCreate={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: es.emptyTrashTitle })).toBeInTheDocument();
+    expect(screen.getByText(es.emptyTrashDescription)).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
+    rerender(<EmptyNote trashed={false} query="pendiente" onCreate={vi.fn()} />);
+    expect(
+      screen.getByRole("heading", { name: "No hay notas que coincidan con «pendiente»." }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(es.emptyNotes)).toBeNull();
+  });
+
+  it("colorea fijar y eliminar, y conserva la estrella fijada rellena", () => {
+    const { rerender } = render(<NoteList {...props} notes={[note("1", "Nota")]} />, {
+      wrapper: TooltipProvider,
+    });
+    const pin = screen.getByRole("button", { name: "Fijar nota" });
+    expect(pin).toHaveClass("hover:text-warning");
+    expect(pin.querySelector("svg")).toHaveAttribute("fill", "none");
+    expect(screen.getByRole("button", { name: "Mover a la papelera" })).toHaveClass(
+      "hover:text-danger",
+    );
+    rerender(<NoteList {...props} notes={[{ ...note("1", "Nota"), pinned: true }]} />);
+    const unpin = screen.getByRole("button", { name: "Desfijar nota" });
+    expect(unpin).toHaveClass("text-warning", "hover:text-warning");
+    expect(unpin.querySelector("svg")).toHaveAttribute("fill", "currentColor");
   });
 });

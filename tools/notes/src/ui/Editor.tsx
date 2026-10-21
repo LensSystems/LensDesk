@@ -1,6 +1,6 @@
 import { markdown } from "@codemirror/lang-markdown";
 import { highlightActiveLine, highlightActiveLineGutter, lineNumbers } from "@codemirror/view";
-import { Button, Download, MarkdownView, SegmentedControl } from "@lensdesk/ui";
+import { Button, MarkdownView, SegmentedControl, Upload } from "@lensdesk/ui";
 import { EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -82,7 +82,7 @@ export function Editor({
           ]}
         />
         <Button type="button" onClick={onExport}>
-          <Download size={14} aria-hidden="true" />
+          <Upload size={14} aria-hidden="true" />
           {t("export")}
         </Button>
       </header>
