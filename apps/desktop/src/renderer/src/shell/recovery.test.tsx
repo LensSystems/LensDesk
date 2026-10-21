@@ -82,7 +82,7 @@ describe("recuperación del shell", () => {
       version: "2.0.0",
       html_url: "https://example.com/release",
     });
-    fireEvent.click(await screen.findByRole("button", { name: "Ver actualización" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Descargar instalador" }));
     await waitFor(() =>
       expect(invoke).toHaveBeenCalledWith("app.openExternal", {
         url: "https://example.com/release",

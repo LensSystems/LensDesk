@@ -31,6 +31,7 @@ type State = {
   fullScreen: boolean;
   tabs: ShellTab[];
   tools: ToolSummary[];
+  toolUpdates: HostEventPayloads["tools.updatesAvailable"]["tools"];
   pendingDowngrade: PendingDowngrade | null;
   settings: SettingValues;
   context: HostEventPayloads["context.changed"];
@@ -57,10 +58,23 @@ const defaults: SettingValues = {
 // Cuenta los eventos recibidos por campo: si uno llega mientras hydrate espera, su dato es más
 // reciente que la respuesta de hydrate y no se pisa.
 const eventCounts = { tabs: 0, settings: 0, context: 0, fullScreen: 0 };
+// Compara x.y.z (sin preversiones; la anunciada siempre es x.y.z).
+function isOlderVersion(installed: string, announced: string): boolean {
+  const parse = (value: string) => value.split(/[-+]/)[0]?.split(".").map(Number) ?? [];
+  const [a, b] = [parse(installed), parse(announced)];
+  for (let index = 0; index < 3; index++) {
+    const left = a[index] ?? 0;
+    const right = b[index] ?? 0;
+    if (left !== right) return left < right;
+  }
+  return false;
+}
+
 export const useShellStore = create<State>((set, get) => ({
   fullScreen: false,
   tabs: [],
   tools: [],
+  toolUpdates: [],
   pendingDowngrade: null,
   settings: defaults,
   context: { locale: "es", theme: "dark", accent: "blue" },
@@ -208,7 +222,18 @@ export const useShellStore = create<State>((set, get) => ({
           ].slice(-maxToasts),
         }));
       }),
-      bridge.on("tools.changed", ({ tools, pendingDowngrade }) => set({ tools, pendingDowngrade })),
+      bridge.on("tools.changed", ({ tools, pendingDowngrade }) =>
+        set((state) => ({
+          tools,
+          pendingDowngrade,
+          // El aviso sigue mientras la versión instalada sea menor que la anunciada.
+          toolUpdates: state.toolUpdates.filter((update) => {
+            const tool = tools.find((tool) => tool.id === update.id);
+            return !!tool && isOlderVersion(tool.version, update.version);
+          }),
+        })),
+      ),
+      bridge.on("tools.updatesAvailable", ({ tools }) => set({ toolUpdates: tools })),
       bridge.on("update.available", (update) =>
         set((state) => (update.version === state.dismissedVersion ? {} : { update })),
       ),

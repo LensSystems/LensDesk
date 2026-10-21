@@ -10,6 +10,7 @@ import { type ToolDialogState, ToolDialogs } from "./ToolDialogs.tsx";
 export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridge } = {}) {
   const { t } = useTranslation();
   const tools = useShellStore((state) => state.tools);
+  const updates = useShellStore((state) => state.toolUpdates);
   const pending = useShellStore((state) => state.pendingDowngrade);
   const [dialog, setDialog] = useState<ToolDialogState>(null);
   const install = async (
@@ -80,6 +81,7 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
             <ToolCard
               key={tool.id}
               tool={tool}
+              update={updates.find((update) => update.id === tool.id)}
               onOpen={() => void act(() => bridge.invoke("tabs.open", { toolId: tool.id }))}
               actions={{
                 enabled: () =>
@@ -98,6 +100,13 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
       )}
       <ToolDialogs
         state={dialog}
+        update={updates.find(
+          (update) => dialog && "tool" in dialog && update.id === dialog.tool.id,
+        )}
+        onInstall={() => {
+          setDialog(null);
+          void install("tools.pickAndInstall");
+        }}
         pending={pending}
         bridge={bridge}
         onClose={() => setDialog(null)}

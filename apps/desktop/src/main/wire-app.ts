@@ -29,7 +29,11 @@ export function wireAppServices(options: {
   logger: Logger;
   settings: SettingsHandlers;
   fetch: Parameters<typeof createUpdateService>[0]["fetch"];
-  emitUpdate(payload: { version: string; html_url: string }): void;
+  platform?: string;
+  arch?: string;
+  installedTools?: Parameters<typeof createUpdateService>[0]["installedTools"];
+  emitTools?: Parameters<typeof createUpdateService>[0]["emitTools"];
+  emitUpdate: Parameters<typeof createUpdateService>[0]["emit"];
   showSaveDialog(options: {
     defaultPath: string;
     filters: { name: string; extensions: string[] }[];
@@ -40,6 +44,10 @@ export function wireAppServices(options: {
   const { settings, logger } = options;
   const updates = createUpdateService({
     repo: options.repo,
+    platform: options.platform,
+    arch: options.arch,
+    installedTools: options.installedTools,
+    emitTools: options.emitTools,
     currentVersion: options.currentVersion,
     fetch: options.fetch,
     now: () => new Date(),

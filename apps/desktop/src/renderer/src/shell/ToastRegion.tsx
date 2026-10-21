@@ -36,7 +36,7 @@ export function ToastRegion({ bridge = window.lensdeskHost }: { bridge?: Window[
     <ToastProvider duration={5000} label={t("ui.notifications")}>
       {toast && (
         <Toast
-          className={`h-[34px] rounded-full text-[13px] shadow-none transition-opacity duration-200 ease-out motion-reduce:transition-none ${style === "error" ? "border-danger" : style === "success" ? "border-success" : ""}`}
+          className={`h-[34px] max-w-60 rounded-full text-[13px] shadow-none transition-opacity duration-200 ease-out motion-reduce:transition-none ${style === "error" ? "border-danger" : style === "success" ? "border-success" : ""}`}
           open
           style={{ animation: "none", opacity: closing === toast.id ? 0 : 1 }}
           role="status"

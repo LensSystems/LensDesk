@@ -14,17 +14,19 @@ import {
   Trash2,
 } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
-import type { ToolSummary } from "../../../shared/host-channels.ts";
+import type { ToolSummary, ToolUpdate } from "../../../shared/host-channels.ts";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 
 type Actions = { enabled: () => void; details: () => void; remove: () => void };
 export function ToolCard({
   tool,
+  update,
   onOpen,
   actions,
 }: {
   tool: ToolSummary;
+  update?: ToolUpdate;
   onOpen: () => void;
   actions: Actions;
 }) {
@@ -81,6 +83,11 @@ export function ToolCard({
         >
           {t("toolsPage.open")}
         </Button>
+        {update && (
+          <Button onClick={actions.details}>
+            {t("toolsPage.updateTo", { version: update.version })}
+          </Button>
+        )}
         <span className="ld-selectable min-w-0 break-all text-xs text-muted">
           {t("toolsPage.cardVersion", { version: tool.version })}
         </span>

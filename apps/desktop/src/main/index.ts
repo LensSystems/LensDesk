@@ -169,6 +169,10 @@ const { updates, appActions } = wireAppServices({
   logger,
   settings: settingsHandlers,
   fetch: (url, init) => fetch(url, init),
+  platform: process.platform,
+  arch: process.arch,
+  installedTools: () => toolWiring.registry?.list() ?? [],
+  emitTools: (payload) => shellContents?.send("tools.updatesAvailable", payload),
   emitUpdate: (payload) => shellContents?.send("update.available", payload),
   showSaveDialog: (options) => {
     const window = BrowserWindow.getFocusedWindow();

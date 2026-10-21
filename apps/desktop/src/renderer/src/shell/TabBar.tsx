@@ -173,7 +173,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
           })}
         </div>
       </div>
-      <div className="flex min-w-0 w-64 shrink-0 items-center justify-end gap-1 @max-[880px]:w-56">
+      <div className="flex w-auto min-w-64 max-w-[50%] shrink-0 items-center justify-end gap-1 @max-[880px]:min-w-56">
         <HeaderNotices bridge={bridge} />
         <IconButton
           className="ld-no-drag shrink-0"

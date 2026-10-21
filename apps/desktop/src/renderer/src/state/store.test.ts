@@ -147,4 +147,21 @@ describe("store del shell", () => {
     expect(useShellStore.getState().page).toBe("tab");
     unsubscribe();
   });
+
+  it("conserva el aviso de herramienta tras instalar una versión intermedia y lo quita al alcanzarla", () => {
+    const { bridge, listeners } = fakeBridge();
+    const tool = (version: string) => ({ id: "notes", version }) as never;
+    useShellStore.setState({ tools: [tool("0.1.0")], toolUpdates: [] });
+    const unsubscribe = useShellStore.getState().subscribe(bridge);
+    listeners.get("tools.updatesAvailable")?.({
+      tools: [
+        { id: "notes", version: "0.3.0", url: "https://github.com/o/r/releases/download/v/x" },
+      ],
+    });
+    listeners.get("tools.changed")?.({ tools: [tool("0.2.0")], pendingDowngrade: null });
+    expect(useShellStore.getState().toolUpdates).toHaveLength(1);
+    listeners.get("tools.changed")?.({ tools: [tool("0.3.0")], pendingDowngrade: null });
+    expect(useShellStore.getState().toolUpdates).toHaveLength(0);
+    unsubscribe();
+  });
 });

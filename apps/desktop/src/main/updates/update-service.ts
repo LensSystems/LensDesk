@@ -1,8 +1,13 @@
+import type { HostEventPayloads } from "../../shared/host-channels.ts";
 import { checkForUpdate, type UpdateCheckResult, type UpdateFetch } from "./check.ts";
 
 // Une la comprobación con los ajustes: lee `updates.check` y `updates.lastCheckedAt`, guarda la
 // hora cuando hubo consulta y avisa al shell con `update.available` si hay una versión mayor.
 export function createUpdateService(options: {
+  platform?: string;
+  arch?: string;
+  installedTools?: () => { id: string; version: string }[];
+  emitTools?: (payload: HostEventPayloads["tools.updatesAvailable"]) => void;
   repo: string;
   currentVersion: string;
   fetch: UpdateFetch;
@@ -12,7 +17,7 @@ export function createUpdateService(options: {
     lastCheckedAt(): string | null;
     setLastCheckedAt(value: string): void;
   };
-  emit(payload: { version: string; html_url: string }): void;
+  emit(payload: HostEventPayloads["update.available"]): void;
   log(message: string): void;
 }) {
   // Una consulta a la vez: la búsqueda manual y la automática comparten la que esté en curso.
@@ -20,6 +25,9 @@ export function createUpdateService(options: {
   const check = async (force: boolean): Promise<UpdateCheckResult> => {
     const result = await checkForUpdate({
       repo: options.repo,
+      platform: options.platform,
+      arch: options.arch,
+      installedTools: options.installedTools,
       enabled: options.settings.enabled(),
       lastCheckedAt: force ? null : options.settings.lastCheckedAt(),
       now: options.now,
@@ -36,7 +44,14 @@ export function createUpdateService(options: {
       );
     }
     if (result.kind === "available")
-      options.emit({ version: result.version, html_url: result.url });
+      options.emit({
+        version: result.version,
+        html_url: result.url,
+        ...(result.installerUrl ? { installerUrl: result.installerUrl } : {}),
+        ...(result.tools ? { tools: result.tools } : {}),
+      });
+    if (result.kind === "available" || result.kind === "none")
+      options.emitTools?.({ tools: result.tools ?? [] });
     return result;
   };
   return {

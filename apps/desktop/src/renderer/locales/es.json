@@ -50,7 +50,10 @@
     "disabledDescription": "Herramienta desactivada. Actívala desde el menú de acciones para usarla.",
     "chooseFile": "Elige un archivo .lenspkg",
     "subtitle": "Cada herramienta instalada guarda sus datos por separado y solo en tu equipo.",
-    "cardVersion": "v{{version}}"
+    "cardVersion": "v{{version}}",
+    "updateTo": "Actualización a {{version}}",
+    "download": "Descargar",
+    "installFile": "Instalar archivo…"
   },
   "settingsPage": {
     "openAtLogin": "Abrir al iniciar sesión",
@@ -100,10 +103,13 @@
     "errorDescription": "La interfaz no pudo cargarse correctamente.",
     "reload": "Recargar",
     "updateAvailable": "LensDesk {{version}} está disponible.",
-    "viewUpdate": "Ver actualización",
+    "viewUpdate": "Ver novedades",
+    "updateShort": "LensDesk {{version}}",
+    "download": "Descargar",
     "toolCrashedTitle": "{{name}} dejó de funcionar",
     "toolCrashedDescription": "Vuelve a abrir la herramienta para continuar donde lo dejaste.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "downloadInstaller": "Descargar instalador"
   },
   "errors": {
     "E_SIGNATURE_INVALID": "La firma de la herramienta no es válida.",

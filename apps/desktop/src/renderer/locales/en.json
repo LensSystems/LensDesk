@@ -50,7 +50,10 @@
     "disabledDescription": "Tool disabled. Turn it on from the actions menu to use it.",
     "chooseFile": "Choose a .lenspkg file",
     "subtitle": "Each installed tool keeps its data separately and only on your computer.",
-    "cardVersion": "v{{version}}"
+    "cardVersion": "v{{version}}",
+    "updateTo": "Update to {{version}}",
+    "download": "Download",
+    "installFile": "Install file…"
   },
   "settingsPage": {
     "openAtLogin": "Open at login",
@@ -100,10 +103,13 @@
     "errorDescription": "The interface could not load correctly.",
     "reload": "Reload",
     "updateAvailable": "LensDesk {{version}} is available.",
-    "viewUpdate": "View update",
+    "viewUpdate": "View release notes",
+    "updateShort": "LensDesk {{version}}",
+    "download": "Download",
     "toolCrashedTitle": "{{name}} stopped working",
     "toolCrashedDescription": "Reopen the tool to continue where you left off.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "downloadInstaller": "Download installer"
   },
   "errors": {
     "E_SIGNATURE_INVALID": "The tool signature is invalid.",

@@ -367,7 +367,9 @@ describe("avisos dentro del encabezado", () => {
       expect(item.closest(".ld-no-drag")).not.toBeNull();
     }
     expect(header.contains(screen.getByText("LensDesk 9.0.0 está disponible."))).toBe(true);
-    expect(header.contains(screen.getByRole("button", { name: "Ver actualización" }))).toBe(true);
+    expect(header.contains(screen.getByRole("button", { name: "Descargar instalador" }))).toBe(
+      true,
+    );
     expect(header.contains(screen.getByText("Hecho"))).toBe(true);
     expect(header.contains(screen.getByRole("region", { name: /Notificaciones/ }))).toBe(true);
     useShellStore.setState({ update: null, toasts: [] });

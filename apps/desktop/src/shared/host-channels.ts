@@ -31,6 +31,7 @@ export const HOST_EVENTS = [
   "tools.changed",
   "tools.toast",
   "update.available",
+  "tools.updatesAvailable",
   "tool.crashed",
   "app.error",
   "window.fullScreenChanged",
@@ -101,11 +102,18 @@ export type HostResponses = {
   "app.openExternal": Record<string, never>;
   "updates.checkNow": UpdateCheckResult;
 };
+export type ToolUpdate = { id: string; version: string; url: string };
 export type UpdateCheckResult =
   | { kind: "skipped" }
-  | { kind: "none" }
+  | { kind: "none"; tools?: ToolUpdate[] }
   | { kind: "error" }
-  | { kind: "available"; version: string; url: string };
+  | {
+      kind: "available";
+      version: string;
+      url: string;
+      installerUrl?: string;
+      tools?: ToolUpdate[];
+    };
 export type PendingDowngrade = {
   toolId: string;
   installedVersion: string;
@@ -135,7 +143,14 @@ export type HostEventPayloads = {
   "tabs.closedForLimit": { toolId: string };
   "tools.changed": ToolState;
   "tools.toast": { toolId: string; kind: string; message: string };
-  "update.available": { version: string; html_url: string };
+  "update.available": {
+    version: string;
+    html_url: string;
+    installerUrl?: string;
+    tools?: ToolUpdate[];
+  };
+  // Se emite también con la app al día; una lista vacía limpia avisos anteriores.
+  "tools.updatesAvailable": { tools: ToolUpdate[] };
   "tool.crashed": { toolId: string };
   "app.error": { kind: "uncaught" | "rejection" };
 };

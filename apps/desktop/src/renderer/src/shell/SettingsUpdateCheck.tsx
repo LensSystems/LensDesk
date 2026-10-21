@@ -31,7 +31,9 @@ export function SettingsUpdateCheck({ bridge, version }: Props) {
       {result?.kind === "available" ? (
         <Button
           className="h-7 px-3 text-xs"
-          onClick={() => void bridge.invoke("app.openExternal", { url: result.url })}
+          onClick={() =>
+            void bridge.invoke("app.openExternal", { url: result.installerUrl ?? result.url })
+          }
         >
           {t("settingsPage.updateAvailable", { version: result.version })}
         </Button>

@@ -12,20 +12,24 @@ import {
 import { useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import type { HostBridge, PendingDowngrade, ToolSummary } from "../../../shared/host-channels.ts";
+import { ToolUpdateActions } from "./ToolUpdateActions.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
-
 export type ToolDialogState =
   | { kind: "details" | "remove"; tool: ToolSummary }
   | { kind: "error"; code: string; install: boolean }
   | null;
 export function ToolDialogs({
   state,
+  update,
+  onInstall,
   pending,
   bridge,
   onClose,
   onError,
 }: {
+  update?: import("../../../shared/host-channels.ts").ToolUpdate;
+  onInstall?: () => void;
   state: ToolDialogState;
   pending: PendingDowngrade | null;
   bridge: HostBridge;
@@ -38,7 +42,6 @@ export function ToolDialogs({
   useEffect(() => {
     setDowngradeOpen(Boolean(pending));
   }, [pending]);
-  // Cada confirmación de quitar empieza con la casilla desmarcada.
   useEffect(() => {
     if (state?.kind === "remove") setDeleteData(false);
   }, [state]);
@@ -96,6 +99,7 @@ export function ToolDialogs({
                     : t("toolsPage.noPermissions")}
                 </dd>
               </dl>
+              <ToolUpdateActions update={update} bridge={bridge} onInstall={onInstall} />
               <div className="flex justify-end gap-2">
                 <Button size="lg" onClick={onClose}>
                   {t("ui.close")}

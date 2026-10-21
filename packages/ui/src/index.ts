@@ -10,6 +10,7 @@ export {
   Code,
   Database,
   Download,
+  ExternalLink,
   FileCode,
   FileJson,
   FileOutput,
