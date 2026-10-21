@@ -3,6 +3,8 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 
+import { checkSingleInstance } from "./single-instance-check.ts";
+
 const root = resolve(import.meta.dirname, "../..");
 
 test("la aplicación empaquetada pasa su smoke", () => {
@@ -41,4 +43,18 @@ test("la aplicación empaquetada pasa su smoke", () => {
       timeout: 30_000,
     });
   }
+});
+
+test("la aplicación empaquetada solo permite una instancia desde la terminal", async () => {
+  const executable =
+    process.platform === "darwin"
+      ? resolve(
+          root,
+          "apps/desktop/release",
+          process.arch === "arm64" ? "mac-arm64" : "mac",
+          "LensDesk.app/Contents/MacOS/LensDesk",
+        )
+      : resolve(root, "apps/desktop/release/win-unpacked/LensDesk.exe");
+  expect(existsSync(executable)).toBe(true);
+  await checkSingleInstance(executable, []);
 });

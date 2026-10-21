@@ -26,6 +26,7 @@ import { createTabHandlers } from "./shell/tab-handlers.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
 import { updateTitleBar, wireFullScreen } from "./shell/title-bar.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
+import { configureSingleInstance } from "./single-instance.ts";
 import { createToolWiring } from "./tools/wire-tools.ts";
 import {
   createMainLogger,
@@ -44,8 +45,16 @@ const packageJson = JSON.parse(
 const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (path) =>
   app.setPath("userData", path),
 );
-const { logger, logsDir } = createMainLogger(app.getPath("userData"));
 let shellWindow: BrowserWindow | undefined;
+// LensDesk solo se abre una vez por carpeta de datos (el bloqueo depende de `userData`, ya fijada).
+// El segundo arranque sale aquí, antes de abrir el registro o la base, y enfoca la primera ventana.
+configureSingleInstance({
+  requestLock: () => app.requestSingleInstanceLock(),
+  quit: () => process.exit(0),
+  onSecondInstance: (listener) => app.on("second-instance", listener),
+  getWindow: () => shellWindow,
+});
+const { logger, logsDir } = createMainLogger(app.getPath("userData"));
 let shellContents: Electron.WebContents | undefined;
 // Aviso al shell por errores no capturados, como mucho uno cada 10 s y sin detalles.
 logProcessErrors(
