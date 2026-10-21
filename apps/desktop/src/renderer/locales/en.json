@@ -1,5 +1,6 @@
 {
   "shell": {
+    "tabPosition": "{{name}}, tab {{n}} of {{total}}",
     "label": "LensDesk",
     "labelCompact": "LD",
     "labelFullScreen": "LensSystems - LensDesk",

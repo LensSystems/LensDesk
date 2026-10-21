@@ -31,6 +31,8 @@ export function createToolWiring(options: {
   context: () => { locale: string; theme: string; accent?: "blue" | "green" };
   showingTab: () => boolean;
   onShowActiveTool(callback: () => void): void;
+  // Herramientas o pestañas cambiaron fuera del almacén de pestañas (instalar, quitar).
+  onCatalogChanged?: () => void;
   logger: Logger;
 }) {
   const fileTokens = createFileTokens({
@@ -91,11 +93,13 @@ export function createToolWiring(options: {
         properties: ["openFile"],
         filters: [{ name: "LensDesk Tool", extensions: ["lenspkg"] }],
       }),
-    emit: () =>
+    emit: () => {
       options.shellContents()?.send("tools.changed", {
         tools: installer?.registry.list().map(({ installPath: _path, ...tool }) => tool) ?? [],
         pendingDowngrade: installer?.getPendingDowngrade() ?? null,
-      }),
+      });
+      options.onCatalogChanged?.();
+    },
   });
   return {
     handlers,
@@ -128,6 +132,7 @@ export function createToolWiring(options: {
             () => createTabsStore(db, () => undefined).list(),
             (tabs) => options.shellContents()?.send("tabs.changed", { tabs }),
           );
+          options.onCatalogChanged?.();
           showActive();
         },
         trustedKeys: () =>

@@ -57,7 +57,7 @@ const defaults: SettingValues = {
 // Cuenta los eventos recibidos por campo: si uno llega mientras hydrate espera, su dato es más
 // reciente que la respuesta de hydrate y no se pisa.
 const eventCounts = { tabs: 0, settings: 0, context: 0, fullScreen: 0 };
-export const useShellStore = create<State>((set) => ({
+export const useShellStore = create<State>((set, get) => ({
   fullScreen: false,
   tabs: [],
   tools: [],
@@ -168,7 +168,15 @@ export const useShellStore = create<State>((set) => ({
       }),
       bridge.on("tabs.changed", ({ tabs }) => {
         eventCounts.tabs += 1;
-        set({ tabs, page: tabs.some((tab) => tab.active) ? "tab" : "tools" });
+        const { tabs: before, page } = get();
+        // Solo reordenar (mismas pestañas y activa, otro orden) no saca de Herramientas ni de
+        // Ajustes; activar la pestaña ya activa publica la misma lista y sí vuelve a ella.
+        const entries = (list: typeof tabs) => list.map((tab) => `${tab.toolId}:${tab.active}`);
+        const reordered =
+          entries(before).join() !== entries(tabs).join() &&
+          entries(before).sort().join() === entries(tabs).sort().join();
+        if (page !== "tab" && reordered) set({ tabs });
+        else set({ tabs, page: tabs.some((tab) => tab.active) ? "tab" : "tools" });
       }),
       bridge.on("settings.changed", ({ key, value }) => {
         eventCounts.settings += 1;

@@ -81,6 +81,12 @@ export const ipcSchemas = {
     request: z.object({ toolId: z.string().min(1) }).strict(),
     response: tabsResponseSchema,
   },
+  "tabs.move": {
+    request: z
+      .object({ toolId: z.string().min(1), toIndex: z.number().int().nonnegative() })
+      .strict(),
+    response: tabsResponseSchema,
+  },
   "tabs.activate": {
     request: z.object({ toolId: z.string().min(1) }).strict(),
     response: tabsResponseSchema,

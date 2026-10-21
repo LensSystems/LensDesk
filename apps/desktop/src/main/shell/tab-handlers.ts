@@ -9,6 +9,7 @@ export function createTabHandlers(options: {
     undoClose(toolId: string): Tabs;
     close(toolId: string): Tabs;
     activate(toolId: string): Tabs;
+    move(toolId: string, toIndex: number): Tabs;
   };
   follow(tabs: Tabs): void;
   notifyClosed(toolId: string): void;
@@ -30,6 +31,10 @@ export function createTabHandlers(options: {
     return { tabs };
   };
   return {
+    // Mover no abre ni cierra nada: no cambia la vista visible.
+    "tabs.move": ({ toolId, toIndex }: { toolId: string; toIndex: number }) => ({
+      tabs: options.tabsStore().move(toolId, toIndex),
+    }),
     "tabs.list": () => ({ tabs: options.tabsStore().list() }),
     "tabs.open": ({ toolId }: { toolId: string }) => apply((store) => store.open(toolId)),
     "tabs.undoClose": ({ toolId }: { toolId: string }) => apply((store) => store.undoClose(toolId)),

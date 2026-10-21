@@ -1,8 +1,28 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createTranslator } from "./i18n.ts";
-import { buildMenuTemplate } from "./menu.ts";
+import { buildMenuTemplate, tabMenuEntries } from "./menu.ts";
 
 describe("buildMenuTemplate", () => {
+  it("asigna el menú Ventana y sus atajos al orden recibido", () => {
+    const activate = vi.fn();
+    const template = buildMenuTemplate(
+      createTranslator("es"),
+      "darwin",
+      [
+        { toolId: "two", name: "Dos" },
+        { toolId: "one", name: "Uno" },
+      ],
+      activate,
+    );
+    const items = template.find((item) => item.label === "Ventana")?.submenu ?? [];
+    expect(items.slice(-2).map(({ label, accelerator }) => ({ label, accelerator }))).toEqual([
+      { label: "Dos", accelerator: "CmdOrCtrl+1" },
+      { label: "Uno", accelerator: "CmdOrCtrl+2" },
+    ]);
+    items.at(-1)?.click?.();
+    expect(activate).toHaveBeenCalledWith("one");
+  });
+
   it.each(["darwin", "win32"] as const)("builds localized menus for %s", (platform) => {
     for (const locale of ["es", "en"] as const) {
       const template = buildMenuTemplate(createTranslator(locale), platform);
@@ -28,4 +48,20 @@ describe("buildMenuTemplate", () => {
       );
     }
   });
+});
+
+it("nombra las pestañas del menú Ventana en el idioma activo y en su orden", () => {
+  const manifests: Record<string, { manifest: Record<string, unknown> }> = {
+    notes: { manifest: { name: { es: "Notas", en: "Notes" } } },
+  };
+  expect(
+    tabMenuEntries(
+      [{ toolId: "missing" }, { toolId: "notes" }],
+      { get: (id) => manifests[id] },
+      "en",
+    ),
+  ).toEqual([
+    { toolId: "missing", name: "missing" },
+    { toolId: "notes", name: "Notes" },
+  ]);
 });

@@ -25,6 +25,92 @@ afterEach(() => {
 });
 
 describe("tabs store", () => {
+  it("revierte todas las posiciones si falla una actualización", () => {
+    const database = open();
+    const emit = vi.fn();
+    const store = createTabsStore(database, emit);
+    for (const id of ["one", "two"]) {
+      insertTool(database, id);
+      store.open(id);
+    }
+    const before = store.list();
+    emit.mockClear();
+    database.exec(`CREATE TRIGGER fail_move BEFORE UPDATE OF position ON open_tabs
+      WHEN NEW.tool_id = 'one' AND NEW.position = 1
+      BEGIN SELECT RAISE(ABORT, 'move failed'); END`);
+    expect(() => store.move("two", 0)).toThrow("move failed");
+    expect(store.list()).toEqual(before);
+    expect(emit).not.toHaveBeenCalled();
+    database.close();
+  });
+
+  it("el handler publica el nuevo orden sin mover la vista ni cerrar herramientas", () => {
+    const database = open();
+    const emit = vi.fn();
+    const store = createTabsStore(database, emit);
+    for (const id of ["one", "two"]) {
+      insertTool(database, id);
+      store.open(id);
+    }
+    emit.mockClear();
+    const follow = vi.fn();
+    const closeTool = vi.fn();
+    const handlers = createTabHandlers({
+      tabsStore: () => store,
+      follow,
+      closeTool,
+      notifyClosed: vi.fn(),
+      hideAll: vi.fn(),
+      leaveTab: vi.fn(),
+    });
+    const result = handlers["tabs.move"]({ toolId: "two", toIndex: 0 });
+    expect(result.tabs.map((tab) => tab.toolId)).toEqual(["two", "one"]);
+    expect(emit).toHaveBeenCalledExactlyOnceWith(result.tabs);
+    expect(follow).not.toHaveBeenCalled();
+    expect(closeTool).not.toHaveBeenCalled();
+    database.close();
+  });
+
+  it("mueve al inicio, al final y a sí misma, publica y conserva la activa", () => {
+    const database = open();
+    const emit = vi.fn();
+    const store = createTabsStore(database, emit);
+    for (const id of ["one", "two", "three"]) {
+      insertTool(database, id);
+      store.open(id);
+    }
+    emit.mockClear();
+    expect(store.move("three", 0).map((tab) => tab.toolId)).toEqual(["three", "one", "two"]);
+    const moved = store.move("three", 2);
+    expect(moved).toEqual([
+      { toolId: "one", position: 0, active: false },
+      { toolId: "two", position: 1, active: false },
+      { toolId: "three", position: 2, active: true },
+    ]);
+    expect(store.move("two", 1)).toEqual(moved);
+    expect(createTabsStore(database, () => undefined).list()).toEqual(moved);
+    // Mover a su misma posición no publica.
+    expect(emit).toHaveBeenCalledTimes(2);
+    database.close();
+  });
+
+  it("rechaza índices fuera de rango sin cambiar ni publicar el orden", () => {
+    const database = open();
+    insertTool(database, "one");
+    const emit = vi.fn();
+    const store = createTabsStore(database, emit);
+    const before = store.open("one");
+    emit.mockClear();
+    for (const index of [-1, 1, 0.5, Number.NaN]) {
+      expect(() => store.move("one", index)).toThrow(
+        expect.objectContaining({ code: "E_INVALID_PARAMS" }),
+      );
+    }
+    expect(store.list()).toEqual(before);
+    expect(emit).not.toHaveBeenCalled();
+    database.close();
+  });
+
   it("cierra la menos usada no activa y deshacer restaura su posición sin superar ocho", () => {
     const database = open();
     const store = createTabsStore(database, () => undefined);
@@ -131,12 +217,13 @@ describe("tabs store", () => {
     const store = createTabsStore(database, () => undefined);
     store.open("one");
     store.open("two");
+    store.move("two", 0);
     database.close();
 
     const reopened = openHostDatabase(directory);
     expect(createTabsStore(reopened, () => undefined).list()).toEqual([
-      { toolId: "one", position: 0, active: false },
-      { toolId: "two", position: 1, active: true },
+      { toolId: "two", position: 0, active: true },
+      { toolId: "one", position: 1, active: false },
     ]);
     reopened.close();
   });

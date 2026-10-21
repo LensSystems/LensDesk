@@ -110,6 +110,26 @@ export function createTabsStore(database: SqliteDatabase, emit: (tabs: ShellTab[
       }
       return publish();
     },
+    move(toolId: string, toIndex: number): ShellTab[] {
+      const tabs = list();
+      if (!Number.isInteger(toIndex) || toIndex < 0 || toIndex >= tabs.length)
+        throw new LensError("E_INVALID_PARAMS", "La posición de pestaña no es válida.");
+      const fromIndex = tabs.findIndex((tab) => tab.toolId === toolId);
+      if (fromIndex < 0) throw new LensError("E_TOOL_NOT_FOUND", "La pestaña no está abierta.");
+      // Soltar en el mismo sitio no cambia nada ni publica un evento.
+      if (fromIndex === toIndex) return tabs;
+      const [tab] = tabs.splice(fromIndex, 1);
+      if (tab) tabs.splice(toIndex, 0, tab);
+      transaction(() => {
+        database.prepare("UPDATE open_tabs SET position = position + 1000000").run();
+        tabs.forEach((current, position) => {
+          database
+            .prepare("UPDATE open_tabs SET position = ? WHERE tool_id = ?")
+            .run(position, current.toolId);
+        });
+      });
+      return publish();
+    },
     activate(toolId: string): ShellTab[] {
       if (!database.prepare("SELECT tool_id FROM open_tabs WHERE tool_id = ?").get(toolId))
         throw new LensError("E_TOOL_NOT_FOUND", "La pestaña no está abierta.");

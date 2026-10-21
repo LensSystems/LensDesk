@@ -119,4 +119,32 @@ describe("store del shell", () => {
     });
     unsubscribe();
   });
+
+  it("reordenar pestañas no saca de Ajustes; abrir otra sí lleva a la pestaña", () => {
+    const { bridge, listeners } = fakeBridge();
+    const one = { toolId: "one", position: 0, active: true };
+    const two = { toolId: "two", position: 1, active: false };
+    useShellStore.setState({ tabs: [one, two], page: "settings" });
+    const unsubscribe = useShellStore.getState().subscribe(bridge);
+    listeners.get("tabs.changed")?.({
+      tabs: [
+        { ...two, position: 0 },
+        { ...one, position: 1 },
+      ],
+    });
+    expect(useShellStore.getState().page).toBe("settings");
+    expect(useShellStore.getState().tabs.map((tab) => tab.toolId)).toEqual(["two", "one"]);
+    listeners.get("tabs.changed")?.({
+      tabs: [
+        { ...two, position: 0, active: true },
+        { ...one, position: 1, active: false },
+      ],
+    });
+    expect(useShellStore.getState().page).toBe("tab");
+    // Volver desde Ajustes a la pestaña ya activa publica la misma lista: muestra la pestaña.
+    useShellStore.setState({ page: "settings" });
+    listeners.get("tabs.changed")?.({ tabs: useShellStore.getState().tabs });
+    expect(useShellStore.getState().page).toBe("tab");
+    unsubscribe();
+  });
 });

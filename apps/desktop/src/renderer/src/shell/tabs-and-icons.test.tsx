@@ -56,6 +56,26 @@ function makeBridge(dismissed: string | null = null) {
 }
 
 describe("pestañas", () => {
+  it("reordena con Ctrl+Mayús y anuncia la posición sin activar otra pestaña", async () => {
+    const { bridge, invoke } = makeBridge();
+    invoke.mockImplementation(async (channel: string) => {
+      if (channel !== "tabs.move") throw new Error("Canal inesperado");
+      return {
+        ok: true as const,
+        data: { tabs: [{ ...tabs[1], position: 0 }, { ...tabs[0], position: 1 }, tabs[2]] },
+      } as never;
+    });
+    renderBar(bridge);
+    const tab = screen.getByRole("tab", { name: "Notas" });
+    expect(tab).toHaveAttribute("aria-posinset", "1");
+    expect(tab).toHaveAttribute("aria-setsize", "3");
+    fireEvent.keyDown(tab, { key: "ArrowLeft", ctrlKey: true, shiftKey: true });
+    expect(invoke).not.toHaveBeenCalled();
+    fireEvent.keyDown(tab, { key: "ArrowRight", ctrlKey: true, shiftKey: true });
+    expect(invoke).toHaveBeenCalledExactlyOnceWith("tabs.move", { toolId: "notas", toIndex: 1 });
+    await waitFor(() => expect(screen.getByText("Notas, pestaña 2 de 3")).toBeInTheDocument());
+  });
+
   beforeEach(async () => {
     await rendererI18n.changeLanguage("es");
     useShellStore.setState({ tabs, tools, page: "tab", fullScreen: false });

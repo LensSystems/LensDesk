@@ -20,13 +20,14 @@ import { getSetting, setSetting } from "./db/settings-repo.ts";
 import { createTranslator } from "./i18n.ts";
 import { createErrorNotifier } from "./log/error-notifier.ts";
 import { logProcessErrors, logRendererCrashes } from "./log/wire-logging.ts";
-import { buildMenuTemplate } from "./menu.ts";
+import { buildMenuTemplate, tabMenuEntries } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 import { createTabHandlers } from "./shell/tab-handlers.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
 import { updateTitleBar, wireFullScreen } from "./shell/title-bar.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 import { configureSingleInstance } from "./single-instance.ts";
+import { createToolRegistry } from "./tools/registry.ts";
 import { createToolWiring } from "./tools/wire-tools.ts";
 import {
   createMainLogger,
@@ -87,7 +88,20 @@ const setNativeMenu = (locale: "es" | "en"): void => {
   const t = createTranslator(locale);
   Menu.setApplicationMenu(
     Menu.buildFromTemplate(
-      buildMenuTemplate(t, process.platform) as Electron.MenuItemConstructorOptions[],
+      buildMenuTemplate(
+        t,
+        process.platform,
+        database ? tabMenuEntries(tabsStore().list(), createToolRegistry(database), locale) : [],
+        (toolId) => {
+          // La entrada puede quedar vieja un instante si la pestaña se acaba de cerrar.
+          if (
+            tabsStore()
+              .list()
+              .some((tab) => tab.toolId === toolId)
+          )
+            tabHandlers["tabs.activate"]({ toolId });
+        },
+      ) as Electron.MenuItemConstructorOptions[],
     ),
   );
 };
@@ -114,9 +128,10 @@ const settingsHandlers = createSettingsHandlers({
 });
 let persistentTabs: ReturnType<typeof createTabsStore> | undefined;
 const tabsStore = () =>
-  (persistentTabs ??= createTabsStore(requireDatabase(), (tabs) =>
-    shellContents?.send("tabs.changed", { tabs }),
-  ));
+  (persistentTabs ??= createTabsStore(requireDatabase(), (tabs) => {
+    shellContents?.send("tabs.changed", { tabs });
+    setNativeMenu(settingsHandlers["app.getContext"]().locale);
+  }));
 toolWiring = createToolWiring({
   app,
   database: () => database,
@@ -128,6 +143,7 @@ toolWiring = createToolWiring({
   onShowActiveTool: (callback) => {
     showActiveTool = callback;
   },
+  onCatalogChanged: () => setNativeMenu(settingsHandlers["app.getContext"]().locale),
   logger,
 });
 logRendererCrashes(app as never, {

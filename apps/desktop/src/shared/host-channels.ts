@@ -10,6 +10,7 @@ export const HOST_CHANNELS = [
   "tabs.close",
   "tabs.undoClose",
   "tabs.activate",
+  "tabs.move",
   "shell.showPage",
   "tools.list",
   "tools.pickAndInstall",
@@ -47,6 +48,7 @@ export type HostPayloads = {
   "tabs.close": { toolId: string };
   "tabs.undoClose": { toolId: string };
   "tabs.activate": { toolId: string };
+  "tabs.move": { toolId: string; toIndex: number };
   "shell.showPage": { page: "tools" | "settings" };
   "tools.list": Record<string, never>;
   "tools.pickAndInstall": Record<string, never>;
@@ -79,6 +81,7 @@ export type HostResponses = {
   "tabs.close": { tabs: ShellTab[] };
   "tabs.undoClose": { tabs: ShellTab[] };
   "tabs.activate": { tabs: ShellTab[] };
+  "tabs.move": { tabs: ShellTab[] };
   "shell.showPage": { page: "tools" | "settings" };
   "tools.list": ToolState;
   "tools.pickAndInstall": ToolState;

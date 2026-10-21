@@ -13,6 +13,10 @@ for (const width of [760, 900]) {
     try {
       const shell = await shellPage(app);
       const window = await app.browserWindow(shell);
+      // Con el tamaño inicial (1100 px) cabe la marca completa.
+      await expect(
+        shell.locator("[data-brand]").getByText("LensDesk", { exact: true }),
+      ).toBeVisible();
       await window.evaluate((browserWindow) => browserWindow.setSize(400, 300));
       const size = await window.evaluate((browserWindow) => browserWindow.getSize());
       expect(size[0]).toBeGreaterThanOrEqual(760);

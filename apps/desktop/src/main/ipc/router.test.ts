@@ -12,6 +12,7 @@ const unusedHandlers = {
   "tabs.close": () => ({ tabs: [] }),
   "tabs.undoClose": () => ({ tabs: [] }),
   "tabs.activate": () => ({ tabs: [] }),
+  "tabs.move": () => ({ tabs: [] }),
   "shell.showPage": ({ page }: { page: "tools" | "settings" }) => ({ page }),
   "tools.list": () => ({ tools: [], pendingDowngrade: null }),
   "tools.pickAndInstall": () => ({ tools: [], pendingDowngrade: null }),

@@ -12,11 +12,29 @@ import { HeaderNotices } from "./HeaderNotices.tsx";
 import { TabItem } from "./TabItem.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
+import { useTabDrag } from "./use-tab-drag.ts";
 
 type TabBarProps = { tabs: ShellTab[]; bridge: Window["lensdeskHost"] };
 
 export function TabBar({ tabs, bridge }: TabBarProps) {
   const { t, i18n } = useTranslation();
+  const [announcement, setAnnouncement] = useState("");
+  const reorder = async (toolId: string, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= tabs.length) return;
+    const result = await bridge.invoke("tabs.move", { toolId, toIndex });
+    if (!result.ok) return;
+    setFocusedIndex(toIndex);
+    requestAnimationFrame(() => tabRefs.current[toIndex]?.focus());
+    const tool = tools.find((candidate) => candidate.id === toolId);
+    setAnnouncement(
+      t("shell.tabPosition", {
+        name: tool ? toolText(tool, i18n.resolvedLanguage).name : toolId,
+        n: toIndex + 1,
+        total: result.data.tabs.length,
+      }),
+    );
+  };
+  const drag = useTabDrag((toolId, index) => void reorder(toolId, index));
   const listRef = useRef<HTMLDivElement>(null);
   const [space, setSpace] = useState({ available: Infinity, required: 0 });
   const compact = tabs.length > 5 || space.available < space.required;
@@ -70,16 +88,19 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
         paddingRight:
           !fullScreen && bridge.platform === "win32" ? WIN_CONTROLS_WIDTH + 16 : undefined,
       }}
-      className="ld-drag @container relative flex items-center gap-2 bg-bg px-4 @max-[1000px]:gap-1"
+      className="ld-drag @container relative flex items-center gap-2 bg-bg px-4 @max-[880px]:gap-1"
     >
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </span>
       <div
         data-brand
-        className="w-48 shrink-0 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none @max-[1000px]:w-8"
+        className="w-48 shrink-0 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none @max-[880px]:w-8"
       >
-        <span className="block truncate font-bold text-muted @max-[1000px]:hidden">
+        <span className="block truncate font-bold text-muted @max-[880px]:hidden">
           {t(fullScreen ? "shell.labelFullScreen" : "shell.label")}
         </span>
-        <span className="hidden font-bold text-muted @max-[1000px]:block">
+        <span className="hidden font-bold text-muted @max-[880px]:block">
           {t("shell.labelCompact")}
         </span>
       </div>
@@ -103,6 +124,19 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
               <TabItem
                 key={tab.toolId}
                 tab={tab}
+                index={index}
+                total={tabs.length}
+                drag={drag}
+                dropAfter={drag.drop?.index === tabs.length - 1 && index === tabs.length - 1}
+                dropBefore={
+                  drag.drop !== null &&
+                  index ===
+                    drag.drop.index +
+                      (tabs.findIndex((item) => item.toolId === drag.drop?.toolId) <=
+                      drag.drop.index
+                        ? 1
+                        : 0)
+                }
                 bridge={bridge}
                 name={names[index] ?? tab.toolId}
                 Icon={Icon}
@@ -114,6 +148,15 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
                 }}
                 onFocus={() => setFocusedIndex(index)}
                 onKeyDown={(event) => {
+                  if (
+                    event.ctrlKey &&
+                    event.shiftKey &&
+                    (event.key === "ArrowLeft" || event.key === "ArrowRight")
+                  ) {
+                    event.preventDefault();
+                    void reorder(tab.toolId, index + (event.key === "ArrowRight" ? 1 : -1));
+                    return;
+                  }
                   let target = index;
                   if (event.key === "ArrowRight") target = (index + 1) % tabs.length;
                   else if (event.key === "ArrowLeft")
@@ -130,7 +173,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
           })}
         </div>
       </div>
-      <div className="flex min-w-0 w-64 shrink-0 items-center justify-end gap-1 @max-[1000px]:w-56">
+      <div className="flex min-w-0 w-64 shrink-0 items-center justify-end gap-1 @max-[880px]:w-56">
         <HeaderNotices bridge={bridge} />
         <IconButton
           className="ld-no-drag shrink-0"
