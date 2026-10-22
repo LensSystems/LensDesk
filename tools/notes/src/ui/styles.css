@@ -2,7 +2,7 @@
 @import "@lensdesk/ui/styles.css";
 
 body {
-  min-width: 640px;
+  min-width: 0;
   min-height: 100vh;
 }
 .code-editor:focus-within {
@@ -15,6 +15,7 @@ body {
   outline: none;
 }
 .notes-app {
+  container: notes / inline-size;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -22,6 +23,7 @@ body {
   padding: 0 12px 12px;
 }
 .workspace {
+  min-width: 0;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -142,4 +144,86 @@ body {
 .empty-state {
   align-items: center;
   justify-content: center;
+}
+
+.notes-sidebar,
+.sidebar-wide {
+  display: flex;
+  min-height: 0;
+  flex: none;
+}
+.notes-sidebar {
+  width: 300px;
+  transition: width 150ms ease-out;
+}
+.sidebar-rail {
+  display: none;
+  /* fieldset: sin margen ni ancho mínimo del navegador. */
+  min-width: 0;
+  margin: 0;
+}
+.note-list {
+  min-width: 0;
+  max-width: 100%;
+}
+.sidebar-overlay {
+  left: 72px;
+  top: 12px;
+  width: 320px;
+  max-height: calc(100vh - 24px);
+  padding: 32px 0 0;
+  gap: 0;
+  overflow: hidden;
+}
+.sidebar-overlay .note-list {
+  width: 100%;
+  max-height: calc(100vh - 60px);
+  border: 0;
+  border-radius: 0;
+}
+.editor-toolbar {
+  min-width: 0;
+  transition:
+    padding 150ms ease-out,
+    gap 150ms ease-out;
+}
+@container notes (max-width: 960px) {
+  .notes-sidebar {
+    width: 48px;
+  }
+  .sidebar-wide {
+    display: none;
+  }
+  .sidebar-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 48px;
+    padding: 12px 0;
+    border: 1px solid var(--ld-border);
+    border-radius: var(--ld-radius-lg);
+    background: var(--ld-surface);
+    overflow-y: auto;
+  }
+  .editor-toolbar {
+    padding: 0 12px;
+    gap: 4px;
+  }
+  .compact-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notes-sidebar,
+  .editor-toolbar {
+    transition: none;
+  }
 }

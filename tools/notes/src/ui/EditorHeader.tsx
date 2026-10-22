@@ -1,4 +1,4 @@
-import { Button, Copy, Eye, Lock, Pencil, SegmentedControl, Upload } from "@lensdesk/ui";
+import { Button, Copy, Eye, Lock, Pencil, SegmentedControl, Tooltip, Upload } from "@lensdesk/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Note } from "./NoteList.tsx";
@@ -30,14 +30,16 @@ export function EditorHeader({
   useEffect(() => () => clearTimeout(copyTimer.current), []);
   return (
     <header className="editor-toolbar">
-      <Button
-        data-vault-trigger
-        aria-label={t(note.private ? "vault.remove" : "vault.makePrivate")}
-        aria-pressed={Boolean(note.private)}
-        onClick={onPrivate}
-      >
-        <Lock size={14} aria-hidden="true" />
-      </Button>
+      <Tooltip label={t(note.private ? "vault.remove" : "vault.makePrivate")}>
+        <Button
+          data-vault-trigger
+          aria-label={t(note.private ? "vault.remove" : "vault.makePrivate")}
+          aria-pressed={Boolean(note.private)}
+          onClick={onPrivate}
+        >
+          <Lock size={14} aria-hidden="true" />
+        </Button>
+      </Tooltip>
       <NoteTitle title={note.title} onRename={onRename} />
       <SegmentedControl
         aria-label={t("mode")}
@@ -52,41 +54,50 @@ export function EditorHeader({
             value: "edit",
             disabled: locked,
             label: (
-              <span className="flex items-center gap-1">
-                <Pencil size={12} aria-hidden="true" />
-                {t("edit")}
-              </span>
+              <Tooltip label={t("edit")}>
+                <span className="flex items-center gap-1">
+                  <Pencil size={12} aria-hidden="true" />
+                  <span className="compact-label">{t("edit")}</span>
+                </span>
+              </Tooltip>
             ),
           },
           {
             value: "preview",
             disabled: locked,
             label: (
-              <span className="flex items-center gap-1">
-                <Eye size={12} aria-hidden="true" />
-                {t("preview")}
-              </span>
+              <Tooltip label={t("preview")}>
+                <span className="flex items-center gap-1">
+                  <Eye size={12} aria-hidden="true" />
+                  <span className="compact-label">{t("preview")}</span>
+                </span>
+              </Tooltip>
             ),
           },
         ]}
       />
-      <Button
-        type="button"
-        disabled={locked}
-        onClick={async () => {
-          if (!(await onCopy())) return;
-          setCopied(true);
-          clearTimeout(copyTimer.current);
-          copyTimer.current = setTimeout(() => setCopied(false), 2000);
-        }}
-      >
-        <Copy size={14} aria-hidden="true" />
-        {t(copied ? "copied" : "copyNote")}
-      </Button>
-      <Button type="button" disabled={locked} onClick={onExport}>
-        <Upload size={14} aria-hidden="true" />
-        {t("export")}
-      </Button>
+      <Tooltip label={t(copied ? "copied" : "copyNote")}>
+        <Button
+          aria-label={t(copied ? "copied" : "copyNote")}
+          type="button"
+          disabled={locked}
+          onClick={async () => {
+            if (!(await onCopy())) return;
+            setCopied(true);
+            clearTimeout(copyTimer.current);
+            copyTimer.current = setTimeout(() => setCopied(false), 2000);
+          }}
+        >
+          <Copy size={14} aria-hidden="true" />
+          <span className="compact-label">{t(copied ? "copied" : "copyNote")}</span>
+        </Button>
+      </Tooltip>
+      <Tooltip label={t("export")}>
+        <Button aria-label={t("export")} type="button" disabled={locked} onClick={onExport}>
+          <Upload size={14} aria-hidden="true" />
+          <span className="compact-label">{t("export")}</span>
+        </Button>
+      </Tooltip>
     </header>
   );
 }

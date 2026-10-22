@@ -111,5 +111,6 @@
     "show": "Mostrar secreto",
     "hide": "Ocultar secreto",
     "warning": "Las contraseñas quedarán sin cifrar. ¿Quieres quitar la privacidad?"
-  }
+  },
+  "showNotes": "Mostrar lista de notas"
 }

@@ -221,7 +221,10 @@ describe("interfaz de Notas", () => {
     await act(async () => fake.visibility(false));
     expect(fake.invoke).toHaveBeenCalledWith("update", { id: "2", body_md: "Segundo oculto" });
     expect(screen.getByRole("radio", { name: "Ver" })).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Nueva nota" }));
+    // La barra plegada también está en el DOM (jsdom no aplica las consultas de contenedor).
+    const [create] = screen.getAllByRole("button", { name: "Nueva nota" });
+    if (!create) throw new Error("Falta Nueva nota");
+    fireEvent.click(create);
     await waitFor(() =>
       expect(screen.getByRole("radio", { name: "Editar" })).toHaveAttribute("aria-checked", "true"),
     );
@@ -478,7 +481,8 @@ describe("interfaz de Notas", () => {
     const fake = fakeClient();
     render(<App client={fake.client as never} />);
     await screen.findAllByText("Aún no hay notas. Crea una nota nueva para comenzar.");
-    const importButton = screen.getByRole("button", { name: "Importar Markdown" });
+    const [importButton] = screen.getAllByRole("button", { name: "Importar Markdown" });
+    if (!importButton) throw new Error("Falta Importar");
     expect(importButton.querySelector("svg")).toHaveClass("lucide-download");
     fireEvent.click(importButton);
     await screen.findByRole("button", { name: "Uno" });

@@ -111,5 +111,6 @@
     "show": "Show secret",
     "hide": "Hide secret",
     "warning": "Passwords will no longer be encrypted. Remove privacy?"
-  }
+  },
+  "showNotes": "Show notes list"
 }
