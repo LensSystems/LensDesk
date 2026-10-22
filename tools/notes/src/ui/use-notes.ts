@@ -1,6 +1,7 @@
 import type { createToolClient } from "@lensdesk/sdk";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ensureGuide } from "./guide.ts";
 import type { Note } from "./NoteList.tsx";
 import { exportMarkdown, importMarkdown } from "./note-markdown.ts";
 import { useAppContext } from "./use-app-context.ts";
@@ -47,6 +48,8 @@ export function useNotes(client: Client) {
     async (inTrash = trashed, search = query): Promise<boolean> => {
       const request = ++latestLoad.current;
       try {
+        // La guía es opcional: si falla, la lista se carga igual y se reintenta en la siguiente carga.
+        await ensureGuide(client).catch(() => undefined);
         const rows =
           search.trim() && !inTrash
             ? await client.backend.invoke<Note[]>("search", { query: search })

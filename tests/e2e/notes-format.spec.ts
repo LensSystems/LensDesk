@@ -17,7 +17,10 @@ test("historial con botones y teclado, formato y reinicio entre notas", async ()
     await shell.getByRole("button", { name: "Abrir Notas", exact: true }).click();
     const notes = await toolPage(app, "notes");
     const create = notes.getByRole("button", { name: "Nueva nota" }).first();
+    // Ya existe la guía: se espera a que el editor de la nota nueva sustituya al suyo.
+    await notes.getByRole("heading", { name: "Guía de Markdown" }).waitFor();
     await create.click();
+    await notes.getByRole("textbox", { name: "Título de la nota" }).waitFor();
     const undo = notes.getByRole("button", { name: "Deshacer", exact: true });
     const redo = notes.getByRole("button", { name: "Rehacer", exact: true });
     const editor = notes.locator(".cm-content");

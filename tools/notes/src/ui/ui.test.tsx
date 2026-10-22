@@ -95,6 +95,7 @@ function fakeClient() {
     return null;
   });
   const client = {
+    storage: { get: vi.fn(async () => true), set: vi.fn() },
     backend: { invoke },
     files: {
       pickOpen: vi.fn(async () => files),
