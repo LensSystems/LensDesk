@@ -11,6 +11,7 @@ import {
   logInstallFailure,
 } from "../log/wire-logging.ts";
 import { createTabsStore } from "../shell/tabs-store.ts";
+import { spellcheckEnabled } from "../spellcheck.ts";
 import { createBackendHost } from "./backend-host.ts";
 import { scanDevTools } from "./dev-tools.ts";
 import { createFileTokens } from "./file-tokens.ts";
@@ -162,6 +163,7 @@ export function createToolWiring(options: {
         registry: installer.registry,
         views,
         context: options.context,
+        spellcheck: spellcheckEnabled(process.platform),
         hostVersion: options.version,
         shellContents: options.shellContents,
         clipboard: (text) => clipboard.writeText(text),

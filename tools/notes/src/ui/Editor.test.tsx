@@ -77,3 +77,43 @@ it("actualiza botones de historial y empieza vacío al montar otra nota", () => 
   expect(screen.getByRole("button", { name: "Deshacer" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Rehacer" })).toBeDisabled();
 });
+
+it("activa la ortografía sin rehacer el editor ni perder el historial", () => {
+  const props = {
+    preview: false,
+    onMode: vi.fn(),
+    onCopy: vi.fn(async () => true),
+    onCopyCode: vi.fn(async () => {}),
+    onChange: vi.fn(),
+    onBlur: vi.fn(),
+    onExport: vi.fn(),
+    onRename: vi.fn(async () => {}),
+    note: {
+      id: "1",
+      title: "",
+      body_md: "Texto",
+      pinned: false,
+      created_at: "now",
+      updated_at: "now",
+      deleted_at: null,
+    },
+  };
+  const { rerender } = render(
+    <TooltipProvider>
+      <Editor {...props} spellcheck={false} />
+    </TooltipProvider>,
+  );
+  const content = screen.getByRole("textbox", { name: "Editar" });
+  expect(content.getAttribute("spellcheck")).toBe("false");
+  const view = EditorView.findFromDOM(content);
+  if (!view) throw new Error("Editor ausente");
+  act(() => view.dispatch({ changes: { from: 5, insert: " nuevo" } }));
+  rerender(
+    <TooltipProvider>
+      <Editor {...props} spellcheck />
+    </TooltipProvider>,
+  );
+  expect(screen.getByRole("textbox", { name: "Editar" })).toBe(content);
+  expect(content.getAttribute("spellcheck")).toBe("true");
+  expect(screen.getByRole("button", { name: "Deshacer" })).toBeEnabled();
+});

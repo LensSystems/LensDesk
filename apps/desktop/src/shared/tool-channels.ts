@@ -1,4 +1,4 @@
-import type { ToolBridge } from "@lensdesk/sdk";
+import type { SpellingInfo, ToolBridge } from "@lensdesk/sdk";
 import type { LensErrorCode, Result } from "@lensdesk/sdk/errors";
 
 export const TOOL_CHANNELS = [
@@ -19,6 +19,7 @@ export const TOOL_CHANNELS = [
   "ui.openExternal",
 ] as const;
 export const TOOL_EVENTS = [
+  "app.spelling",
   "files.drop",
   "backend.progress",
   "app.contextChanged",
@@ -29,6 +30,7 @@ export const TOOL_DROP_REGISTER_CHANNEL = "lensdesk:tool-drop-register-internal"
 export type ToolChannel = (typeof TOOL_CHANNELS)[number];
 export type ToolEvent = (typeof TOOL_EVENTS)[number];
 export type ToolContextPayload = {
+  spellcheck?: boolean;
   locale: string;
   theme: string;
   accent?: "blue" | "green";
@@ -97,6 +99,23 @@ export function createToolBridge(invoke: Invoker, subscribe: Subscriber) {
         ),
     },
     app: {
+      onSpelling: (callback: (info: SpellingInfo) => void) =>
+        listen("app.spelling", (payload) => {
+          if (typeof payload !== "object" || payload === null) return;
+          const { word, suggestions } = payload as Record<string, unknown>;
+          if (
+            typeof word !== "string" ||
+            word.length > 100 ||
+            /[\r\n\u2028\u2029]/.test(word) ||
+            !Array.isArray(suggestions) ||
+            suggestions.length > 8 ||
+            !suggestions.every(
+              (item) => typeof item === "string" && item.length > 0 && item.length <= 100,
+            )
+          )
+            return;
+          callback({ word, suggestions });
+        }),
       onVisibilityChange: (callback: (visible: boolean) => void) =>
         listen("app.visibilityChanged", (payload) => {
           if (typeof payload === "boolean") callback(payload);

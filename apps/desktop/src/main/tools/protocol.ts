@@ -2,6 +2,8 @@ import { realpath, stat } from "node:fs/promises";
 import { extname, isAbsolute, relative, resolve, sep } from "node:path";
 import { protocol, session } from "electron";
 
+import { applySpellcheckPolicy } from "../spellcheck.ts";
+
 export const TOOL_CSP =
   "default-src 'self' lenstool:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'";
 
@@ -107,6 +109,7 @@ export function registerToolProtocolFor(
   if (registeredPartitions.has(partition)) return;
   registeredPartitions.add(partition);
   const toolSession = session.fromPartition(partition);
+  applySpellcheckPolicy(toolSession, process.platform);
   toolSession.protocol.handle("lenstool", async (request) => {
     const file = await resolveToolFile({ url: request.url, registry, ownerToolId: toolId });
     if (!file) return new Response("Not Found", { status: 404, headers: toolResponseHeaders() });

@@ -7,6 +7,8 @@ vi.mock("electron", () => ({
   protocol: { registerSchemesAsPrivileged: vi.fn() },
   session: {
     fromPartition: vi.fn(() => ({
+      setSpellCheckerEnabled: vi.fn(),
+      setSpellCheckerLanguages: vi.fn(),
       protocol: { handle: vi.fn() },
       setPermissionRequestHandler: vi.fn(),
       setPermissionCheckHandler: vi.fn(),

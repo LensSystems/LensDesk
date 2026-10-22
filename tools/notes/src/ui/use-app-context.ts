@@ -1,16 +1,19 @@
-import type { createToolClient } from "@lensdesk/sdk";
+import type { createToolClient, ToolContext } from "@lensdesk/sdk";
 import { applyDocumentContext, type DocumentContext } from "@lensdesk/ui";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 type Client = ReturnType<typeof createToolClient>;
 
 // Aplica tema e idioma del host, también cuando cambian en vivo.
 export function useAppContext(client: Client) {
+  const [context, setContext] = useState<ToolContext>();
   const { i18n } = useTranslation();
   useEffect(() => {
     let alive = true;
-    const applyContext = (context: DocumentContext) => {
+    const applyContext = (context: DocumentContext & Partial<ToolContext>) => {
+      if (!alive) return;
+      setContext(context as ToolContext);
       applyDocumentContext(context);
       void i18n.changeLanguage(context.locale);
     };
@@ -26,4 +29,5 @@ export function useAppContext(client: Client) {
       unsubscribe();
     };
   }, [client, i18n]);
+  return context;
 }

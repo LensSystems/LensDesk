@@ -72,7 +72,7 @@ export function useNotes(client: Client) {
     },
     [client, query, setError, t, notesView],
   );
-  useAppContext(client);
+  const context = useAppContext(client);
   useEffect(() => {
     void load(notesView, query);
   }, [notesView, query, load]);
@@ -162,6 +162,7 @@ export function useNotes(client: Client) {
     setBody("");
   });
   return {
+    context,
     body,
     ...files,
     create,

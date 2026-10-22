@@ -112,5 +112,9 @@
     "hide": "Ocultar secreto",
     "warning": "Las contraseñas quedarán sin cifrar. ¿Quieres quitar la privacidad?"
   },
-  "showNotes": "Mostrar lista de notas"
+  "showNotes": "Mostrar lista de notas",
+  "spelling": {
+    "title": "Ortografía",
+    "none": "Sin sugerencias"
+  }
 }

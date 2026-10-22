@@ -38,6 +38,7 @@ export function registerToolApi(options: {
   views: { getToolIdForContents(id: number): string | undefined; getViews(): ToolView[] };
   context: () => { locale: string; theme: string; accent?: "blue" | "green" };
   hostVersion: string;
+  spellcheck?: boolean;
   shellContents: () => WebContents | undefined;
   clipboard: (text: string) => void;
   openExternal: (url: string) => Promise<void>;
@@ -52,6 +53,7 @@ export function registerToolApi(options: {
     viewId: options.views.getToolIdForContents,
     context: options.context,
     hostVersion: options.hostVersion,
+    spellcheck: options.spellcheck,
     clipboard: options.clipboard,
     openExternal: options.openExternal,
     fileTokens: options.fileTokens,

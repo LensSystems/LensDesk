@@ -36,6 +36,7 @@ function fixture(permissions = ["storage"], extra: Record<string, unknown> = {})
     views: () => [view],
     viewId: (id) => (id === 5 ? "test-tool" : undefined),
     hostVersion: "0.1.0",
+    spellcheck: true,
     clipboard: vi.fn(),
     openExternal: vi.fn(async () => undefined),
     fileTokens: createFileTokens({ createId: () => "file-token" }),
@@ -103,12 +104,18 @@ describe("tool API", () => {
         accent: "green",
         hostVersion: "0.1.0",
         toolVersion: "1.2.3",
+        spellcheck: true,
       },
     });
     api.publishContext({ locale: "en", theme: "light", accent: "green" });
     expect(view.webContents.send).toHaveBeenCalledWith(
       "lensdesk:tool-event:app.contextChanged",
-      expect.objectContaining({ locale: "en", accent: "green", toolVersion: "1.2.3" }),
+      expect.objectContaining({
+        locale: "en",
+        accent: "green",
+        toolVersion: "1.2.3",
+        spellcheck: true,
+      }),
     );
     expect(
       errorCode(await api.invoke({ id: 5 }, "ui.openExternal", { url: "http://example.com" })),

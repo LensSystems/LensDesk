@@ -8,6 +8,8 @@ vi.mock("electron", () => ({
   protocol: { registerSchemesAsPrivileged: vi.fn() },
   session: {
     fromPartition: vi.fn(() => ({
+      setSpellCheckerEnabled: vi.fn(),
+      setSpellCheckerLanguages: vi.fn(),
       protocol: { handle: vi.fn() },
       setPermissionRequestHandler: vi.fn(),
       setPermissionCheckHandler: vi.fn(),
@@ -48,6 +50,7 @@ function fakeView(id: number) {
 describe("tool view helpers", () => {
   it("sets isolated preferences and bounds below the tab bar", () => {
     expect(toolWebPreferences("my-tool")).toEqual({
+      spellcheck: process.platform === "darwin",
       partition: "persist:tool-my-tool",
       contextIsolation: true,
       sandbox: true,
@@ -114,4 +117,40 @@ describe("tool view helpers", () => {
     expect(second.view.webContents.close).toHaveBeenCalledOnce();
     expect(close).not.toHaveBeenCalled();
   });
+});
+
+it.each(["darwin", "win32"])("limita el reenvío ortográfico en %s", (platform) => {
+  const first = fakeView(101);
+  const second = fakeView(102);
+  const manager = createToolViews({
+    platform,
+    host: { addChildView: vi.fn(), removeChildView: vi.fn() },
+    registry: { get: () => ({ enabled: true }) },
+    factory: (id) => (id === "spell-one" ? first.view : second.view),
+  });
+  manager.show("spell-one", { width: 800, height: 600 });
+  manager.show("spell-two", { width: 800, height: 600 });
+  const listener = first.handlers.get("context-menu");
+  if (platform === "win32") {
+    expect(listener).toBeUndefined();
+    return;
+  }
+  (listener as (...args: unknown[]) => void)(
+    {},
+    {
+      misspelledWord: "holaa",
+      dictionarySuggestions: Array(10).fill("hola"),
+      selectionText: "secreto",
+      linkURL: "privado",
+      srcURL: "privado",
+    },
+  );
+  expect(first.view.webContents.send).toHaveBeenCalledWith("lensdesk:tool-event:app.spelling", {
+    word: "holaa",
+    suggestions: Array(8).fill("hola"),
+  });
+  expect(second.view.webContents.send).not.toHaveBeenCalledWith(
+    "lensdesk:tool-event:app.spelling",
+    expect.anything(),
+  );
 });

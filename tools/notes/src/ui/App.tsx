@@ -125,6 +125,8 @@ export function App({ client }: { client: Client }) {
                   />
                 ) : (
                   <Editor
+                    spellcheck={state.context?.spellcheck === true}
+                    client={client}
                     key={`${state.selected.id}:${vault.ready}`}
                     preview={preview}
                     onMode={setPreview}

@@ -112,5 +112,9 @@
     "hide": "Hide secret",
     "warning": "Passwords will no longer be encrypted. Remove privacy?"
   },
-  "showNotes": "Show notes list"
+  "showNotes": "Show notes list",
+  "spelling": {
+    "title": "Spelling",
+    "none": "No suggestions"
+  }
 }

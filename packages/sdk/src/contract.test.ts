@@ -32,6 +32,7 @@ describe("public client contract", () => {
           data: { locale: "es", theme: "dark", hostVersion: "1", toolVersion: "1" },
         })),
         onContextChange: vi.fn(() => () => {}),
+        onSpelling: vi.fn(() => () => {}),
         onVisibilityChange: vi.fn(() => () => {}),
       },
       ui: { toast: vi.fn(done), copyText: vi.fn(done), openExternal: vi.fn(done) },
@@ -51,6 +52,8 @@ describe("public client contract", () => {
     await client.app.getContext();
     client.app.onContextChange(vi.fn());
     client.app.onVisibilityChange(vi.fn());
+    expect(client.app.onSpelling(vi.fn())).toBeTypeOf("function");
+    expect(bridge.app.onSpelling).toHaveBeenCalledOnce();
     await client.ui.toast({ kind: "info", message: "x" });
     await client.ui.copyText("x");
     await client.ui.openExternal("https://example.com");

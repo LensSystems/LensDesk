@@ -7,6 +7,7 @@ import {
   keymap,
   lineNumbers,
 } from "@codemirror/view";
+import type { createToolClient } from "@lensdesk/sdk";
 import { EditorView } from "codemirror";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +20,8 @@ import { markdownHighlighting } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
 import { NotePreview } from "./NotePreview.tsx";
 export function Editor({
+  spellcheck = false,
+  client,
   note,
   preview,
   onMode,
@@ -33,6 +36,8 @@ export function Editor({
   readOnly = false,
   children,
 }: {
+  spellcheck?: boolean;
+  client?: ReturnType<typeof createToolClient>;
   onPrivate?: () => void;
   locked?: boolean;
   readOnly?: boolean;
@@ -51,6 +56,9 @@ export function Editor({
   const host = useRef<HTMLDivElement>(null);
   const editorLabel = useRef(t("edit"));
   const editable = useRef(new Compartment());
+  const spelling = useRef(new Compartment());
+  const spellcheckRef = useRef(spellcheck);
+  spellcheckRef.current = spellcheck;
   const readOnlyRef = useRef(readOnly);
   readOnlyRef.current = readOnly;
   const bodyRef = useRef(note.body_md);
@@ -67,6 +75,7 @@ export function Editor({
           EditorState.readOnly.of(readOnlyRef.current),
           EditorView.editable.of(!readOnlyRef.current),
         ]),
+        spelling.current.of(spellingAttributes(spellcheckRef.current)),
         EditorView.lineWrapping,
         history(),
         keymap.of([
@@ -99,6 +108,12 @@ export function Editor({
       view.current = null;
     };
   }, [onChange, onBlur, locked]);
+  // El contexto llega después de crear el editor: se cambia sin rehacerlo (conserva el historial).
+  useLayoutEffect(() => {
+    view.current?.dispatch({
+      effects: spelling.current.reconfigure(spellingAttributes(spellcheck)),
+    });
+  }, [spellcheck]);
   useLayoutEffect(() => {
     view.current?.dispatch({
       effects: editable.current.reconfigure([
@@ -151,7 +166,13 @@ export function Editor({
                 }
               }}
             />
-            <EditorMenu view={view} privateNote={!!note.private && !locked} readOnly={readOnly}>
+            <EditorMenu
+              client={client}
+              spellcheck={spellcheck}
+              view={view}
+              privateNote={!!note.private && !locked}
+              readOnly={readOnly}
+            >
               <div className="code-editor" ref={host} />
             </EditorMenu>
           </div>
@@ -162,4 +183,8 @@ export function Editor({
       )}
     </section>
   );
+}
+
+function spellingAttributes(enabled: boolean) {
+  return enabled ? EditorView.contentAttributes.of({ spellcheck: "true" }) : [];
 }

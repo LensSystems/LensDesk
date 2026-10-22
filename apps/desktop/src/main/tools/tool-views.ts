@@ -1,10 +1,15 @@
 import { join } from "node:path";
 import { shell, WebContentsView } from "electron";
 import { HEADER_HEIGHT } from "../../shared/layout.ts";
+import { spellcheckEnabled } from "../spellcheck.ts";
 import { registerToolProtocolFor } from "./protocol.ts";
 
-export function toolWebPreferences(toolId: string): Electron.WebPreferences {
+export function toolWebPreferences(
+  toolId: string,
+  platform: string = process.platform,
+): Electron.WebPreferences {
   return {
+    spellcheck: spellcheckEnabled(platform),
     partition: `persist:tool-${toolId}`,
     contextIsolation: true,
     sandbox: true,
@@ -57,6 +62,7 @@ export function createToolViews(options: {
   host: ViewHost;
   registry: { get(id: string): { enabled: boolean } | undefined };
   factory?: ViewFactory;
+  platform?: string;
   external?: (url: string) => Promise<void>;
 }) {
   const views = new Map<string, ToolView>();
@@ -71,7 +77,9 @@ export function createToolViews(options: {
   const factory =
     options.factory ??
     ((toolId) =>
-      new WebContentsView({ webPreferences: toolWebPreferences(toolId) }) as unknown as ToolView);
+      new WebContentsView({
+        webPreferences: toolWebPreferences(toolId, options.platform),
+      }) as unknown as ToolView);
   const remove = (toolId: string): void => {
     const view = views.get(toolId);
     if (!view) return;
@@ -108,6 +116,24 @@ export function createToolViews(options: {
       let view = views.get(toolId);
       if (!view) {
         view = factory(toolId);
+        if (spellcheckEnabled(options.platform ?? process.platform)) {
+          const target = view;
+          target.webContents.on("context-menu", ((
+            _event: unknown,
+            params: {
+              misspelledWord?: string;
+              dictionarySuggestions?: string[];
+            },
+          ) => {
+            target.webContents.send?.("lensdesk:tool-event:app.spelling", {
+              word: (params.misspelledWord ?? "").slice(0, 100).replace(/[\r\n\u2028\u2029]/g, ""),
+              suggestions: (params.dictionarySuggestions ?? [])
+                .filter((word) => word.length > 0)
+                .slice(0, 8)
+                .map((word) => word.slice(0, 100)),
+            });
+          }) as never);
+        }
         views.set(toolId, view);
         contentsToTool.set(view.webContents.id, toolId);
         view.webContents.on("will-navigate", ((

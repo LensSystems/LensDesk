@@ -9,6 +9,7 @@ import {
   Menu,
   nativeTheme,
   screen,
+  session,
   shell,
   utilityProcess,
 } from "electron";
@@ -27,6 +28,7 @@ import { createTabsStore } from "./shell/tabs-store.ts";
 import { updateTitleBar, wireFullScreen } from "./shell/title-bar.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
 import { configureSingleInstance } from "./single-instance.ts";
+import { applySpellcheckPolicy } from "./spellcheck.ts";
 import { createToolRegistry } from "./tools/registry.ts";
 import { createToolWiring } from "./tools/wire-tools.ts";
 import {
@@ -209,6 +211,7 @@ registerHostIpc(ipcMain, {
 });
 
 void app.whenReady().then(async () => {
+  applySpellcheckPolicy(session.defaultSession, process.platform);
   try {
     database = openHostDatabase(app.getPath("userData"));
   } catch (error) {

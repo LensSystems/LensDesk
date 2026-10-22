@@ -23,6 +23,7 @@ export function createToolApi(options: {
   views: () => ToolView[];
   viewId: (webContentsId: number) => string | undefined;
   hostVersion: string;
+  spellcheck?: boolean;
   clipboard: (text: string) => void;
   openExternal: (url: string) => Promise<void>;
   fileTokens: FileTokens;
@@ -169,6 +170,7 @@ export function createToolApi(options: {
           data = {
             ...options.context(),
             hostVersion: options.hostVersion,
+            spellcheck: options.spellcheck ?? false,
             toolVersion: tool.version,
           };
         } else if (channel === "ui.copyText") {
@@ -232,6 +234,7 @@ export function createToolApi(options: {
           view.webContents.send?.("lensdesk:tool-event:app.contextChanged", {
             ...context,
             hostVersion: options.hostVersion,
+            spellcheck: options.spellcheck ?? false,
             toolVersion: tool.version,
           });
       }

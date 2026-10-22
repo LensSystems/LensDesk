@@ -1,5 +1,5 @@
 import { ContextMenu as Primitive } from "radix-ui";
-import type { ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 import { menuContentClass, menuItemClass } from "./menu-styles.ts";
 
 export function ContextMenu({
@@ -8,7 +8,17 @@ export function ContextMenu({
   items,
   onClose,
   keyboardAnchor,
+  onNativeContextMenu,
+  leadingGroup,
 }: {
+  onNativeContextMenu?: (
+    point: { x: number; y: number },
+    open: (point: { x: number; y: number }) => void,
+  ) => void;
+  leadingGroup?: {
+    label: string;
+    items: { label: string; disabled?: boolean; onSelect: () => void }[];
+  };
   children: ReactNode;
   label: string;
   items: { label: string; disabled?: boolean; onSelect: () => void }[];
@@ -16,23 +26,35 @@ export function ContextMenu({
   /** Punto donde abrir el menú con Mayús+F10 (por defecto, la esquina del área). */
   keyboardAnchor?: () => { x: number; y: number } | null;
 }) {
+  const ownEvents = useRef(new WeakSet<Event>());
+  const open = (target: EventTarget, point: { x: number; y: number }) => {
+    const event = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      clientX: point.x,
+      clientY: point.y,
+    });
+    ownEvents.current.add(event);
+    target.dispatchEvent(event);
+  };
   return (
     <Primitive.Root>
       <Primitive.Trigger
         asChild
+        onContextMenuCapture={(event) => {
+          if (!onNativeContextMenu || ownEvents.current.has(event.nativeEvent)) return;
+          event.stopPropagation();
+          const target = event.currentTarget;
+          onNativeContextMenu({ x: event.clientX, y: event.clientY }, (point) =>
+            open(target, point),
+          );
+        }}
         onKeyDown={(event) => {
           if (event.key !== "F10" || !event.shiftKey) return;
           event.preventDefault();
           const rect = event.currentTarget.getBoundingClientRect();
           const point = keyboardAnchor?.() ?? { x: rect.left, y: rect.top };
-          event.currentTarget.dispatchEvent(
-            new MouseEvent("contextmenu", {
-              bubbles: true,
-              cancelable: true,
-              clientX: point.x,
-              clientY: point.y,
-            }),
-          );
+          open(event.currentTarget, point);
         }}
       >
         {children}
@@ -46,6 +68,24 @@ export function ContextMenu({
             onClose?.();
           }}
         >
+          {leadingGroup && (
+            <>
+              <Primitive.Label className="px-2.5 py-1 text-muted">
+                {leadingGroup.label}
+              </Primitive.Label>
+              {leadingGroup.items.map((item) => (
+                <Primitive.Item
+                  key={item.label}
+                  className={menuItemClass}
+                  disabled={item.disabled}
+                  onSelect={item.onSelect}
+                >
+                  {item.label}
+                </Primitive.Item>
+              ))}
+              <Primitive.Separator className="my-1 h-px bg-border" />
+            </>
+          )}
           <Primitive.Label className="px-2.5 py-1 text-muted">{label}</Primitive.Label>
           {items.map((item) => (
             <Primitive.Item

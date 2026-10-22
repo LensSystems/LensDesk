@@ -79,6 +79,7 @@ export function OverlayExamples() {
       <Example names={["ContextMenu"]}>
         <ui.ContextMenu
           label="Insertar"
+          leadingGroup={{ label: "Ortografía", items: [{ label: "Palabra", onSelect: () => {} }] }}
           items={[
             { label: "Encabezado", onSelect: () => {} },
             { label: "Contraseña…", disabled: true, onSelect: () => {} },

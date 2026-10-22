@@ -47,3 +47,35 @@ describe("tool bridge", () => {
     expect(listeners.has("app.contextChanged")).toBe(false);
   });
 });
+
+it("valida ortografía y descarta campos ajenos", () => {
+  let receive: (payload: unknown) => void = () => {};
+  const stop = vi.fn();
+  const bridge = createToolBridge(vi.fn(), (event, callback) => {
+    expect(event).toBe("app.spelling");
+    receive = callback;
+    return stop;
+  });
+  const callback = vi.fn();
+  const cancel = bridge.app.onSpelling(callback);
+  for (const payload of [
+    null,
+    {},
+    { word: "a\nb", suggestions: [] },
+    { word: "x".repeat(101), suggestions: [] },
+    { word: "a", suggestions: [""] },
+    { word: "a", suggestions: Array(9).fill("a") },
+    { word: "a", suggestions: [1] },
+    { word: "a", suggestions: ["x".repeat(101)] },
+  ])
+    receive(payload);
+  expect(callback).not.toHaveBeenCalled();
+  receive({ word: "", suggestions: [], selectionText: "privado" });
+  receive({ word: "árbol", suggestions: ["árboles"] });
+  expect(callback.mock.calls).toEqual([
+    [{ word: "", suggestions: [] }],
+    [{ word: "árbol", suggestions: ["árboles"] }],
+  ]);
+  cancel();
+  expect(stop).toHaveBeenCalledOnce();
+});

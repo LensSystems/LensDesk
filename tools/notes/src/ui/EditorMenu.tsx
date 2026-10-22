@@ -1,4 +1,5 @@
 import type { EditorView } from "@codemirror/view";
+import type { createToolClient } from "@lensdesk/sdk";
 import { ContextMenu } from "@lensdesk/ui";
 import { type ReactNode, type RefObject, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -7,27 +8,33 @@ import { emptyCredential, formatCredential, parseCredential } from "./credential
 import { credentialFences, credentialInsertion } from "./credential-fences.ts";
 import { applyMarkdownEdit } from "./editor-commands.ts";
 import { insertKinds, insertMarkdown } from "./markdown-insert.ts";
+import { useSpellingMenu } from "./use-spelling-menu.ts";
 
 export function EditorMenu({
+  client,
+  spellcheck = false,
   children,
   view,
   privateNote = false,
   readOnly = false,
 }: {
+  client?: ReturnType<typeof createToolClient>;
+  spellcheck?: boolean;
   children: ReactNode;
   privateNote?: boolean;
   readOnly?: boolean;
   view: RefObject<EditorView | null>;
 }) {
   const { t } = useTranslation();
+  const spellingMenu = useSpellingMenu(client, spellcheck, view, readOnly);
   const [editing, setEditing] = useState<{ from: number; to: number; content: string } | null>(
     null,
   );
   return (
     <>
       <ContextMenu
+        {...spellingMenu}
         label={t("insert.title")}
-        onClose={() => view.current?.focus()}
         keyboardAnchor={() => {
           const editor = view.current;
           const coords = editor?.coordsAtPos(editor.state.selection.main.head);

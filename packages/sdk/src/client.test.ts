@@ -130,3 +130,17 @@ describe("createToolClient backend invoke", () => {
     expect(() => unsubscribe()).not.toThrow();
   });
 });
+
+it("ortografía compatible con hosts anteriores y cancelable", () => {
+  const { bridge } = makeBridge();
+  const callback = vi.fn();
+  expect(createToolClient(bridge).app.onSpelling(callback)()).toBeUndefined();
+  const stop = vi.fn();
+  bridge.app.onSpelling = vi.fn((receive) => {
+    receive({ word: "holaa", suggestions: ["hola"] });
+    return stop;
+  });
+  createToolClient(bridge).app.onSpelling(callback)();
+  expect(callback).toHaveBeenCalledWith({ word: "holaa", suggestions: ["hola"] });
+  expect(stop).toHaveBeenCalledOnce();
+});

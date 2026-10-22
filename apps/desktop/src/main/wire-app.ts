@@ -10,6 +10,7 @@ import { exportLogs } from "./log/export.ts";
 import { createLogger, type Logger } from "./log/logger.ts";
 import { createLoginItem, type LoginItemDependencies } from "./login-item.ts";
 import { titleBarColors, titleBarOverlayFor } from "./shell/title-bar.ts";
+import { spellcheckEnabled } from "./spellcheck.ts";
 import { createUpdateService } from "./updates/update-service.ts";
 
 type SettingsHandlers = Pick<
@@ -187,6 +188,7 @@ export function shellWindowOptions(
     show,
     webPreferences: {
       preload,
+      spellcheck: spellcheckEnabled(platform),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
