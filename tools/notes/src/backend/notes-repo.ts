@@ -10,6 +10,7 @@ export type Note = {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  archived_at: string | null;
 };
 type StoredNote = Omit<Note, "pinned"> & { pinned: number };
 
@@ -119,13 +120,22 @@ export function createNotesRepository(db: Db, now: () => Date = () => new Date()
       return requiredNote(db, string(values.id, "id"));
     },
     list(params: unknown) {
-      const values = assertObject(params, [], ["trashed"]);
+      const values = assertObject(params, [], ["trashed", "view"]);
       if (values.trashed !== undefined && typeof values.trashed !== "boolean")
         throw new LensError("E_INVALID_PARAMS", "trashed must be a boolean");
-      const trashed = values.trashed === true;
+      if (
+        values.view !== undefined &&
+        (typeof values.view !== "string" || !["notes", "archived", "trash"].includes(values.view))
+      )
+        throw new LensError("E_INVALID_PARAMS", "Invalid notes view");
+      const view = values.view ?? (values.trashed === true ? "trash" : "notes");
+      const condition =
+        view === "trash"
+          ? "deleted_at IS NOT NULL"
+          : `deleted_at IS NULL AND archived_at IS ${view === "archived" ? "NOT " : ""}NULL`;
       return db
         .all<StoredNote>(
-          `SELECT * FROM notes WHERE deleted_at IS ${trashed ? "NOT " : ""}NULL ORDER BY pinned DESC, updated_at DESC`,
+          `SELECT * FROM notes WHERE ${condition} ORDER BY pinned DESC, updated_at DESC`,
         )
         .map((row) => note(row) as Note);
     },
@@ -139,7 +149,7 @@ export function createNotesRepository(db: Db, now: () => Date = () => new Date()
         .join(" ");
       return db
         .all<StoredNote>(
-          "SELECT notes.* FROM notes_fts JOIN notes ON notes.rowid = notes_fts.rowid WHERE notes_fts MATCH ? AND notes.deleted_at IS NULL ORDER BY notes.pinned DESC, notes.updated_at DESC",
+          "SELECT notes.* FROM notes_fts JOIN notes ON notes.rowid = notes_fts.rowid WHERE notes_fts MATCH ? AND notes.deleted_at IS NULL AND notes.archived_at IS NULL ORDER BY notes.pinned DESC, notes.updated_at DESC",
           expression,
         )
         .map((row) => note(row) as Note);
@@ -152,6 +162,28 @@ export function createNotesRepository(db: Db, now: () => Date = () => new Date()
       db.run(
         "UPDATE notes SET pinned = ?, updated_at = ? WHERE id = ?",
         values.pinned ? 1 : 0,
+        now().toISOString(),
+        id,
+      );
+      return requiredNote(db, id);
+    },
+    archive(params: unknown) {
+      const values = assertObject(params, ["id"]);
+      const id = string(values.id, "id");
+      const timestamp = now().toISOString();
+      db.run(
+        "UPDATE notes SET archived_at = ?, updated_at = ? WHERE id = ?",
+        timestamp,
+        timestamp,
+        id,
+      );
+      return requiredNote(db, id);
+    },
+    unarchive(params: unknown) {
+      const values = assertObject(params, ["id"]);
+      const id = string(values.id, "id");
+      db.run(
+        "UPDATE notes SET archived_at = NULL, updated_at = ? WHERE id = ?",
         now().toISOString(),
         id,
       );

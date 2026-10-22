@@ -1,4 +1,4 @@
-import { IconButton, ListItem, Star, Trash2 } from "@lensdesk/ui";
+import { Archive, ArchiveRestore, IconButton, ListItem, Star, Trash2 } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import { Highlighted } from "./Highlighted.tsx";
 import { noteSummary } from "./note-summary.ts";
@@ -11,13 +11,18 @@ export type Note = {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  archived_at?: string | null;
 };
+
+export type NotesView = "notes" | "archived" | "trash";
 
 export function NoteList({
   notes,
   query = "",
   selectedId,
   trashed,
+  archived = false,
+  onArchive,
   onSelect,
   onTrash,
   onPin,
@@ -26,6 +31,8 @@ export function NoteList({
   query?: string;
   selectedId: string | null;
   trashed: boolean;
+  archived?: boolean;
+  onArchive?: (note: Note) => void;
   onSelect: (id: string) => void;
   onTrash: (id: string) => void;
   onPin: (note: Note) => void;
@@ -69,6 +76,17 @@ export function NoteList({
                   <Star size={14} fill={note.pinned ? "currentColor" : "none"} aria-hidden="true" />
                 </IconButton>
                 <IconButton
+                  className="size-7 hover:text-accent"
+                  label={t(note.archived_at ? "unarchive" : "archive")}
+                  onClick={() => onArchive?.(note)}
+                >
+                  {note.archived_at ? (
+                    <ArchiveRestore size={14} aria-hidden="true" />
+                  ) : (
+                    <Archive size={14} aria-hidden="true" />
+                  )}
+                </IconButton>
+                <IconButton
                   className="size-7 hover:text-danger"
                   label={t("moveToTrash")}
                   onClick={() => onTrash(note.id)}
@@ -85,11 +103,14 @@ export function NoteList({
           <p>
             {trashed
               ? t("emptyTrashTitle")
-              : query.trim()
-                ? t("noResults", { query })
-                : t("emptyNotes")}
+              : archived
+                ? t("emptyArchivedTitle")
+                : query.trim()
+                  ? t("noResults", { query })
+                  : t("emptyNotes")}
           </p>
           {trashed && <p>{t("emptyTrashDescription")}</p>}
+          {archived && <p>{t("emptyArchivedDescription")}</p>}
         </div>
       )}
     </nav>

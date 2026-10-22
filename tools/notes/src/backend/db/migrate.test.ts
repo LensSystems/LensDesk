@@ -10,7 +10,7 @@ it("migra una copia de la base anterior sin cambiar títulos, fechas ni otros da
     const original = join(directory, "original");
     let db = openNotesDatabase(original);
     db.exec(
-      "DROP TABLE notes; DROP TABLE notes_fts; DELETE FROM schema_migrations WHERE version = 2;",
+      "DROP TABLE notes; DROP TABLE notes_fts; DELETE FROM schema_migrations WHERE version >= 2;",
     );
     db.exec(readFileSync(new URL("./migrations/001_init.sql", import.meta.url), "utf8"));
     const bodies = [
@@ -72,7 +72,9 @@ it("migra una copia de la base anterior sin cambiar títulos, fechas ni otros da
       bodies[8],
       "Cuerpo",
     ];
-    expect(after).toEqual(before.map((row, index) => ({ ...row, body_md: expectedBodies[index] })));
+    expect(after).toEqual(
+      before.map((row, index) => ({ ...row, archived_at: null, body_md: expectedBodies[index] })),
+    );
     expect(
       db.all("SELECT name, sql FROM sqlite_master WHERE type = 'trigger' ORDER BY name"),
     ).toEqual(triggers);

@@ -25,6 +25,7 @@ const note = (id: string, body_md = "") => ({
   created_at: "now",
   updated_at: "now",
   deleted_at: null,
+  archived_at: null as string | null,
 });
 
 function fakeClient() {
@@ -47,17 +48,24 @@ function fakeClient() {
       body_md?: string;
       query?: string;
       trashed?: boolean;
+      view?: "notes" | "archived" | "trash";
       pinned?: boolean;
     };
     if (method === "create") parse(createSchema, params);
     if (method === "update") parse(updateSchema, params);
     if (method === "rename") parse(renameSchema, params);
     if (method === "list")
-      return rows.filter((row) => Boolean(row.deleted_at) === (args.trashed === true));
+      return rows.filter((row) => {
+        const view = args.view ?? (args.trashed ? "trash" : "notes");
+        return view === "trash"
+          ? Boolean(row.deleted_at)
+          : !row.deleted_at && Boolean(row.archived_at) === (view === "archived");
+      });
     if (method === "search")
       return rows.filter(
         (row) =>
           !row.deleted_at &&
+          !row.archived_at &&
           `${row.title} ${row.body_md}`.toLowerCase().includes(args.query?.toLowerCase() ?? ""),
       );
     if (method === "create") {
@@ -75,6 +83,12 @@ function fakeClient() {
       };
       rows = rows.map((row) => (row.id === args.id ? updated : row));
       return updated;
+    }
+    if (method === "archive" || method === "unarchive") {
+      rows = rows.map((row) =>
+        row.id === args.id ? { ...row, archived_at: method === "archive" ? "now" : null } : row,
+      );
+      return rows.find((row) => row.id === args.id);
     }
     if (method === "trash" || method === "restore") {
       rows = rows.map((row) =>
@@ -530,7 +544,7 @@ describe("interfaz de Notas", () => {
     fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
     await waitFor(() => expect(finishTrash).toBeDefined());
     fireEvent.click(screen.getByRole("radio", { name: "Papelera" }));
-    await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("list", { trashed: true }));
+    await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("list", { view: "trash" }));
     await act(async () => finishTrash?.());
     expect(await screen.findByRole("button", { name: "Archivar" })).toBeTruthy();
     expect(screen.getByRole("radio", { name: "Papelera" })).toHaveAttribute("aria-checked", "true");
@@ -606,11 +620,17 @@ describe("interfaz de Notas", () => {
     const group = screen.getByRole("radiogroup", { name: "Vista de notas" });
     const notes = within(group).getByRole("radio", { name: "Notas" });
     const trash = within(group).getByRole("radio", { name: "Papelera" });
+    const archived = within(group).getByRole("radio", { name: "Archivadas" });
     notes.focus();
     fireEvent.keyDown(notes, { key: "ArrowRight" });
+    await waitFor(() => expect(archived).toHaveFocus());
+    expect(archived).toHaveAttribute("aria-checked", "true");
+    fireEvent.keyDown(archived, { key: "ArrowRight" });
     await waitFor(() => expect(trash).toHaveFocus());
     expect(trash).toHaveAttribute("aria-checked", "true");
     fireEvent.keyDown(trash, { key: "ArrowLeft" });
+    await waitFor(() => expect(archived).toHaveFocus());
+    fireEvent.keyDown(archived, { key: "ArrowLeft" });
     await waitFor(() => expect(notes).toHaveFocus());
     expect(notes).toHaveAttribute("aria-checked", "true");
     fireEvent.click(await screen.findByRole("radio", { name: "Ver" }));
@@ -643,7 +663,7 @@ describe("interfaz de Notas", () => {
     expect(alert).toHaveTextContent("La nota ya no existe. Se recargó la lista.");
     expect(within(alert).queryByRole("button", { name: "Reintentar" })).toBeNull();
     expect(within(alert).getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
-    expect(fake.invoke).toHaveBeenCalledWith("list", { trashed: false });
+    expect(fake.invoke).toHaveBeenCalledWith("list", { view: "notes" });
     await waitFor(() => expect(screen.queryByRole("button", { name: "Fantasma" })).toBeNull());
     expect(en.errors.notFound).toBe("The note no longer exists. The list was reloaded.");
   });
@@ -848,6 +868,9 @@ describe("estados vacíos y colores de la lista", () => {
     const texts = language === "es" ? es : en;
     const { rerender } = render(<NoteList {...props} />);
     expect(screen.getByText(texts.emptyNotes)).toBeInTheDocument();
+    rerender(<NoteList {...props} archived query="pendiente" />);
+    expect(screen.getByText(texts.emptyArchivedTitle)).toBeInTheDocument();
+    expect(screen.getByText(texts.emptyArchivedDescription)).toBeInTheDocument();
     rerender(<NoteList {...props} trashed query="pendiente" />);
     expect(screen.getByText(texts.emptyTrashTitle)).toBeInTheDocument();
     expect(screen.getByText(texts.emptyTrashDescription)).toBeInTheDocument();
@@ -893,6 +916,7 @@ describe("estados vacíos y colores de la lista", () => {
     const { rerender } = render(<NoteList {...props} notes={[note("1", "Nota")]} />, {
       wrapper: TooltipProvider,
     });
+    expect(screen.getByRole("button", { name: "Archivar nota" })).toHaveClass("hover:text-accent");
     const pin = screen.getByRole("button", { name: "Fijar nota" });
     expect(pin).toHaveClass("hover:text-warning");
     expect(pin.querySelector("svg")).toHaveAttribute("fill", "none");
@@ -903,5 +927,83 @@ describe("estados vacíos y colores de la lista", () => {
     const unpin = screen.getByRole("button", { name: "Desfijar nota" });
     expect(unpin).toHaveClass("text-warning", "hover:text-warning");
     expect(unpin.querySelector("svg")).toHaveAttribute("fill", "currentColor");
+  });
+});
+
+describe("vista Archivadas", () => {
+  it("segmenta tres vistas y permite archivar, editar, restaurar y desarchivar", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Guardada", body_md: "Contenido" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Guardada" });
+    const views = screen.getByRole("radiogroup", { name: "Vista de notas" });
+    expect(
+      within(views)
+        .getAllByRole("radio")
+        .map((item) => item.textContent),
+    ).toEqual(["Notas", "Archivadas", "Papelera"]);
+    fireEvent.click(screen.getByRole("button", { name: "Archivar nota" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Guardada" })).toBeNull());
+    fireEvent.change(screen.getByRole("textbox", { name: "Buscar notas" }), {
+      target: { value: "Guardada" },
+    });
+    await screen.findByRole("heading", { name: "No hay notas que coincidan con «Guardada»." });
+    fireEvent.click(screen.getByRole("radio", { name: "Archivadas" }));
+    await screen.findByRole("heading", { name: "Guardada" });
+    expect(screen.getByRole("textbox", { name: "Buscar notas" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("radio", { name: "Editar" }));
+    const content = document.querySelector(".cm-content") as HTMLElement;
+    act(() => {
+      const editor = EditorView.findFromDOM(content);
+      editor?.dispatch({ changes: { from: editor.state.doc.length, insert: " editado" } });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
+    await screen.findByRole("heading", { name: es.emptyArchivedTitle });
+    expect(screen.getAllByText(es.emptyArchivedDescription)).toHaveLength(2);
+    fireEvent.click(screen.getByRole("radio", { name: "Papelera" }));
+    await screen.findByRole("heading", { name: "Guardada" });
+    expect(screen.getByRole("article")).toHaveTextContent("Contenido editado");
+    fireEvent.click(screen.getByRole("button", { name: "Restaurar" }));
+    await screen.findByRole("heading", { name: es.emptyTrashTitle });
+    fireEvent.click(screen.getByRole("radio", { name: "Notas" }));
+    await screen.findByRole("heading", { name: "No hay notas que coincidan con «Guardada»." });
+    fireEvent.click(screen.getByRole("radio", { name: "Archivadas" }));
+    await screen.findByRole("heading", { name: "Guardada" });
+    fireEvent.click(screen.getByRole("button", { name: "Desarchivar nota" }));
+    await screen.findByRole("heading", { name: es.emptyArchivedTitle });
+    fireEvent.click(screen.getByRole("radio", { name: "Notas" }));
+    await screen.findByRole("heading", { name: "Guardada" });
+  });
+
+  it.each(["es", "en"])("traduce acciones y panel vacío en %s", async (language) => {
+    await act(async () => {
+      await i18n.changeLanguage(language);
+    });
+    const texts = language === "es" ? es : en;
+    const onArchive = vi.fn();
+    const props = {
+      notes: [note("1", "Nota")],
+      selectedId: null,
+      trashed: false,
+      onSelect: vi.fn(),
+      onPin: vi.fn(),
+      onTrash: vi.fn(),
+      onArchive,
+    };
+    const { rerender } = render(<NoteList {...props} />, { wrapper: TooltipProvider });
+    fireEvent.click(screen.getByRole("button", { name: texts.archive }));
+    expect(onArchive).toHaveBeenCalledWith(props.notes[0]);
+    rerender(
+      <NoteList
+        {...props}
+        notes={[{ ...note("1", "Nota"), archived_at: "2025-01-02T00:00:00.000Z" }]}
+        archived
+      />,
+    );
+    expect(screen.getByRole("button", { name: texts.unarchive })).toHaveClass("hover:text-accent");
+    rerender(<EmptyNote archived trashed={false} onCreate={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: texts.emptyArchivedTitle })).toBeInTheDocument();
+    expect(screen.getByText(texts.emptyArchivedDescription)).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

@@ -69,7 +69,7 @@ test("un título largo no saca de la lista los botones de fijar y borrar", async
     await expect(tool.getByRole("button", { name: title })).toBeVisible();
 
     const list = await tool.getByRole("navigation", { name: "Lista de notas" }).boundingBox();
-    for (const name of ["Fijar nota", "Mover a la papelera"]) {
+    for (const name of ["Fijar nota", "Archivar nota", "Mover a la papelera"]) {
       const button = tool.getByRole("button", { name, exact: true }).first();
       await expect(button).toBeInViewport({ ratio: 1 });
       const box = await button.boundingBox();

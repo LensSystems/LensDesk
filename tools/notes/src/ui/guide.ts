@@ -17,7 +17,8 @@ async function initialize(client: Client) {
   }
   const notes = await client.backend.invoke<unknown[]>("list", { trashed: false });
   const trash = await client.backend.invoke<unknown[]>("list", { trashed: true });
-  if (notes.length === 0 && trash.length === 0) {
+  const archived = await client.backend.invoke<unknown[]>("list", { view: "archived" });
+  if (notes.length === 0 && trash.length === 0 && archived.length === 0) {
     const { locale } = await client.app.getContext();
     const englishLocale = locale.split("-")[0] === "en";
     await client.backend.invoke("create", {

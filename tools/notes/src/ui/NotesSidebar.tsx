@@ -1,7 +1,7 @@
 import { Button, Download, IconButton, Input, Plus, Search, SegmentedControl } from "@lensdesk/ui";
 import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
-import { NoteList } from "./NoteList.tsx";
+import { NoteList, type NotesView } from "./NoteList.tsx";
 
 export function NotesSidebar({
   query,
@@ -17,7 +17,7 @@ export function NotesSidebar({
   onCreate: () => void;
   onImport: () => void;
   onEmpty: () => void;
-  onView: (trash: boolean) => void;
+  onView: (view: NotesView) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -45,17 +45,19 @@ export function NotesSidebar({
         value={query}
         onChange={(event) => onQuery(event.target.value)}
         placeholder={t("search")}
+        disabled={list.trashed || list.archived}
       />
       <SegmentedControl
         aria-label={t("notesView")}
-        value={list.trashed ? "trash" : "notes"}
-        onValueChange={(value) => onView(value === "trash")}
+        value={list.trashed ? "trash" : list.archived ? "archived" : "notes"}
+        onValueChange={(value) => onView(value as NotesView)}
         options={[
           { value: "notes", label: t("notes") },
+          { value: "archived", label: t("archived") },
           { value: "trash", label: t("trash") },
         ]}
       />
-      <NoteList {...list} query={list.trashed ? "" : query} />
+      <NoteList {...list} query={list.trashed || list.archived ? "" : query} />
     </aside>
   );
 }

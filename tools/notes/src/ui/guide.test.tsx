@@ -11,10 +11,24 @@ vi.mock("react-i18next", () => {
 });
 vi.mock("./use-app-context.ts", () => ({ useAppContext: () => {} }));
 
-function setup(locale = "es", existing: "notes" | "trash" | null = null) {
+function setup(locale = "es", existing: "notes" | "trash" | "archived" | null = null) {
   let marked = false;
-  const rows: { id: string; title: string; body_md: string; deleted_at: string | null }[] = existing
-    ? [{ id: "old", title: "Old", body_md: "", deleted_at: existing === "trash" ? "now" : null }]
+  const rows: {
+    id: string;
+    title: string;
+    body_md: string;
+    deleted_at: string | null;
+    archived_at: string | null;
+  }[] = existing
+    ? [
+        {
+          id: "old",
+          title: "Old",
+          body_md: "",
+          deleted_at: existing === "trash" ? "now" : null,
+          archived_at: existing === "archived" ? "now" : null,
+        },
+      ]
     : [];
   const storage = {
     get: vi.fn(async () => marked),
@@ -23,13 +37,20 @@ function setup(locale = "es", existing: "notes" | "trash" | null = null) {
     }),
   };
   const invoke = vi.fn(async (method: string, params: Record<string, unknown>) => {
-    if (method === "list") return rows.filter((row) => Boolean(row.deleted_at) === params.trashed);
+    if (method === "list")
+      return rows.filter((row) => {
+        const view = params.view ?? (params.trashed ? "trash" : "notes");
+        return view === "trash"
+          ? Boolean(row.deleted_at)
+          : !row.deleted_at && Boolean(row.archived_at) === (view === "archived");
+      });
     if (method === "create") {
       const row = {
         id: "guide",
         title: String(params.title),
         body_md: String(params.body_md),
         deleted_at: null,
+        archived_at: null,
       };
       rows.push(row);
       return row;
@@ -91,16 +112,19 @@ describe("guía inicial", () => {
     expect(fake.rows).toHaveLength(0);
   });
 
-  it.each(["notes", "trash"] as const)("marca sin crear si ya hay %s", async (existing) => {
-    const fake = setup("es", existing);
-    await ensureGuide(fake.client);
-    expect(fake.rows).toHaveLength(1);
-    expect(fake.rows[0]?.id).toBe("old");
-    expect(fake.storage.set).toHaveBeenCalledWith("guideCreated", true);
-    fake.rows.length = 0;
-    await ensureGuide(fake.client);
-    expect(fake.rows).toHaveLength(0);
-  });
+  it.each(["notes", "trash", "archived"] as const)(
+    "marca sin crear si ya hay %s",
+    async (existing) => {
+      const fake = setup("es", existing);
+      await ensureGuide(fake.client);
+      expect(fake.rows).toHaveLength(1);
+      expect(fake.rows[0]?.id).toBe("old");
+      expect(fake.storage.set).toHaveBeenCalledWith("guideCreated", true);
+      fake.rows.length = 0;
+      await ensureGuide(fake.client);
+      expect(fake.rows).toHaveLength(0);
+    },
+  );
 
   it("serializa carreras entre clientes con almacenamiento compartido", async () => {
     const fake = setup();
@@ -127,6 +151,7 @@ describe("guía inicial", () => {
   it("no marca si crear falla y permite reintentar", async () => {
     const fake = setup();
     fake.invoke
+      .mockImplementationOnce(async () => [])
       .mockImplementationOnce(async () => [])
       .mockImplementationOnce(async () => [])
       .mockRejectedValueOnce(new Error("create failed"));

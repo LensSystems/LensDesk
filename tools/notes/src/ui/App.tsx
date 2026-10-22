@@ -62,6 +62,7 @@ export function App({ client }: { client: Client }) {
                 selectedId={state.selectedId}
                 query={state.query}
                 trashed={state.trashed}
+                archived={state.notesView === "archived"}
                 onQuery={state.setQuery}
                 onSelect={(id) => {
                   flush();
@@ -73,16 +74,25 @@ export function App({ client }: { client: Client }) {
                   void state.importNotes();
                 }}
                 onEmpty={() => setConfirmingEmpty(true)}
-                onView={(trash) => {
+                onView={(view) => {
                   flush();
-                  state.setTrashed(trash);
+                  setPreview(true);
+                  state.setView(view);
                 }}
                 onCreate={create}
-                onTrash={(id) => void state.trashNote(id)}
+                onArchive={(note) => {
+                  flush();
+                  setPreview(true);
+                  void state.archive(note);
+                }}
+                onTrash={(id) => {
+                  flush();
+                  void state.trashNote(id);
+                }}
                 onPin={(note) =>
                   void client.backend
                     .invoke("setPinned", { id: note.id, pinned: !note.pinned })
-                    .then(() => state.load(false, state.query))
+                    .then(() => state.load(state.notesView, state.query))
                     .catch((reason: unknown) => state.fail(reason))
                 }
               />
@@ -108,7 +118,12 @@ export function App({ client }: { client: Client }) {
                   />
                 )
               ) : (
-                <EmptyNote query={state.query} trashed={state.trashed} onCreate={create} />
+                <EmptyNote
+                  query={state.query}
+                  trashed={state.trashed}
+                  archived={state.notesView === "archived"}
+                  onCreate={create}
+                />
               )}
             </div>
           )}

@@ -67,5 +67,10 @@
     "separator": "Separador",
     "link": "Enlace…",
     "password": "Contraseña…"
-  }
+  },
+  "archived": "Archivadas",
+  "archive": "Archivar nota",
+  "unarchive": "Desarchivar nota",
+  "emptyArchivedTitle": "No hay notas archivadas",
+  "emptyArchivedDescription": "Las notas que archives aparecerán aquí."
 }

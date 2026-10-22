@@ -3,10 +3,12 @@ import { useTranslation } from "react-i18next";
 
 export function EmptyNote({
   trashed,
+  archived = false,
   query = "",
   onCreate,
 }: {
   trashed: boolean;
+  archived?: boolean;
   query?: string;
   onCreate: () => void;
 }) {
@@ -18,13 +20,22 @@ export function EmptyNote({
         title={
           trashed
             ? t("emptyTrashTitle")
-            : query.trim()
-              ? t("noResults", { query })
-              : t("emptyNotes")
+            : archived
+              ? t("emptyArchivedTitle")
+              : query.trim()
+                ? t("noResults", { query })
+                : t("emptyNotes")
         }
-        description={trashed ? t("emptyTrashDescription") : undefined}
+        description={
+          trashed
+            ? t("emptyTrashDescription")
+            : archived
+              ? t("emptyArchivedDescription")
+              : undefined
+        }
         action={
-          !trashed && (
+          !trashed &&
+          !archived && (
             <Button variant="primary" onClick={onCreate}>
               {t("newNote")}
             </Button>

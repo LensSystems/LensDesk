@@ -2,7 +2,7 @@ import type { createToolClient } from "@lensdesk/sdk";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ensureGuide } from "./guide.ts";
-import type { Note } from "./NoteList.tsx";
+import type { Note, NotesView } from "./NoteList.tsx";
 import { exportMarkdown, importMarkdown } from "./note-markdown.ts";
 import { useAppContext } from "./use-app-context.ts";
 import { errorCode, useFail, useNotice } from "./use-failure.ts";
@@ -20,7 +20,8 @@ export function useNotes(client: Client) {
     setBody(value);
   }, []);
   const [query, setQuery] = useState("");
-  const [trashed, setTrashed] = useState(false);
+  const [notesView, setView] = useState<NotesView>("notes");
+  const trashed = notesView === "trash";
   const [loading, setLoading] = useState(true);
   const { error, errorKind, setError } = useNotice();
   const selected = useMemo(
@@ -39,21 +40,21 @@ export function useNotes(client: Client) {
   // reciente, y crear una nota descarta las cargas en curso para que no la borren de la lista.
   const latestLoad = useRef(0);
   // Vista visible ahora mismo: tras borrar o restaurar se recarga esta, no la de cuando se pulsó.
-  const view = useRef({ trashed, query });
-  view.current = { trashed, query };
+  const view = useRef({ notesView, query });
+  view.current = { notesView, query };
 
   // Solo la primera carga muestra "Cargando": las siguientes conservan la lista, el cuadro de
   // búsqueda con su foco y el texto que el editor aún no ha guardado.
   const load = useCallback(
-    async (inTrash = trashed, search = query): Promise<boolean> => {
+    async (currentView = notesView, search = query): Promise<boolean> => {
       const request = ++latestLoad.current;
       try {
         // La guía es opcional: si falla, la lista se carga igual y se reintenta en la siguiente carga.
         await ensureGuide(client).catch(() => undefined);
         const rows =
-          search.trim() && !inTrash
+          search.trim() && currentView === "notes"
             ? await client.backend.invoke<Note[]>("search", { query: search })
-            : await client.backend.invoke<Note[]>("list", { trashed: inTrash });
+            : await client.backend.invoke<Note[]>("list", { view: currentView });
         if (request !== latestLoad.current) return true;
         setNotes(rows);
         if (!rows.some((note) => note.id === selectedRef.current)) {
@@ -70,14 +71,14 @@ export function useNotes(client: Client) {
         setLoading(false);
       }
     },
-    [client, query, setError, t, trashed],
+    [client, query, setError, t, notesView],
   );
 
   useAppContext(client);
 
   useEffect(() => {
-    void load(trashed, query);
-  }, [trashed, query, load]);
+    void load(notesView, query);
+  }, [notesView, query, load]);
 
   const fail = useFail(load, setError);
 
@@ -133,7 +134,7 @@ export function useNotes(client: Client) {
     try {
       const note = await client.backend.invoke<Note>("create", { body_md: content, title });
       latestLoad.current++;
-      setTrashed(false);
+      setView("notes");
       setQuery("");
       setNotes((current) => [note, ...current]);
       setSelectedId(note.id);
@@ -217,7 +218,15 @@ export function useNotes(client: Client) {
   const trashNote = async (id: string) => {
     try {
       await client.backend.invoke("trash", { id });
-      await load(view.current.trashed, view.current.query);
+      await load(view.current.notesView, view.current.query);
+    } catch (reason) {
+      await fail(reason);
+    }
+  };
+  const archive = async (note: Note) => {
+    try {
+      await client.backend.invoke(note.archived_at ? "unarchive" : "archive", { id: note.id });
+      await load(view.current.notesView, view.current.query);
     } catch (reason) {
       await fail(reason);
     }
@@ -225,7 +234,7 @@ export function useNotes(client: Client) {
   const restore = async (id: string) => {
     try {
       await client.backend.invoke("restore", { id });
-      await load(view.current.trashed, view.current.query);
+      await load(view.current.notesView, view.current.query);
     } catch (reason) {
       await fail(reason);
     }
@@ -235,7 +244,7 @@ export function useNotes(client: Client) {
       await client.backend.invoke("emptyTrash", {});
       setSelectedId(null);
       setBody("");
-      await load(true, "");
+      await load(view.current.notesView, view.current.query);
     } catch (reason) {
       await fail(reason);
     }
@@ -268,7 +277,9 @@ export function useNotes(client: Client) {
     setError,
     setQuery,
     setSelectedId,
-    setTrashed,
+    setView,
+    notesView,
+    archive,
     trashNote,
     trashed,
   };

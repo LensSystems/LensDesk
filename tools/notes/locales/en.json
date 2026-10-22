@@ -67,5 +67,10 @@
     "separator": "Separator",
     "link": "Link…",
     "password": "Password…"
-  }
+  },
+  "archived": "Archived",
+  "archive": "Archive note",
+  "unarchive": "Unarchive note",
+  "emptyArchivedTitle": "There are no archived notes",
+  "emptyArchivedDescription": "Notes you archive will appear here."
 }
