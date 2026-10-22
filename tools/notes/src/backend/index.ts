@@ -12,6 +12,12 @@ function getRepository(dataDir: string) {
 }
 
 export const methods = {
+  vaultStatus: (params, ctx) => getRepository(ctx.dataDir).vaultStatus(params),
+  vaultSetup: (params, ctx) => getRepository(ctx.dataDir).vaultSetup(params),
+  vaultUnlock: (params, ctx) => getRepository(ctx.dataDir).vaultUnlock(params),
+  vaultLock: (params, ctx) => getRepository(ctx.dataDir).vaultLock(params),
+  vaultReset: (params, ctx) => getRepository(ctx.dataDir).vaultReset(params),
+  setPrivate: (params, ctx) => getRepository(ctx.dataDir).setPrivate(params),
   create: (params, ctx) => getRepository(ctx.dataDir).create(params),
   update: (params, ctx) => getRepository(ctx.dataDir).update(params),
   rename: (params, ctx) => getRepository(ctx.dataDir).rename(params),

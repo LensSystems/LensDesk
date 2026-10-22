@@ -33,7 +33,7 @@ describe("backend de Notas", () => {
         "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
       ),
     ).toEqual({
-      version: 3,
+      version: 4,
     });
     db.close();
   });
