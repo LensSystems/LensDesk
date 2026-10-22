@@ -6,6 +6,7 @@ vi.mock("electron", () => ({ utilityProcess: {} }));
 // Backend simulado: responde a cada petición y anota las cancelaciones recibidas.
 function setup() {
   const sent: { type: string; id: number }[] = [];
+  let forks = 0;
   let clock = 0;
   const host = createBackendHost({
     userData: `${process.env.TMPDIR ?? "/tmp"}/lensdesk-backend-host-test`,
@@ -14,6 +15,7 @@ function setup() {
     resolveFile: async () => undefined,
     now: () => clock,
     fork: () => {
+      forks++;
       let onMessage: (message: unknown) => void = () => undefined;
       return {
         postMessage: (message: unknown) => {
@@ -33,12 +35,60 @@ function setup() {
   return {
     host,
     sent,
+    forks: () => forks,
     advance: (ms: number) => {
       clock += ms;
     },
   };
 }
 const noProgress = () => undefined;
+
+describe("arranque del backend", () => {
+  it("dos llamadas simultáneas comparten un solo proceso", async () => {
+    const { host, forks } = setup();
+    await Promise.all([
+      host.invoke("notes", "r1", "m", {}, noProgress),
+      host.invoke("notes", "r2", "m", {}, noProgress),
+    ]);
+    await host.invoke("notes", "r3", "m", {}, noProgress);
+    expect(forks()).toBe(1);
+  });
+});
+
+describe("cerrar durante el arranque", () => {
+  it("no lanza el proceso y la llamada siguiente usa la versión instalada ahora", async () => {
+    const paths: string[] = [];
+    let installPath = "/tool-v1";
+    const host = createBackendHost({
+      userData: `${process.env.TMPDIR ?? "/tmp"}/lensdesk-backend-host-test`,
+      hostVersion: "0.0.0",
+      getTool: (id) => ({ id, installPath, version: "1.0.0" }),
+      resolveFile: async () => undefined,
+      fork: (path) => {
+        paths.push(path);
+        let onMessage: (message: unknown) => void = () => undefined;
+        return {
+          postMessage: (message: unknown) => {
+            const msg = message as { type: string; id: number };
+            if (msg.type === "request")
+              setTimeout(() => onMessage({ type: "response", id: msg.id, result: "ok" }), 0);
+          },
+          on: (event: string, listener: (...args: never[]) => void) => {
+            if (event === "message") onMessage = listener as never;
+          },
+          kill: () => undefined,
+        };
+      },
+    });
+    const first = host.invoke("notes", "r1", "m", {}, noProgress);
+    host.terminate("notes");
+    installPath = "/tool-v2";
+    await expect(first).rejects.toMatchObject({ code: "E_CANCELLED" });
+    expect(paths).toEqual([]);
+    await host.invoke("notes", "r2", "m", {}, noProgress);
+    expect(paths).toEqual(["/tool-v2/backend/index.js"]);
+  });
+});
 
 describe("cancelaciones anticipadas del backend", () => {
   it("aplica una cancelación que llegó antes que su llamada", async () => {
