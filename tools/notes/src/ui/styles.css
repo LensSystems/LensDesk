@@ -97,7 +97,7 @@ body {
 .cm-editor {
   height: 100%;
   font:
-    13px / 1.75 "JetBrains Mono Variable",
+    13px / 1.7 "JetBrains Mono Variable",
     monospace;
   color: var(--ld-text);
   background: var(--ld-bg);
@@ -110,9 +110,14 @@ body {
   /* Franja derecha libre para la barra flotante de deshacer y formato. */
   padding: 16px 144px 16px 0;
   caret-color: var(--ld-accent);
+  line-height: 1.7;
 }
 .code-editor .cm-line {
   padding: 0 20px;
+}
+.code-editor .cm-line.cm-block-start,
+.code-editor .cm-gutterElement.cm-block-start {
+  padding-top: 0.35em;
 }
 .code-editor .cm-gutters {
   color: var(--ld-text-muted);
