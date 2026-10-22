@@ -6,7 +6,7 @@ import {
   keymap,
   lineNumbers,
 } from "@codemirror/view";
-import { Button, Copy, Eye, MarkdownView, Pencil, SegmentedControl, Upload } from "@lensdesk/ui";
+import { Button, Copy, Eye, Pencil, SegmentedControl, Upload } from "@lensdesk/ui";
 import { EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,14 +15,15 @@ import { EditorToolbar } from "./EditorToolbar.tsx";
 import { formatCommand, formatKeymap } from "./editor-commands.ts";
 import { markdownHighlighting } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
+import { NotePreview } from "./NotePreview.tsx";
 import { NoteTitle } from "./NoteTitle.tsx";
-import { renderPreview } from "./preview.ts";
 
 export function Editor({
   note,
   preview,
   onMode,
   onCopy,
+  onCopyCode,
   onChange,
   onBlur,
   onExport,
@@ -32,6 +33,7 @@ export function Editor({
   preview: boolean;
   onMode: (preview: boolean) => void;
   onCopy: () => Promise<boolean>;
+  onCopyCode: (code: string) => Promise<void>;
   onChange: (value: string) => void;
   onBlur: () => void;
   onExport: () => void;
@@ -175,12 +177,7 @@ export function Editor({
           <div className="code-editor" ref={host} />
         </EditorMenu>
       </div>
-      {preview && (
-        <MarkdownView
-          className="min-h-0 flex-1 overflow-auto p-6"
-          html={renderPreview(note.body_md)}
-        />
-      )}
+      {preview && <NotePreview body={note.body_md} onCopyCode={onCopyCode} />}
     </section>
   );
 }

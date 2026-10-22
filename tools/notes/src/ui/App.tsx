@@ -89,6 +89,7 @@ export function App({ client }: { client: Client }) {
               {state.selected ? (
                 state.trashed ? (
                   <TrashView
+                    onCopyCode={(code) => client.ui.copyText(code)}
                     note={state.selected}
                     onRestore={() => void state.restore(state.selected?.id ?? "")}
                   />
@@ -98,6 +99,7 @@ export function App({ client }: { client: Client }) {
                     preview={preview}
                     onMode={setPreview}
                     onCopy={state.copyNote}
+                    onCopyCode={(code) => client.ui.copyText(code)}
                     note={{ ...state.selected, body_md: state.body }}
                     onChange={updateBody}
                     onBlur={flush}

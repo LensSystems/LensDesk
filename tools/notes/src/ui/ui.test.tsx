@@ -157,6 +157,17 @@ beforeEach(async () => {
 });
 
 describe("interfaz de Notas", () => {
+  it("copia el código de la vista previa mediante el cliente", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Código", body_md: "```ts\nconst x = 1;\n```\n*Pie*" });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Código" });
+    fireEvent.click(screen.getByRole("radio", { name: "Ver" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Copiar código" }));
+    await screen.findByRole("button", { name: "Copiado" });
+    expect(fake.client.ui.copyText).toHaveBeenCalledExactlyOnceWith("const x = 1;\n");
+  });
+
   it("cambia a Ver al seleccionar u ocultar, crea en Editar y copia el borrador", async () => {
     const fake = fakeClient();
     await fake.invoke("create", { title: "Uno", body_md: "Cuerpo" });
@@ -294,6 +305,7 @@ describe("interfaz de Notas", () => {
           preview={false}
           onMode={vi.fn()}
           onCopy={vi.fn(async () => true)}
+          onCopyCode={vi.fn(async () => {})}
           onChange={vi.fn()}
           onBlur={vi.fn()}
           onRename={vi.fn(async () => {})}

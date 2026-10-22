@@ -1,9 +1,17 @@
-import { Button, MarkdownView, RotateCcw } from "@lensdesk/ui";
+import { Button, RotateCcw } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import type { Note } from "./NoteList.tsx";
-import { renderPreview } from "./preview.ts";
+import { NotePreview } from "./NotePreview.tsx";
 
-export function TrashView({ note, onRestore }: { note: Note; onRestore: () => void }) {
+export function TrashView({
+  note,
+  onRestore,
+  onCopyCode,
+}: {
+  note: Note;
+  onRestore: () => void;
+  onCopyCode: (code: string) => Promise<void>;
+}) {
   const { t } = useTranslation();
   return (
     <section className="editor-panel">
@@ -14,10 +22,7 @@ export function TrashView({ note, onRestore }: { note: Note; onRestore: () => vo
           {t("restore")}
         </Button>
       </header>
-      <MarkdownView
-        className="min-h-0 flex-1 overflow-auto p-6"
-        html={renderPreview(note.body_md)}
-      />
+      <NotePreview body={note.body_md} onCopyCode={onCopyCode} />
     </section>
   );
 }

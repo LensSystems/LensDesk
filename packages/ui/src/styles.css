@@ -161,3 +161,37 @@
 .ld-tooltip {
   pointer-events: none;
 }
+
+.ld-markdown-view .ld-code-block {
+  position: relative;
+  margin: 0 0 12px;
+}
+.ld-markdown-view .ld-code-block pre {
+  padding-top: 40px;
+  margin-bottom: 4px;
+}
+.ld-markdown-view .ld-code-block button[data-copy-code] {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--ld-border-control);
+  border-radius: var(--ld-radius-sm);
+  background: var(--ld-surface-raised);
+  color: var(--ld-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ld-markdown-view .ld-code-block button[data-copy-code]:hover {
+  background: var(--ld-accent-soft);
+  color: var(--ld-accent-soft-fg);
+}
+.ld-markdown-view .ld-code-block button[data-copy-code]:focus-visible {
+  outline: 2px solid var(--ld-accent);
+  outline-offset: 2px;
+}
+.ld-markdown-view .ld-code-block figcaption {
+  color: var(--ld-text-muted);
+  font-size: 12px;
+}

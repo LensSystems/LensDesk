@@ -16,6 +16,7 @@ it("actualiza botones de historial y empieza vacío al montar otra nota", () => 
     preview: false,
     onMode: vi.fn(),
     onCopy: vi.fn(async () => true),
+    onCopyCode: vi.fn(async () => {}),
     onChange: vi.fn(),
     onBlur: vi.fn(),
     onExport: vi.fn(),

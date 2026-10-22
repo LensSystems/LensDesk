@@ -1,0 +1,88 @@
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import { beforeAll, expect, it, vi } from "vitest";
+import en from "../../locales/en.json";
+import es from "../../locales/es.json";
+import { NotePreview } from "./NotePreview.tsx";
+
+beforeAll(async () => {
+  await i18n
+    .use(initReactI18next)
+    .init({ lng: "es", resources: { es: { translation: es }, en: { translation: en } } });
+});
+
+it("copia solo el código del mismo bloque y restablece cada botón a los dos segundos", async () => {
+  vi.useFakeTimers();
+  try {
+    const copy = vi.fn(async () => {});
+    render(
+      <NotePreview
+        body={'```ts\nconst x = "<uno>";\n```\n*Comentario*\n\n```\notro\n```'}
+        onCopyCode={copy}
+      />,
+    );
+    const [first, second] = screen.getAllByRole("button", { name: "Copiar código" });
+    if (!first || !second) throw new Error("Botones ausentes");
+    await act(async () => fireEvent.click(first));
+    expect(copy).toHaveBeenLastCalledWith('const x = "<uno>";\n');
+    expect(first).toHaveTextContent("Copiado");
+    expect(second).toHaveTextContent("Copiar código");
+    act(() => vi.advanceTimersByTime(1000));
+    await act(async () => fireEvent.click(second));
+    expect(copy).toHaveBeenLastCalledWith("otro\n");
+    act(() => vi.advanceTimersByTime(1000));
+    expect(first).toHaveTextContent("Copiar código");
+    expect(second).toHaveTextContent("Copiado");
+    act(() => vi.advanceTimersByTime(1000));
+    expect(second).toHaveTextContent("Copiar código");
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("no confirma una copia rechazada y actualiza el idioma en vivo", async () => {
+  const copy = vi.fn(async () => {
+    throw new Error("Rechazado");
+  });
+  render(<NotePreview body={"```\nx\n```"} onCopyCode={copy} />);
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Copiar código" })));
+  expect(screen.queryByRole("button", { name: "Copiado" })).toBeNull();
+  await act(async () => {
+    await i18n.changeLanguage("en");
+  });
+  expect(screen.getByRole("button", { name: "Copy code" })).toBeInTheDocument();
+  await act(async () => {
+    await i18n.changeLanguage("es");
+  });
+});
+
+it("vuelve a «Copiar código» aunque se renderice de nuevo durante la confirmación", async () => {
+  vi.useFakeTimers();
+  try {
+    const body = "```\nx\n```";
+    const { rerender } = render(<NotePreview body={body} onCopyCode={async () => {}} />);
+    const button = screen.getByRole("button", { name: "Copiar código" });
+    await act(async () => fireEvent.click(button));
+    expect(button).toHaveTextContent("Copiado");
+    rerender(<NotePreview body={body} onCopyCode={async () => {}} />);
+    act(() => vi.advanceTimersByTime(2000));
+    expect(button).toHaveTextContent("Copiar código");
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("ignora botones de copiar escritos en el HTML de la nota", async () => {
+  const copy = vi.fn(async () => {});
+  render(
+    <NotePreview
+      body={
+        '<figure class="ld-code-block"><button data-copy-code>Falso</button><pre><code>echo seguro<span style="display:none">; rm -rf ~</span></code></pre></figure>'
+      }
+      onCopyCode={copy}
+    />,
+  );
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Falso" })));
+  expect(copy).not.toHaveBeenCalled();
+});
