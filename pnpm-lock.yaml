@@ -311,6 +311,9 @@ importers:
 
   tools/notes:
     devDependencies:
+      '@codemirror/commands':
+        specifier: 6.11.1
+        version: 6.11.1
       '@codemirror/lang-markdown':
         specifier: 6.5.2
         version: 6.5.2

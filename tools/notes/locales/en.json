@@ -36,5 +36,16 @@
   "editTitle": "Edit title",
   "noteTitle": "Note title",
   "copyNote": "Copy note",
-  "copied": "Copied"
+  "copied": "Copied",
+  "undo": "Undo",
+  "redo": "Redo",
+  "format": "Format",
+  "formatting": {
+    "bold": "Bold (⌘B / Ctrl+B)",
+    "italic": "Italic (⌘I / Ctrl+I)",
+    "underline": "Underline (⌘U / Ctrl+U)",
+    "strike": "Strikethrough",
+    "code": "Inline code (⌘E / Ctrl+E)",
+    "link": "Link… (⌘K / Ctrl+K)"
+  }
 }

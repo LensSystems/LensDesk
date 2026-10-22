@@ -10,6 +10,7 @@
     "package": "node ../../scripts/build-tool.ts && node ../../packages/lenspkg/src/cli.ts pack dist --out dist/ --unsigned"
   },
   "devDependencies": {
+    "@codemirror/commands": "6.11.1",
     "@codemirror/lang-markdown": "6.5.2",
     "@codemirror/language": "6.13.1",
     "@codemirror/state": "6.7.6",

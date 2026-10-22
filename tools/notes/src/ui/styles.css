@@ -107,7 +107,8 @@ body {
   font-family: "JetBrains Mono Variable", monospace;
 }
 .code-editor .cm-content {
-  padding: 16px 0;
+  /* Franja derecha libre para la barra flotante de deshacer y formato. */
+  padding: 16px 144px 16px 0;
   caret-color: var(--ld-accent);
 }
 .code-editor .cm-line {

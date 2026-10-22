@@ -1,9 +1,17 @@
+import { history, historyKeymap, redo, redoDepth, undo, undoDepth } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
-import { highlightActiveLine, highlightActiveLineGutter, lineNumbers } from "@codemirror/view";
+import {
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  keymap,
+  lineNumbers,
+} from "@codemirror/view";
 import { Button, Copy, Eye, MarkdownView, Pencil, SegmentedControl, Upload } from "@lensdesk/ui";
 import { EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { EditorToolbar } from "./EditorToolbar.tsx";
+import { formatCommand, formatKeymap } from "./editor-commands.ts";
 import { markdownHighlighting } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
 import { NoteTitle } from "./NoteTitle.tsx";
@@ -33,6 +41,7 @@ export function Editor({
   const editorLabel = useRef(t("edit"));
   const initialBody = useRef(note.body_md);
   const view = useRef<EditorView | null>(null);
+  const [depth, setDepth] = useState({ undo: 0, redo: 0 });
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyTimer.current), []);
@@ -43,6 +52,13 @@ export function Editor({
       doc: initialBody.current,
       extensions: [
         EditorView.lineWrapping,
+        history(),
+        keymap.of([
+          ...formatKeymap,
+          ...historyKeymap,
+          { key: "Mod-Shift-z", run: redo },
+          { key: "Ctrl-y", run: redo },
+        ]),
         EditorView.contentAttributes.of(() => ({ "aria-label": editorLabel.current })),
         markdown(),
         markdownHighlighting,
@@ -50,6 +66,8 @@ export function Editor({
         highlightActiveLine(),
         highlightActiveLineGutter(),
         EditorView.updateListener.of((update) => {
+          const next = { undo: undoDepth(update.state), redo: redoDepth(update.state) };
+          setDepth((old) => (old.undo === next.undo && old.redo === next.redo ? old : next));
           if (update.docChanged) onChange(update.state.doc.toString());
         }),
       ],
@@ -126,7 +144,34 @@ export function Editor({
           {t("export")}
         </Button>
       </header>
-      <div className="code-editor" ref={host} hidden={preview} />
+      <div
+        className="relative min-h-0 flex-1 flex-col"
+        style={{ display: preview ? "none" : "flex" }}
+      >
+        <EditorToolbar
+          canUndo={depth.undo > 0}
+          canRedo={depth.redo > 0}
+          onUndo={() => {
+            if (view.current) {
+              undo(view.current);
+              view.current.focus();
+            }
+          }}
+          onRedo={() => {
+            if (view.current) {
+              redo(view.current);
+              view.current.focus();
+            }
+          }}
+          onFormat={(format) => {
+            if (view.current) {
+              formatCommand(format)(view.current);
+              view.current.focus();
+            }
+          }}
+        />
+        <div className="code-editor" ref={host} />
+      </div>
       {preview && (
         <MarkdownView
           className="min-h-0 flex-1 overflow-auto p-6"

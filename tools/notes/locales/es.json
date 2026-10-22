@@ -36,5 +36,16 @@
   "editTitle": "Editar título",
   "noteTitle": "Título de la nota",
   "copyNote": "Copiar nota",
-  "copied": "Copiado"
+  "copied": "Copiado",
+  "undo": "Deshacer",
+  "redo": "Rehacer",
+  "format": "Formato",
+  "formatting": {
+    "bold": "Negrita (⌘B / Ctrl+B)",
+    "italic": "Cursiva (⌘I / Ctrl+I)",
+    "underline": "Subrayado (⌘U / Ctrl+U)",
+    "strike": "Tachado",
+    "code": "Código en línea (⌘E / Ctrl+E)",
+    "link": "Enlace… (⌘K / Ctrl+K)"
+  }
 }
