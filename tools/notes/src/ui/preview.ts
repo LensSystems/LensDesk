@@ -1,6 +1,8 @@
 import DOMPurify from "dompurify";
 import MarkdownIt from "markdown-it";
 
+import { type CredentialPreview, credentialCard } from "./credential-preview.ts";
+
 const markdown = new MarkdownIt({ html: true, linkify: true, breaks: true });
 
 // Marca de los botones de copiar que genera la vista previa. El HTML de una nota no la conoce,
@@ -11,6 +13,7 @@ markdown.core.ruler.after("inline", "code_caption", (state) => {
   for (let index = 0; index < state.tokens.length; index++) {
     const block = state.tokens[index];
     if (block?.type !== "fence") continue;
+    if (block.info.trim() === "credential" && state.env.credentials) continue;
     const [open, inline, close] = state.tokens.slice(index + 1, index + 4);
     const children = inline?.children;
     if (
@@ -35,6 +38,12 @@ markdown.core.ruler.after("inline", "code_caption", (state) => {
 for (const type of ["fence", "code_block"]) {
   const original = markdown.renderer.rules[type];
   markdown.renderer.rules[type] = (tokens, index, options, env, renderer) => {
+    if (type === "fence" && tokens[index]?.info.trim() === "credential" && env?.credentials)
+      return credentialCard(
+        tokens[index]?.content ?? "",
+        env.credentials as CredentialPreview,
+        markdown.utils.escapeHtml,
+      );
     const code = original?.(tokens, index, options, env, renderer) ?? "";
     const label = markdown.utils.escapeHtml(typeof env?.copyCode === "string" ? env.copyCode : "");
     const caption = tokens[index]?.meta?.caption;
@@ -44,7 +53,11 @@ for (const type of ["fence", "code_block"]) {
   };
 }
 
-export function renderPreview(source: string, copyCode = ""): string {
+export function renderPreview(
+  source: string,
+  copyCode = "",
+  credentials?: CredentialPreview,
+): string {
   DOMPurify.addHook("uponSanitizeAttribute", (node, data) => {
     if (
       node.nodeName === "IMG" &&
@@ -54,7 +67,7 @@ export function renderPreview(source: string, copyCode = ""): string {
       data.keepAttr = false;
   });
   try {
-    return DOMPurify.sanitize(markdown.render(source, { copyCode }), {
+    return DOMPurify.sanitize(markdown.render(source, { copyCode, credentials }), {
       ADD_TAGS: ["figure", "figcaption", "button"],
       ADD_ATTR: ["data-copy-code"],
     });

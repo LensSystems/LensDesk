@@ -1,3 +1,4 @@
+import { ConfirmDialog } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import { PasswordSetup } from "./PasswordSetup.tsx";
 import { PrivateNotice } from "./PrivateNotice.tsx";
@@ -10,6 +11,18 @@ export function VaultPanels({ vault }: { vault: ReturnType<typeof useVault> }) {
   const onClose = () => vault.setDialog(null);
   return (
     <>
+      <ConfirmDialog
+        open={vault.dialog === "unprotect"}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+        title={t("vault.remove")}
+        description={t("credential.warning")}
+        confirmLabel={t("vault.remove")}
+        cancelLabel={t("close")}
+        busy={vault.busy}
+        onConfirm={() => void vault.confirmUnprotect()}
+      />
       {vault.dialog === "unlock" && (
         <VaultDialog title={t("vault.unlock")} onClose={onClose}>
           <UnlockPanel

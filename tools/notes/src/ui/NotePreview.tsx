@@ -1,21 +1,38 @@
 import { MarkdownView } from "@lensdesk/ui";
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { CREDENTIAL_TOKEN, type CredentialPreview } from "./credential-preview.ts";
 import { COPY_CODE_TOKEN, renderPreview } from "./preview.ts";
 
 export function NotePreview({
   body,
+  privateNote = false,
   onCopyCode,
 }: {
   body: string;
+  privateNote?: boolean;
   onCopyCode: (code: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const host = useRef<HTMLDivElement>(null);
-  const html = useMemo(() => renderPreview(body, t("copyCode")), [body, t]);
+  const rendered = useMemo(() => {
+    const credentials: CredentialPreview = {
+      fields: [],
+      labels: Object.fromEntries(
+        ["user", "password", "note", "copy", "show", "hide"].map((key) => [
+          key,
+          t(`credential.${key}`),
+        ]),
+      ),
+    };
+    return {
+      html: renderPreview(body, t("copyCode"), privateNote ? credentials : undefined),
+      credentials,
+    };
+  }, [body, privateNote, t]);
   // Referencias a lo último recibido: el efecto no se reinstala (ni cancela «Copiado») en cada render.
-  const latest = useRef({ onCopyCode, t });
-  latest.current = { onCopyCode, t };
+  const latest = useRef({ onCopyCode, t, rendered });
+  latest.current = { onCopyCode, t, rendered };
   useEffect(() => {
     const container = host.current;
     if (!container) return;
@@ -23,6 +40,27 @@ export function NotePreview({
     let active = true;
     const copy = async (event: MouseEvent) => {
       if (!(event.target instanceof Element)) return;
+      const credential = event.target.closest<HTMLButtonElement>("button[data-credential]");
+      if (credential?.dataset.credential === CREDENTIAL_TOKEN && container.contains(credential)) {
+        const index = Number(credential.dataset.field);
+        const field = latest.current.rendered.credentials.fields[index];
+        if (!field) return;
+        if (credential.dataset.action === "copy") {
+          try {
+            await latest.current.onCopyCode(field.value);
+          } catch {
+            /* Conserva el control al rechazar la copia. */
+          }
+        } else if (credential.dataset.action === "reveal") {
+          const span = credential.parentElement?.querySelector("[data-credential-value]");
+          if (!span) return;
+          const shown = credential.dataset.shown !== "true";
+          span.textContent = shown ? field.value : "•••••••";
+          credential.dataset.shown = String(shown);
+          credential.textContent = latest.current.t(shown ? "credential.hide" : "credential.show");
+        }
+        return;
+      }
       const button = event.target.closest<HTMLButtonElement>("button[data-copy-code]");
       if (!button || button.dataset.copyCode !== COPY_CODE_TOKEN) return;
       if (!container.contains(button)) return;
@@ -54,7 +92,7 @@ export function NotePreview({
 
   return (
     <div ref={host} className="min-h-0 flex-1 overflow-auto p-6">
-      <MarkdownView html={html} />
+      <MarkdownView html={rendered.html} />
     </div>
   );
 }

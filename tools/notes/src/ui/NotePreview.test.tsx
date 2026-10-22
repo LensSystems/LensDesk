@@ -86,3 +86,32 @@ it("ignora botones de copiar escritos en el HTML de la nota", async () => {
   await act(async () => fireEvent.click(screen.getByRole("button", { name: "Falso" })));
   expect(copy).not.toHaveBeenCalled();
 });
+
+it("mantiene secretos fuera del DOM y copia desde memoria; ignora controles falsos", async () => {
+  const copy = vi.fn(async () => {});
+  const { container } = render(
+    <NotePreview
+      privateNote
+      body={
+        '```credential\nuser: Ada\npassword: secreto-unico\nsecret: PIN | 9876\n```\n<button data-credential="falso" data-field="1">Falso</button>'
+      }
+      onCopyCode={copy}
+    />,
+  );
+  expect(container.innerHTML).not.toContain("secreto-unico");
+  expect(container.innerHTML).not.toContain("9876");
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Falso" })));
+  expect(copy).not.toHaveBeenCalled();
+  const copyPassword = screen.getAllByRole("button", { name: "Copiar" })[1];
+  if (!copyPassword) throw new Error("Falta el botón de copiar");
+  await act(async () => fireEvent.click(copyPassword));
+  expect(copy).toHaveBeenLastCalledWith("secreto-unico");
+  expect(container.innerHTML).not.toContain("secreto-unico");
+  const reveal = screen.getAllByRole("button", { name: "Mostrar secreto" })[0];
+  if (!reveal) throw new Error("Falta el ojo");
+  fireEvent.click(reveal);
+  expect(container.textContent).toContain("secreto-unico");
+  fireEvent.click(screen.getByRole("button", { name: "Ocultar secreto" }));
+  expect(container.innerHTML).not.toContain("secreto-unico");
+  expect(screen.queryByRole("button", { name: "Copiar código" })).toBeNull();
+});

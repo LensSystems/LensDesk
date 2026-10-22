@@ -10,6 +10,7 @@ import {
 import { EditorView } from "codemirror";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { credentialMask } from "./credential-mask.ts";
 import { EditorHeader } from "./EditorHeader.tsx";
 import { EditorMenu } from "./EditorMenu.tsx";
 import { EditorToolbar } from "./EditorToolbar.tsx";
@@ -76,6 +77,7 @@ export function Editor({
         ]),
         EditorView.contentAttributes.of(() => ({ "aria-label": editorLabel.current })),
         markdown(),
+        credentialMask,
         markdownHighlighting,
         lineNumbers(),
         highlightActiveLine(),
@@ -149,11 +151,13 @@ export function Editor({
                 }
               }}
             />
-            <EditorMenu view={view}>
+            <EditorMenu view={view} privateNote={!!note.private && !locked} readOnly={readOnly}>
               <div className="code-editor" ref={host} />
             </EditorMenu>
           </div>
-          {preview && <NotePreview body={note.body_md} onCopyCode={onCopyCode} />}
+          {preview && (
+            <NotePreview privateNote={!!note.private} body={note.body_md} onCopyCode={onCopyCode} />
+          )}
         </>
       )}
     </section>

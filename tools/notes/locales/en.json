@@ -96,5 +96,20 @@
     "unlockFirst": "Unlock the vault to make this note private.",
     "saveFailed": "The latest changes could not be saved. Saving will be retried when you edit again.",
     "draftRestored": "The latest changes were not saved; they have been restored so you can save them"
+  },
+  "credential": {
+    "title": "Password block",
+    "user": "User",
+    "password": "Password",
+    "note": "Notes",
+    "add": "+ Add field",
+    "text": "Plain text",
+    "secret": "Secret text",
+    "fieldTitle": "Field title",
+    "save": "Save",
+    "copy": "Copy",
+    "show": "Show secret",
+    "hide": "Hide secret",
+    "warning": "Passwords will no longer be encrypted. Remove privacy?"
   }
 }
