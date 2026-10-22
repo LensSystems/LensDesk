@@ -296,24 +296,34 @@ async function run() {
         await titleInput.press("Enter");
         await notes.locator(".cm-content").fill(body);
       };
+      // En ventanas estrechas la lista está plegada: se abre su panel para usarla.
+      const rail = notes.locator(".sidebar-rail");
+      const list = async () => {
+        if (!(await rail.isVisible())) return notes;
+        await rail.getByRole("button", { name: "Mostrar lista de notas" }).click();
+        return notes.getByRole("dialog", { name: "Lista de notas" });
+      };
       await newNote("Borrador archivado", "Ideas para revisar más adelante.");
       await notes.waitForTimeout(1000);
+      const drafts = await list();
       await expect(
-        notes.getByRole("button", { name: "Borrador archivado", exact: true }),
+        drafts.getByRole("button", { name: "Borrador archivado", exact: true }),
       ).toBeVisible();
-      await notes.getByRole("button", { name: "Mover a la papelera" }).first().click();
+      await drafts.getByRole("button", { name: "Mover a la papelera" }).first().click();
       await expect(
-        notes.getByRole("button", { name: "Borrador archivado", exact: true }),
+        drafts.getByRole("button", { name: "Borrador archivado", exact: true }),
       ).toHaveCount(0);
+      if (drafts !== notes) await notes.keyboard.press("Escape");
       await newNote("Guía del proyecto", sample);
       await notes.waitForTimeout(1000);
       await expect(notes.getByRole("heading", { name: "Guía del proyecto" })).toBeVisible();
       await snap("notas-edicion", notes);
       await notes.getByRole("radio", { name: "Ver", exact: true }).click();
       await snap("notas-vista-previa", notes);
-      await notes.getByRole("radio", { name: "Papelera", exact: true }).click();
+      const trash = await list();
+      await trash.getByRole("radio", { name: "Papelera", exact: true }).click();
       await expect(
-        notes.getByRole("button", { name: "Borrador archivado", exact: true }),
+        trash.getByRole("button", { name: "Borrador archivado", exact: true }),
       ).toBeVisible();
       await snap("notas-papelera", notes);
       const converter = await open("Convertidor", "md-converter");
