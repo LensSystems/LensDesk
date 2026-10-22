@@ -76,6 +76,19 @@ export function OverlayExamples() {
           </ui.DropdownMenu>
         ))}
       </Example>
+      <Example names={["ContextMenu"]}>
+        <ui.ContextMenu
+          label="Insertar"
+          items={[
+            { label: "Encabezado", onSelect: () => {} },
+            { label: "Contraseña…", disabled: true, onSelect: () => {} },
+          ]}
+        >
+          <button type="button" className="rounded-ld-sm border border-border p-2">
+            Clic derecho o Mayús+F10
+          </button>
+        </ui.ContextMenu>
+      </Example>
       <Example names={["Tooltip", "TooltipProvider"]}>
         <ui.IconButton label="Información">i</ui.IconButton>
         <ui.Tooltip label="Información adicional">

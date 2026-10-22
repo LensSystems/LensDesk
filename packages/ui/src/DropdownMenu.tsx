@@ -1,6 +1,7 @@
 import { DropdownMenu as Primitive } from "radix-ui";
 import type { ComponentProps } from "react";
 import { cn } from "./cn.ts";
+import { menuContentClass, menuItemClass } from "./menu-styles.ts";
 
 export const DropdownMenu = Primitive.Root;
 export const DropdownMenuTrigger = Primitive.Trigger;
@@ -16,11 +17,7 @@ export function DropdownMenuItem({
   return (
     <Primitive.Item
       {...props}
-      className={cn(
-        "flex items-center rounded-ld-sm px-2.5 py-2 transition-colors duration-150 ease-out data-[highlighted]:bg-surface data-[disabled]:opacity-45 motion-reduce:transition-none",
-        destructive && "text-danger",
-        className,
-      )}
+      className={cn(menuItemClass, destructive && "text-danger", className)}
     />
   );
 }
@@ -41,13 +38,7 @@ export function DropdownMenuContent({
 }: ComponentProps<typeof Primitive.Content>) {
   return (
     <Primitive.Portal>
-      <Primitive.Content
-        {...props}
-        className={cn(
-          "ld-pop z-50 min-w-32 rounded-ld-lg border border-border bg-surface-raised p-1.5 text-[13px] text-text shadow-ld",
-          className,
-        )}
-      />
+      <Primitive.Content {...props} className={cn(menuContentClass, className)} />
     </Primitive.Portal>
   );
 }

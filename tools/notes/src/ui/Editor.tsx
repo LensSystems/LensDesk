@@ -10,6 +10,7 @@ import { Button, Copy, Eye, MarkdownView, Pencil, SegmentedControl, Upload } fro
 import { EditorView } from "codemirror";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { EditorMenu } from "./EditorMenu.tsx";
 import { EditorToolbar } from "./EditorToolbar.tsx";
 import { formatCommand, formatKeymap } from "./editor-commands.ts";
 import { markdownHighlighting } from "./markdown-highlight.ts";
@@ -170,7 +171,9 @@ export function Editor({
             }
           }}
         />
-        <div className="code-editor" ref={host} />
+        <EditorMenu view={view}>
+          <div className="code-editor" ref={host} />
+        </EditorMenu>
       </div>
       {preview && (
         <MarkdownView

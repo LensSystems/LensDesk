@@ -54,6 +54,7 @@ export * from "./Badge.tsx";
 export * from "./Button.tsx";
 export * from "./Checkbox.tsx";
 export * from "./ConfirmDialog.tsx";
+export * from "./ContextMenu.tsx";
 export { cn } from "./cn.ts";
 export * from "./Dialog.tsx";
 export * from "./DropdownMenu.tsx";

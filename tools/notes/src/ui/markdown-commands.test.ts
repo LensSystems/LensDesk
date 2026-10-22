@@ -167,6 +167,10 @@ describe("formato Markdown", () => {
     expect(toggleMarks(back, { from: 0, to: 12 }, "**").text).toBe("**otra**\n**hola mundo**");
   });
 
+  it("con la nota empezando por un salto trata la primera línea", () => {
+    expect(toggleMarks("\n- uno", { from: 0, to: 6 }, "**").text).toBe("\n- **uno**");
+  });
+
   it("inserta marcas sin selección y sitúa el cursor dentro", () => {
     expect(toggleMarks("ab", { from: 1, to: 1 }, "**")).toEqual({
       text: "a****b",

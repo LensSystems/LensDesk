@@ -47,5 +47,23 @@
     "strike": "Tachado",
     "code": "Código en línea (⌘E / Ctrl+E)",
     "link": "Enlace… (⌘K / Ctrl+K)"
+  },
+  "insert": {
+    "title": "Insertar",
+    "heading1": "Encabezado 1",
+    "heading2": "Encabezado 2",
+    "heading3": "Encabezado 3",
+    "heading4": "Encabezado 4",
+    "heading5": "Encabezado 5",
+    "heading6": "Encabezado 6",
+    "bullet": "Lista con viñetas",
+    "numbered": "Lista numerada",
+    "task": "Lista de tareas",
+    "quote": "Cita",
+    "codeBlock": "Bloque de código",
+    "table": "Tabla 2×2",
+    "separator": "Separador",
+    "link": "Enlace…",
+    "password": "Contraseña…"
   }
 }

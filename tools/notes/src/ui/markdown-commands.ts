@@ -1,3 +1,8 @@
+// Inicio de la línea de `at` (lastIndexOf con -1 miraría la posición 0).
+export function lineStart(text: string, at: number): number {
+  return at <= 0 ? 0 : text.lastIndexOf("\n", at - 1) + 1;
+}
+
 export type TextRange = { from: number; to: number };
 export type MarkdownEdit = { text: string; range: TextRange };
 export const marks = {
@@ -42,14 +47,20 @@ const prefix = /^[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?|>[ \t]?|#{
 
 export function toggleMarks(
   text: string,
-  { from, to }: TextRange,
+  range: TextRange,
   open: string,
   close = open,
 ): MarkdownEdit {
+  // Las líneas en blanco de los extremos de la selección no cuentan.
+  const raw = text.slice(range.from, range.to);
+  const lead = raw.match(/^(?:[ \t]*\n)+/)?.[0].length ?? 0;
+  const tail = raw.slice(lead).match(/(?:\n[ \t]*)+$/)?.[0].length ?? 0;
+  const from = range.from + lead;
+  const to = Math.max(from, range.to - tail);
   const selected = text.slice(from, to);
   if (selected.trim().includes("\n")) {
     // Con varias líneas se trabaja con líneas completas: así ninguna marca ni código queda cortado.
-    const lineFrom = text.lastIndexOf("\n", from - 1) + 1;
+    const lineFrom = lineStart(text, from);
     const lineEnd = text[to - 1] === "\n" ? to : text.indexOf("\n", to);
     return toggleLines(
       text,
@@ -168,7 +179,7 @@ function toggleInline(
 
 // Parejas de una marca en la línea de la selección, fuera del código en línea.
 function markSpans(text: string, from: number, to: number, open: string, close: string) {
-  const lineFrom = text.lastIndexOf("\n", from - 1) + 1;
+  const lineFrom = lineStart(text, from);
   const lineEnd = text.indexOf("\n", to);
   const line = text.slice(lineFrom, lineEnd === -1 ? text.length : lineEnd);
   const code = [...line.matchAll(/`[^`]*`/g)].map((match) => [
@@ -278,7 +289,7 @@ function toggleLines(
 
 // Dentro de un código en línea (o cruzándolo) no se puede marcar sin romperlo.
 function cutsCode(text: string, from: number, to: number): boolean {
-  const lineFrom = text.lastIndexOf("\n", from - 1) + 1;
+  const lineFrom = lineStart(text, from);
   const lineEnd = text.indexOf("\n", to);
   const line = text.slice(lineFrom, lineEnd === -1 ? text.length : lineEnd);
   return [...line.matchAll(/(`+)[^`]+?\1/g)].some((match) => {
