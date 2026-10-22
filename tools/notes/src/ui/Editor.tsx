@@ -1,23 +1,22 @@
 import { history, historyKeymap, redo, redoDepth, undo, undoDepth } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
+import { Compartment, EditorState } from "@codemirror/state";
 import {
   highlightActiveLine,
   highlightActiveLineGutter,
   keymap,
   lineNumbers,
 } from "@codemirror/view";
-import { Button, Copy, Eye, Pencil, SegmentedControl, Upload } from "@lensdesk/ui";
 import { EditorView } from "codemirror";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { EditorHeader } from "./EditorHeader.tsx";
 import { EditorMenu } from "./EditorMenu.tsx";
 import { EditorToolbar } from "./EditorToolbar.tsx";
 import { formatCommand, formatKeymap } from "./editor-commands.ts";
 import { markdownHighlighting } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
 import { NotePreview } from "./NotePreview.tsx";
-import { NoteTitle } from "./NoteTitle.tsx";
-
 export function Editor({
   note,
   preview,
@@ -28,7 +27,15 @@ export function Editor({
   onBlur,
   onExport,
   onRename,
+  onPrivate,
+  locked = false,
+  readOnly = false,
+  children,
 }: {
+  onPrivate?: () => void;
+  locked?: boolean;
+  readOnly?: boolean;
+  children?: ReactNode;
   note: Note;
   preview: boolean;
   onMode: (preview: boolean) => void;
@@ -42,18 +49,23 @@ export function Editor({
   const { t } = useTranslation();
   const host = useRef<HTMLDivElement>(null);
   const editorLabel = useRef(t("edit"));
-  const initialBody = useRef(note.body_md);
+  const editable = useRef(new Compartment());
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
+  const bodyRef = useRef(note.body_md);
+  bodyRef.current = note.body_md;
   const view = useRef<EditorView | null>(null);
   const [depth, setDepth] = useState({ undo: 0, redo: 0 });
-  const [copied, setCopied] = useState(false);
-  const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(copyTimer.current), []);
 
   useEffect(() => {
-    if (!host.current) return;
+    if (locked || !host.current) return;
     const instance = new EditorView({
-      doc: initialBody.current,
+      doc: bodyRef.current,
       extensions: [
+        editable.current.of([
+          EditorState.readOnly.of(readOnlyRef.current),
+          EditorView.editable.of(!readOnlyRef.current),
+        ]),
         EditorView.lineWrapping,
         history(),
         keymap.of([
@@ -84,100 +96,66 @@ export function Editor({
       instance.destroy();
       view.current = null;
     };
-  }, [onChange, onBlur]);
-
+  }, [onChange, onBlur, locked]);
+  useLayoutEffect(() => {
+    view.current?.dispatch({
+      effects: editable.current.reconfigure([
+        EditorState.readOnly.of(readOnly),
+        EditorView.editable.of(!readOnly),
+      ]),
+    });
+  }, [readOnly]);
   useEffect(() => {
     editorLabel.current = t("edit");
     view.current?.dispatch({});
   }, [t]);
-
   useEffect(() => {
     const editor = view.current;
     if (editor && editor.state.doc.toString() !== note.body_md)
       editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: note.body_md } });
   }, [note.body_md]);
-
   return (
     <section className="editor-panel">
-      <header className="editor-toolbar">
-        <NoteTitle title={note.title} onRename={onRename} />
-        <SegmentedControl
-          aria-label={t("mode")}
-          className="h-6 items-center p-0 [&>button]:h-6 [&>button]:px-2"
-          value={preview ? "preview" : "edit"}
-          onValueChange={(value) => {
-            onBlur();
-            onMode(value === "preview");
-          }}
-          options={[
-            {
-              value: "edit",
-              label: (
-                <span className="flex items-center gap-1">
-                  <Pencil size={12} aria-hidden="true" />
-                  {t("edit")}
-                </span>
-              ),
-            },
-            {
-              value: "preview",
-              label: (
-                <span className="flex items-center gap-1">
-                  <Eye size={12} aria-hidden="true" />
-                  {t("preview")}
-                </span>
-              ),
-            },
-          ]}
-        />
-        <Button
-          type="button"
-          onClick={async () => {
-            if (!(await onCopy())) return;
-            setCopied(true);
-            clearTimeout(copyTimer.current);
-            copyTimer.current = setTimeout(() => setCopied(false), 2000);
-          }}
-        >
-          <Copy size={14} aria-hidden="true" />
-          {t(copied ? "copied" : "copyNote")}
-        </Button>
-        <Button type="button" onClick={onExport}>
-          <Upload size={14} aria-hidden="true" />
-          {t("export")}
-        </Button>
-      </header>
-      <div
-        className="relative min-h-0 flex-1 flex-col"
-        style={{ display: preview ? "none" : "flex" }}
-      >
-        <EditorToolbar
-          canUndo={depth.undo > 0}
-          canRedo={depth.redo > 0}
-          onUndo={() => {
-            if (view.current) {
-              undo(view.current);
-              view.current.focus();
-            }
-          }}
-          onRedo={() => {
-            if (view.current) {
-              redo(view.current);
-              view.current.focus();
-            }
-          }}
-          onFormat={(format) => {
-            if (view.current) {
-              formatCommand(format)(view.current);
-              view.current.focus();
-            }
-          }}
-        />
-        <EditorMenu view={view}>
-          <div className="code-editor" ref={host} />
-        </EditorMenu>
-      </div>
-      {preview && <NotePreview body={note.body_md} onCopyCode={onCopyCode} />}
+      <EditorHeader
+        {...{ note, preview, locked, onPrivate, onMode, onBlur, onCopy, onExport, onRename }}
+      />
+      {locked ? (
+        children
+      ) : (
+        <>
+          <div
+            className="relative min-h-0 flex-1 flex-col"
+            style={{ display: preview ? "none" : "flex" }}
+          >
+            <EditorToolbar
+              canUndo={!readOnly && depth.undo > 0}
+              canRedo={!readOnly && depth.redo > 0}
+              onUndo={() => {
+                if (view.current && !view.current.state.readOnly) {
+                  undo(view.current);
+                  view.current.focus();
+                }
+              }}
+              onRedo={() => {
+                if (view.current && !view.current.state.readOnly) {
+                  redo(view.current);
+                  view.current.focus();
+                }
+              }}
+              onFormat={(format) => {
+                if (view.current && !view.current.state.readOnly) {
+                  formatCommand(format)(view.current);
+                  view.current.focus();
+                }
+              }}
+            />
+            <EditorMenu view={view}>
+              <div className="code-editor" ref={host} />
+            </EditorMenu>
+          </div>
+          {preview && <NotePreview body={note.body_md} onCopyCode={onCopyCode} />}
+        </>
+      )}
     </section>
   );
 }

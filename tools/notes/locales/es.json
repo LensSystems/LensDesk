@@ -72,5 +72,29 @@
   "archive": "Archivar nota",
   "unarchive": "Desarchivar nota",
   "emptyArchivedTitle": "No hay notas archivadas",
-  "emptyArchivedDescription": "Las notas que archives aparecerán aquí."
+  "emptyArchivedDescription": "Las notas que archives aparecerán aquí.",
+  "vault": {
+    "noticeTitle": "Notas privadas",
+    "notice": "El contenido se cifra en este equipo. El título sigue visible: no pongas datos sensibles en él. Sin la contraseña ni las respuestas de seguridad no hay recuperación. Una contraseña corta es más fácil de adivinar sin conexión; usamos scrypt y una espera tras varios intentos fallidos.",
+    "continue": "Continuar",
+    "rules": "Usa de 6 a 10 caracteres, con al menos una mayúscula, una minúscula, un número y un carácter especial.",
+    "password": "Contraseña",
+    "confirmation": "Confirmar contraseña",
+    "setup": "Crear contraseña",
+    "question": "Pregunta de seguridad {{number}}",
+    "answer": "Respuesta {{number}}",
+    "reset": "Restablecer contraseña",
+    "locked": "Contenido privado bloqueado",
+    "unlock": "Desbloquear",
+    "forgot": "¿Olvidaste la contraseña?",
+    "private": "Nota privada",
+    "remove": "Quitar privada",
+    "makePrivate": "Hacer privada",
+    "wait": "Demasiados intentos. Espera {{seconds}} segundos.",
+    "waitAgain": "Credenciales incorrectas. Espera antes de volver a intentarlo.",
+    "invalid": "No se pudo completar la acción. Comprueba la contraseña o las respuestas e inténtalo de nuevo.",
+    "unlockFirst": "Desbloquea la bóveda para hacer privada esta nota.",
+    "saveFailed": "No se pudieron guardar los últimos cambios. Se reintentará al editar de nuevo.",
+    "draftRestored": "No se guardaron los últimos cambios; se restauraron para que puedas guardarlos"
+  }
 }

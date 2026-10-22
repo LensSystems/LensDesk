@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, IconButton, ListItem, Star, Trash2 } from "@lensdesk/ui";
+import { Archive, ArchiveRestore, IconButton, ListItem, Lock, Star, Trash2 } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import { Highlighted } from "./Highlighted.tsx";
 import { noteSummary } from "./note-summary.ts";
@@ -7,6 +7,7 @@ export type Note = {
   id: string;
   title: string;
   body_md: string;
+  private?: boolean;
   pinned: boolean;
   created_at: string;
   updated_at: string;
@@ -53,7 +54,9 @@ export function NoteList({
             )
           }
           secondaryText={
-            query.trim() ? (
+            note.private ? (
+              <Lock size={14} aria-label={t("vault.private")} />
+            ) : query.trim() ? (
               <Highlighted text={noteSummary(note.body_md, note.title, query)} query={query} />
             ) : (
               noteSummary(note.body_md, note.title)

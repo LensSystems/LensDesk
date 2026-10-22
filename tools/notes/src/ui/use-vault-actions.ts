@@ -1,0 +1,115 @@
+import type { createToolClient } from "@lensdesk/sdk";
+import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { VaultStatus } from "./use-vault.ts";
+import type { useVaultDocument } from "./use-vault-document.ts";
+export function useVaultActions(
+  client: ReturnType<typeof createToolClient>,
+  document: ReturnType<typeof useVaultDocument>,
+  visible: { current: boolean },
+  refresh: (allowUnlock?: boolean) => Promise<VaultStatus | undefined>,
+  reload: () => Promise<boolean>,
+) {
+  const { t } = useTranslation();
+  const [dialog, setDialog] = useState<"notice" | "setup" | "reset" | "unlock" | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const running = useRef(false);
+  const run = async (operation: () => Promise<void>) => {
+    if (running.current) return false;
+    running.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      await operation();
+      return visible.current;
+    } catch (reason) {
+      const message =
+        reason instanceof Error
+          ? reason.message
+          : String((reason as { message?: string })?.message ?? "");
+      const seconds = /Wait (\d+) seconds/.exec(message)?.[1];
+      setError(
+        seconds
+          ? t("vault.wait", { seconds })
+          : t(message.includes("Wait") ? "vault.waitAgain" : "vault.invalid"),
+      );
+      return false;
+    } finally {
+      running.current = false;
+      setBusy(false);
+    }
+  };
+  // Lee el cuerpo justo al escribir, después de las esperas; nunca el del clic.
+  const write = async (id: string) => {
+    await document.settle(id);
+    const snapshot = document.current.current;
+    if (!visible.current || snapshot.note?.id !== id) return false;
+    if (snapshot.note.private) {
+      if (snapshot.loaded?.id !== id) return false;
+      await document.persist(id, snapshot.body);
+    } else await client.backend.invoke("update", { id, body_md: snapshot.publicBody });
+    return true;
+  };
+  const toggle = () => {
+    const target = document.current.current.note;
+    return run(async () => {
+      const next = await refresh();
+      if (!next || !target || document.current.current.note?.id !== target.id) return;
+      if (!next.configured) {
+        setDialog("notice");
+        return;
+      }
+      if (!next.unlocked) {
+        if (!target.private) setDialog("unlock");
+        return;
+      }
+      if (!(await write(target.id))) return;
+      await client.backend.invoke("setPrivate", { id: target.id, private: !target.private });
+      await reload();
+    });
+  };
+  return {
+    dialog,
+    setDialog,
+    error,
+    busy,
+    readOnly: busy || dialog !== null,
+    toggle,
+    setup: (password: string, questions: [string, string], answers: [string, string]) => {
+      const id = document.current.current.note?.id;
+      const request = document.epoch.current;
+      return run(async () => {
+        await client.backend.invoke("vaultSetup", { password, questions, answers });
+        if (!visible.current) {
+          await client.backend.invoke("vaultLock", {});
+          return;
+        }
+        if (request !== document.epoch.current || !id || !(await write(id))) return;
+        await client.backend.invoke("setPrivate", { id, private: true });
+        setDialog(null);
+        await refresh(true);
+        await reload();
+      });
+    },
+    unlock: (password: string) =>
+      run(async () => {
+        await client.backend.invoke("vaultUnlock", { password });
+        if (!visible.current) {
+          await client.backend.invoke("vaultLock", {});
+          return;
+        }
+        await refresh(true);
+      }),
+    reset: (password: string, answers: [string, string]) =>
+      run(async () => {
+        await client.backend.invoke("vaultReset", { password, answers });
+        setDialog(null);
+        if (!visible.current) {
+          await client.backend.invoke("vaultLock", {});
+          return;
+        }
+        await refresh(true);
+      }),
+  };
+}

@@ -72,5 +72,29 @@
   "archive": "Archive note",
   "unarchive": "Unarchive note",
   "emptyArchivedTitle": "There are no archived notes",
-  "emptyArchivedDescription": "Notes you archive will appear here."
+  "emptyArchivedDescription": "Notes you archive will appear here.",
+  "vault": {
+    "noticeTitle": "Private notes",
+    "notice": "Content is encrypted on this computer. The title remains visible: do not put sensitive information in it. Without the password or security answers, recovery is impossible. A short password is easier to guess offline; we use scrypt and a delay after repeated failed attempts.",
+    "continue": "Continue",
+    "rules": "Use 6–10 characters, including an uppercase letter, a lowercase letter, a number and a special character.",
+    "password": "Password",
+    "confirmation": "Confirm password",
+    "setup": "Create password",
+    "question": "Security question {{number}}",
+    "answer": "Answer {{number}}",
+    "reset": "Reset password",
+    "locked": "Private content locked",
+    "unlock": "Unlock",
+    "forgot": "Forgot your password?",
+    "private": "Private note",
+    "remove": "Remove privacy",
+    "makePrivate": "Make private",
+    "wait": "Too many attempts. Wait {{seconds}} seconds.",
+    "waitAgain": "Invalid credentials. Wait before trying again.",
+    "invalid": "Could not complete the action. Check your password or answers and try again.",
+    "unlockFirst": "Unlock the vault to make this note private.",
+    "saveFailed": "The latest changes could not be saved. Saving will be retried when you edit again.",
+    "draftRestored": "The latest changes were not saved; they have been restored so you can save them"
+  }
 }

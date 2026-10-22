@@ -6,20 +6,36 @@ import { Editor } from "./Editor.tsx";
 import { EmptyNote } from "./EmptyNote.tsx";
 import { NotesSidebar } from "./NotesSidebar.tsx";
 import { TrashView } from "./TrashView.tsx";
+import { UnlockPanel } from "./UnlockPanel.tsx";
 import { useAutosave } from "./use-autosave.ts";
 import { useNotes } from "./use-notes.ts";
+import { useVault } from "./use-vault.ts";
+import { VaultPanels } from "./VaultPanels.tsx";
 
 type Client = ReturnType<typeof createToolClient>;
 
 export function App({ client }: { client: Client }) {
   const { t } = useTranslation();
   const state = useNotes(client);
+  const vault = useVault(client, state.selected, state.load, state.body);
+  // Para notas privadas: vale mientras no se bloquee la bóveda ni se cambie de nota.
+  const stillUnlocked = () => {
+    if (!state.selected?.private) return () => true;
+    const at = vault.epoch.current;
+    return () => vault.epoch.current === at;
+  };
+  const privateNote = Boolean(state.selected?.private);
+  const body = privateNote ? vault.body : state.body;
   useEffect(() => {
     document.title = t("title");
   }, [t]);
   const [preview, setPreview] = useState(false);
   const [confirmingEmpty, setConfirmingEmpty] = useState(false);
-  const flush = useAutosave(state.selected?.id ?? null, state.body, state.save);
+  const flush = useAutosave(
+    vault.ready && !vault.readOnly ? (state.selected?.id ?? null) : null,
+    body,
+    privateNote ? vault.save : state.save,
+  );
   useEffect(
     () =>
       client.app.onVisibilityChange((visible) => {
@@ -36,7 +52,10 @@ export function App({ client }: { client: Client }) {
       if (created) setPreview(false);
     });
   };
-  const updateBody = useCallback((value: string) => state.setBody(value), [state.setBody]);
+  const updateBody = useCallback(
+    (value: string) => (privateNote ? vault.setBody(value) : state.setBody(value)),
+    [privateNote, vault.setBody, state.setBody],
+  );
 
   return (
     <UiLabelsProvider labels={{ loading: t("loading"), close: t("close"), dismiss: t("close") }}>
@@ -53,6 +72,7 @@ export function App({ client }: { client: Client }) {
               }
             />
           )}
+          {vault.message && vault.ready && <Notice tone="warning" title={vault.message} />}
           {state.loading ? (
             <p>{t("loading")}</p>
           ) : (
@@ -97,25 +117,43 @@ export function App({ client }: { client: Client }) {
                 }
               />
               {state.selected ? (
-                state.trashed ? (
+                state.trashed && vault.ready ? (
                   <TrashView
                     onCopyCode={(code) => client.ui.copyText(code)}
-                    note={state.selected}
+                    note={{ ...state.selected, body_md: body }}
                     onRestore={() => void state.restore(state.selected?.id ?? "")}
                   />
                 ) : (
                   <Editor
-                    key={state.selected.id}
+                    key={`${state.selected.id}:${vault.ready}`}
                     preview={preview}
                     onMode={setPreview}
-                    onCopy={state.copyNote}
+                    onCopy={() =>
+                      vault.ready ? state.copyNote(body, stillUnlocked()) : Promise.resolve(false)
+                    }
+                    locked={!vault.ready}
+                    readOnly={vault.readOnly}
+                    onPrivate={() => void vault.toggle()}
                     onCopyCode={(code) => client.ui.copyText(code)}
-                    note={{ ...state.selected, body_md: state.body }}
+                    note={{ ...state.selected, body_md: body }}
                     onChange={updateBody}
                     onBlur={flush}
                     onRename={(title) => state.rename(state.selected?.id ?? "", title)}
-                    onExport={() => void state.exportNote()}
-                  />
+                    onExport={() => {
+                      if (vault.ready) void state.exportNote(body, stillUnlocked());
+                    }}
+                  >
+                    {vault.status.unlocked ? (
+                      <p role="status">{t("loading")}</p>
+                    ) : (
+                      <UnlockPanel
+                        error={vault.error}
+                        busy={vault.busy}
+                        onSubmit={(password) => void vault.unlock(password)}
+                        onForgot={() => vault.setDialog("reset")}
+                      />
+                    )}
+                  </Editor>
                 )
               ) : (
                 <EmptyNote
@@ -127,6 +165,7 @@ export function App({ client }: { client: Client }) {
               )}
             </div>
           )}
+          <VaultPanels vault={vault} />
           <ConfirmDialog
             open={confirmingEmpty}
             title={t("confirmEmptyTitle")}

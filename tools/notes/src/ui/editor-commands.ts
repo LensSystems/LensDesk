@@ -9,6 +9,7 @@ import {
 
 export function formatCommand(format: Format) {
   return (view: EditorView): boolean => {
+    if (view.state.readOnly) return false;
     const text = view.state.doc.toString();
     const range = view.state.selection.main;
     const edit =
@@ -21,6 +22,7 @@ export function formatCommand(format: Format) {
 }
 
 export function applyMarkdownEdit(view: EditorView, edit: MarkdownEdit) {
+  if (view.state.readOnly) return;
   const text = view.state.doc.toString();
   let from = 0;
   while (from < text.length && from < edit.text.length && text[from] === edit.text[from]) from++;
