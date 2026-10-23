@@ -1,6 +1,8 @@
 import type { createToolClient } from "@lensdesk/sdk";
 import {
   Button,
+  Check,
+  Copy,
   EmptyState,
   FileText,
   MarkdownView,
@@ -9,10 +11,11 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Tooltip,
 } from "@lensdesk/ui";
 import DOMPurify from "dompurify";
 import MarkdownIt from "markdown-it";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorCode, type QueueItem } from "./use-queue.ts";
 
@@ -41,12 +44,17 @@ export function Preview({
   client,
   item,
   results,
+  onSaved,
 }: {
   client: Client;
   item: QueueItem | null;
   results: QueueItem[];
+  onSaved: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(copyTimer.current), []);
   const [tab, setTab] = useState("rendered");
   const [notice, setNotice] = useState("");
   // El HTML saneado solo se recalcula cuando cambia el Markdown, no con cada aviso de progreso.
@@ -59,6 +67,7 @@ export function Preview({
     });
     if (!file) return false;
     await client.files.writeText(file.token, result.markdown);
+    onSaved(result.id);
     return true;
   };
 
@@ -80,20 +89,35 @@ export function Preview({
             </TabsTrigger>
           ))}
         </TabsList>
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={!item}
-          onClick={() =>
-            item &&
-            void attempt(async () => {
-              await client.ui.copyText(item.markdown);
-              return t("copied");
-            })
-          }
-        >
-          {t("copy")}
-        </Button>
+        <Tooltip label={t(copied ? "copied" : "copy")}>
+          <Button
+            type="button"
+            variant="ghost"
+            className={copied ? "copy-confirmation" : "size-8 p-0 text-muted"}
+            aria-label={t(copied ? "copied" : "copy")}
+            disabled={!item}
+            onClick={() =>
+              item &&
+              void (async () => {
+                try {
+                  await client.ui.copyText(item.markdown);
+                  clearTimeout(copyTimer.current);
+                  setCopied(true);
+                  copyTimer.current = setTimeout(() => setCopied(false), 2000);
+                } catch (reason) {
+                  setNotice(t("errors.generic", { code: errorCode(reason) }));
+                }
+              })()
+            }
+          >
+            {copied ? (
+              <Check size={14} aria-hidden="true" />
+            ) : (
+              <Copy size={14} aria-hidden="true" />
+            )}
+            {copied && <span>{t("copied")}</span>}
+          </Button>
+        </Tooltip>
         <Button
           type="button"
           disabled={!item}

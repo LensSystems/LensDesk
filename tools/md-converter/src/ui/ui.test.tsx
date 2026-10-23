@@ -215,8 +215,8 @@ describe("interfaz del Convertidor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Elegir archivos…" }));
     expect(fake.client.files.pickOpen).toHaveBeenCalledOnce();
     await screen.findByRole("heading", { name: "sample.html" });
-    expect(screen.getByRole("region", { name: es.dropZone })).toHaveTextContent(es.dropMore);
-    expect(screen.getByRole("region", { name: es.dropZone })).toHaveClass("flex");
+    expect(screen.getByRole("region", { name: es.dropZone })).toHaveTextContent(es.dropHint);
+    expect(screen.getByRole("region", { name: es.dropZone })).not.toHaveClass("flex");
     expect(container.querySelector(".ld-markdown-view")).toBeInTheDocument();
     const rendered = screen.getByRole("tab", { name: "Vista renderizada" });
     const raw = screen.getByRole("tab", { name: "Markdown crudo" });

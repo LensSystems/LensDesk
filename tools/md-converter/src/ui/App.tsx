@@ -68,9 +68,11 @@ export function App({ client }: { client: Client }) {
               onChoose={() => void choose()}
               onSelect={queue.setSelectedId}
               onCancel={queue.cancel}
+              onClear={queue.clear}
             />
             <Preview
               client={client}
+              onSaved={queue.markSaved}
               item={queue.selected}
               results={queue.items.filter((item) => item.status === "done")}
             />

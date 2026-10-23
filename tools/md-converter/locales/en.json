@@ -25,7 +25,7 @@
   "copy": "Copy",
   "save": "Save .md",
   "saveAll": "Save all…",
-  "copied": "Markdown copied to the clipboard.",
+  "copied": "Copied",
   "saved": "Files saved: {{count}}",
   "noResult": "Choose a converted file to see its Markdown.",
   "imagesOmitted": "The original document had images that were left out.",
@@ -36,5 +36,10 @@
     "E_CANCELLED": "Conversion cancelled.",
     "generic": "The action could not be completed ({{code}})."
   },
-  "dropMore": "Drag more documents to this area"
+  "dropMore": "Drag more documents to this area",
+  "historyHeading": "Converted files · {{count}}",
+  "clearHistory": "Clear history",
+  "clearHistoryTitle": "Clear history?",
+  "clearHistoryDescription": "The {{count}} files are removed from this list. The .md files you already saved are not deleted.",
+  "fileSaved": "File saved"
 }

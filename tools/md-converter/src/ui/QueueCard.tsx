@@ -1,4 +1,4 @@
-import { Badge, IconButton, ListItem, X } from "@lensdesk/ui";
+import { Badge, Check, IconButton, ListItem, Save, X } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import { StatusText } from "./StatusText.tsx";
 import type { QueueItem } from "./use-queue.ts";
@@ -47,13 +47,21 @@ export function QueueCard({
               </IconButton>
             </>
           ) : (
-            <Badge
-              tone={
-                item.status === "done" ? "accent" : item.status === "error" ? "danger" : "neutral"
-              }
-            >
-              {t(`status.${item.status}`)}
-            </Badge>
+            <span className="queue-result-status">
+              <Badge
+                tone={
+                  item.status === "done" ? "accent" : item.status === "error" ? "danger" : "neutral"
+                }
+              >
+                {t(`status.${item.status}`)}
+              </Badge>
+              {item.status === "done" && item.saved && (
+                <span className="saved-indicator" role="img" aria-label={t("fileSaved")}>
+                  <Save size={16} aria-hidden="true" />
+                  <Check size={12} className="saved-check" aria-hidden="true" />
+                </span>
+              )}
+            </span>
           )
         }
         footer={

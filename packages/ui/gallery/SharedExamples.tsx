@@ -1,4 +1,5 @@
 import {
+  BrushCleaning,
   Button,
   ConfirmDialog,
   FileDropZone,
@@ -6,6 +7,7 @@ import {
   MarkdownView,
   Notice,
   Panel,
+  Save,
   SegmentedControl,
   Toolbar,
 } from "@lensdesk/ui";
@@ -19,6 +21,10 @@ export function SharedExamples() {
   const [notice, setNotice] = useState("");
   return (
     <>
+      <Example names={["BrushCleaning", "Save"]}>
+        <BrushCleaning aria-label="Borrar historial" />
+        <Save aria-label="Guardar" />
+      </Example>
       <Example names={["Panel"]}>
         <Panel title="Panel" actions={<Button>Acción</Button>}>
           Contenido
