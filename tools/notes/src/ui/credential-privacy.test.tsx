@@ -10,7 +10,10 @@ import { vaultTestClient } from "./vault-test-client.ts";
 beforeAll(async () => {
   await i18n.use(initReactI18next).init({ lng: "es", resources: { es: { translation: es } } });
 });
-it("advierte antes de quitar privacidad: cerrar conserva el cifrado, aceptar la hace pública", async () => {
+// Monta la aplicación entera con cifrado real: con la máquina cargada pasa de 5 s.
+it("advierte antes de quitar privacidad: cerrar conserva el cifrado, aceptar la hace pública", {
+  timeout: 15_000,
+}, async () => {
   const f = vaultTestClient();
   const source = "```credential\nuser: Ada\npassword: clave-privada\n```";
   render(<App client={f.client as never} />);

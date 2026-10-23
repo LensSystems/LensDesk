@@ -152,7 +152,10 @@ it("carga get antes de editar o guardar una privada y descarta respuestas despu�
   expect(document.body).not.toHaveTextContent("Contenido secreto");
   expect(f.note().body_md).toBe("Contenido secreto");
 });
-it("configura, bloquea, rechaza contraseña errónea, desbloquea y restablece sin perder contenido", async () => {
+// Monta la aplicación entera con cifrado real: con la máquina cargada pasa de 5 s.
+it("configura, bloquea, rechaza contraseña errónea, desbloquea y restablece sin perder contenido", {
+  timeout: 15_000,
+}, async () => {
   const f = fake();
   render(<App client={f.client as never} />);
   const trigger = await screen.findByRole("button", { name: "Hacer privada" });
@@ -223,7 +226,10 @@ it("ignora un get que termina después de ocultar la herramienta", async () => {
   expect(document.body).not.toHaveTextContent("Contenido secreto");
   expect(f.invoke.mock.calls.filter(([method]) => method === "update")).toHaveLength(0);
 });
-it("guarda cambios privados antes de bloquear y detecta la caducidad del backend", async () => {
+// Monta la aplicación entera con cifrado real: con la máquina cargada pasa de 5 s.
+it("guarda cambios privados antes de bloquear y detecta la caducidad del backend", {
+  timeout: 15_000,
+}, async () => {
   const f = fake(true, true);
   render(<App client={f.client as never} />);
   await waitFor(() =>
