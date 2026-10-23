@@ -10,7 +10,7 @@
     "settingsPage": "Ajustes",
     "unexpectedError": "Ocurrió un error inesperado. Los detalles están en los registros.",
     "activeTool": "Herramienta activa",
-    "tabClosedForLimit": "Se cerró {{name}} para no superar {{count}} pestañas.",
+    "tabClosedForLimit": "Se cerró {{closed}} para abrir {{opened}}",
     "undoCloseTab": "Deshacer"
   },
   "toolsPage": {

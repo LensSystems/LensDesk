@@ -19,6 +19,7 @@ import { openHostDatabase, readStoredLocale, supportsFts5 } from "./db/driver.ts
 import { SchemaTooNewError } from "./db/migrate.ts";
 import { getSetting, setSetting } from "./db/settings-repo.ts";
 import { createTranslator } from "./i18n.ts";
+import { closedForLimitSchema } from "./ipc/schemas.ts";
 import { createErrorNotifier } from "./log/error-notifier.ts";
 import { logProcessErrors, logRendererCrashes } from "./log/wire-logging.ts";
 import { buildMenuTemplate, tabMenuEntries } from "./menu.ts";
@@ -185,7 +186,11 @@ const { updates, appActions } = wireAppServices({
 });
 const tabHandlers = createTabHandlers({
   tabsStore,
-  notifyClosed: (toolId) => shellContents?.send("tabs.closedForLimit", { toolId }),
+  notifyClosed: (toolId, openedToolId) =>
+    shellContents?.send(
+      "tabs.closedForLimit",
+      closedForLimitSchema.parse({ toolId, openedToolId }),
+    ),
   follow: followTabs,
   closeTool: (toolId) => toolWiring.close(toolId),
   hideAll: () => toolWiring.hideAll(),

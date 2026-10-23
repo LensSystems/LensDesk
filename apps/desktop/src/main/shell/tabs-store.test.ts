@@ -179,10 +179,10 @@ describe("tabs store", () => {
     for (let index = 0; index < 9; index++) insertTool(database, `tool-${index}`);
     for (let index = 0; index < 9; index++) handlers["tabs.open"]({ toolId: `tool-${index}` });
     expect(closeTool).toHaveBeenCalledExactlyOnceWith("tool-0");
-    expect(notifyClosed).toHaveBeenCalledExactlyOnceWith("tool-0");
+    expect(notifyClosed).toHaveBeenCalledExactlyOnceWith("tool-0", "tool-8");
     handlers["tabs.undoClose"]({ toolId: "tool-0" });
     expect(closeTool).toHaveBeenLastCalledWith("tool-1");
-    expect(notifyClosed).toHaveBeenLastCalledWith("tool-1");
+    expect(notifyClosed).toHaveBeenLastCalledWith("tool-1", "tool-0");
     expect(store.list()[0]).toMatchObject({ toolId: "tool-0", active: true });
     expect(store.list()).toHaveLength(8);
     handlers["tabs.close"]({ toolId: "tool-0" });

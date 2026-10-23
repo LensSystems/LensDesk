@@ -3,6 +3,10 @@ import type { HostChannel } from "../../shared/host-channels.ts";
 import { isHttpsUrl } from "../app-actions.ts";
 import { type SettingKey, settingSchemas } from "../db/settings-repo.ts";
 
+export const closedForLimitSchema = z
+  .object({ toolId: z.string().min(1), openedToolId: z.string().min(1).optional() })
+  .strict();
+
 const toolUpdatesSchema = z.array(
   z.object({ id: z.string(), version: z.string(), url: z.string().refine(isHttpsUrl) }).strict(),
 );

@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { enableDeveloperMode, installTool, launchApp, shellPage } from "./helpers.ts";
 
-for (const width of [1280, 900]) {
+for (const width of [1280, 760]) {
   test(`limita a ocho pestañas, restaura la posición y no desborda a ${width}px`, async () => {
     test.setTimeout(90_000);
     const directory = await mkdtemp(join(tmpdir(), "lensdesk-tabs-limit-"));
@@ -13,7 +13,10 @@ for (const width of [1280, 900]) {
     try {
       const shell = await shellPage(app);
       const window = await app.browserWindow(shell);
-      await window.evaluate((browserWindow, width) => browserWindow.setSize(width, 800), width);
+      await window.evaluate(
+        (browserWindow, width) => browserWindow.setContentSize(width, 520),
+        width,
+      );
       await enableDeveloperMode(shell);
       for (let index = 0; index < 9; index++) {
         const source = join(directory, `tool-${index}`);
@@ -46,7 +49,7 @@ for (const width of [1280, 900]) {
       await expect(shell.getByRole("tab", { name: "Plantilla 1", exact: true })).toHaveCount(0);
       await expect(shell.getByRole("tab", { name: "Plantilla 0", exact: true })).toBeVisible();
       await expect(shell.locator("li[role=status]")).toContainText(
-        "Se cerró Plantilla 1 para no superar 8 pestañas.",
+        "Se cerró Plantilla 1 para abrir Plantilla 8",
       );
       const notice = await shell.locator("li[role=status]").boundingBox();
       const header = await shell.getByRole("banner").boundingBox();
@@ -65,11 +68,20 @@ for (const width of [1280, 900]) {
         })
         .toBe(true);
       // Tampoco tapa los botones de la derecha ni desborda la página.
-      const noticeBox = await shell.locator("li[role=status]").boundingBox();
-      const toolsBox = await shell
-        .getByRole("button", { name: "Herramientas", exact: true })
-        .boundingBox();
-      expect(noticeBox && toolsBox && noticeBox.x + noticeBox.width <= toolsBox.x).toBe(true);
+      // Se mide cuando termina la entrada del aviso, que se desliza unos píxeles.
+      await expect
+        .poll(async () => {
+          const noticeBox = await shell.locator("li[role=status]").boundingBox();
+          const toolsBox = await shell
+            .getByRole("button", { name: "Herramientas", exact: true })
+            .boundingBox();
+          return (
+            !!noticeBox &&
+            !!toolsBox &&
+            Math.abs(toolsBox.x - noticeBox.x - noticeBox.width - 8) < 1
+          );
+        })
+        .toBe(true);
       expect(
         await shell.evaluate(
           () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,

@@ -12,7 +12,7 @@ export function createTabHandlers(options: {
     move(toolId: string, toIndex: number): Tabs;
   };
   follow(tabs: Tabs): void;
-  notifyClosed(toolId: string): void;
+  notifyClosed(toolId: string, openedToolId?: string): void;
   closeTool(toolId: string): void;
   hideAll(): void;
   leaveTab(): void;
@@ -24,7 +24,8 @@ export function createTabHandlers(options: {
     for (const tab of before) {
       if (!tabs.some((current) => current.toolId === tab.toolId)) {
         options.closeTool(tab.toolId);
-        if (notify) options.notifyClosed(tab.toolId);
+        if (notify)
+          options.notifyClosed(tab.toolId, tabs.find((current) => current.active)?.toolId);
       }
     }
     options.follow(tabs);

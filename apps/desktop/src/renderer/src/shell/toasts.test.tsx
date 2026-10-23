@@ -59,11 +59,11 @@ describe("avisos del shell", () => {
   it("localiza el cierre automático y deshacer pide restaurarlo", () => {
     const { bridge, invoke } = bridgeWith({});
     useShellStore.setState({
-      toasts: [{ id: 999, kind: "info", message: "", closedToolId: "notas" }],
+      toasts: [{ id: 999, kind: "info", message: "", closedToolId: "notas", openedToolId: "hash" }],
       tools: [{ id: "notas", manifest: { name: { es: "Notas", en: "Notes" } } }] as never,
     });
     render(<ToastRegion bridge={bridge} />);
-    expect(screen.getByText("Se cerró Notas para no superar 8 pestañas.")).toBeTruthy();
+    expect(screen.getByText("Se cerró Notas para abrir hash")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
     expect(invoke).toHaveBeenCalledWith("tabs.undoClose", { toolId: "notas" });
     expect(useShellStore.getState().toasts).toHaveLength(0);

@@ -2,6 +2,8 @@ import { Button, ExternalLink, IconButton, X } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import type { HostEventPayloads } from "../../../shared/host-channels.ts";
 
+import { NoticeCapsule } from "./NoticeCapsule.tsx";
+
 type Props = {
   update: HostEventPayloads["update.available"];
   bridge: Window["lensdeskHost"];
@@ -13,16 +15,17 @@ type Props = {
 export function UpdateBanner({ update, bridge, onDismiss }: Props) {
   const { t } = useTranslation();
   return (
-    <div
-      className="flex h-8 min-w-0 items-center gap-1 rounded-full bg-accent-soft pl-3 pr-1 text-xs text-accent-soft-fg"
-      role="status"
+    <NoticeCapsule
+      status
+      text={
+        <>
+          <span aria-hidden>{t("recovery.updateShort", { version: update.version })}</span>
+          <span className="sr-only">
+            {t("recovery.updateAvailable", { version: update.version })}
+          </span>
+        </>
+      }
     >
-      <span className="truncate">
-        <span aria-hidden>{t("recovery.updateShort", { version: update.version })}</span>
-        <span className="sr-only">
-          {t("recovery.updateAvailable", { version: update.version })}
-        </span>
-      </span>
       <Button
         variant="primary"
         aria-label={t("recovery.downloadInstaller")}
@@ -50,6 +53,6 @@ export function UpdateBanner({ update, bridge, onDismiss }: Props) {
       >
         <X aria-hidden size={14} />
       </IconButton>
-    </div>
+    </NoticeCapsule>
   );
 }

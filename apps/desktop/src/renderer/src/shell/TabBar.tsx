@@ -35,10 +35,12 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
     );
   };
   const drag = useTabDrag((toolId, index) => void reorder(toolId, index));
-  const { headerRef, brandRef, actionsRef, width, left, right } = useTabCenter();
+  const hasNotice = useShellStore((state) => !!state.update || state.toasts.length > 0);
+  const { headerRef, brandRef, actionsRef, width, left, right, naturalRight } = useTabCenter();
   const listRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const fullScreen = useShellStore((state) => state.fullScreen);
+  const windowInset = bridge.platform === "win32" && !fullScreen ? WIN_CONTROLS_WIDTH + 16 : 16;
   const page = useShellStore((state) => state.page);
   const showPage = useShellStore((state) => state.showPage);
   const tools = useShellStore((state) => state.tools);
@@ -54,8 +56,13 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
     0,
     tabs.findIndex((tab) => tab.active),
   );
-  const { compact, required } = useCompactTabs(listRef, names, activeIndex, width - left - right);
-  const insets = tabInsets(width, left, right, required);
+  const { compact, required } = useCompactTabs(
+    listRef,
+    names,
+    activeIndex,
+    width - left - (hasNotice ? naturalRight : right),
+  );
+  const insets = hasNotice ? { left, right } : tabInsets(width, left, right, required);
   // Mientras el foco está dentro de la barra manda el índice enfocado; fuera de ella, la pestaña activa.
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const rovingIndex = Math.min(focusedIndex ?? activeIndex, Math.max(0, tabs.length - 1));
@@ -64,6 +71,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
     <header
       ref={headerRef}
       data-platform={bridge.platform}
+      data-has-notice={hasNotice}
       style={{
         height: HEADER_HEIGHT,
         paddingLeft:
@@ -71,7 +79,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
         paddingRight:
           !fullScreen && bridge.platform === "win32" ? WIN_CONTROLS_WIDTH + 16 : undefined,
       }}
-      className="ld-drag @container relative flex items-center gap-2 bg-bg px-4 @max-[880px]:gap-1"
+      className={`ld-drag @container relative flex items-center bg-bg px-4 ${hasNotice ? "justify-between gap-3" : "gap-2 @max-[880px]:gap-1"}`}
     >
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
@@ -79,7 +87,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
       <div
         ref={brandRef}
         data-brand
-        className="w-48 shrink-0 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none @max-[880px]:w-8"
+        className={`${hasNotice ? "w-auto" : "w-48"} shrink-0 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none @max-[880px]:w-8`}
       >
         <span className="block truncate font-bold text-muted @max-[880px]:hidden">
           {t(fullScreen ? "shell.labelFullScreen" : "shell.label")}
@@ -88,7 +96,11 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
           {t("shell.labelCompact")}
         </span>
       </div>
-      <div ref={listRef} style={insets} className="absolute flex min-w-0 justify-center">
+      <div
+        ref={listRef}
+        style={hasNotice ? { maxWidth: required } : insets}
+        className={`${hasNotice ? "relative w-max shrink-0" : "absolute"} flex min-w-0 justify-center transition-[left,right] duration-160 ease-out motion-reduce:transition-none`}
+      >
         <div
           aria-label={t("shell.tabsLabel")}
           className={`flex min-w-0 max-w-full shrink items-center gap-1 overflow-hidden rounded-full ${tabs.length > 0 ? "bg-surface p-1" : ""}`}
@@ -156,7 +168,13 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
       </div>
       <div
         ref={actionsRef}
-        className="ml-auto flex min-w-0 max-w-[50%] items-center justify-end gap-1"
+        style={{
+          maxWidth:
+            hasNotice && Number.isFinite(width)
+              ? Math.max(0, width - left - required - 12 - windowInset)
+              : "50%",
+        }}
+        className={`${hasNotice ? "" : "ml-auto"} flex min-w-0 items-center justify-end gap-1`}
       >
         <HeaderNotices bridge={bridge} />
         <IconButton

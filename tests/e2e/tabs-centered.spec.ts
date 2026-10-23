@@ -77,6 +77,71 @@ for (const width of [1280, 760]) {
           await expectCentered(shell);
           await expectClearSides(shell);
         }
+        if ([0, 4, 7].includes(index)) {
+          // Cada aviso usa otra versión: la descartada antes ya no vuelve a mostrarse.
+          await app.evaluate(
+            ({ BrowserWindow }, version) => {
+              BrowserWindow.getAllWindows()[0]?.webContents.send("update.available", {
+                version,
+                html_url: `https://github.com/LensSystems/LensDesk/releases/tag/v${version}`,
+              });
+            },
+            `0.3.${index + 1}`,
+          );
+          const notice = shell.locator("[data-notice-capsule]");
+          await expect(notice).toBeVisible();
+          await expect
+            .poll(() =>
+              shell.getByRole("tablist").evaluate((list) => {
+                const tabs = list.getBoundingClientRect();
+                const brand = document.querySelector("[data-brand]")?.getBoundingClientRect();
+                const capsule = document
+                  .querySelector("[data-notice-capsule]")
+                  ?.getBoundingClientRect();
+                const tools = [...document.querySelectorAll("header button")]
+                  .find((button) => button.getAttribute("aria-label") === "Herramientas")
+                  ?.getBoundingClientRect();
+                return (
+                  !!brand &&
+                  !!capsule &&
+                  !!tools &&
+                  Math.abs(tools.left - capsule.right - 8) <= 1 &&
+                  tabs.left >= brand.right + 11 &&
+                  capsule.left >= tabs.right + 11 &&
+                  Math.abs(tabs.left - brand.right - (capsule.left - tabs.right)) <= 1 &&
+                  document.documentElement.scrollWidth <= document.documentElement.clientWidth
+                );
+              }),
+            )
+            .toBe(true);
+          const text = notice.locator("[data-notice-text]");
+          if (width === 1280 && index === 7) {
+            await expect(text).toHaveAttribute("data-overflow", "false");
+          }
+          // La barra se recoloca con una transición: se mide cuando ya está quieta.
+          await shell.waitForTimeout(400);
+          const overflow = (await text.getAttribute("data-overflow")) === "true";
+          if (overflow) {
+            await expect(text).toHaveAttribute("data-moving", "true");
+            await notice.hover();
+            await expect(text).toHaveAttribute("data-paused", "true");
+            const action = notice.getByRole("button", { name: "Descargar instalador" });
+            await action.focus();
+            await shell.mouse.move(0, 200);
+            await expect(text).toHaveAttribute("data-paused", "true");
+          } else {
+            await shell.waitForTimeout(1600);
+            await expect(text).toHaveAttribute("data-moving", "false");
+          }
+          await shell.emulateMedia({ reducedMotion: "reduce" });
+          await expect(text).toHaveAttribute("data-moving", "false");
+          await shell.screenshot({
+            path: test.info().outputPath(`aviso-${width}-${index + 1}.png`),
+          });
+          await notice.getByRole("button", { name: "Descartar", exact: true }).click();
+          await shell.emulateMedia({ reducedMotion: "no-preference" });
+          await expectCentered(shell);
+        }
       }
       const tabs = shell.getByRole("tab");
       const first = await tabs.first().boundingBox();

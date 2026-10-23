@@ -11,7 +11,7 @@ export function useTabCenter() {
   const headerRef = useRef<HTMLElement>(null);
   const brandRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
-  const [bounds, setBounds] = useState({ width: Infinity, left: 0, right: 0 });
+  const [bounds, setBounds] = useState({ width: Infinity, left: 0, right: 0, naturalRight: 0 });
   useLayoutEffect(() => {
     const header = headerRef.current;
     const brand = brandRef.current;
@@ -20,11 +20,23 @@ export function useTabCenter() {
     const measure = () => {
       const rect = header.getBoundingClientRect();
       if (rect.width <= 0) return;
-      const gap = Number.parseFloat(getComputedStyle(header).columnGap) || 0;
+      const gap =
+        header.dataset.hasNotice === "true"
+          ? 12
+          : Number.parseFloat(getComputedStyle(header).columnGap) || 0;
+      const overflow = [...actions.querySelectorAll<HTMLElement>("[data-notice-text]")].reduce(
+        (sum, node) => {
+          const copy = node.querySelector<HTMLElement>("[data-notice-copy]");
+          const natural = copy ? Math.max(copy.scrollWidth, copy.getBoundingClientRect().width) : 0;
+          return sum + Math.max(0, natural - node.clientWidth);
+        },
+        0,
+      );
       setBounds({
         width: rect.width,
         left: brand.getBoundingClientRect().right - rect.left + gap,
         right: rect.right - actions.getBoundingClientRect().left + gap,
+        naturalRight: rect.right - actions.getBoundingClientRect().left + gap + overflow,
       });
     };
     const observer = new ResizeObserver(measure);

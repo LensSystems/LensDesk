@@ -140,7 +140,7 @@ export type HostEventPayloads = {
   "settings.changed": { key: HostSettingKey; value: HostSettingValue };
   "context.changed": { locale: "es" | "en"; theme: "dark" | "light"; accent: "blue" | "green" };
   "tabs.changed": { tabs: ShellTab[] };
-  "tabs.closedForLimit": { toolId: string };
+  "tabs.closedForLimit": { toolId: string; openedToolId?: string };
   "tools.changed": ToolState;
   "tools.toast": { toolId: string; kind: string; message: string };
   "update.available": {
