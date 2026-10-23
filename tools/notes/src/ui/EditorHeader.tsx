@@ -1,4 +1,14 @@
-import { Button, Copy, Eye, Lock, Pencil, SegmentedControl, Tooltip, Upload } from "@lensdesk/ui";
+import {
+  Button,
+  Check,
+  Copy,
+  Eye,
+  Lock,
+  Pencil,
+  SegmentedControl,
+  Tooltip,
+  Upload,
+} from "@lensdesk/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Note } from "./NoteList.tsx";
@@ -30,8 +40,11 @@ export function EditorHeader({
   useEffect(() => () => clearTimeout(copyTimer.current), []);
   return (
     <header className="editor-toolbar">
+      <NoteTitle title={note.title} onRename={onRename} />
       <Tooltip label={t(note.private ? "vault.remove" : "vault.makePrivate")}>
         <Button
+          variant="ghost"
+          className="size-8 p-0 text-muted"
           data-vault-trigger
           aria-label={t(note.private ? "vault.remove" : "vault.makePrivate")}
           aria-pressed={Boolean(note.private)}
@@ -40,7 +53,6 @@ export function EditorHeader({
           <Lock size={14} aria-hidden="true" />
         </Button>
       </Tooltip>
-      <NoteTitle title={note.title} onRename={onRename} />
       <SegmentedControl
         aria-label={t("mode")}
         className="h-6 items-center p-0 [&>button]:h-6 [&>button]:px-2"
@@ -78,6 +90,8 @@ export function EditorHeader({
       />
       <Tooltip label={t(copied ? "copied" : "copyNote")}>
         <Button
+          variant="ghost"
+          className={copied ? "copy-confirmation" : "size-8 p-0 text-muted"}
           aria-label={t(copied ? "copied" : "copyNote")}
           type="button"
           disabled={locked}
@@ -88,8 +102,8 @@ export function EditorHeader({
             copyTimer.current = setTimeout(() => setCopied(false), 2000);
           }}
         >
-          <Copy size={14} aria-hidden="true" />
-          <span className="compact-label">{t(copied ? "copied" : "copyNote")}</span>
+          {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+          {copied && <span>{t("copied")}</span>}
         </Button>
       </Tooltip>
       <Tooltip label={t("export")}>

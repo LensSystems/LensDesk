@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { CREDENTIAL_TOKEN, type CredentialPreview } from "./credential-preview.ts";
 import { COPY_CODE_TOKEN, renderPreview } from "./preview.ts";
+import { confirmCopy, resetCopy } from "./preview-controls.ts";
 
 export function NotePreview({
   body,
@@ -19,7 +20,7 @@ export function NotePreview({
     const credentials: CredentialPreview = {
       fields: [],
       labels: Object.fromEntries(
-        ["user", "password", "note", "copy", "show", "hide"].map((key) => [
+        ["title", "user", "password", "note", "copy", "show", "hide"].map((key) => [
           key,
           t(`credential.${key}`),
         ]),
@@ -38,6 +39,18 @@ export function NotePreview({
     if (!container) return;
     const timers = new Map<HTMLButtonElement, ReturnType<typeof setTimeout>>();
     let active = true;
+    const confirm = (button: HTMLButtonElement, key: string) => {
+      if (!active || !container.contains(button)) return;
+      confirmCopy(button, latest.current.t("copied"));
+      clearTimeout(timers.get(button));
+      timers.set(
+        button,
+        setTimeout(() => {
+          resetCopy(button, latest.current.t(key));
+          timers.delete(button);
+        }, 2000),
+      );
+    };
     const copy = async (event: MouseEvent) => {
       if (!(event.target instanceof Element)) return;
       const credential = event.target.closest<HTMLButtonElement>("button[data-credential]");
@@ -48,6 +61,7 @@ export function NotePreview({
         if (credential.dataset.action === "copy") {
           try {
             await latest.current.onCopyCode(field.value);
+            confirm(credential, "credential.copy");
           } catch {
             /* Conserva el control al rechazar la copia. */
           }
@@ -57,7 +71,9 @@ export function NotePreview({
           const shown = credential.dataset.shown !== "true";
           span.textContent = shown ? field.value : "•••••••";
           credential.dataset.shown = String(shown);
-          credential.textContent = latest.current.t(shown ? "credential.hide" : "credential.show");
+          const label = latest.current.t(shown ? "credential.hide" : "credential.show");
+          credential.setAttribute("aria-label", label);
+          credential.title = label;
         }
         return;
       }
@@ -68,16 +84,7 @@ export function NotePreview({
       if (!code) return;
       try {
         await latest.current.onCopyCode(code.textContent ?? "");
-        if (!active || !container.contains(button)) return;
-        button.textContent = latest.current.t("copied");
-        clearTimeout(timers.get(button));
-        timers.set(
-          button,
-          setTimeout(() => {
-            button.textContent = latest.current.t("copyCode");
-            timers.delete(button);
-          }, 2000),
-        );
+        confirm(button, "copyCode");
       } catch {
         // Conserva la etiqueta si el portapapeles rechaza la copia.
       }

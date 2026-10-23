@@ -27,6 +27,7 @@ export {
   Grid2x2Plus,
   Hash,
   Info,
+  KeyRound,
   Link,
   ListChecks,
   LoaderCircle,

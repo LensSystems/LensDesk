@@ -12,9 +12,9 @@ it.each(["*Comentario con **énfasis***", "_Comentario con **énfasis**_"])(
   (caption) => {
     const host = preview(`\`\`\`ts\nconst x = 1;\n\`\`\`\n${caption}\n`);
     const figure = host.querySelector("figure.ld-code-block");
-    expect(figure?.querySelector('button[type="button"][data-copy-code]')?.textContent).toBe(
-      "Copiar código",
-    );
+    expect(
+      figure?.querySelector('button[type="button"][data-copy-code]')?.getAttribute("aria-label"),
+    ).toBe("Copiar código");
     expect(figure?.querySelector("code")?.textContent).toBe("const x = 1;\n");
     expect(figure?.querySelector("figcaption")?.textContent).toBe("Comentario con énfasis");
     expect(host.querySelector("p")).toBeNull();
@@ -33,7 +33,7 @@ it.each(["", "\n*Separado*", "Texto *parcial*", "*Primera* y *segunda*", "*Dos\n
 it("envuelve también los bloques indentados sin confundir código y etiquetas", () => {
   const host = preview("    <button>código</button>\n", 'Copy <code> & "text"');
   expect(host.querySelector("figure pre code")?.textContent).toBe("<button>código</button>\n");
-  expect(host.querySelector("button")?.textContent).toBe('Copy <code> & "text"');
+  expect(host.querySelector("button")?.getAttribute("aria-label")).toBe('Copy <code> & "text"');
   expect(host.querySelectorAll("button")).toHaveLength(1);
 });
 

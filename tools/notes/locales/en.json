@@ -99,7 +99,7 @@
     "draftRestored": "The latest changes were not saved; they have been restored so you can save them"
   },
   "credential": {
-    "title": "Password block",
+    "title": "Credential",
     "user": "User",
     "password": "Password",
     "note": "Notes",
@@ -117,5 +117,6 @@
   "spelling": {
     "title": "Spelling",
     "none": "No suggestions"
-  }
+  },
+  "formatSymbol": "A"
 }

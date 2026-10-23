@@ -27,15 +27,15 @@ it("copia solo el código del mismo bloque y restablece cada botón a los dos se
     await act(async () => fireEvent.click(first));
     expect(copy).toHaveBeenLastCalledWith('const x = "<uno>";\n');
     expect(first).toHaveTextContent("Copiado");
-    expect(second).toHaveTextContent("Copiar código");
+    expect(second).toHaveAttribute("aria-label", "Copiar código");
     act(() => vi.advanceTimersByTime(1000));
     await act(async () => fireEvent.click(second));
     expect(copy).toHaveBeenLastCalledWith("otro\n");
     act(() => vi.advanceTimersByTime(1000));
-    expect(first).toHaveTextContent("Copiar código");
+    expect(first).toHaveAttribute("aria-label", "Copiar código");
     expect(second).toHaveTextContent("Copiado");
     act(() => vi.advanceTimersByTime(1000));
-    expect(second).toHaveTextContent("Copiar código");
+    expect(second).toHaveAttribute("aria-label", "Copiar código");
   } finally {
     vi.useRealTimers();
   }
@@ -67,7 +67,7 @@ it("vuelve a «Copiar código» aunque se renderice de nuevo durante la confirma
     expect(button).toHaveTextContent("Copiado");
     rerender(<NotePreview body={body} onCopyCode={async () => {}} />);
     act(() => vi.advanceTimersByTime(2000));
-    expect(button).toHaveTextContent("Copiar código");
+    expect(button).toHaveAttribute("aria-label", "Copiar código");
   } finally {
     vi.useRealTimers();
   }
@@ -114,4 +114,29 @@ it("mantiene secretos fuera del DOM y copia desde memoria; ignora controles fals
   fireEvent.click(screen.getByRole("button", { name: "Ocultar secreto" }));
   expect(container.innerHTML).not.toContain("secreto-unico");
   expect(screen.queryByRole("button", { name: "Copiar código" })).toBeNull();
+});
+
+it("confirma la copia de un campo durante exactamente dos segundos sin revelar el secreto", async () => {
+  vi.useFakeTimers();
+  try {
+    const { container } = render(
+      <NotePreview
+        privateNote
+        body={"```credential\npassword: secreto-temporal\n```"}
+        onCopyCode={async () => {}}
+      />,
+    );
+    const button = screen.getAllByRole("button", { name: "Copiar" })[1];
+    if (!button) throw new Error("Falta el botón de copiar");
+    await act(async () => fireEvent.click(button));
+    expect(button).toHaveTextContent("Copiado");
+    expect(container.innerHTML).not.toContain("secreto-temporal");
+    act(() => vi.advanceTimersByTime(1999));
+    expect(button).toHaveTextContent("Copiado");
+    act(() => vi.advanceTimersByTime(1));
+    expect(button).toHaveAttribute("aria-label", "Copiar");
+    expect(button).not.toHaveTextContent("Copiado");
+  } finally {
+    vi.useRealTimers();
+  }
 });

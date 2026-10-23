@@ -99,7 +99,7 @@
     "draftRestored": "No se guardaron los últimos cambios; se restauraron para que puedas guardarlos"
   },
   "credential": {
-    "title": "Bloque Contraseña",
+    "title": "Credencial",
     "user": "Usuario",
     "password": "Contraseña",
     "note": "Notas",
@@ -117,5 +117,6 @@
   "spelling": {
     "title": "Ortografía",
     "none": "Sin sugerencias"
-  }
+  },
+  "formatSymbol": "A"
 }

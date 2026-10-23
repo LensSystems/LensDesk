@@ -3,6 +3,8 @@ import MarkdownIt from "markdown-it";
 
 import { type CredentialPreview, credentialCard } from "./credential-preview.ts";
 
+import { copyIcon } from "./preview-controls.ts";
+
 const markdown = new MarkdownIt({ html: true, linkify: true, breaks: true });
 
 // Marca de los botones de copiar que genera la vista previa. El HTML de una nota no la conoce,
@@ -47,7 +49,8 @@ for (const type of ["fence", "code_block"]) {
     const code = original?.(tokens, index, options, env, renderer) ?? "";
     const label = markdown.utils.escapeHtml(typeof env?.copyCode === "string" ? env.copyCode : "");
     const caption = tokens[index]?.meta?.caption;
-    return `<figure class="ld-code-block"><button type="button" data-copy-code="${COPY_CODE_TOKEN}">${label}</button>${code}${
+    const language = markdown.utils.escapeHtml(tokens[index]?.info.trim().split(/\s+/)[0] ?? "");
+    return `<figure class="ld-code-block"><div class="ld-code-header"><span>${language}</span><button type="button" aria-label="${label}" title="${label}" data-copy-code="${COPY_CODE_TOKEN}">${copyIcon}</button></div>${code}${
       typeof caption === "string" ? `<figcaption>${caption}</figcaption>` : ""
     }</figure>\n`;
   };

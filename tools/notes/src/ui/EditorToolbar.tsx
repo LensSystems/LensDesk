@@ -6,7 +6,6 @@ import {
   DropdownMenuTrigger,
   IconButton,
   Redo2,
-  Type,
   Undo2,
 } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
@@ -48,7 +47,7 @@ export function EditorToolbar({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <IconButton label={t("format")}>
-            <Type aria-hidden="true" className="size-4" />
+            <span aria-hidden="true">{t("formatSymbol")}</span>
             <ChevronDown aria-hidden="true" className="size-3" />
           </IconButton>
         </DropdownMenuTrigger>

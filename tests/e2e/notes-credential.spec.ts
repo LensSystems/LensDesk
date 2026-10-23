@@ -64,11 +64,14 @@ test("credenciales privadas: insertar, enmascarar, copiar y revelar", async () =
     expect(await card.innerHTML()).not.toContain("secreto-e2e-unico");
     expect(await card.innerHTML()).not.toContain("932871");
     await expect(card.getByRole("button", { name: "Copiar código" })).toHaveCount(0);
+    const passwordRow = card
+      .locator("div")
+      .filter({ has: tool.getByText("Contraseña", { exact: true }) });
     await card.getByRole("button", { name: "Copiar", exact: true }).nth(0).click();
     await expect
       .poll(() => app.evaluate(({ clipboard }) => clipboard.readText()))
       .toBe("ada@example.test");
-    await card.getByRole("button", { name: "Copiar", exact: true }).nth(1).click();
+    await passwordRow.getByRole("button", { name: "Copiar", exact: true }).click();
     await expect
       .poll(() => app.evaluate(({ clipboard }) => clipboard.readText()))
       .toBe("secreto-e2e-unico");
