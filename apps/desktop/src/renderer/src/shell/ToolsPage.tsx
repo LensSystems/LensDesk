@@ -6,6 +6,7 @@ import { useShellStore } from "../state/store.ts";
 import { PageFrame } from "./PageFrame.tsx";
 import { ToolCard } from "./ToolCard.tsx";
 import { type ToolDialogState, ToolDialogs } from "./ToolDialogs.tsx";
+import { ToolUpdateGuide } from "./ToolUpdateGuide.tsx";
 
 export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridge } = {}) {
   const { t } = useTranslation();
@@ -47,9 +48,15 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
           <p className="text-muted">{t("toolsPage.subtitle")}</p>
         </div>
         {tools.length > 0 && (
-          <Button variant="primary" size="lg" onClick={() => void install("tools.pickAndInstall")}>
-            <Plus aria-hidden size={16} />
-            {t("toolsPage.addTool")}
+          <Button
+            aria-label={t("toolsPage.addTool")}
+            variant="primary"
+            size="lg"
+            onClick={() => void install("tools.pickAndInstall")}
+          >
+            <Plus aria-hidden size={16} className="@min-[48rem]:hidden" />
+            <span className="@min-[48rem]:hidden">{t("toolsPage.addToolCompact")}</span>
+            <span className="hidden @min-[48rem]:inline">{t("toolsPage.addTool")}</span>
           </Button>
         )}
       </div>
@@ -75,12 +82,14 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
       ) : (
         <section
           aria-label={t("toolsPage.title")}
-          className="grid grid-cols-1 items-start gap-4 @min-[44rem]:grid-cols-2 @min-[68rem]:grid-cols-3"
+          className="grid grid-cols-2 items-stretch gap-4 @min-[48rem]:items-start @min-[68rem]:grid-cols-3"
         >
           {tools.map((tool) => (
             <ToolCard
               key={tool.id}
               tool={tool}
+              bridge={bridge}
+              onInstall={() => void install("tools.pickAndInstall")}
               update={updates.find((update) => update.id === tool.id)}
               onOpen={() => void act(() => bridge.invoke("tabs.open", { toolId: tool.id }))}
               actions={{
@@ -98,6 +107,7 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
           ))}
         </section>
       )}
+      {tools.some((tool) => updates.some((update) => update.id === tool.id)) && <ToolUpdateGuide />}
       <ToolDialogs
         state={dialog}
         update={updates.find(

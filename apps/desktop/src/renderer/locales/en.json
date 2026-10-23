@@ -53,7 +53,14 @@
     "cardVersion": "v{{version}}",
     "updateTo": "Update to {{version}}",
     "download": "Download",
-    "installFile": "Install file…"
+    "installFile": "Install file…",
+    "addToolCompact": "Add…",
+    "updateAvailable": "Version {{version}} available",
+    "updateGuideTitle": "How tool updates work",
+    "updateGuideStep1": "<strong>Download</strong> opens the .lenspkg download in your browser.",
+    "updateGuideStep2": "<strong>Install file…</strong> opens the picker already filtered to .lenspkg.",
+    "updateGuideStep3": "The signature and hashes are verified and the version is replaced; your data is preserved.",
+    "updateGuideStep4": "Once installed, you can open it from its card."
   },
   "settingsPage": {
     "openAtLogin": "Open at login",

@@ -53,7 +53,14 @@
     "cardVersion": "v{{version}}",
     "updateTo": "Actualización a {{version}}",
     "download": "Descargar",
-    "installFile": "Instalar archivo…"
+    "installFile": "Instalar archivo…",
+    "addToolCompact": "Agregar…",
+    "updateAvailable": "Versión {{version}} disponible",
+    "updateGuideTitle": "Cómo funciona la actualización de herramientas",
+    "updateGuideStep1": "<strong>Descargar</strong> abre la descarga del .lenspkg en el navegador.",
+    "updateGuideStep2": "<strong>Instalar archivo…</strong> abre el selector ya filtrado a .lenspkg.",
+    "updateGuideStep3": "Se verifican firma y hashes y se reemplaza la versión; los datos se conservan.",
+    "updateGuideStep4": "Una vez instalada, ya puedes abrirla desde su tarjeta."
   },
   "settingsPage": {
     "openAtLogin": "Abrir al iniciar sesión",

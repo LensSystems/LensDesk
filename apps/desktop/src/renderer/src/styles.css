@@ -54,3 +54,27 @@
     display: inline;
   }
 }
+
+.ld-tool-update {
+  display: grid;
+  animation: ld-tool-update-enter 160ms ease-out;
+}
+.ld-tool-update > div {
+  overflow: hidden;
+  min-height: 0;
+}
+@keyframes ld-tool-update-enter {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-tool-update {
+    animation: none;
+  }
+}

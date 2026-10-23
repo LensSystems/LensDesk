@@ -57,7 +57,7 @@ it("separa descargar herramienta de seleccionar el archivo", async () => {
       onInstall={onInstall}
     />,
   );
-  expect(screen.getByText("Actualización a 0.2.0")).toBeTruthy();
+  expect(screen.getByText("Versión 0.2.0 disponible")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Descargar" }));
   expect(invoke).toHaveBeenCalledWith("app.openExternal", { url: download });
   expect(onInstall).not.toHaveBeenCalled();
