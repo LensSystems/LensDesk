@@ -35,7 +35,11 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
     );
   };
   const drag = useTabDrag((toolId, index) => void reorder(toolId, index));
-  const hasNotice = useShellStore((state) => !!state.update || state.toasts.length > 0);
+  const hasNotice = useShellStore(
+    (state) =>
+      (!!state.update && state.update.version !== state.dismissedVersion) ||
+      state.toasts.length > 0,
+  );
   const { headerRef, brandRef, actionsRef, width, left, right, naturalRight } = useTabCenter();
   const listRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);

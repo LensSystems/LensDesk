@@ -391,9 +391,9 @@ describe("aviso de actualización descartado", () => {
       value: "2.0.0",
     });
     act(() => listeners.get("update.available")?.({ version: "2.0.0", html_url: "https://x.y" }));
-    expect(screen.queryByText("LensDesk 2.0.0 está disponible.")).toBeNull();
+    expect(screen.queryByText("LensDesk 2.0.0 está disponible")).toBeNull();
     act(() => listeners.get("update.available")?.({ version: "2.1.0", html_url: "https://x.y" }));
-    expect(await screen.findByText("LensDesk 2.1.0 está disponible.")).toBeTruthy();
+    expect(await screen.findByText("LensDesk 2.1.0 está disponible")).toBeTruthy();
   });
 
   it("recuerda la versión descartada guardada al arrancar", async () => {
@@ -401,9 +401,9 @@ describe("aviso de actualización descartado", () => {
     render(<App bridge={bridge} />);
     await waitFor(() => expect(useShellStore.getState().dismissedVersion).toBe("3.0.0"));
     act(() => listeners.get("update.available")?.({ version: "3.0.0", html_url: "https://x.y" }));
-    expect(screen.queryByText("LensDesk 3.0.0 está disponible.")).toBeNull();
+    expect(screen.queryByText("LensDesk 3.0.0 está disponible")).toBeNull();
     act(() => listeners.get("update.available")?.({ version: "3.0.1", html_url: "https://x.y" }));
-    expect(await screen.findByText("LensDesk 3.0.1 está disponible.")).toBeTruthy();
+    expect(await screen.findByText("LensDesk 3.0.1 está disponible")).toBeTruthy();
   });
 });
 
@@ -428,10 +428,8 @@ describe("avisos dentro del encabezado", () => {
     ]) {
       expect(item.closest(".ld-no-drag")).not.toBeNull();
     }
-    expect(header.contains(screen.getByText("LensDesk 9.0.0 está disponible."))).toBe(true);
-    expect(header.contains(screen.getByRole("button", { name: "Descargar instalador" }))).toBe(
-      true,
-    );
+    expect(header.contains(screen.getByText("LensDesk 9.0.0 está disponible"))).toBe(true);
+    expect(header.contains(screen.getByRole("button", { name: "Ir a Ajustes" }))).toBe(true);
     expect(header.contains(screen.getByText("Hecho"))).toBe(true);
     expect(header.contains(screen.getByRole("region", { name: /Notificaciones/ }))).toBe(true);
     useShellStore.setState({ update: null, toasts: [] });

@@ -24,7 +24,6 @@ type SettingsPageProps = { bridge: Window["lensdeskHost"] };
 
 export function SettingsPage({ bridge }: SettingsPageProps) {
   const { t, i18n } = useTranslation();
-  const updatesDescriptionId = useId();
   const developerDescriptionId = useId();
   const theme = useShellStore((state) => state.context.theme);
   const settings = useShellStore((state) => state.settings);
@@ -49,8 +48,8 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
   const update = (key: HostSettingKey, value: unknown) =>
     void bridge.invoke("settings.set", { key, value });
   return (
-    <PageFrame>
-      <div className="grid grid-cols-1 items-start gap-4 @min-[44rem]:grid-cols-2 @min-[68rem]:grid-cols-3">
+    <PageFrame settings>
+      <div className="mx-auto flex w-full min-[900px]:max-w-2xl flex-col gap-4 min-[900px]:gap-6">
         <h1 className="col-span-full text-[28px] font-bold leading-tight tracking-tight">
           {t("settingsPage.title")}
         </h1>
@@ -98,22 +97,12 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
         </SettingsSection>
         <SettingsSection title={t("settingsPage.general")}>
+          <SettingsUpdateCheck
+            bridge={bridge}
+            version={version ?? ""}
+            enabled={releasesRepo !== "" && settings.updatesCheck}
+          />
           <SettingsLoginItem bridge={bridge} />
-          <SettingsRow
-            label={t("settingsPage.checkUpdates")}
-            description={t("settingsPage.checkUpdatesDescription")}
-            descriptionId={updatesDescriptionId}
-          >
-            {releasesRepo !== "" && settings.updatesCheck && (
-              <SettingsUpdateCheck bridge={bridge} version={version ?? ""} />
-            )}
-            <Switch
-              aria-label={t("settingsPage.checkUpdates")}
-              aria-describedby={updatesDescriptionId}
-              checked={settings.updatesCheck}
-              onCheckedChange={(value) => update("updates.check", value)}
-            />
-          </SettingsRow>
           <SettingsRow
             label={t("settingsPage.developerMode")}
             description={t("settingsPage.developerModeDescription")}

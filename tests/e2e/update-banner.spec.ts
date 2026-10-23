@@ -39,7 +39,7 @@ for (const width of [1100, 760]) {
         const current = boxes[index];
         if (previous && current) expect(previous.x + previous.width).toBeLessThanOrEqual(current.x);
       }
-      for (const name of ["Descargar instalador", "Ver novedades", "Descartar"])
+      for (const name of ["Ir a Ajustes", "Descartar"])
         await expect(banner.getByRole("button", { name, exact: true })).toBeVisible();
       expect(
         await shell.evaluate(

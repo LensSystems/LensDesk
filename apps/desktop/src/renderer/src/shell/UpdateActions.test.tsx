@@ -26,26 +26,26 @@ function setup() {
   });
   return { invoke, bridge: createHostBridge(invoke, () => () => {}) };
 }
-it.each([undefined, download])(
-  "abre instalador o página y permite ver novedades (%s)",
-  async (installerUrl) => {
-    await rendererI18n.changeLanguage("es");
-    const { invoke, bridge } = setup();
-    render(
-      <TooltipProvider>
-        <UpdateBanner
-          update={{ version: "0.2.0", html_url: page, installerUrl }}
-          bridge={bridge}
-          onDismiss={() => {}}
-        />
-      </TooltipProvider>,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Descargar instalador" }));
-    expect(invoke).toHaveBeenLastCalledWith("app.openExternal", { url: installerUrl ?? page });
-    fireEvent.click(screen.getByRole("button", { name: "Ver novedades" }));
-    expect(invoke).toHaveBeenLastCalledWith("app.openExternal", { url: page });
-  },
-);
+it("muestra la versión con una acción para Ajustes y descartar", async () => {
+  await rendererI18n.changeLanguage("es");
+  const onOpenSettings = vi.fn();
+  const onDismiss = vi.fn();
+  render(
+    <TooltipProvider>
+      <UpdateBanner
+        update={{ version: "0.2.0", html_url: page }}
+        onOpenSettings={onOpenSettings}
+        onDismiss={onDismiss}
+      />
+    </TooltipProvider>,
+  );
+  expect(screen.getByRole("status")).toHaveTextContent("LensDesk 0.2.0 está disponible");
+  expect(screen.getAllByRole("button")).toHaveLength(2);
+  fireEvent.click(screen.getByRole("button", { name: "Ir a Ajustes" }));
+  expect(onOpenSettings).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole("button", { name: "Descartar" }));
+  expect(onDismiss).toHaveBeenCalledOnce();
+});
 it("separa descargar herramienta de seleccionar el archivo", async () => {
   await rendererI18n.changeLanguage("es");
   const { invoke, bridge } = setup();

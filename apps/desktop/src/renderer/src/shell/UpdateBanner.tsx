@@ -1,4 +1,4 @@
-import { Button, ExternalLink, IconButton, X } from "@lensdesk/ui";
+import { Button, IconButton, X } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import type { HostEventPayloads } from "../../../shared/host-channels.ts";
 
@@ -6,45 +6,23 @@ import { NoticeCapsule } from "./NoticeCapsule.tsx";
 
 type Props = {
   update: HostEventPayloads["update.available"];
-  bridge: Window["lensdeskHost"];
+  onOpenSettings: () => void;
   onDismiss: () => void;
 };
 
-// Aviso compacto dentro del encabezado: una línea, sin empujar el contenido. Las acciones
-// secundarias son iconos con etiqueta para que quepa junto a los botones de la cabecera.
-export function UpdateBanner({ update, bridge, onDismiss }: Props) {
+export function UpdateBanner({ update, onOpenSettings, onDismiss }: Props) {
   const { t } = useTranslation();
   return (
-    <NoticeCapsule
-      status
-      text={
-        <>
-          <span aria-hidden>{t("recovery.updateShort", { version: update.version })}</span>
-          <span className="sr-only">
-            {t("recovery.updateAvailable", { version: update.version })}
-          </span>
-        </>
-      }
-    >
+    <NoticeCapsule status text={t("recovery.updateAvailable", { version: update.version })}>
       <Button
         variant="primary"
-        aria-label={t("recovery.downloadInstaller")}
+        aria-label={t("recovery.goToSettings")}
         className="ld-no-drag h-6 shrink-0 px-2 text-xs"
-        onClick={() =>
-          void bridge.invoke("app.openExternal", { url: update.installerUrl ?? update.html_url })
-        }
+        onClick={onOpenSettings}
         type="button"
       >
-        {t("recovery.download")}
+        {t("recovery.goToSettings")}
       </Button>
-      <IconButton
-        className="ld-no-drag size-6 shrink-0 text-accent-soft-fg"
-        label={t("recovery.viewUpdate")}
-        tooltipSide="bottom"
-        onClick={() => void bridge.invoke("app.openExternal", { url: update.html_url })}
-      >
-        <ExternalLink aria-hidden size={14} />
-      </IconButton>
       <IconButton
         className="ld-no-drag size-6 shrink-0 text-accent-soft-fg"
         label={t("ui.dismiss")}

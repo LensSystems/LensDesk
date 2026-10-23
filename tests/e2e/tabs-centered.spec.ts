@@ -125,7 +125,7 @@ for (const width of [1280, 760]) {
             await expect(text).toHaveAttribute("data-moving", "true");
             await notice.hover();
             await expect(text).toHaveAttribute("data-paused", "true");
-            const action = notice.getByRole("button", { name: "Descargar instalador" });
+            const action = notice.getByRole("button", { name: "Ir a Ajustes" });
             await action.focus();
             await shell.mouse.move(0, 200);
             await expect(text).toHaveAttribute("data-paused", "true");

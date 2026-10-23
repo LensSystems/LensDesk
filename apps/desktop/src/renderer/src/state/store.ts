@@ -40,6 +40,8 @@ type State = {
   toasts: ShellToast[];
   update: HostEventPayloads["update.available"] | null;
   dismissedVersion: string | null;
+  updateSettingsRequest: number;
+  showUpdateSettings: (bridge: HostBridge) => Promise<void>;
   pushToast: (kind: ShellToast["kind"], message: string, source?: string) => void;
   removeToast: (id: number) => void;
   dismissUpdate: (bridge: HostBridge) => void;
@@ -83,6 +85,7 @@ export const useShellStore = create<State>((set, get) => ({
   toasts: [],
   update: null,
   dismissedVersion: null,
+  updateSettingsRequest: 0,
   crashedToolId: null,
   pushToast(kind, message, source) {
     set((state) => ({
@@ -94,13 +97,19 @@ export const useShellStore = create<State>((set, get) => ({
   },
   dismissUpdate(bridge) {
     const version = useShellStore.getState().update?.version;
-    set({ update: null, ...(version ? { dismissedVersion: version } : {}) });
+    set(version ? { dismissedVersion: version } : {});
     if (version)
       void bridge.invoke("settings.set", { key: "updates.dismissedVersion", value: version });
   },
+  async showUpdateSettings(bridge) {
+    const result = await bridge.invoke("shell.showPage", { page: "settings" });
+    if (!result.ok) return;
+    get().dismissUpdate(bridge);
+    set((state) => ({ page: "settings", updateSettingsRequest: state.updateSettingsRequest + 1 }));
+  },
   async showPage(bridge, page) {
     const result = await bridge.invoke("shell.showPage", { page });
-    if (result.ok) set({ page: result.data.page });
+    if (result.ok) set({ page: result.data.page, updateSettingsRequest: 0 });
   },
   async hydrate(bridge) {
     const before = { ...eventCounts };
@@ -168,7 +177,13 @@ export const useShellStore = create<State>((set, get) => ({
                 : defaults.updatesCheck,
           },
       dismissedVersion: dismissedVersion ?? state.dismissedVersion,
-      update: dismissedVersion && state.update?.version === dismissedVersion ? null : state.update,
+      update:
+        info.ok &&
+        typeof info.data.version === "string" &&
+        state.update &&
+        !isOlderVersion(info.data.version, state.update.version)
+          ? null
+          : state.update,
       context: context.ok && !stale("context") ? context.data : state.context,
       ...(tools.ok && Array.isArray(tools.data.tools)
         ? { tools: tools.data.tools, pendingDowngrade: tools.data.pendingDowngrade }
@@ -191,7 +206,12 @@ export const useShellStore = create<State>((set, get) => ({
           entries(before).join() !== entries(tabs).join() &&
           entries(before).sort().join() === entries(tabs).sort().join();
         if (page !== "tab" && reordered) set({ tabs });
-        else set({ tabs, page: tabs.some((tab) => tab.active) ? "tab" : "tools" });
+        else
+          set({
+            tabs,
+            page: tabs.some((tab) => tab.active) ? "tab" : "tools",
+            updateSettingsRequest: 0,
+          });
       }),
       bridge.on("settings.changed", ({ key, value }) => {
         eventCounts.settings += 1;
@@ -241,9 +261,7 @@ export const useShellStore = create<State>((set, get) => ({
         })),
       ),
       bridge.on("tools.updatesAvailable", ({ tools }) => set({ toolUpdates: tools })),
-      bridge.on("update.available", (update) =>
-        set((state) => (update.version === state.dismissedVersion ? {} : { update })),
-      ),
+      bridge.on("update.available", (update) => set({ update })),
       bridge.on("tools.toast", ({ toolId, kind, message }) =>
         useShellStore
           .getState()

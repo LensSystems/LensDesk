@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@lensdesk/ui";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ipcSchemas } from "../../../main/ipc/schemas.ts";
@@ -30,7 +31,11 @@ function renderSettings(
               : {};
     return { ok: true, data: ipcSchemas[channel].response.parse(data) };
   });
-  render(<SettingsPage bridge={{ invoke } as unknown as HostBridge} />);
+  render(
+    <TooltipProvider>
+      <SettingsPage bridge={{ invoke } as unknown as HostBridge} />
+    </TooltipProvider>,
+  );
   return invoke;
 }
 
@@ -38,6 +43,8 @@ describe("Ajustes", () => {
   beforeEach(async () => {
     await rendererI18n.changeLanguage("es");
     useShellStore.setState({
+      update: null,
+      updateSettingsRequest: 0,
       context: { locale: "es", theme: "dark", accent: "blue" },
       settings: {
         locale: "es",
@@ -130,11 +137,11 @@ describe("Ajustes", () => {
     const button = await screen.findByRole("button", { name: "Buscar ahora" });
     expect(invoke).not.toHaveBeenCalledWith("updates.checkNow", {});
     fireEvent.click(button);
-    expect(screen.getByRole("button", { name: "Buscando…" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Buscando…" }));
+    expect(screen.getByRole("button", { name: "Buscar ahora" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Buscar ahora" }));
     expect(invoke.mock.calls.filter(([channel]) => channel === "updates.checkNow")).toHaveLength(1);
     await act(async () => finish({ kind: "none" }));
-    expect(screen.getByRole("status")).toHaveTextContent("Sin versiones nuevas · v0.1.0");
+    expect(screen.getByRole("status")).toHaveTextContent("LensDesk está actualizado (0.1.0)");
   });
 
   it("abre la versión nueva con la misma acción del aviso", async () => {
@@ -143,7 +150,7 @@ describe("Ajustes", () => {
       check: async () => ({ kind: "available", version: "1.0.0", url }),
     });
     fireEvent.click(await screen.findByRole("button", { name: "Buscar ahora" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Versión 1.0.0 disponible" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Versión 1.0.0 disponible" }));
     expect(invoke).toHaveBeenCalledWith("app.openExternal", { url });
   });
 
@@ -154,8 +161,11 @@ describe("Ajustes", () => {
       .mockResolvedValue({ kind: "none" });
     const invoke = renderSettings({ check, failure: failure === "ipc" });
     fireEvent.click(await screen.findByRole("button", { name: "Buscar ahora" }));
-    const retry = await screen.findByRole("button", { name: "Reintentar" });
-    expect(screen.getByRole("status")).toHaveTextContent("No se pudo buscar actualizaciones.");
+    await screen.findByText("No se pudo comprobar. Revisa la conexión.");
+    const retry = screen.getByRole("button", { name: "Buscar ahora" });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "No se pudo comprobar. Revisa la conexión.",
+    );
     fireEvent.click(retry);
     await waitFor(() =>
       expect(invoke.mock.calls.filter(([channel]) => channel === "updates.checkNow")).toHaveLength(
@@ -163,14 +173,14 @@ describe("Ajustes", () => {
       ),
     );
     if (failure === "error")
-      expect(await screen.findByText("Sin versiones nuevas · v0.1.0")).toBeTruthy();
+      expect(await screen.findByText("LensDesk está actualizado (0.1.0)")).toBeTruthy();
   });
 
   it("no presenta skipped como una comprobación al día", async () => {
     renderSettings({ check: async () => ({ kind: "skipped" }) });
     fireEvent.click(await screen.findByRole("button", { name: "Buscar ahora" }));
     await screen.findByRole("button", { name: "Buscar ahora" });
-    expect(screen.queryByText("Sin versiones nuevas · v0.1.0")).toBeNull();
+    expect(screen.queryByText("LensDesk está actualizado (0.1.0)")).toBeNull();
   });
 
   it.each(["empty", "disabled"] as const)("oculta la acción sin consultar: %s", async (reason) => {
