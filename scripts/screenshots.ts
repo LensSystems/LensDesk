@@ -301,7 +301,7 @@ async function run() {
       const list = async () => {
         if (!(await rail.isVisible())) return notes;
         await rail.getByRole("button", { name: "Mostrar lista de notas" }).click();
-        return notes.getByRole("dialog", { name: "Lista de notas" });
+        return notes.getByRole("dialog", { name: "Notas", exact: true });
       };
       await newNote("Borrador archivado", "Ideas para revisar más adelante.");
       await notes.waitForTimeout(1000);
