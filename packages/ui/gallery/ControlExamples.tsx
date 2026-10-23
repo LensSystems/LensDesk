@@ -5,6 +5,7 @@ import {
   EmptyState,
   IconButton,
   Input,
+  PanelLeft,
   Plus,
   Progress,
   Search,
@@ -71,6 +72,11 @@ export function ControlExamples() {
           )}
         </Example>
       ))}
+      <Example names={["PanelLeft"]}>
+        <IconButton label="Mostrar panel">
+          <PanelLeft size={16} />
+        </IconButton>
+      </Example>
       <Example names={["Input"]}>
         <Input label="Buscar" leadingIcon={<Search size={16} />} />
       </Example>

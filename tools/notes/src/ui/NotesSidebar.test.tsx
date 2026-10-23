@@ -48,8 +48,9 @@ it("ofrece acciones plegadas y devuelve el foco al cerrar con Escape o elegir no
   fireEvent.click(rail.getByRole("button", { name: "Importar Markdown" }));
   expect(onCreate).toHaveBeenCalledOnce();
   expect(onImport).toHaveBeenCalledOnce();
-  for (const name of ["Notas", "Archivadas", "Papelera"]) {
-    expect(rail.getByRole("button", { name })).toBeTruthy();
+  expect(rail.getAllByRole("button")).toHaveLength(3);
+  for (const name of ["Notas", "Archivadas", "Papelera", "Buscar notas"]) {
+    expect(rail.queryByRole("button", { name })).toBeNull();
   }
   const toggle = rail.getByRole("button", { name: "Mostrar lista de notas" });
   fireEvent.click(toggle);
@@ -65,11 +66,11 @@ it("ofrece acciones plegadas y devuelve el foco al cerrar con Escape o elegir no
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(onSelect).toHaveBeenCalledWith("a");
   expect(document.activeElement).toBe(toggle);
-  fireEvent.click(rail.getByRole("button", { name: "Buscar notas" }));
-  await waitFor(() =>
-    expect(document.activeElement).toBe(
-      within(screen.getByRole("dialog")).getByRole("textbox", { name: "Buscar notas" }),
-    ),
-  );
-  expect(onView).toHaveBeenLastCalledWith("notes");
+  fireEvent.click(toggle);
+  const reopened = await screen.findByRole("dialog", { name: "Notas" });
+  expect(within(reopened).getByRole("radiogroup", { name: "Vista de notas" })).toBeTruthy();
+  expect(within(reopened).queryByRole("button", { name: "Nueva nota" })).toBeNull();
+  fireEvent.click(within(reopened).getByRole("button", { name: "Cerrar" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(document.activeElement).toBe(toggle);
 });

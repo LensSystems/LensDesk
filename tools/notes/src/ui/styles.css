@@ -196,20 +196,56 @@ body {
   min-width: 0;
   max-width: 100%;
 }
+.sidebar-rail button {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.sidebar-create svg {
+  box-sizing: content-box;
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--ld-accent);
+  color: var(--ld-accent-fg);
+}
 .sidebar-overlay {
   left: 72px;
-  top: 12px;
-  width: 320px;
-  max-height: calc(100vh - 24px);
-  padding: 32px 0 0;
+  top: 0;
+  bottom: 12px;
+  width: 312px;
+  height: auto;
+  max-width: calc(100vw - 84px);
+  padding: 16px 0 0;
   gap: 0;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
+}
+.sidebar-title {
+  padding: 0 48px 0 16px;
 }
 .sidebar-overlay .note-list {
   width: 100%;
-  max-height: calc(100vh - 60px);
   border: 0;
   border-radius: 0;
+  background: transparent;
+}
+.sidebar-overlay[data-state] {
+  animation: none;
+}
+@keyframes notes-sidebar-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar-overlay[data-state="open"] {
+    animation: notes-sidebar-in 160ms ease-out;
+  }
 }
 .editor-toolbar {
   min-width: 0;

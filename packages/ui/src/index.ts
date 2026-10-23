@@ -42,6 +42,7 @@ export {
   type LucideIcon,
   Minus,
   MoreHorizontal,
+  PanelLeft,
   Pencil,
   Plus,
   Puzzle,

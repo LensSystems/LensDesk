@@ -1,14 +1,11 @@
 import {
-  Archive,
   Dialog,
   DialogContent,
   DialogTitle,
   Download,
   IconButton,
+  PanelLeft,
   Plus,
-  Search,
-  StickyNote,
-  Trash2,
 } from "@lensdesk/ui";
 import { type ComponentProps, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,12 +15,10 @@ export function NotesSidebar(props: ComponentProps<typeof NotesSidebarContent>) 
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement | null>(null);
-  const search = useRef(false);
   const panel = useRef<HTMLDivElement>(null);
   const wide = useRef<HTMLDivElement>(null);
-  const show = (button: HTMLButtonElement, searching = false) => {
+  const show = (button: HTMLButtonElement) => {
     trigger.current = button;
-    search.current = searching;
     setOpen(true);
   };
   return (
@@ -37,43 +32,13 @@ export function NotesSidebar(props: ComponentProps<typeof NotesSidebarContent>) 
           aria-expanded={open}
           onClick={(event) => show(event.currentTarget)}
         >
-          <StickyNote size={16} />
+          <PanelLeft size={16} aria-hidden="true" />
         </IconButton>
-        <IconButton label={t("newNote")} onClick={props.onCreate}>
-          <Plus size={16} />
+        <IconButton className="sidebar-create" label={t("newNote")} onClick={props.onCreate}>
+          <Plus size={12} aria-hidden="true" />
         </IconButton>
-        <IconButton
-          label={t("search")}
-          onClick={(event) => {
-            props.onView("notes");
-            show(event.currentTarget, true);
-          }}
-        >
-          <Search size={16} />
-        </IconButton>
-        {(
-          [
-            ["notes", StickyNote],
-            ["archived", Archive],
-            ["trash", Trash2],
-          ] as const
-        ).map(([view, Icon]) => (
-          <IconButton
-            key={view}
-            label={t(view)}
-            aria-pressed={
-              view === (props.trashed ? "trash" : props.archived ? "archived" : "notes")
-            }
-            onClick={(event) => {
-              props.onView(view);
-              show(event.currentTarget);
-            }}
-          >
-            <Icon size={16} />
-          </IconButton>
-        ))}
         <IconButton label={t("import")} onClick={props.onImport}>
-          <Download size={16} />
+          <Download size={16} aria-hidden="true" />
         </IconButton>
       </fieldset>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -87,7 +52,7 @@ export function NotesSidebar(props: ComponentProps<typeof NotesSidebarContent>) 
             event.preventDefault();
             const content = panel.current;
             (
-              content?.querySelector<HTMLInputElement>(search.current ? "input" : "nav button") ??
+              content?.querySelector<HTMLInputElement>("input:not(:disabled)") ??
               content?.querySelector<HTMLButtonElement>("button")
             )?.focus();
           }}
@@ -104,9 +69,10 @@ export function NotesSidebar(props: ComponentProps<typeof NotesSidebarContent>) 
                 ?.focus();
           }}
         >
-          <DialogTitle className="sr-only">{t("notesList")}</DialogTitle>
+          <DialogTitle className="sidebar-title">{t("notes")}</DialogTitle>
           <NotesSidebarContent
             {...props}
+            showCreateActions={false}
             onSelect={(id) => {
               props.onSelect(id);
               setOpen(false);

@@ -10,8 +10,10 @@ export function NotesSidebarContent({
   onImport,
   onEmpty,
   onView,
+  showCreateActions = true,
   ...list
 }: ComponentProps<typeof NoteList> & {
+  showCreateActions?: boolean;
   query: string;
   onQuery: (query: string) => void;
   onCreate: () => void;
@@ -49,7 +51,8 @@ export function NotesSidebarContent({
               {t("emptyTrash")}
             </Button>
           )
-        : !list.archived && (
+        : showCreateActions &&
+          !list.archived && (
             <div className="sidebar-heading">
               <Button className="flex-1" variant="primary" onClick={onCreate}>
                 <Plus size={15} aria-hidden="true" />
