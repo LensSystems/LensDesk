@@ -64,10 +64,11 @@
     "task": "Lista de tareas",
     "quote": "Cita",
     "codeBlock": "Bloque de código",
-    "table": "Tabla 2×2",
+    "table": "Tabla",
     "separator": "Separador",
     "link": "Enlace…",
-    "password": "Contraseña…"
+    "password": "Contraseña…",
+    "privateOnly": "solo privadas"
   },
   "archived": "Archivadas",
   "archive": "Archivar nota",
@@ -118,5 +119,34 @@
     "title": "Ortografía",
     "none": "Sin sugerencias"
   },
-  "formatSymbol": "A"
+  "formatSymbol": "A",
+  "editorMenu": "Menú de edición",
+  "shortcuts": {
+    "mac": {
+      "undo": "⌘Z",
+      "redo": "⌘⇧Z",
+      "bold": "⌘B",
+      "italic": "⌘I",
+      "underline": "⌘U",
+      "code": "⌘E",
+      "link": "⌘K"
+    },
+    "other": {
+      "undo": "Ctrl+Z",
+      "redo": "Ctrl+Mayús+Z",
+      "bold": "Ctrl+B",
+      "italic": "Ctrl+I",
+      "underline": "Ctrl+U",
+      "code": "Ctrl+E",
+      "link": "Ctrl+K"
+    }
+  },
+  "formatLabels": {
+    "bold": "Negrita",
+    "italic": "Cursiva",
+    "underline": "Subrayado",
+    "strike": "Tachado",
+    "code": "Código en línea",
+    "link": "Enlace…"
+  }
 }

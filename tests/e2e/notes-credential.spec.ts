@@ -21,11 +21,12 @@ test("credenciales privadas: insertar, enmascarar, copiar y revelar", async () =
     await title.press("Enter");
     const editor = tool.locator(".cm-content");
     await editor.click({ button: "right" });
+    await tool.getByRole("menuitem", { name: "Insertar", exact: true }).click();
     await expect(tool.getByRole("menuitem", { name: "Contraseña…" })).toHaveAttribute(
       "aria-disabled",
       "true",
     );
-    await tool.getByRole("menu").press("Escape");
+    await tool.getByRole("menu", { name: "Menú de edición" }).press("Escape");
     await tool.getByRole("button", { name: "Hacer privada", exact: true }).click();
     await tool.getByRole("button", { name: "Continuar", exact: true }).click();
     await tool.getByLabel("Contraseña", { exact: true }).fill("Abcd1!");
@@ -37,6 +38,7 @@ test("credenciales privadas: insertar, enmascarar, copiar y revelar", async () =
     await tool.getByRole("button", { name: "Crear contraseña", exact: true }).click();
     await expect(tool.getByRole("button", { name: "Quitar privada", exact: true })).toBeVisible();
     await editor.click({ button: "right" });
+    await tool.getByRole("menuitem", { name: "Insertar", exact: true }).click();
     const insert = tool.getByRole("menuitem", { name: "Contraseña…" });
     await expect(insert).not.toHaveAttribute("aria-disabled", "true");
     await insert.click();

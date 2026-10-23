@@ -81,7 +81,14 @@ export function OverlayExamples() {
           label="Insertar"
           leadingGroup={{ label: "Ortografía", items: [{ label: "Palabra", onSelect: () => {} }] }}
           items={[
-            { label: "Encabezado", onSelect: () => {} },
+            {
+              label: "Deshacer",
+              icon: <ui.Undo2 className="size-4" />,
+              shortcut: "⌘Z",
+              onSelect: () => {},
+            },
+            { separator: true },
+            { label: "Insertar", items: [{ label: "Encabezado", onSelect: () => {} }] },
             { label: "Contraseña…", disabled: true, onSelect: () => {} },
           ]}
         >

@@ -33,7 +33,7 @@ test("corrector local sin descargas y menú de insertar", async () => {
     const editor = notes.locator(".cm-content");
     await editor.fill("Holaa errror ortográffico");
     await editor.click({ button: "right" });
-    await expect(notes.getByRole("menu", { name: "Insertar", exact: true })).toBeVisible();
+    await expect(notes.getByRole("menu", { name: "Menú de edición", exact: true })).toBeVisible();
     const state = await app.evaluate(({ session }) => ({
       downloads: (globalThis as typeof globalThis & { spellingDownloads: number })
         .spellingDownloads,

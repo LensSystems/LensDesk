@@ -64,10 +64,11 @@
     "task": "Task list",
     "quote": "Quote",
     "codeBlock": "Code block",
-    "table": "2×2 table",
+    "table": "Table",
     "separator": "Separator",
     "link": "Link…",
-    "password": "Password…"
+    "password": "Password…",
+    "privateOnly": "private only"
   },
   "archived": "Archived",
   "archive": "Archive note",
@@ -118,5 +119,34 @@
     "title": "Spelling",
     "none": "No suggestions"
   },
-  "formatSymbol": "A"
+  "formatSymbol": "A",
+  "editorMenu": "Editing menu",
+  "shortcuts": {
+    "mac": {
+      "undo": "⌘Z",
+      "redo": "⌘⇧Z",
+      "bold": "⌘B",
+      "italic": "⌘I",
+      "underline": "⌘U",
+      "code": "⌘E",
+      "link": "⌘K"
+    },
+    "other": {
+      "undo": "Ctrl+Z",
+      "redo": "Ctrl+Shift+Z",
+      "bold": "Ctrl+B",
+      "italic": "Ctrl+I",
+      "underline": "Ctrl+U",
+      "code": "Ctrl+E",
+      "link": "Ctrl+K"
+    }
+  },
+  "formatLabels": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strike": "Strikethrough",
+    "code": "Inline code",
+    "link": "Link…"
+  }
 }

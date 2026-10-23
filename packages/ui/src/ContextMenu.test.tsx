@@ -46,3 +46,27 @@ it("Mayús+F10 abre directamente y muestra primero el grupo adicional", () => {
   ]);
   expect(native).not.toHaveBeenCalled();
 });
+
+it.each([{ key: "ContextMenu" }, { key: "F10", shiftKey: true }])(
+  "abre con $key y navega a un submenú con flechas",
+  async (key) => {
+    render(
+      <ContextMenu
+        label="Editor"
+        showLabel={false}
+        items={[{ label: "Insertar", items: [{ label: "Tabla", onSelect: vi.fn() }] }]}
+      >
+        <button type="button">Editor</button>
+      </ContextMenu>,
+    );
+    fireEvent.keyDown(screen.getByRole("button"), key);
+    const trigger = screen.getByRole("menuitem", { name: "Insertar" });
+    act(() => trigger.focus());
+    fireEvent.keyDown(trigger, { key: "ArrowRight" });
+    const item = screen.getByRole("menuitem", { name: "Tabla" });
+    await vi.waitFor(() => expect(item).toHaveFocus());
+    fireEvent.keyDown(item, { key: "ArrowLeft" });
+    expect(screen.queryByRole("menuitem", { name: "Tabla" })).toBeNull();
+    expect(trigger).toHaveFocus();
+  },
+);

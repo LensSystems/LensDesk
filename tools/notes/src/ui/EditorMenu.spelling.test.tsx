@@ -53,6 +53,8 @@ it("espera el clic, muestra sugerencias y limpia la suscripción", () => {
   test.emit({ word: "holaa", suggestions: ["hola"] });
   expect(screen.getByRole("menuitem", { name: "hola" })).toBeTruthy();
   expect(screen.getByText("spelling.title")).toBeTruthy();
+  expect(screen.getAllByRole("menuitem")[0]).toHaveTextContent("hola");
+  expect(screen.getAllByRole("menuitem")[1]).toHaveTextContent("undo");
   test.unmount();
   expect(test.stop).toHaveBeenCalledOnce();
 });

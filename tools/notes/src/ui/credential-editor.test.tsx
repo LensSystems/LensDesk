@@ -40,6 +40,7 @@ function mount(privateNote: boolean, locked = false) {
 }
 function openMenu() {
   fireEvent.contextMenu(screen.getByRole("textbox", { name: "Editar" }));
+  fireEvent.keyDown(screen.getByRole("menuitem", { name: "Insertar" }), { key: "ArrowRight" });
   return screen.getByRole("menuitem", { name: "Contraseña…" });
 }
 it("deshabilita Contraseña en notas públicas", () => {
