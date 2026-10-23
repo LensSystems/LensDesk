@@ -4,10 +4,13 @@ import {
   ConfirmDialog,
   FileDropZone,
   ListItem,
+  MarkdownRaw,
   MarkdownView,
   Notice,
   Panel,
   Save,
+  SaveAll,
+  SaveMarkdown,
   SegmentedControl,
   Toolbar,
 } from "@lensdesk/ui";
@@ -21,7 +24,10 @@ export function SharedExamples() {
   const [notice, setNotice] = useState("");
   return (
     <>
-      <Example names={["BrushCleaning", "Save"]}>
+      <Example names={["BrushCleaning", "Save", "MarkdownRaw", "SaveMarkdown", "SaveAll"]}>
+        <MarkdownRaw aria-label="Markdown crudo" />
+        <SaveMarkdown aria-label="Guardar .md" />
+        <SaveAll size={16} aria-label="Guardar todos" />
         <BrushCleaning aria-label="Borrar historial" />
         <Save aria-label="Guardar" />
       </Example>

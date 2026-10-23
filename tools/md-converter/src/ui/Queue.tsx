@@ -1,5 +1,5 @@
 import { BrushCleaning, ConfirmDialog, FileDropZone, IconButton } from "@lensdesk/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { QueueCard } from "./QueueCard.tsx";
 import type { QueueItem } from "./use-queue.ts";
@@ -20,6 +20,16 @@ export function Queue({
   onClear: () => void;
 }) {
   const { t } = useTranslation();
+  const [compact, setCompact] = useState(
+    () => window.matchMedia?.("(max-width: 900px)").matches ?? false,
+  );
+  useEffect(() => {
+    const query = window.matchMedia?.("(max-width: 900px)");
+    if (!query) return;
+    const change = () => setCompact(query.matches);
+    query.addEventListener("change", change);
+    return () => query.removeEventListener("change", change);
+  }, []);
   const [confirmOpen, setConfirmOpen] = useState(false);
   return (
     <aside className="queue-panel">
@@ -27,9 +37,9 @@ export function Queue({
       <FileDropZone
         size="md"
         buttonVariant="primary"
-        className="py-6"
+        className={compact ? "compact-drop-zone" : "py-6"}
         onBrowse={onChoose}
-        label={t("dropHint")}
+        label={t(compact ? "dropHintCompact" : "dropHint")}
         aria-label={t("dropZone")}
         buttonLabel={t("chooseFiles")}
       />

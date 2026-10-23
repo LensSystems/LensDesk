@@ -41,5 +41,6 @@
   "clearHistory": "Clear history",
   "clearHistoryTitle": "Clear history?",
   "clearHistoryDescription": "The {{count}} files are removed from this list. The .md files you already saved are not deleted.",
-  "fileSaved": "File saved"
+  "fileSaved": "File saved",
+  "dropHintCompact": "Drop HTML, DOCX, CSV, PDF or XLSX here"
 }

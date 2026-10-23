@@ -41,5 +41,6 @@
   "clearHistory": "Borrar historial",
   "clearHistoryTitle": "¿Borrar el historial?",
   "clearHistoryDescription": "Se quitan los {{count}} archivos de esta lista. Los archivos .md que ya guardaste no se borran.",
-  "fileSaved": "Archivo guardado"
+  "fileSaved": "Archivo guardado",
+  "dropHintCompact": "Suelta aquí HTML, DOCX, CSV, PDF o XLSX"
 }

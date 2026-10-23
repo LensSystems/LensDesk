@@ -4,9 +4,13 @@ import {
   Check,
   Copy,
   EmptyState,
+  Eye,
   FileText,
+  MarkdownRaw,
   MarkdownView,
   Notice,
+  SaveAll,
+  SaveMarkdown,
   Tabs,
   TabsContent,
   TabsList,
@@ -84,9 +88,18 @@ export function Preview({
       <header className="preview-toolbar">
         <TabsList className="mr-auto" aria-label={t("resultTabs")}>
           {(["rendered", "raw"] as const).map((name) => (
-            <TabsTrigger key={name} value={name} onClick={() => setTab(name)}>
-              {t(name)}
-            </TabsTrigger>
+            <Tooltip key={name} label={t(name)}>
+              <TabsTrigger value={name} aria-label={t(name)} onClick={() => setTab(name)}>
+                <span className="compact-icon">
+                  {name === "rendered" ? (
+                    <Eye size={16} aria-hidden="true" />
+                  ) : (
+                    <MarkdownRaw aria-hidden="true" />
+                  )}
+                </span>
+                <span className="normal-label">{t(name)}</span>
+              </TabsTrigger>
+            </Tooltip>
           ))}
         </TabsList>
         <Tooltip label={t(copied ? "copied" : "copy")}>
@@ -118,28 +131,38 @@ export function Preview({
             {copied && <span>{t("copied")}</span>}
           </Button>
         </Tooltip>
-        <Button
-          type="button"
-          disabled={!item}
-          onClick={() =>
-            item && void attempt(async () => t("saved", { count: (await saveOne(item)) ? 1 : 0 }))
-          }
-        >
-          {t("save")}
-        </Button>
-        <Button
-          type="button"
-          disabled={results.length === 0}
-          onClick={() =>
-            void attempt(async () => {
-              let count = 0;
-              for (const result of results) if (await saveOne(result)) count += 1;
-              return t("saved", { count });
-            })
-          }
-        >
-          {t("saveAll")}
-        </Button>
+        <Tooltip label={t("save")}>
+          <Button
+            type="button"
+            className="save-action"
+            aria-label={t("save")}
+            disabled={!item}
+            onClick={() =>
+              item && void attempt(async () => t("saved", { count: (await saveOne(item)) ? 1 : 0 }))
+            }
+          >
+            <SaveMarkdown className="compact-icon" aria-hidden="true" />
+            <span className="normal-label">{t("save")}</span>
+          </Button>
+        </Tooltip>
+        <Tooltip label={t("saveAll")}>
+          <Button
+            type="button"
+            className="save-action"
+            aria-label={t("saveAll")}
+            disabled={results.length === 0}
+            onClick={() =>
+              void attempt(async () => {
+                let count = 0;
+                for (const result of results) if (await saveOne(result)) count += 1;
+                return t("saved", { count });
+              })
+            }
+          >
+            <SaveAll size={16} className="compact-icon" aria-hidden="true" />
+            <span className="normal-label">{t("saveAll")}</span>
+          </Button>
+        </Tooltip>
       </header>
       {item && item.warnings.length > 0 && (
         <Notice className="result-notice" tone="info" title={t("imagesOmitted")} />

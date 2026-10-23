@@ -182,3 +182,122 @@ body {
   color: var(--ld-success);
   background: transparent;
 }
+
+.compact-icon,
+.compact-drop {
+  display: none;
+}
+.normal-drop {
+  flex-shrink: 0;
+}
+.queue-filename {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.queue-filename-track {
+  white-space: nowrap;
+}
+.queue-filename-repeat {
+  display: none;
+  padding-left: 24px;
+}
+@media (max-width: 900px) {
+  .queue-panel {
+    width: 216px;
+    padding: 8px;
+    gap: 8px;
+  }
+  .queue-panel h1 {
+    font-size: 16px;
+    padding: 4px;
+  }
+  .normal-drop,
+  .normal-label,
+  .normal-status {
+    display: none;
+  }
+  .compact-icon {
+    display: inline-flex;
+  }
+  .compact-drop {
+    display: block;
+    flex-shrink: 0;
+  }
+  .compact-drop-zone {
+    min-height: 124px;
+    justify-items: center;
+    text-align: center;
+    border-width: 1px;
+    border-radius: var(--ld-radius-sm);
+  }
+  .queue-heading {
+    font-size: 12px;
+    padding-left: 4px;
+  }
+  .queue-heading h2 {
+    white-space: nowrap;
+  }
+  .queue-list {
+    padding: 0;
+    gap: 4px;
+  }
+  .queue-card {
+    padding: 8px;
+    border-radius: var(--ld-radius-md);
+    font-size: 13px;
+  }
+  .queue-result-status {
+    flex-direction: row;
+    gap: 12px;
+  }
+  .preview-toolbar {
+    height: 50px;
+    padding: 0 8px;
+    overflow: visible;
+  }
+  .preview-toolbar [role="tab"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    padding: 0;
+  }
+  .preview-toolbar .save-action {
+    width: 28px;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+    color: var(--ld-text-muted);
+  }
+  .preview-toolbar .copy-confirmation {
+    padding: 0 8px;
+  }
+  .preview-body {
+    padding: 16px;
+  }
+  .result-notice {
+    margin: 16px 16px 0;
+  }
+  .queue-filename[data-moving="true"] {
+    text-overflow: clip;
+  }
+  .queue-filename[data-moving="true"] .queue-filename-track {
+    display: inline-block;
+    animation: filename-scroll 12s linear infinite;
+  }
+  .queue-filename[data-moving="true"] .queue-filename-repeat {
+    display: inline;
+  }
+}
+@keyframes filename-scroll {
+  to {
+    transform: translateX(var(--filename-distance));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .queue-filename[data-moving="true"] .queue-filename-track {
+    animation: none;
+  }
+}

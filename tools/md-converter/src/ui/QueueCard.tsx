@@ -1,5 +1,6 @@
-import { Badge, Check, IconButton, ListItem, Save, X } from "@lensdesk/ui";
+import { Badge, Check, CircleAlert, IconButton, ListItem, Save, X } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
+import { QueueFilename } from "./QueueFilename.tsx";
 import { StatusText } from "./StatusText.tsx";
 import type { QueueItem } from "./use-queue.ts";
 
@@ -21,11 +22,12 @@ export function QueueCard({
     <li className="min-w-0">
       <ListItem
         variant="card"
-        title={item.file.name}
+        title={<QueueFilename name={item.file.name} />}
+        aria-label={item.file.name}
         selected={selected}
         disabled={item.status !== "done"}
         onClick={() => onSelect(item.id)}
-        containerClassName={item.status === "error" ? "border-danger bg-danger-soft" : undefined}
+        containerClassName={`queue-card ${item.status === "error" ? "border-danger bg-danger-soft" : ""}`}
         actions={
           active ? (
             <>
@@ -48,7 +50,21 @@ export function QueueCard({
             </>
           ) : (
             <span className="queue-result-status">
+              {(item.status === "done" || item.status === "error") && (
+                <span
+                  className={`compact-icon ${item.status === "done" ? "text-success" : "text-danger"}`}
+                  role="img"
+                  aria-label={t(`status.${item.status}`)}
+                >
+                  {item.status === "done" ? (
+                    <Check size={16} aria-hidden="true" />
+                  ) : (
+                    <CircleAlert size={16} aria-hidden="true" />
+                  )}
+                </span>
+              )}
               <Badge
+                className="normal-status"
                 tone={
                   item.status === "done" ? "accent" : item.status === "error" ? "danger" : "neutral"
                 }
