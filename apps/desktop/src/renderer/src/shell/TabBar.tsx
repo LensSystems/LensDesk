@@ -1,5 +1,5 @@
 import { Grid2x2Plus, IconButton, SlidersHorizontal } from "@lensdesk/ui";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ShellTab } from "../../../shared/host-channels.ts";
 import {
@@ -13,9 +13,9 @@ import { TabItem } from "./TabItem.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 import { useTabDrag } from "./use-tab-drag.ts";
+import { tabInsets, useCompactTabs, useTabCenter } from "./use-tab-layout.ts";
 
 type TabBarProps = { tabs: ShellTab[]; bridge: Window["lensdeskHost"] };
-
 export function TabBar({ tabs, bridge }: TabBarProps) {
   const { t, i18n } = useTranslation();
   const [announcement, setAnnouncement] = useState("");
@@ -35,9 +35,8 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
     );
   };
   const drag = useTabDrag((toolId, index) => void reorder(toolId, index));
+  const { headerRef, brandRef, actionsRef, width, left, right } = useTabCenter();
   const listRef = useRef<HTMLDivElement>(null);
-  const [space, setSpace] = useState({ available: Infinity, required: 0 });
-  const compact = tabs.length > 5 || space.available < space.required;
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const fullScreen = useShellStore((state) => state.fullScreen);
   const page = useShellStore((state) => state.page);
@@ -51,35 +50,19 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
       }),
     [tabs, tools, i18n.resolvedLanguage],
   );
-  useEffect(() => {
-    const container = listRef.current;
-    if (!container || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) return;
-      const labels = [...container.querySelectorAll<HTMLElement>("[data-tab-name]")];
-      const widths = names.map((_, index) => labels[index]?.scrollWidth ?? 0);
-      // Icono, cierre, relleno y separación de cada pestaña desplegada.
-      const required = widths.every((width) => width > 0)
-        ? widths.reduce(
-            (sum, width) => sum + Math.min(192, width + 75),
-            8 + Math.max(0, widths.length - 1) * 4,
-          )
-        : names.length * 192;
-      setSpace({ available: entry.contentRect.width, required });
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [names]);
   const activeIndex = Math.max(
     0,
     tabs.findIndex((tab) => tab.active),
   );
+  const { compact, required } = useCompactTabs(listRef, names, activeIndex, width - left - right);
+  const insets = tabInsets(width, left, right, required);
   // Mientras el foco está dentro de la barra manda el índice enfocado; fuera de ella, la pestaña activa.
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const rovingIndex = Math.min(focusedIndex ?? activeIndex, Math.max(0, tabs.length - 1));
   const moveFocus = (index: number) => tabRefs.current[index]?.focus();
   return (
     <header
+      ref={headerRef}
       data-platform={bridge.platform}
       style={{
         height: HEADER_HEIGHT,
@@ -94,6 +77,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
         {announcement}
       </span>
       <div
+        ref={brandRef}
         data-brand
         className="w-48 shrink-0 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none @max-[880px]:w-8"
       >
@@ -104,10 +88,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
           {t("shell.labelCompact")}
         </span>
       </div>
-      <div
-        ref={listRef}
-        className="flex min-w-0 flex-1 justify-center transition-[width,padding] duration-150 ease-out motion-reduce:transition-none"
-      >
+      <div ref={listRef} style={insets} className="absolute flex min-w-0 justify-center">
         <div
           aria-label={t("shell.tabsLabel")}
           className={`flex min-w-0 max-w-full shrink items-center gap-1 overflow-hidden rounded-full ${tabs.length > 0 ? "bg-surface p-1" : ""}`}
@@ -173,7 +154,10 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
           })}
         </div>
       </div>
-      <div className="flex w-auto min-w-64 max-w-[50%] shrink-0 items-center justify-end gap-1 @max-[880px]:min-w-56">
+      <div
+        ref={actionsRef}
+        className="ml-auto flex min-w-0 max-w-[50%] items-center justify-end gap-1"
+      >
         <HeaderNotices bridge={bridge} />
         <IconButton
           className="ld-no-drag shrink-0"

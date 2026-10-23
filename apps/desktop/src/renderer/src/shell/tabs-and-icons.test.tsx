@@ -187,6 +187,68 @@ describe("pestañas", () => {
     expect(screen.getByRole("tab", { name: "Notes" })).toBeTruthy();
   });
 
+  it.each([
+    [1280, 288, 1196, 296],
+    [760, 128, 676, 136],
+    [760, 48, 538, 230],
+  ])(
+    "reserva límites simétricos en una ventana de %i px",
+    (width, brandRight, actionsLeft, inset) => {
+      const rect = (left: number, right: number) =>
+        ({ left, right, width: right - left }) as DOMRect;
+      const geometry = vi
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: HTMLElement) {
+          if (this.tagName === "HEADER") return rect(0, width);
+          if (this.hasAttribute("data-brand")) return rect(0, brandRight);
+          return rect(actionsLeft, width);
+        });
+      const styles = vi
+        .spyOn(window, "getComputedStyle")
+        .mockReturnValue({ columnGap: "8px" } as CSSStyleDeclaration);
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          observe() {}
+          disconnect() {}
+        },
+      );
+      try {
+        renderBar(makeBridge().bridge);
+        const container = screen.getByRole("tablist").parentElement;
+        expect(container).toHaveClass("absolute", "justify-center");
+        expect(container?.style.left).toBe(`${inset}px`);
+        expect(container?.style.right).toBe(`${inset}px`);
+      } finally {
+        geometry.mockRestore();
+        styles.mockRestore();
+        vi.unstubAllGlobals();
+      }
+    },
+  );
+
+  it("centra el contenido y superpone el cierre sin reservarle ancho, también en la activa", () => {
+    renderBar(makeBridge().bridge);
+    for (const name of ["Notas", "Convertidor"]) {
+      const tab = screen.getByRole("tab", { name });
+      expect(tab).toHaveClass("justify-center", "px-[21.5px]", "ld-no-drag");
+      expect(tab.parentElement).toHaveClass("relative");
+      expect(tab.firstElementChild).toHaveClass(
+        "group-hover:-translate-x-[9.5px]",
+        "group-has-[:focus-visible]:-translate-x-[9.5px]",
+        "duration-[140ms]",
+        "ease-out",
+        "motion-reduce:transition-none",
+      );
+      expect(screen.getByRole("button", { name: `Cerrar ${name}` })).toHaveClass(
+        "absolute",
+        "right-[3px]",
+        "size-6",
+        "opacity-0",
+      );
+    }
+  });
+
   it("sin pestañas no pinta la pista vacía", () => {
     render(
       <TooltipProvider>
@@ -221,7 +283,7 @@ describe("pestañas", () => {
       "group-hover:opacity-100",
       "group-has-[:focus-visible]:opacity-100",
       "transition-opacity",
-      "duration-150",
+      "duration-[140ms]",
       "ease-out",
       "motion-reduce:transition-none",
     ])
