@@ -23,22 +23,6 @@ export function NotesSidebarContent({
   const searchId = useId();
   return (
     <div className="note-list">
-      <div className="sidebar-heading">
-        <h1>{t("title")}</h1>
-        <IconButton label={t("import")} onClick={onImport}>
-          <Download size={16} aria-hidden="true" />
-        </IconButton>
-        {list.trashed ? (
-          <Button variant="danger" onClick={onEmpty}>
-            {t("emptyTrash")}
-          </Button>
-        ) : (
-          <Button variant="primary" onClick={onCreate}>
-            <Plus size={15} aria-hidden="true" />
-            {t("newNote")}
-          </Button>
-        )}
-      </div>
       <Input
         label={<span className="sr-only">{t("search")}</span>}
         id={searchId}
@@ -49,6 +33,7 @@ export function NotesSidebarContent({
         disabled={list.trashed || list.archived}
       />
       <SegmentedControl
+        fullWidth
         aria-label={t("notesView")}
         value={list.trashed ? "trash" : list.archived ? "archived" : "notes"}
         onValueChange={(value) => onView(value as NotesView)}
@@ -58,6 +43,27 @@ export function NotesSidebarContent({
           { value: "trash", label: t("trash") },
         ]}
       />
+      {list.trashed
+        ? list.notes.length > 0 && (
+            <Button variant="danger" onClick={onEmpty}>
+              {t("emptyTrash")}
+            </Button>
+          )
+        : !list.archived && (
+            <div className="sidebar-heading">
+              <Button className="flex-1" variant="primary" onClick={onCreate}>
+                <Plus size={15} aria-hidden="true" />
+                {t("newNote")}
+              </Button>
+              <IconButton
+                className="border border-border-control"
+                label={t("import")}
+                onClick={onImport}
+              >
+                <Download size={16} aria-hidden="true" />
+              </IconButton>
+            </div>
+          )}
       <NoteList {...list} query={list.trashed || list.archived ? "" : query} />
     </div>
   );

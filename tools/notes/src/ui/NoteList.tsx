@@ -45,6 +45,7 @@ export function NoteList({
         <ListItem
           key={note.id}
           variant="card"
+          containerClassName="note-card"
           aria-label={note.title || t("untitled")}
           title={
             query.trim() ? (
@@ -65,7 +66,7 @@ export function NoteList({
           selected={selectedId === note.id}
           onClick={() => onSelect(note.id)}
           actions={
-            !trashed && (
+            !trashed && selectedId === note.id ? (
               <>
                 <IconButton
                   className={
@@ -97,25 +98,39 @@ export function NoteList({
                   <Trash2 size={14} aria-hidden="true" />
                 </IconButton>
               </>
-            )
+            ) : !trashed && note.pinned ? (
+              <Star
+                className="note-pin text-warning"
+                size={14}
+                fill="currentColor"
+                aria-label={t("pinned")}
+                role="img"
+              />
+            ) : null
           }
         />
       ))}
-      {notes.length === 0 && (
-        <div className="text-muted">
-          <p>
-            {trashed
-              ? t("emptyTrashTitle")
-              : archived
+      {notes.length === 0 &&
+        (trashed ? (
+          <div className="trash-empty">
+            <span className="trash-empty-icon">
+              <Trash2 size={18} aria-hidden="true" />
+            </span>
+            <p className="font-bold text-text">{t("emptyTrashTitle")}</p>
+            <p className="text-muted">{t("emptyTrashDescription")}</p>
+          </div>
+        ) : (
+          <div className="text-muted">
+            <p>
+              {archived
                 ? t("emptyArchivedTitle")
                 : query.trim()
                   ? t("noResults", { query })
                   : t("emptyNotes")}
-          </p>
-          {trashed && <p>{t("emptyTrashDescription")}</p>}
-          {archived && <p>{t("emptyArchivedDescription")}</p>}
-        </div>
-      )}
+            </p>
+            {archived && <p>{t("emptyArchivedDescription")}</p>}
+          </div>
+        ))}
     </nav>
   );
 }

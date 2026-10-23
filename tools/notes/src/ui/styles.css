@@ -46,13 +46,44 @@ body {
   align-items: center;
   gap: 4px;
 }
-.sidebar-heading h1 {
-  flex: 1;
-  font-size: 18px;
-  font-weight: 700;
-}
 .sidebar-heading button {
   flex-shrink: 0;
+}
+.note-card {
+  position: relative;
+}
+.note-card > div {
+  align-items: center;
+}
+.note-pin {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.note-card:has(.note-pin) > button {
+  padding-right: 16px;
+}
+.note-list nav:has(.trash-empty) {
+  flex: 1;
+  align-content: center;
+}
+.trash-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  text-align: center;
+  font-size: 13px;
+}
+.trash-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: var(--ld-radius-md);
+  background: var(--ld-bg);
+  color: var(--ld-text-muted);
 }
 .note-list nav {
   display: grid;

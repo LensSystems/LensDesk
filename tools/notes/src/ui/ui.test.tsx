@@ -917,9 +917,12 @@ describe("estados vacíos y colores de la lista", () => {
   });
 
   it("colorea fijar y eliminar, y conserva la estrella fijada rellena", () => {
-    const { rerender } = render(<NoteList {...props} notes={[note("1", "Nota")]} />, {
-      wrapper: TooltipProvider,
-    });
+    const { rerender } = render(
+      <NoteList {...props} selectedId="1" notes={[note("1", "Nota")]} />,
+      {
+        wrapper: TooltipProvider,
+      },
+    );
     expect(screen.getByRole("button", { name: "Archivar nota" })).toHaveClass("hover:text-accent");
     const pin = screen.getByRole("button", { name: "Fijar nota" });
     expect(pin).toHaveClass("hover:text-warning");
@@ -927,7 +930,9 @@ describe("estados vacíos y colores de la lista", () => {
     expect(screen.getByRole("button", { name: "Mover a la papelera" })).toHaveClass(
       "hover:text-danger",
     );
-    rerender(<NoteList {...props} notes={[{ ...note("1", "Nota"), pinned: true }]} />);
+    rerender(
+      <NoteList {...props} selectedId="1" notes={[{ ...note("1", "Nota"), pinned: true }]} />,
+    );
     const unpin = screen.getByRole("button", { name: "Desfijar nota" });
     expect(unpin).toHaveClass("text-warning", "hover:text-warning");
     expect(unpin.querySelector("svg")).toHaveAttribute("fill", "currentColor");
@@ -987,7 +992,7 @@ describe("vista Archivadas", () => {
     const onArchive = vi.fn();
     const props = {
       notes: [note("1", "Nota")],
-      selectedId: null,
+      selectedId: "1",
       trashed: false,
       onSelect: vi.fn(),
       onPin: vi.fn(),

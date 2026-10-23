@@ -43,6 +43,19 @@ export function SharedExamples() {
           ]}
         />
       </Example>
+      <Example names={["SegmentedControl"]}>
+        <SegmentedControl
+          fullWidth
+          aria-label="Vista a todo el ancho"
+          value={value}
+          onValueChange={setValue}
+          options={[
+            { value: "edit", label: "Editar" },
+            { value: "preview", label: "Vista previa" },
+            { value: "other", label: "Otra vista" },
+          ]}
+        />
+      </Example>
       <Example names={["Notice"]}>
         {(["info", "success", "warning", "danger"] as const).map((tone) => (
           <Notice
