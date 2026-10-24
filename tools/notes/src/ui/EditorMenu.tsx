@@ -35,6 +35,7 @@ export function EditorMenu({
         {...spellingMenu}
         label={t("editorMenu")}
         showLabel={false}
+        contentClassName="min-w-[264px]"
         keyboardAnchor={() => {
           const editor = view.current;
           const coords = editor?.coordsAtPos(editor.state.selection.main.head);

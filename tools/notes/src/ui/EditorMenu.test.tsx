@@ -48,15 +48,21 @@ it("ordena el menú principal y los grupos de Insertar", () => {
   expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
     expect.stringMatching(/^Deshacer/),
     expect.stringMatching(/^Rehacer/),
-    expect.stringMatching(/Formato$/),
-    "Insertar",
+    expect.stringMatching(/Formato/),
+    expect.stringMatching(/^Insertar/),
   ]);
   expect(screen.getAllByRole("separator")).toHaveLength(1);
+  expect(screen.getByRole("menu")).toHaveClass("min-w-[264px]");
   const menu = insert();
+  expect(menu).toHaveClass("min-w-[294px]");
   expect(
     within(menu)
       .getAllByRole("menuitem")
-      .map((item) => item.textContent),
+      .map(
+        (item) =>
+          item.querySelector("span:nth-child(2)")?.textContent +
+          (item.getAttribute("aria-description") ?? ""),
+      ),
   ).toEqual([
     "Encabezado 1",
     "Encabezado 2",
@@ -113,7 +119,10 @@ it("comparte las acciones de formato y permite deshacer y rehacer", () => {
     key: "ArrowRight",
   });
   const menu = screen.getByRole("menu", { name: "Formato" });
+  expect(menu).toHaveClass("min-w-[294px]");
   expect(within(menu).getAllByRole("menuitem")).toHaveLength(6);
+  expect(within(menu).getByText("B")).toHaveClass("font-extrabold");
+  expect(within(menu).getByText("</>")).toHaveClass("font-mono");
   fireEvent.click(within(menu).getByRole("menuitem", { name: /^Negrita/ }));
   expect(editor.state.doc.toString()).toBe("**texto**");
   fireEvent.contextMenu(screen.getByRole("button", { name: "Editor" }));

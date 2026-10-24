@@ -1,7 +1,7 @@
-import { ChevronRight } from "lucide-react";
 import { ContextMenu as Primitive } from "radix-ui";
 import type { ReactNode } from "react";
-import { menuContentClass, menuItemClass } from "./menu-styles.ts";
+import { cn } from "./cn.ts";
+import { menuContentClass, menuItemClass, menuShortcutClass } from "./menu-styles.ts";
 
 export type ContextMenuEntry =
   | { separator: true }
@@ -13,6 +13,7 @@ export type ContextMenuEntry =
       disabled?: boolean;
       onSelect?: () => void;
       items?: ContextMenuEntry[];
+      contentClassName?: string;
     };
 
 export function ContextMenuItems({ items }: { items: ContextMenuEntry[] }) {
@@ -24,7 +25,7 @@ export function ContextMenuItems({ items }: { items: ContextMenuEntry[] }) {
             .slice(0, index)
             .flatMap((entry) => ("label" in entry ? [entry.label] : []))
             .join("/")}
-          className="my-1 h-px bg-border"
+          className="my-1 mx-1.5 h-px bg-border"
         />
       );
     const content = (
@@ -32,16 +33,21 @@ export function ContextMenuItems({ items }: { items: ContextMenuEntry[] }) {
         {item.icon && (
           <span
             aria-hidden="true"
-            className="mr-3 flex size-4 items-center justify-center text-muted"
+            className="flex w-5 shrink-0 items-center justify-center text-xs font-bold text-muted [&_svg]:size-3.5 [&_svg]:stroke-2"
           >
             {item.icon}
           </span>
         )}
         <span>{item.label}</span>
-        {(item.shortcut || item.note) && (
-          <span className="ml-auto pl-6 text-xs text-muted">{item.shortcut || item.note}</span>
+        {item.shortcut && <kbd className={cn(menuShortcutClass, "font-sans")}>{item.shortcut}</kbd>}
+        {!item.shortcut && item.note && (
+          <span className={cn(menuShortcutClass, "text-[11px]")}>{item.note}</span>
         )}
-        {item.items && <ChevronRight aria-hidden="true" className="ml-auto size-3" />}
+        {item.items && (
+          <span aria-hidden="true" className={menuShortcutClass}>
+            ›
+          </span>
+        )}
       </>
     );
     return item.items ? (
@@ -50,7 +56,12 @@ export function ContextMenuItems({ items }: { items: ContextMenuEntry[] }) {
           {content}
         </Primitive.SubTrigger>
         <Primitive.Portal>
-          <Primitive.SubContent aria-label={item.label} className={menuContentClass}>
+          <Primitive.SubContent
+            aria-label={item.label}
+            className={cn(menuContentClass, item.contentClassName)}
+            sideOffset={-8}
+            alignOffset={-7}
+          >
             <ContextMenuItems items={item.items} />
           </Primitive.SubContent>
         </Primitive.Portal>

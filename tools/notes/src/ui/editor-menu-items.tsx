@@ -1,48 +1,36 @@
 import { redo, redoDepth, undo, undoDepth } from "@codemirror/commands";
 import type { EditorView } from "@codemirror/view";
 import {
-  Bold,
-  Braces,
-  Code,
   type ContextMenuEntry,
-  Heading1,
-  Heading2,
-  Heading3,
-  Italic,
   Link,
-  List,
   ListChecks,
-  ListOrdered,
   Lock,
-  Minus,
   Plus,
-  Quote,
   Redo2,
-  Strikethrough,
   Table,
   Type,
-  Underline,
   Undo2,
 } from "@lensdesk/ui";
 import type { TFunction } from "i18next";
 import { applyMarkdownEdit, formatCommand } from "./editor-commands.ts";
+import { editorShortcut } from "./editor-shortcut.ts";
+import { FormatGlyph } from "./FormatGlyph.tsx";
 import { insertKinds, insertMarkdown } from "./markdown-insert.ts";
 
 const insertIcons = [
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
+  "heading1",
+  "heading2",
+  "heading3",
+  "bullet",
+  "numbered",
   ListChecks,
-  Quote,
-  Braces,
+  "quote",
+  "codeBlock",
   Table,
-  Minus,
+  "separator",
   Link,
 ];
 const formats = ["bold", "italic", "underline", "strike", "code", "link"] as const;
-const formatIcons = [Bold, Italic, Underline, Strikethrough, Code, Link];
 
 export function editorMenuItems(
   t: TFunction,
@@ -51,8 +39,7 @@ export function editorMenuItems(
   privateNote: boolean,
   onPassword: () => void,
 ): ContextMenuEntry[] {
-  const mac = /Mac/.test(navigator.platform);
-  const shortcut = (action: string) => t(`shortcuts.${mac ? "mac" : "other"}.${action}`);
+  const shortcut = (action: string) => editorShortcut(t, action);
   const disabled = readOnly || !editor || editor.state.readOnly;
   const insertItems: ContextMenuEntry[] = [];
   insertKinds.forEach((kind, index) => {
@@ -60,7 +47,14 @@ export function editorMenuItems(
     const Icon = insertIcons[index] ?? Type;
     insertItems.push({
       label: t(`insert.${kind}`),
-      icon: <Icon className="size-4" />,
+      icon:
+        typeof Icon === "string" ? (
+          <span className={kind === "codeBlock" ? "font-mono text-[10px]" : undefined}>
+            {t(`insertGlyphs.${Icon}`)}
+          </span>
+        ) : (
+          <Icon className="size-3.5" />
+        ),
       disabled,
       onSelect: () => {
         if (editor)
@@ -75,7 +69,7 @@ export function editorMenuItems(
     { separator: true },
     {
       label: t("insert.password"),
-      icon: <Lock className="size-4" />,
+      icon: <Lock className="size-3.5" />,
       note: t("insert.privateOnly"),
       disabled: disabled || !privateNote,
       onSelect: onPassword,
@@ -84,7 +78,7 @@ export function editorMenuItems(
   return [
     {
       label: t("undo"),
-      icon: <Undo2 className="size-4" />,
+      icon: <Undo2 className="size-3.5" />,
       shortcut: shortcut("undo"),
       disabled: disabled || undoDepth(editor.state) === 0,
       onSelect: () => {
@@ -93,7 +87,7 @@ export function editorMenuItems(
     },
     {
       label: t("redo"),
-      icon: <Redo2 className="size-4" />,
+      icon: <Redo2 className="size-3.5" />,
       shortcut: shortcut("redo"),
       disabled: disabled || redoDepth(editor.state) === 0,
       onSelect: () => {
@@ -108,12 +102,12 @@ export function editorMenuItems(
           {t("formatSymbol")}
         </span>
       ),
-      items: formats.map((format, index) => {
-        const Icon = formatIcons[index] ?? Type;
+      contentClassName: "min-w-[294px]",
+      items: formats.map((format) => {
         return {
           label: t(`formatLabels.${format}`),
-          icon: <Icon className="size-4" />,
-          shortcut: format === "strike" ? undefined : shortcut(format),
+          icon: <FormatGlyph format={format} />,
+          shortcut: shortcut(format),
           disabled,
           onSelect: () => {
             if (editor) formatCommand(format)(editor);
@@ -121,6 +115,11 @@ export function editorMenuItems(
         };
       }),
     },
-    { label: t("insert.title"), icon: <Plus className="size-4" />, items: insertItems },
+    {
+      label: t("insert.title"),
+      icon: <Plus className="size-3.5" />,
+      contentClassName: "min-w-[294px]",
+      items: insertItems,
+    },
   ];
 }

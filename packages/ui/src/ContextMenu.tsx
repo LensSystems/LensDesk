@@ -1,10 +1,12 @@
 import { ContextMenu as Primitive } from "radix-ui";
 import { type ReactNode, useRef, useState } from "react";
 import { type ContextMenuEntry, ContextMenuItems } from "./ContextMenuItems.tsx";
+import { cn } from "./cn.ts";
 import { menuContentClass, menuItemClass } from "./menu-styles.ts";
 
 export function ContextMenu({
   children,
+  contentClassName,
   label,
   items,
   onClose,
@@ -22,6 +24,7 @@ export function ContextMenu({
     items: { label: string; disabled?: boolean; onSelect: () => void }[];
   };
   showLabel?: boolean;
+  contentClassName?: string;
   children: ReactNode;
   label: string;
   items: ContextMenuEntry[] | (() => ContextMenuEntry[]);
@@ -65,7 +68,7 @@ export function ContextMenu({
       </Primitive.Trigger>
       <Primitive.Portal>
         <Primitive.Content
-          className={menuContentClass}
+          className={cn(menuContentClass, contentClassName)}
           aria-label={label}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
@@ -87,7 +90,7 @@ export function ContextMenu({
                   {item.label}
                 </Primitive.Item>
               ))}
-              <Primitive.Separator className="my-1 h-px bg-border" />
+              <Primitive.Separator className="my-1 mx-1.5 h-px bg-border" />
             </>
           )}
           {showLabel && (

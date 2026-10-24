@@ -29,7 +29,7 @@ export function DropdownMenuSeparator({
   className,
   ...props
 }: ComponentProps<typeof Primitive.Separator>) {
-  return <Primitive.Separator {...props} className={cn("my-1 h-px bg-border", className)} />;
+  return <Primitive.Separator {...props} className={cn("my-1 mx-1.5 h-px bg-border", className)} />;
 }
 
 export function DropdownMenuContent({

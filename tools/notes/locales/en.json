@@ -44,12 +44,12 @@
   "redo": "Redo",
   "format": "Format",
   "formatting": {
-    "bold": "Bold (⌘B / Ctrl+B)",
-    "italic": "Italic (⌘I / Ctrl+I)",
-    "underline": "Underline (⌘U / Ctrl+U)",
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
     "strike": "Strikethrough",
-    "code": "Inline code (⌘E / Ctrl+E)",
-    "link": "Link… (⌘K / Ctrl+K)"
+    "code": "Inline code",
+    "link": "Link…"
   },
   "insert": {
     "title": "Insert",
@@ -129,7 +129,8 @@
       "italic": "⌘I",
       "underline": "⌘U",
       "code": "⌘E",
-      "link": "⌘K"
+      "link": "⌘K",
+      "strike": "⌘⇧X"
     },
     "other": {
       "undo": "Ctrl+Z",
@@ -138,7 +139,8 @@
       "italic": "Ctrl+I",
       "underline": "Ctrl+U",
       "code": "Ctrl+E",
-      "link": "Ctrl+K"
+      "link": "Ctrl+K",
+      "strike": "Ctrl+Shift+X"
     }
   },
   "formatLabels": {
@@ -148,5 +150,22 @@
     "strike": "Strikethrough",
     "code": "Inline code",
     "link": "Link…"
+  },
+  "formatGlyphs": {
+    "bold": "B",
+    "italic": "I",
+    "underline": "U",
+    "strike": "S",
+    "code": "</>"
+  },
+  "insertGlyphs": {
+    "heading1": "H1",
+    "heading2": "H2",
+    "heading3": "H3",
+    "bullet": "•",
+    "numbered": "1.",
+    "quote": "❝",
+    "codeBlock": "{ }",
+    "separator": "—"
   }
 }
