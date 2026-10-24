@@ -82,6 +82,47 @@ describe("pestañas", () => {
   });
   afterEach(cleanup);
 
+  it("en mínima conserva el nombre solo de la seleccionada aunque haya espacio", () => {
+    const bounds = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        return { width: this.tagName === "HEADER" ? 760 : 0, left: 0, right: 0 } as DOMRect;
+      });
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    try {
+      renderBar(makeBridge().bridge);
+      expect(
+        screen.getByRole("tab", { name: "Notas" }).querySelector("[data-tab-name]"),
+      ).toHaveClass("sr-only");
+      expect(screen.getByRole("tab", { name: "Notas" }).parentElement).toHaveClass("w-[31px]");
+      expect(
+        screen.getByRole("tab", { name: "Convertidor" }).querySelector("[data-tab-name]"),
+      ).toHaveClass("truncate");
+      act(() => useShellStore.setState({ page: "tools" }));
+      for (const tab of screen.getAllByRole("tab")) {
+        expect(tab.querySelector("[data-tab-name]")).toHaveClass("sr-only");
+        expect(tab).toHaveAttribute("aria-selected", "false");
+      }
+    } finally {
+      bounds.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("usa un icono de cierre de 13 dentro del botón de 24", () => {
+    renderBar(makeBridge().bridge);
+    const close = screen.getByRole("button", { name: "Cerrar Notas" });
+    expect(close).toHaveClass("size-6", "right-[3px]");
+    expect(close.querySelector("svg")).toHaveAttribute("width", "13");
+    expect(close.querySelector("svg")).toHaveAttribute("height", "13");
+  });
+
   it("con más de cinco pestañas conserva solo el nombre de la activa", () => {
     const many = Array.from({ length: 8 }, (_, position) => ({
       toolId: `tool-${position}`,

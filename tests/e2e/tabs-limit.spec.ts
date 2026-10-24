@@ -111,13 +111,13 @@ for (const width of [1280, 760]) {
         }),
       );
       for (const box of compactBoxes) {
-        expect(box.width).toBe(30);
+        expect(box.width).toBe(31);
         expect(box.height).toBe(30);
       }
       const [first, second] = compactBoxes;
       expect(first).toBeDefined();
       expect(second).toBeDefined();
-      if (first && second) expect(second.x - first.x - 30).toBe(4);
+      if (first && second) expect(second.x - first.x - 31).toBe(4);
       await shell.getByRole("button", { name: "Deshacer", exact: true }).click();
       await expect(shell.getByRole("tab")).toHaveCount(8);
       await expect(shell.getByRole("tab").nth(1)).toHaveAccessibleName("Plantilla 1");

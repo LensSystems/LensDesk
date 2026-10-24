@@ -39,6 +39,10 @@ for (const width of [1100, 760]) {
         const current = boxes[index];
         if (previous && current) expect(previous.x + previous.width).toBeLessThanOrEqual(current.x);
       }
+      await expect(banner.getByRole("button", { name: "Ir a Ajustes" })).toHaveCSS(
+        "border-width",
+        "0px",
+      );
       for (const name of ["Ir a Ajustes", "Descartar"])
         await expect(banner.getByRole("button", { name, exact: true })).toBeVisible();
       expect(

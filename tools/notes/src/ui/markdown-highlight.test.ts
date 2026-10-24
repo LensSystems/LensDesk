@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { markdown } from "@codemirror/lang-markdown";
+import { forceParsing } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import { EditorView } from "codemirror";
 import { afterEach, describe, expect, it } from "vitest";
@@ -73,6 +74,8 @@ describe("espaciado de bloques Markdown", () => {
       extensions: [markdown(), markdownHighlighting],
       parent: document.body,
     });
+    // Con la máquina cargada el analizador puede no terminar en su plazo: se fuerza el árbol completo.
+    forceParsing(view, view.state.doc.length, 5000);
     const starts: number[] = [];
     view.state.facet(EditorView.decorations).forEach((decorations) => {
       if (typeof decorations === "function") return;

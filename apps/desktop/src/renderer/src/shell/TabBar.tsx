@@ -56,20 +56,18 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
       }),
     [tabs, tools, i18n.resolvedLanguage],
   );
-  const activeIndex = Math.max(
-    0,
-    tabs.findIndex((tab) => tab.active),
-  );
+  const activeIndex = tabs.findIndex((tab) => tab.active);
   const { compact, required } = useCompactTabs(
     listRef,
     names,
-    activeIndex,
+    width < 900 && page !== "tab" ? -1 : activeIndex,
     width - left - (hasNotice ? naturalRight : right),
+    width,
   );
   const insets = hasNotice ? { left, right } : tabInsets(width, left, right, required);
   // Mientras el foco está dentro de la barra manda el índice enfocado; fuera de ella, la pestaña activa.
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  const rovingIndex = Math.min(focusedIndex ?? activeIndex, Math.max(0, tabs.length - 1));
+  const rovingIndex = Math.max(0, Math.min(focusedIndex ?? activeIndex, tabs.length - 1));
   const moveFocus = (index: number) => tabRefs.current[index]?.focus();
   return (
     <header
@@ -138,7 +136,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
                 name={names[index] ?? tab.toolId}
                 Icon={Icon}
                 selected={selected}
-                compact={compact && !tab.active}
+                compact={compact && !(width < 900 ? selected : tab.active)}
                 tabIndex={rovingIndex === index ? 0 : -1}
                 buttonRef={(node) => {
                   tabRefs.current[index] = node;

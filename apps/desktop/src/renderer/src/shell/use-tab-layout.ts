@@ -52,6 +52,7 @@ export function useCompactTabs(
   names: string[],
   activeIndex: number,
   available: number,
+  windowWidth = Infinity,
 ) {
   const [space, setSpace] = useState({ available: Infinity, widths: [] as number[] });
   useEffect(() => {
@@ -73,11 +74,12 @@ export function useCompactTabs(
   });
   // La compactación depende del espacio libre, nunca del ancho que deje el centrado.
   const compact =
+    windowWidth < 900 ||
     names.length > 5 ||
     (Number.isFinite(available) ? available : space.available) <
       widths.reduce((sum, width) => sum + width, padding);
   const required = widths.reduce(
-    (sum, width, index) => sum + (compact && index !== activeIndex ? 30 : width),
+    (sum, width, index) => sum + (compact && index !== activeIndex ? 31 : width),
     padding,
   );
   return { compact, required };

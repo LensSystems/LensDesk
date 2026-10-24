@@ -74,6 +74,13 @@ for (const width of [1280, 760]) {
         await shell.getByRole("button", { name: `Abrir Plantilla ${index}`, exact: true }).click();
         if (index === 2 || index === 7) {
           await expect(shell.getByRole("tab")).toHaveCount(index + 1);
+          for (const tab of await shell.getByRole("tab").all()) {
+            const selected = (await tab.getAttribute("aria-selected")) === "true";
+            const compact = !selected && (width < 900 || index === 7);
+            await expect(tab.locator("[data-tab-name]")).toHaveClass(
+              compact ? "sr-only whitespace-nowrap" : "truncate",
+            );
+          }
           await expectCentered(shell);
           await expectClearSides(shell);
         }

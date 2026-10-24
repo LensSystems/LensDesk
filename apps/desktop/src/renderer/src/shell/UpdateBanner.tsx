@@ -17,7 +17,7 @@ export function UpdateBanner({ update, onOpenSettings, onDismiss }: Props) {
       <Button
         variant="primary"
         aria-label={t("recovery.goToSettings")}
-        className="ld-no-drag h-6 shrink-0 px-2 text-xs"
+        className="ld-no-drag h-6 w-20 shrink-0 border-0 px-2 text-xs leading-4 font-bold"
         onClick={onOpenSettings}
         type="button"
       >

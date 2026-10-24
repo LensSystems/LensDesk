@@ -32,3 +32,21 @@ it("reserva 324 px para el panel normal y 312 px para el menú", () => {
   expect(rules[1]?.style.padding).toBe("12px");
   expect(rules[2]?.style.padding).toBe("12px 12px 16px");
 });
+
+it("ajusta la barra y el hueco solo por debajo de 900 px de ventana", () => {
+  const css = readFileSync("tools/notes/src/ui/styles.css", "utf8");
+  const block = css.split("@media (width < 900px) {")[1];
+  expect(block).toBeTruthy();
+  const sheet = new CSSStyleSheet();
+  for (const rule of block?.match(/[^{}]+\{[^{}]*\}/g) ?? []) {
+    sheet.insertRule(rule, sheet.cssRules.length);
+  }
+  const [workspace, widths, rail] = Array.from(sheet.cssRules) as CSSStyleRule[];
+  expect(workspace?.selectorText).toBe(".workspace");
+  expect(workspace?.style.gap).toBe("8px");
+  expect(widths?.selectorText).toBe(".notes-sidebar,\n  .sidebar-rail");
+  expect(widths?.style.width).toBe("44px");
+  expect(rail?.style.gap).toBe("4px");
+  expect(rail?.style.padding).toBe("6px 0px");
+  expect(rail?.style.borderWidth).toBe("0px");
+});

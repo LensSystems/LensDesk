@@ -24,6 +24,8 @@ for (const middle of [false, true]) {
         const tab = shell.getByRole("tab", { name: "Notas", exact: true });
         const close = shell.getByRole("button", { name: "Cerrar Notas", exact: true });
         await expect(tab).toBeVisible();
+        await expect(close.locator("svg")).toHaveAttribute("width", "13");
+        await expect(close.locator("svg")).toHaveAttribute("height", "13");
         if (middle) {
           await tab.click({ button: "middle" });
         } else {

@@ -41,6 +41,15 @@ it("muestra la versión con una acción para Ajustes y descartar", async () => {
   );
   expect(screen.getByRole("status")).toHaveTextContent("LensDesk 0.2.0 está disponible");
   expect(screen.getAllByRole("button")).toHaveLength(2);
+  expect(screen.getByRole("button", { name: "Ir a Ajustes" })).toHaveClass(
+    "border-0",
+    "w-20",
+    "h-6",
+    "px-2",
+    "text-xs",
+    "leading-4",
+    "font-bold",
+  );
   fireEvent.click(screen.getByRole("button", { name: "Ir a Ajustes" }));
   expect(onOpenSettings).toHaveBeenCalledOnce();
   fireEvent.click(screen.getByRole("button", { name: "Descartar" }));

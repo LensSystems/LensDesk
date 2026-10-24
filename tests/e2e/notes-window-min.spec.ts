@@ -20,6 +20,11 @@ test("Notas permite elegir notas sin desbordes a 760 × 520", async () => {
     await window.evaluate((browserWindow) => browserWindow.setContentSize(760, 520));
     const rail = tool.locator(".sidebar-rail");
     await expect(rail).toBeVisible();
+    await expect(rail).toHaveCSS("width", "44px");
+    await expect(rail).toHaveCSS("border-width", "0px");
+    await expect(rail).toHaveCSS("padding", "6px 0px");
+    await expect(rail).toHaveCSS("gap", "4px");
+    await expect(tool.locator(".workspace")).toHaveCSS("gap", "8px");
     await expect(rail.getByRole("button")).toHaveCount(3);
     await rail.getByRole("button", { name: "Nueva nota", exact: true }).click();
     const title = "Una nota con título muy largo ".repeat(6).trim();

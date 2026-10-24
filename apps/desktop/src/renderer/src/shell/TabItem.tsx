@@ -50,7 +50,7 @@ export function TabItem({
       )}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: El cierre central abarca ambos botones; el teclado usa el botón de cierre. */}
       <div
-        className={`group relative flex h-[30px] min-w-0 max-w-48 items-center rounded-full transition-colors duration-150 ease-out motion-reduce:transition-none ${compact ? "w-[30px] shrink-0" : "shrink"} ${selected ? "bg-border font-semibold text-text" : "bg-transparent text-muted hover:bg-surface-raised"}`}
+        className={`group relative flex h-[30px] min-w-0 max-w-48 items-center rounded-full transition-colors duration-150 ease-out motion-reduce:transition-none ${compact ? "w-[31px] shrink-0" : "shrink"} ${selected ? "bg-border font-semibold text-text" : "bg-transparent text-muted hover:bg-surface-raised"}`}
         onAuxClick={(event) => {
           if (event.button === 1) void bridge.invoke("tabs.close", { toolId: tab.toolId });
         }}
@@ -65,7 +65,7 @@ export function TabItem({
           aria-selected={selected}
           aria-label={name}
           title={name}
-          className={`ld-no-drag flex h-full touch-none min-w-0 items-center rounded-full text-[13px] ${compact ? "w-full justify-center" : "w-full justify-center px-[21.5px]"}`}
+          className={`ld-no-drag flex h-full touch-none min-w-0 items-center rounded-full text-[13px] ${compact ? "w-full justify-center px-2" : "w-full justify-center px-[21.5px]"}`}
           onPointerDown={(event) => drag.onPointerDown(event, tab.toolId)}
           onPointerMove={drag.onPointerMove}
           onPointerUp={drag.onPointerUp}
@@ -97,7 +97,7 @@ export function TabItem({
             label={t("shell.closeTab", { name })}
             onClick={() => void bridge.invoke("tabs.close", { toolId: tab.toolId })}
           >
-            <X aria-hidden size={14} />
+            <X aria-hidden size={13} />
           </IconButton>
         )}
       </div>
