@@ -48,6 +48,7 @@ export function NotesSidebar(props: ComponentProps<typeof NotesSidebarContent>) 
           className="sidebar-overlay translate-x-0 translate-y-0"
           closeLabel={t("close")}
           aria-describedby={undefined}
+          closeClassName="right-4 top-3"
           onOpenAutoFocus={(event) => {
             event.preventDefault();
             const content = panel.current;

@@ -45,7 +45,7 @@ export function NoteList({
         <ListItem
           key={note.id}
           variant="card"
-          containerClassName="note-card"
+          containerClassName={`note-card rounded-ld-md ${selectedId === note.id ? "bg-accent-soft border-accent" : "bg-bg border-transparent"}`}
           aria-label={note.title || t("untitled")}
           title={
             query.trim() ? (
@@ -68,37 +68,44 @@ export function NoteList({
           actions={
             !trashed && selectedId === note.id ? (
               <>
+                {!archived && !note.archived_at && (
+                  <IconButton
+                    className={
+                      note.pinned
+                        ? "size-8 text-warning hover:text-warning"
+                        : "size-8 hover:text-warning"
+                    }
+                    label={note.pinned ? t("unpin") : t("pin")}
+                    onClick={() => onPin(note)}
+                  >
+                    <Star
+                      size={15}
+                      strokeWidth={2}
+                      fill={note.pinned ? "currentColor" : "none"}
+                      aria-hidden="true"
+                    />
+                  </IconButton>
+                )}
                 <IconButton
-                  className={
-                    note.pinned
-                      ? "size-7 text-warning hover:text-warning"
-                      : "size-7 hover:text-warning"
-                  }
-                  label={note.pinned ? t("unpin") : t("pin")}
-                  onClick={() => onPin(note)}
-                >
-                  <Star size={14} fill={note.pinned ? "currentColor" : "none"} aria-hidden="true" />
-                </IconButton>
-                <IconButton
-                  className="size-7 hover:text-accent"
+                  className="size-8 hover:text-accent"
                   label={t(note.archived_at ? "unarchive" : "archive")}
                   onClick={() => onArchive?.(note)}
                 >
                   {note.archived_at ? (
-                    <ArchiveRestore size={14} aria-hidden="true" />
+                    <ArchiveRestore size={15} strokeWidth={2} aria-hidden="true" />
                   ) : (
-                    <Archive size={14} aria-hidden="true" />
+                    <Archive size={15} strokeWidth={2} aria-hidden="true" />
                   )}
                 </IconButton>
                 <IconButton
-                  className="size-7 hover:text-danger"
+                  className="size-8 hover:text-danger"
                   label={t("moveToTrash")}
                   onClick={() => onTrash(note.id)}
                 >
-                  <Trash2 size={14} aria-hidden="true" />
+                  <Trash2 size={15} strokeWidth={2} aria-hidden="true" />
                 </IconButton>
               </>
-            ) : !trashed && note.pinned ? (
+            ) : !trashed && !archived && !note.archived_at && note.pinned ? (
               <Star
                 className="note-pin text-warning"
                 size={14}

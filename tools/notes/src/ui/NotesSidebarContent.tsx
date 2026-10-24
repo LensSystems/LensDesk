@@ -26,6 +26,7 @@ export function NotesSidebarContent({
   return (
     <div className="note-list">
       <Input
+        className="notes-search"
         label={<span className="sr-only">{t("search")}</span>}
         id={searchId}
         leadingIcon={<Search size={15} />}
@@ -36,6 +37,7 @@ export function NotesSidebarContent({
       />
       <SegmentedControl
         fullWidth
+        className="notes-segmented"
         aria-label={t("notesView")}
         value={list.trashed ? "trash" : list.archived ? "archived" : "notes"}
         onValueChange={(value) => onView(value as NotesView)}
@@ -54,16 +56,16 @@ export function NotesSidebarContent({
         : showCreateActions &&
           !list.archived && (
             <div className="sidebar-heading">
-              <Button className="flex-1" variant="primary" onClick={onCreate}>
+              <Button className="flex-1 gap-1.5 font-semibold" variant="primary" onClick={onCreate}>
                 <Plus size={15} aria-hidden="true" />
                 {t("newNote")}
               </Button>
               <IconButton
-                className="border border-border-control"
+                className="border border-border-control bg-surface-raised text-text"
                 label={t("import")}
                 onClick={onImport}
               >
-                <Download size={16} aria-hidden="true" />
+                <Download size={15} aria-hidden="true" />
               </IconButton>
             </div>
           )}

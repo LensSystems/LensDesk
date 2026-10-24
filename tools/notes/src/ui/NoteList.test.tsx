@@ -79,10 +79,32 @@ it("solo muestra acciones en la seleccionada y mueve su estrella al seleccionarl
   rerender(<NoteList {...props} selectedId="a" />);
   expect(screen.queryByRole("img", { name: "Fijada" })).toBeNull();
   const pin = screen.getByRole("button", { name: "Desfijar nota" });
-  expect(pin).toHaveClass("text-warning");
+  expect(pin).toHaveClass("text-warning", "size-8");
+  expect(screen.getByRole("button", { name: "Activa" }).parentElement).toHaveClass(
+    "bg-accent-soft",
+    "border-accent",
+    "rounded-ld-md",
+  );
   expect(pin.querySelector("svg")).toHaveAttribute("fill", "currentColor");
   expect(screen.queryByRole("button", { name: "Fijar nota" })).toBeNull();
   rerender(<NoteList {...props} selectedId={null} />);
   expect(screen.queryByRole("button", { name: "Archivar nota" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Mover a la papelera" })).toBeNull();
+});
+
+it("oculta las estrellas en Archivadas incluso para notas fijadas", () => {
+  const props = {
+    notes: [{ ...base, pinned: true, archived_at: "2025-01-02" }],
+    selectedId: "a",
+    trashed: false,
+    archived: true,
+    onSelect: vi.fn(),
+    onTrash: vi.fn(),
+    onPin: vi.fn(),
+  };
+  const { rerender } = render(<NoteList {...props} />, { wrapper: TooltipProvider });
+  expect(screen.queryByRole("button", { name: "Desfijar nota" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Desarchivar nota" })).toBeTruthy();
+  rerender(<NoteList {...props} selectedId={null} />);
+  expect(screen.queryByRole("img", { name: "Fijada" })).toBeNull();
 });

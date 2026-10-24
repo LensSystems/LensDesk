@@ -19,3 +19,16 @@ it("desactiva la animación del menú salvo cuando se permite movimiento", () =>
   // Con movimiento reducido solo se aplica la regla base, también durante el cierre.
   expect(base.selectorText).toBe(".sidebar-overlay[data-state]");
 });
+
+it("reserva 324 px para el panel normal y 312 px para el menú", () => {
+  const css = readFileSync("tools/notes/src/ui/styles.css", "utf8");
+  const sheet = new CSSStyleSheet();
+  for (const selector of [".notes-sidebar", ".note-list", ".sidebar-overlay"]) {
+    const rule = css.split(`${selector} {`)[1]?.split("}")[0];
+    sheet.insertRule(`${selector} {${rule}}`, sheet.cssRules.length);
+  }
+  const rules = Array.from(sheet.cssRules) as CSSStyleRule[];
+  expect(rules.map((rule) => rule.style.width)).toEqual(["324px", "324px", "312px"]);
+  expect(rules[1]?.style.padding).toBe("12px");
+  expect(rules[2]?.style.padding).toBe("12px 12px 16px");
+});

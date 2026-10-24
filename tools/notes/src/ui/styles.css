@@ -30,21 +30,20 @@ body {
   gap: 12px;
 }
 .note-list {
-  width: 300px;
+  width: 324px;
   flex: none;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 12px;
   border-radius: var(--ld-radius-lg);
   background: var(--ld-surface);
-  border: 1px solid var(--ld-border);
 }
 .sidebar-heading {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .sidebar-heading button {
   flex-shrink: 0;
@@ -57,11 +56,11 @@ body {
 }
 .note-pin {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 10px;
 }
 .note-card:where(:has(.note-pin)) > button {
-  padding-right: 16px;
+  padding-right: 18px;
 }
 .note-list nav:has(.trash-empty) {
   flex: 1;
@@ -89,7 +88,8 @@ body {
   display: grid;
   align-content: start;
   padding: 4px;
-  gap: 8px;
+  margin: -4px -4px 0;
+  gap: 10px;
 }
 .editor-panel {
   flex: 1;
@@ -183,7 +183,7 @@ body {
   flex: none;
 }
 .notes-sidebar {
-  width: 300px;
+  width: 324px;
   transition: width 150ms ease-out;
 }
 .sidebar-rail {
@@ -215,16 +215,24 @@ body {
   width: 312px;
   height: auto;
   max-width: calc(100vw - 84px);
-  padding: 16px 0 0;
-  gap: 0;
+  padding: 12px 12px 16px;
+  gap: 12px;
+  border-radius: var(--ld-radius-lg);
   grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
 }
 .sidebar-title {
-  padding: 0 48px 0 16px;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 36px 0 4px;
+  font-size: 18px;
+  line-height: 28px;
 }
 .sidebar-overlay .note-list {
+  gap: 12px;
   width: 100%;
+  padding: 0 4px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -292,6 +300,56 @@ body {
   .editor-toolbar {
     transition: none;
   }
+}
+
+.note-list > div:first-child {
+  gap: 0;
+}
+.note-list > div:first-child > label {
+  position: absolute;
+}
+.notes-search {
+  height: 38px;
+  padding: 0 10px 0 33px;
+  font-size: 13px;
+  line-height: 18.85px;
+}
+.note-list > div:first-child > div > span {
+  left: 10px;
+}
+.notes-segmented {
+  height: 34px;
+  flex-shrink: 0;
+}
+.notes-segmented > button {
+  padding: 0 14px;
+  font-weight: 400;
+  box-shadow: none;
+}
+.notes-segmented > button[data-state="checked"] {
+  font-weight: 600;
+}
+.note-card {
+  padding: 8px 8px 8px 12px;
+}
+.note-card > button > span:first-child {
+  font-size: 13px;
+  line-height: 18.85px;
+  font-weight: 600;
+}
+.note-card > button > span:nth-child(2) {
+  font-size: 12px;
+  line-height: 17.4px;
+}
+.note-card > div {
+  gap: 0;
+  padding-left: 0;
+}
+.sidebar-overlay .notes-search {
+  height: 36px;
+}
+:where(.sidebar-overlay) .notes-segmented > button {
+  padding: 0 12px;
 }
 
 .editor-toolbar .copy-confirmation,

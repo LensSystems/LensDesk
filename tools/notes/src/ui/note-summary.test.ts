@@ -18,5 +18,22 @@ it("elige la primera línea limpia que coincide o conserva el resumen", () => {
   expect(noteSummary(body, "Título", "caf")).toBe("Café pendiente");
   expect(noteSummary(body, "Título", "titulo")).toBe("Título");
   expect(noteSummary(body, "Título", "ausente")).toBe("Título");
-  expect(noteSummary(body, "Título", "  ")).toBe("Título");
+  expect(noteSummary(body, "Título", "  ")).toBe("Resumen habitual, Café pendiente, Café final");
+});
+
+it.each([
+  [
+    "## Pasos\n1. Congelar la rama develop\n2. Ejecutar la compuerta completa",
+    "Congelar la rama develop, Ejecutar la compuerta completa",
+  ],
+  [
+    "# Título\n- [x] **Hecho**\n- [ ] _Pendiente_\n> Cita\n* Lista\n```ts\ncódigo oculto\n```\nTexto",
+    "Hecho, Pendiente, Cita, Lista, Texto",
+  ],
+  ["# Primero\n## Segundo", "Primero"],
+])("compone el extracto de %s", (body, expected) => {
+  expect(noteSummary(body, "Título")).toBe(expected);
+});
+it("limita el extracto a 120 caracteres", () => {
+  expect(noteSummary("a".repeat(150), "")).toHaveLength(120);
 });
