@@ -217,7 +217,7 @@ describe("interfaz del Convertidor", () => {
     expect(fake.client.files.pickSave).toHaveBeenCalledTimes(3);
     expect(fake.client.files.writeText).toHaveBeenCalledWith("save-2", `# a.html\n\n${TABLE}`);
     expect(fake.client.files.writeText).toHaveBeenCalledWith("save-3", `# b.csv\n\n${TABLE}`);
-    expect(await screen.findByText("Archivos guardados: 2")).toBeInTheDocument();
+    expect(screen.queryByText(/Archivos guardados:/)).toBeNull();
   });
 
   it("usa MarkdownView, pestañas con flechas y el selector del SDK sin input de archivos", async () => {

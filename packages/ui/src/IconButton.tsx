@@ -4,12 +4,20 @@ import { Tooltip } from "./Tooltip.tsx";
 
 export type IconButtonProps = Omit<ComponentProps<"button">, "aria-label"> & {
   label: string;
+  tooltip?: boolean;
   tooltipSide?: ComponentProps<typeof Tooltip>["side"];
 };
 
-export function IconButton({ className, label, tooltipSide, children, ...props }: IconButtonProps) {
+export function IconButton({
+  className,
+  label,
+  tooltip = true,
+  tooltipSide,
+  children,
+  ...props
+}: IconButtonProps) {
   return (
-    <Tooltip label={label} side={tooltipSide}>
+    <Tooltip label={label} side={tooltipSide} disabled={!tooltip}>
       <button
         aria-label={label}
         className={cn(

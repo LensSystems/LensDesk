@@ -49,7 +49,7 @@ it("muestra fuerza, confirmación y preguntas distintas; envía sus textos", asy
   fireEvent.click(screen.getByRole("button", { name: "Ocultar Contraseña" }));
   expect(screen.getByLabelText("Contraseña")).toHaveAttribute("type", "password");
   fill("Confirmar contraseña", "otra");
-  expect(screen.getByText("○ No coinciden")).toBeInTheDocument();
+  expect(screen.getByText("○ No coinciden")).toHaveClass("text-danger");
   fill("Confirmar contraseña", "Abcdef1!");
   expect(screen.getByText("✓ Coinciden")).toBeInTheDocument();
   fireEvent.keyDown(screen.getByRole("combobox", { name: "Pregunta 1" }), { key: "ArrowDown" });

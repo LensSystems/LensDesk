@@ -26,7 +26,6 @@
   "save": "Save .md",
   "saveAll": "Save all…",
   "copied": "Copied",
-  "saved": "Files saved: {{count}}",
   "noResult": "Choose a converted file to see its Markdown.",
   "imagesOmitted": "The original document had images that were left out.",
   "errors": {

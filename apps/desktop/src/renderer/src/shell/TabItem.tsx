@@ -64,7 +64,7 @@ export function TabItem({
           aria-setsize={total}
           aria-selected={selected}
           aria-label={name}
-          title={name}
+          title={compact ? name : undefined}
           className={`ld-no-drag flex h-full touch-none min-w-0 items-center rounded-full text-[13px] ${compact ? "w-full justify-center px-2" : "w-full justify-center px-[21.5px]"}`}
           onPointerDown={(event) => drag.onPointerDown(event, tab.toolId)}
           onPointerMove={drag.onPointerMove}
@@ -92,6 +92,7 @@ export function TabItem({
         </button>
         {!compact && (
           <IconButton
+            tooltip={false}
             className="ld-no-drag absolute right-[3px] size-6 shrink-0 opacity-0 transition-opacity duration-[140ms] ease-out group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 motion-reduce:transition-none"
             tooltipSide="left"
             label={t("shell.closeTab", { name })}

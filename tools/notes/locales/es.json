@@ -113,6 +113,7 @@
     "requirementPending": "○ {{requirement}}",
     "matches": "✓ Coinciden",
     "mismatch": "○ No coinciden",
+    "answerLength": "Las respuestas deben tener entre 2 y 20 caracteres.",
     "questionsHelp": "Dos preguntas para restablecer la contraseña si la olvidas. Las respuestas no distinguen mayúsculas ni acentos.",
     "answerPlaceholder": "Respuesta",
     "back": "Atrás",

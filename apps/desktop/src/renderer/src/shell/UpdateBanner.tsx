@@ -24,6 +24,7 @@ export function UpdateBanner({ update, onOpenSettings, onDismiss }: Props) {
         {t("recovery.goToSettings")}
       </Button>
       <IconButton
+        tooltip={false}
         className="ld-no-drag size-6 shrink-0 text-accent-soft-fg"
         label={t("ui.dismiss")}
         tooltipSide="bottom"

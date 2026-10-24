@@ -18,6 +18,7 @@ export function PasswordFields({
       <div className="grid gap-1.5">
         <SecretField
           label={t("vault.password")}
+          maxLength={10}
           secret
           autoComplete="new-password"
           value={password}
@@ -29,6 +30,7 @@ export function PasswordFields({
       <div className="grid gap-1">
         <SecretField
           label={t("vault.confirmation")}
+          maxLength={10}
           secret
           autoComplete="new-password"
           value={confirmation}
@@ -37,7 +39,7 @@ export function PasswordFields({
         />
         {confirmation && (
           <p
-            className={`text-xs leading-[17.4px] ${password === confirmation ? "text-success" : "text-muted"}`}
+            className={`text-xs leading-[17.4px] ${password === confirmation ? "text-success" : "text-danger"}`}
           >
             {t(password === confirmation ? "vault.matches" : "vault.mismatch")}
           </p>

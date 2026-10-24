@@ -12,6 +12,7 @@ import {
 } from "@lensdesk/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { editorHeaderBase, editorHeaderResponsive } from "./editor-header-classes.ts";
 import type { Note } from "./NoteList.tsx";
 import { NoteTitle } from "./NoteTitle.tsx";
 export function EditorHeader({
@@ -42,9 +43,7 @@ export function EditorHeader({
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyTimer.current), []);
   return (
-    <header
-      className={`editor-toolbar flex min-w-0 shrink-0 items-center gap-2 border-b border-border px-4 py-3 ${locked ? "" : "h-[57px] @max-[960px]/notes:h-[51px] @max-[960px]/notes:gap-1 @max-[960px]/notes:py-2 @max-[960px]/notes:pr-2"}`}
-    >
+    <header className={`${editorHeaderBase} ${locked ? "" : editorHeaderResponsive}`}>
       {locked ? (
         <>
           <Lock size={15} className="shrink-0 text-accent-soft-fg" aria-hidden="true" />
@@ -99,10 +98,12 @@ export function EditorHeader({
                 value: "edit",
                 disabled: locked,
                 label: (
-                  <Tooltip label={t("edit")}>
+                  <Tooltip label={t("edit")} visibleTextSelector="[data-tooltip-text]">
                     <span className="flex items-center justify-center gap-1.5">
                       <Pencil size={13} aria-hidden="true" />
-                      <span className="@max-[960px]/notes:sr-only">{t("edit")}</span>
+                      <span data-tooltip-text className="@max-[960px]/notes:sr-only">
+                        {t("edit")}
+                      </span>
                     </span>
                   </Tooltip>
                 ),
@@ -111,17 +112,19 @@ export function EditorHeader({
                 value: "preview",
                 disabled: locked,
                 label: (
-                  <Tooltip label={t("preview")}>
+                  <Tooltip label={t("preview")} visibleTextSelector="[data-tooltip-text]">
                     <span className="flex items-center justify-center gap-1.5">
                       <Eye size={13} aria-hidden="true" />
-                      <span className="@max-[960px]/notes:sr-only">{t("preview")}</span>
+                      <span data-tooltip-text className="@max-[960px]/notes:sr-only">
+                        {t("preview")}
+                      </span>
                     </span>
                   </Tooltip>
                 ),
               },
             ]}
           />
-          <Tooltip label={t(copied ? "copied" : "copyNote")}>
+          <Tooltip disabled={copied} label={t(copied ? "copied" : "copyNote")}>
             <Button
               variant="ghost"
               className={copied ? "copy-confirmation" : "size-8 shrink-0 p-0 text-muted"}
@@ -143,7 +146,7 @@ export function EditorHeader({
               {copied && <span>{t("copied")}</span>}
             </Button>
           </Tooltip>
-          <Tooltip label={t("export")}>
+          <Tooltip label={t("export")} visibleTextSelector="[data-tooltip-text]">
             <Button
               className="shrink-0 @max-[960px]/notes:size-8 @max-[960px]/notes:p-0"
               aria-label={t("export")}
@@ -152,7 +155,9 @@ export function EditorHeader({
               onClick={onExport}
             >
               <Upload size={16} aria-hidden="true" />
-              <span className="@max-[960px]/notes:sr-only">{t("export")}</span>
+              <span data-tooltip-text className="@max-[960px]/notes:sr-only">
+                {t("export")}
+              </span>
             </Button>
           </Tooltip>
         </>

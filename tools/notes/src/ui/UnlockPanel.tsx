@@ -35,6 +35,7 @@ export function UnlockPanel({
         <div className="text-left">
           <SecretField
             label={t("vault.password")}
+            maxLength={10}
             secret
             autoFocus
             autoComplete="current-password"

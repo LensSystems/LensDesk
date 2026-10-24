@@ -1,6 +1,7 @@
 import { Button } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { validAnswer } from "./answer-validation.ts";
 import { PasswordFields } from "./PasswordFields.tsx";
 import { validPassword } from "./password-validation.ts";
 import { SecretField } from "./SecretField.tsx";
@@ -22,19 +23,21 @@ export function ResetPassword({
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [answers, setAnswers] = useState<[string, string]>(["", ""]);
+  const valid = validPassword(password, confirmation) && answers.every(validAnswer);
   return (
     <VaultDialog title={t("vault.reset")} onClose={onClose}>
       <form
         className="grid gap-[14px]"
         onSubmit={(event) => {
           event.preventDefault();
-          if (validPassword(password, confirmation)) onSubmit(password, answers);
+          if (!busy && valid) onSubmit(password, answers);
         }}
       >
         {([0, 1] as const).map((index) => (
           <SecretField
             key={index}
             label={questions[index] ?? ""}
+            maxLength={20}
             required
             value={answers[index]}
             onChange={(event) =>
@@ -49,6 +52,7 @@ export function ResetPassword({
           onPassword={setPassword}
           onConfirmation={setConfirmation}
         />
+        <p className="text-xs text-muted">{t("vault.answerLength")}</p>
         {error && (
           <p role="alert" className="text-xs text-danger">
             {error}
@@ -58,15 +62,7 @@ export function ResetPassword({
           <Button type="button" onClick={onClose}>
             {t("cancel")}
           </Button>
-          <Button
-            variant="primary"
-            type="submit"
-            disabled={
-              busy ||
-              !validPassword(password, confirmation) ||
-              answers.some((value) => !value.trim())
-            }
-          >
+          <Button variant="primary" type="submit" disabled={busy || !valid}>
             {t("vault.reset")}
           </Button>
         </footer>

@@ -210,7 +210,7 @@ it("limpia restos de una base anterior a secure_delete al crear la bóveda", () 
   repo.update({ id: item.id, body_md: "corto" });
   db.exec("PRAGMA wal_checkpoint(TRUNCATE); PRAGMA secure_delete = ON");
   expect(readFileSync(join(dir, "notes.db")).includes(Buffer.from("historialantiguo"))).toBe(true);
-  repo.vaultSetup({ password: "Abc123!", questions: ["A", "B"], answers: ["a", "b"] });
+  repo.vaultSetup({ password: "Abc123!", questions: ["A", "B"], answers: ["aa", "bb"] });
   repo.setPrivate({ id: item.id, private: true });
   for (const suffix of ["", "-wal"]) {
     const file = join(dir, `notes.db${suffix}`);

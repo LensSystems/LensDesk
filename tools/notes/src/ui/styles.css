@@ -117,6 +117,8 @@ body {
 .code-editor .cm-editor .cm-scroller {
   overflow: auto;
   font-family: "JetBrains Mono Variable", monospace;
+  font-size: 13px;
+  line-height: 1.7;
 }
 .code-editor .cm-content {
   /* Franja derecha libre para la barra flotante de deshacer y formato. */
@@ -136,7 +138,7 @@ body {
   background: transparent;
   border-right: none;
 }
-.code-editor .cm-gutterElement {
+.code-editor .cm-lineNumbers .cm-gutterElement {
   text-align: center;
   box-sizing: border-box;
   width: 40px;

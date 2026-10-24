@@ -26,7 +26,6 @@
   "save": "Guardar .md",
   "saveAll": "Guardar todos…",
   "copied": "Copiado",
-  "saved": "Archivos guardados: {{count}}",
   "noResult": "Elige un archivo convertido para ver su Markdown.",
   "imagesOmitted": "El documento original tenía imágenes que se omitieron.",
   "errors": {

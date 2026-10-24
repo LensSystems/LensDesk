@@ -56,6 +56,7 @@ export function SecurityQuestion({
         hideLabel
         label={t("vault.answer", { number: index + 1 })}
         placeholder={t("vault.answerPlaceholder")}
+        maxLength={20}
         value={answer}
         onChange={(event) => onAnswer(event.target.value)}
         required

@@ -9,6 +9,8 @@ export function SecretField({
   mono = false,
   hideLabel = false,
   actions,
+  maxLength,
+  onChange,
   className = "",
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
@@ -33,6 +35,11 @@ export function SecretField({
       <div className="secret-field-control flex items-center gap-1 rounded-ld-md border border-border-control bg-bg">
         <input
           {...props}
+          maxLength={maxLength}
+          onChange={(event) => {
+            if (maxLength === undefined || [...event.target.value].length <= maxLength)
+              onChange?.(event);
+          }}
           id={id}
           type={secret && !shown ? "password" : "text"}
           className={`min-w-0 flex-1 bg-transparent text-[13px] text-text ${mono ? "font-mono" : ""} ${className}`}

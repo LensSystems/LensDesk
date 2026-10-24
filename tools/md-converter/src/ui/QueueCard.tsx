@@ -42,6 +42,7 @@ export function QueueCard({
                 )}
               </span>
               <IconButton
+                tooltip={false}
                 label={t("cancelFile", { name: item.file.name })}
                 onClick={() => onCancel(item.id)}
               >

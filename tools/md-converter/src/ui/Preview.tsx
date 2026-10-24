@@ -75,9 +75,10 @@ export function Preview({
     return true;
   };
 
-  const attempt = async (action: () => Promise<string>) => {
+  const attempt = async (action: () => Promise<unknown>) => {
     try {
-      setNotice(await action());
+      setNotice("");
+      await action();
     } catch (reason) {
       setNotice(t("errors.generic", { code: errorCode(reason) }));
     }
@@ -88,7 +89,7 @@ export function Preview({
       <header className="preview-toolbar">
         <TabsList className="mr-auto" aria-label={t("resultTabs")}>
           {(["rendered", "raw"] as const).map((name) => (
-            <Tooltip key={name} label={t(name)}>
+            <Tooltip key={name} label={t(name)} visibleTextSelector=".normal-label">
               <span className="inline-flex">
                 <TabsTrigger
                   className="data-[state=active]:bg-surface-raised data-[state=active]:text-text data-[state=active]:font-semibold data-[state=active]:shadow-none"
@@ -109,7 +110,7 @@ export function Preview({
             </Tooltip>
           ))}
         </TabsList>
-        <Tooltip label={t(copied ? "copied" : "copy")}>
+        <Tooltip disabled={copied} label={t(copied ? "copied" : "copy")}>
           <Button
             type="button"
             variant="ghost"
@@ -138,21 +139,19 @@ export function Preview({
             {copied && <span>{t("copied")}</span>}
           </Button>
         </Tooltip>
-        <Tooltip label={t("save")}>
+        <Tooltip label={t("save")} visibleTextSelector=".normal-label">
           <Button
             type="button"
             className="save-action"
             aria-label={t("save")}
             disabled={!item}
-            onClick={() =>
-              item && void attempt(async () => t("saved", { count: (await saveOne(item)) ? 1 : 0 }))
-            }
+            onClick={() => item && void attempt(() => saveOne(item))}
           >
             <SaveMarkdown chip className="compact-icon" aria-hidden="true" />
             <span className="normal-label">{t("save")}</span>
           </Button>
         </Tooltip>
-        <Tooltip label={t("saveAll")}>
+        <Tooltip label={t("saveAll")} visibleTextSelector=".normal-label">
           <Button
             type="button"
             className="save-action bg-surface"
@@ -160,9 +159,7 @@ export function Preview({
             disabled={results.length === 0}
             onClick={() =>
               void attempt(async () => {
-                let count = 0;
-                for (const result of results) if (await saveOne(result)) count += 1;
-                return t("saved", { count });
+                for (const result of results) await saveOne(result);
               })
             }
           >

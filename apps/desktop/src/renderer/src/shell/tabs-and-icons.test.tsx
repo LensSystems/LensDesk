@@ -139,7 +139,7 @@ describe("pestañas", () => {
       expect(button.querySelector("[data-tab-name]")?.className).toBe(
         tab.active ? "truncate" : "sr-only whitespace-nowrap",
       );
-      expect(button.title).toBe(tab.toolId);
+      expect(button.title).toBe(tab.active ? "" : tab.toolId);
     }
     expect(screen.getByRole("tablist").className).toContain("overflow-hidden");
   });

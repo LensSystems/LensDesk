@@ -19,6 +19,16 @@ test("el Convertidor muestra una tabla GFM para HTML y CSV", async () => {
     await shell.getByText("Convertidor", { exact: true }).waitFor();
     await shell.getByRole("button", { name: "Abrir Convertidor", exact: true }).click();
     const tool = await toolPage(app, "md-converter");
+    const save = tool.getByRole("button", { name: "Guardar .md", exact: true });
+    await expect(save.locator(".normal-label")).toBeVisible();
+    await save.hover();
+    await tool.waitForTimeout(300);
+    await expect(tool.locator(".ld-tooltip")).toHaveCount(0);
+    const close = shell.getByRole("button", { name: "Cerrar Convertidor", exact: true });
+    await shell.getByRole("tab", { name: "Convertidor", exact: true }).hover();
+    await close.hover();
+    await shell.waitForTimeout(300);
+    await expect(shell.locator(".ld-tooltip")).toHaveCount(0);
 
     await stubDialog(app, "open", {
       canceled: false,

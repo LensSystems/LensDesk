@@ -2,6 +2,7 @@ import { Tooltip as Primitive } from "radix-ui";
 import { type ComponentProps, type ReactElement, useEffect, useRef, useState } from "react";
 import { cn } from "./cn.ts";
 import { TooltipTarget } from "./TooltipTarget.tsx";
+import { useTooltipTextVisible } from "./use-tooltip-text-visible.ts";
 
 export function TooltipProvider(props: ComponentProps<typeof Primitive.Provider>) {
   return (
@@ -16,16 +17,27 @@ export function TooltipProvider(props: ComponentProps<typeof Primitive.Provider>
 
 export type TooltipProps = {
   label: string;
+  disabled?: boolean;
+  visibleTextSelector?: string;
   children: ReactElement<Record<string, unknown>>;
   className?: string;
   side?: ComponentProps<typeof Primitive.Content>["side"];
 };
 
 // Requiere un TooltipProvider en el árbol (se monta una vez en App.tsx).
-export function Tooltip({ label, children, className, side = "bottom" }: TooltipProps) {
+export function Tooltip({
+  label,
+  children,
+  className,
+  side = "bottom",
+  disabled = false,
+  visibleTextSelector,
+}: TooltipProps) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const leaving = useRef(false);
+  const textVisible = useTooltipTextVisible(trigger, visibleTextSelector);
+  const inactive = disabled || textVisible;
   // Tras salir de la ventana o perder el foco no se abre nada pendiente hasta que vuelva el
   // puntero o el foco de teclado.
   const suppressed = useRef(false);
@@ -74,13 +86,14 @@ export function Tooltip({ label, children, className, side = "bottom" }: Tooltip
     };
   }, []);
   const changeOpen = (next: boolean) => {
-    if (next && suppressed.current) return;
+    if (next && (suppressed.current || inactive)) return;
     // Con foco de teclado, que el ratón salga del disparador no la cierra (los demás cierres sí).
     if (!next && leaving.current && trigger.current?.matches(":focus-visible")) return;
     setOpen(next);
   };
+  if (disabled) return children;
   return (
-    <Primitive.Root open={open} onOpenChange={changeOpen}>
+    <Primitive.Root open={!inactive && open} onOpenChange={changeOpen}>
       <Primitive.Trigger asChild ref={trigger}>
         <TooltipTarget
           {...children.props}

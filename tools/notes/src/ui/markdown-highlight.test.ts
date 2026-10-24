@@ -120,7 +120,13 @@ it("aplica estilos completos a títulos, vallas, citas y marcas de tareas", () =
 });
 
 it("mantiene las medidas y colores del editor y de la vista con tokens", () => {
-  expect(styles).toMatch(/\.cm-gutterElement\s*\{[^}]*width: 40px/s);
+  expect(styles).toMatch(
+    /\.code-editor \.cm-lineNumbers \.cm-gutterElement\s*\{[^}]*text-align: center;[^}]*width: 40px;[^}]*padding-right: 0;[^}]*padding-left: 0;/s,
+  );
+  expect(styles).toMatch(/\.cm-scroller\s*\{[^}]*font-size: 13px;[^}]*line-height: 1.7/s);
+  expect(styles).toMatch(
+    /\.cm-line\.cm-block-start,\s*\.code-editor \.cm-gutterElement\.cm-block-start\s*\{\s*padding-top: 10px/,
+  );
   expect(styles).toMatch(/\.cm-gutterElement\.cm-block-start\s*\{\s*padding-top: 10px/);
   expect(styles).toMatch(
     /\.cm-md-heading span\s*\{\s*color: var\(--ld-accent\);\s*font-weight: 500/,

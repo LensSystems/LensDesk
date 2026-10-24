@@ -1,6 +1,7 @@
 import { Button } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { validAnswer } from "./answer-validation.ts";
 import { PasswordFields } from "./PasswordFields.tsx";
 import { validPassword } from "./password-validation.ts";
 import { SecurityQuestion } from "./SecurityQuestion.tsx";
@@ -23,7 +24,7 @@ export function PasswordSetup({
   const [confirmation, setConfirmation] = useState("");
   const [questions, setQuestions] = useState<[string, string]>(["pet", "city"]);
   const [answers, setAnswers] = useState<[string, string]>(["", ""]);
-  const valid = validPassword(password, confirmation) && answers.every((value) => value.trim());
+  const valid = validPassword(password, confirmation) && answers.every(validAnswer);
   return (
     <VaultDialog title={t("vault.setup")} onClose={onClose}>
       <p className="-mt-3 text-xs leading-[17.4px] text-muted">{t("vault.steps")}</p>
@@ -61,6 +62,7 @@ export function PasswordSetup({
             }
           />
         ))}
+        <p className="text-xs text-muted">{t("vault.answerLength")}</p>
         {error && (
           <p role="alert" className="text-xs text-danger">
             {error}

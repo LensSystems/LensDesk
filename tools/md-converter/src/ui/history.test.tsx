@@ -67,7 +67,8 @@ it("muestra el indicador solo después de escribir, no al cancelar ni al fallar"
   expect(screen.queryByRole("img", { name: es.fileSaved })).toBeNull();
   client.files.pickSave.mockResolvedValueOnce(null);
   fireEvent.click(screen.getByRole("button", { name: es.save }));
-  await screen.findByText("Archivos guardados: 0");
+  await waitFor(() => expect(client.files.pickSave).toHaveBeenCalledOnce());
+  expect(screen.queryByText(/Archivos guardados:/)).toBeNull();
   expect(screen.queryByRole("img", { name: es.fileSaved })).toBeNull();
   client.files.writeText.mockRejectedValueOnce(new Error("failed"));
   fireEvent.click(screen.getByRole("button", { name: es.save }));

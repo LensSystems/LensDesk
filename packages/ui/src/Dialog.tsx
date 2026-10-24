@@ -41,6 +41,7 @@ export function DialogContent({
         <TooltipProvider>
           <Primitive.Close asChild>
             <IconButton
+              tooltip={false}
               label={closeLabel ?? labels.close}
               className={cn("absolute right-2 top-2", closeClassName)}
             >

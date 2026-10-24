@@ -138,6 +138,13 @@ export function createNotesRepository(
       throw new LensError("E_INVALID_PARAMS", "Expected two nonempty strings");
     return value as [string, string];
   }
+  // Solo al guardar respuestas nuevas: comprobar las ya guardadas no debe bloquear a nadie.
+  function answers(value: unknown): [string, string] {
+    const values = pair(value);
+    if (values.some((text) => [...text.trim()].length < 2 || [...text.trim()].length > 20))
+      throw new LensError("E_INVALID_PARAMS", "Invalid answer length");
+    return values;
+  }
   return {
     vaultStatus(params: unknown) {
       assertObject(params, []);
@@ -151,13 +158,13 @@ export function createNotesRepository(
       const v = assertObject(params, ["password", "questions", "answers"]);
       const pass = password(v.password);
       const questions = pair(v.questions);
-      const answers = pair(v.answers);
+      const responses = answers(v.answers);
       if (record()) throw new LensError("E_PERMISSION_DENIED", "Vault already configured");
       // Bases anteriores a secure_delete pueden guardar cuerpos viejos en páginas libres: se
       // reescribe la base una vez, antes de que exista ninguna nota privada.
       db.exec("VACUUM");
       checkpoint();
-      vault.setup(pass, questions, answers, (value) => {
+      vault.setup(pass, questions, responses, (value) => {
         save(value);
         purge();
       });

@@ -113,6 +113,7 @@
     "requirementPending": "○ {{requirement}}",
     "matches": "✓ Match",
     "mismatch": "○ Do not match",
+    "answerLength": "Answers must contain between 2 and 20 characters.",
     "questionsHelp": "Two questions to reset your password if you forget it. Answers are case and accent insensitive.",
     "answerPlaceholder": "Answer",
     "back": "Back",
