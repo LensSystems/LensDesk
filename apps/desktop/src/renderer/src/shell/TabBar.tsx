@@ -89,7 +89,7 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
       <div
         ref={brandRef}
         data-brand
-        className={`${hasNotice ? "w-auto" : "w-48"} shrink-0 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none @max-[880px]:w-8`}
+        className={`${hasNotice ? "w-auto" : "w-48"} shrink-0 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none @max-[880px]:w-auto`}
       >
         <span className="block truncate font-bold text-muted @max-[880px]:hidden">
           {t(fullScreen ? "shell.labelFullScreen" : "shell.label")}

@@ -60,8 +60,12 @@ export function ClosedTabNotice({
         }
       }}
     >
-      <NoticeCapsule text={message} icon={<Info aria-hidden size={15} className="shrink-0" />}>
-        <Button variant="primary" className="ld-no-drag h-6 shrink-0 px-2 text-xs" onClick={onUndo}>
+      <NoticeCapsule text={message} icon={<Info aria-hidden size={15} className="mr-1 shrink-0" />}>
+        <Button
+          variant="primary"
+          className="ld-no-drag h-6 shrink-0 border-0 px-2 text-xs"
+          onClick={onUndo}
+        >
           {t("shell.undoCloseTab")}
         </Button>
       </NoticeCapsule>

@@ -33,20 +33,24 @@ it("reserva 324 px para el panel normal y 312 px para el menú", () => {
   expect(rules[2]?.style.padding).toBe("12px 12px 16px");
 });
 
-it("ajusta la barra y el hueco solo por debajo de 900 px de ventana", () => {
+it("usa la barra estrecha de 44 sin borde en el modo compacto y alinea el menú con la nota", () => {
   const css = readFileSync("tools/notes/src/ui/styles.css", "utf8");
-  const block = css.split("@media (width < 900px) {")[1];
-  expect(block).toBeTruthy();
+  const block = css.split("@container notes (max-width: 960px) {")[1]?.split("\n}\n")[0] ?? "";
   const sheet = new CSSStyleSheet();
-  for (const rule of block?.match(/[^{}]+\{[^{}]*\}/g) ?? []) {
+  for (const rule of block.match(/[^{}]+\{[^{}]*\}/g) ?? []) {
     sheet.insertRule(rule, sheet.cssRules.length);
   }
-  const [workspace, widths, rail] = Array.from(sheet.cssRules) as CSSStyleRule[];
-  expect(workspace?.selectorText).toBe(".workspace");
-  expect(workspace?.style.gap).toBe("8px");
-  expect(widths?.selectorText).toBe(".notes-sidebar,\n  .sidebar-rail");
-  expect(widths?.style.width).toBe("44px");
-  expect(rail?.style.gap).toBe("4px");
-  expect(rail?.style.padding).toBe("6px 0px");
-  expect(rail?.style.borderWidth).toBe("0px");
+  const rule = (selector: string) =>
+    (Array.from(sheet.cssRules) as CSSStyleRule[]).find((item) => item.selectorText === selector);
+  expect(rule(".workspace")?.style.gap).toBe("8px");
+  expect(rule(".notes-sidebar")?.style.width).toBe("44px");
+  expect(rule(".sidebar-rail")?.style.width).toBe("44px");
+  expect(rule(".sidebar-rail")?.style.gap).toBe("4px");
+  expect(rule(".sidebar-rail")?.style.padding).toBe("6px 0px");
+  expect(rule(".sidebar-rail")?.style.borderWidth).toBe("0px");
+  expect(rule(".code-editor .cm-content")?.style.paddingTop).toBe("12px");
+  expect(css).toMatch(/\.sidebar-overlay \{\s*left: 64px;/);
+  expect(css).toMatch(
+    /\.sidebar-rail button\[aria-expanded="true"\] \{\s*background: var\(--ld-surface-raised\)/,
+  );
 });

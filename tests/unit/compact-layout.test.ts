@@ -12,6 +12,9 @@ it("mantiene las medidas compactas del marco y los encabezados", () => {
     expect(shell(page)).toContain("text-2xl leading-8");
   }
   expect(shell("ToolsPage")).not.toContain("space-y-1.5");
+  expect(shell("TabBar")).toContain("@max-[880px]:w-auto");
+  expect(shell("ClosedTabNotice")).toContain('className="mr-1 shrink-0"');
+  expect(shell("ClosedTabNotice")).toContain("h-6 shrink-0 border-0 px-2");
   expect(shell("ToolsPage")).toContain("items-center gap-4 min-[900px]:items-end");
   expect(shell("ToolsPage")).toContain("text-[13px] leading-[1.45]");
   expect(shell("ToolCard")).toContain("text-[13px] leading-5 text-muted");
@@ -22,6 +25,9 @@ it("limita a Ajustes la eliminación de sombras y respeta sus huecos", () => {
   expect(shell("SettingsPage").match(/data-\[state=checked\]:shadow-none/g)).toHaveLength(2);
   expect(shell("SettingsPage")).toContain("flex shrink-0 flex-wrap gap-4");
   expect(shell("SettingsUpdateCheck")).toContain('controlsClassName="gap-3"');
+  const status = shell("SettingsUpdateStatus");
+  expect(status).toContain("text-[13px] leading-5 font-semibold");
+  expect(status).not.toContain("size={14}");
 });
 
 it("distingue el resultado activo y los controles de guardado del Convertidor", () => {

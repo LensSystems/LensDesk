@@ -21,11 +21,11 @@ export function SettingsUpdateStatus({ bridge, version, checking, result, update
   return (
     <div
       role="status"
-      className="ld-selectable mt-2 flex items-center gap-4 text-[13px] font-semibold text-muted empty:hidden"
+      className="ld-selectable mt-2 flex items-center gap-4 text-[13px] leading-5 font-semibold text-muted empty:hidden"
     >
       {checking && (
         <span className="inline-flex items-center gap-2">
-          <LoaderCircle aria-hidden size={14} className="animate-spin motion-reduce:animate-none" />
+          <LoaderCircle aria-hidden size={16} className="animate-spin motion-reduce:animate-none" />
           {t("settingsPage.checking")}
         </span>
       )}
@@ -42,7 +42,7 @@ export function SettingsUpdateStatus({ bridge, version, checking, result, update
               });
             }}
           >
-            <Download aria-hidden size={14} />
+            <Download aria-hidden size={16} />
             {t("settingsPage.updateAvailable", { version: update.version })}
           </a>
           <a
@@ -53,18 +53,18 @@ export function SettingsUpdateStatus({ bridge, version, checking, result, update
               void bridge.invoke("app.openExternal", { url: update.html_url });
             }}
           >
-            <ExternalLink aria-hidden size={14} />
+            <ExternalLink aria-hidden size={16} />
             {t("recovery.viewUpdate")}
           </a>
         </>
       ) : !checking && result?.kind === "none" ? (
         <span className="inline-flex items-center gap-2 text-success">
-          <Check aria-hidden size={14} />
+          <Check aria-hidden size={16} />
           {t("settingsPage.upToDate", { version })}
         </span>
       ) : !checking && result?.kind === "error" ? (
         <span className="inline-flex items-center gap-2 text-danger">
-          <CircleAlert aria-hidden size={14} />
+          <CircleAlert aria-hidden size={16} />
           {t("settingsPage.updateError")}
         </span>
       ) : null}

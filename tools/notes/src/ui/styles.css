@@ -212,12 +212,12 @@ body {
   color: var(--ld-accent-fg);
 }
 .sidebar-overlay {
-  left: 72px;
+  left: 64px;
   top: 0;
   bottom: 12px;
   width: 312px;
   height: auto;
-  max-width: calc(100vw - 84px);
+  max-width: calc(100vw - 76px);
   padding: 12px 12px 16px;
   gap: 12px;
   border-radius: var(--ld-radius-lg);
@@ -265,8 +265,15 @@ body {
     gap 150ms ease-out;
 }
 @container notes (max-width: 960px) {
+  .workspace {
+    gap: 8px;
+  }
+  .code-editor .cm-content {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
   .notes-sidebar {
-    width: 48px;
+    width: 44px;
   }
   .sidebar-wide {
     display: none;
@@ -275,10 +282,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    width: 48px;
-    padding: 12px 0;
-    border: 1px solid var(--ld-border);
+    gap: 4px;
+    width: 44px;
+    padding: 6px 0;
+    border: 0;
     border-radius: var(--ld-radius-lg);
     background: var(--ld-surface);
     overflow-y: auto;
@@ -542,17 +549,6 @@ body {
   color: var(--ld-text-muted);
 }
 
-@media (width < 900px) {
-  .workspace {
-    gap: 8px;
-  }
-  .notes-sidebar,
-  .sidebar-rail {
-    width: 44px;
-  }
-  .sidebar-rail {
-    gap: 4px;
-    padding: 6px 0;
-    border: 0;
-  }
+.sidebar-rail button[aria-expanded="true"] {
+  background: var(--ld-surface-raised);
 }
