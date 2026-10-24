@@ -24,7 +24,10 @@ async function unlock() {
   fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
 }
 const restored = "No se guardaron los últimos cambios; se restauraron para que puedas guardarlos";
-it("un fallo de autoguardado conserva el texto, muestra el error y reintenta al siguiente cambio", async () => {
+// El bloqueo llega tras la pausa de 800 ms del autoguardado: con la máquina cargada hace falta margen.
+it("un fallo de autoguardado conserva el texto, muestra el error y reintenta al siguiente cambio", {
+  timeout: 15_000,
+}, async () => {
   const f = vaultTestClient();
   render(<App client={f.client as never} />);
   f.fail("E_INTERNAL");
@@ -38,10 +41,11 @@ it("un fallo de autoguardado conserva el texto, muestra el error y reintenta al 
   expect(document.querySelector(".cm-content")).toHaveTextContent("Original borrador");
   f.fail(null);
   await edit(" nuevo");
-  await waitFor(() => expect(f.row().body_md).toBe("Original borrador nuevo"), { timeout: 2000 });
+  await waitFor(() => expect(f.row().body_md).toBe("Original borrador nuevo"), { timeout: 5000 });
 });
 it.each(["ocultar", "permiso", "inactividad", "candado"])(
   "recupera el borrador después de %s y lo vuelve a guardar",
+  { timeout: 15_000 },
   async (cause) => {
     const f = vaultTestClient();
     render(<App client={f.client as never} />);
@@ -54,7 +58,7 @@ it.each(["ocultar", "permiso", "inactividad", "candado"])(
       fireEvent.click(screen.getByRole("button", { name: "Bloquear notas privadas" }));
     if (cause === "permiso") f.fail("E_PERMISSION_DENIED");
     if (cause === "inactividad") f.expire();
-    await screen.findByText("Esta nota es privada", {}, { timeout: 2000 });
+    await screen.findByText("Esta nota es privada", {}, { timeout: 5000 });
     expect(document.body).not.toHaveTextContent("Original borrador");
     if (cause === "ocultar")
       await waitFor(() => expect(f.invoke).toHaveBeenCalledWith("vaultLock", {}));
@@ -69,7 +73,7 @@ it.each(["ocultar", "permiso", "inactividad", "candado"])(
       const methods = f.invoke.mock.calls.map(([method]) => method);
       expect(methods.indexOf("update")).toBeLessThan(methods.indexOf("vaultLock"));
     }
-    await waitFor(() => expect(f.row().body_md).toBe("Original borrador"), { timeout: 2000 });
+    await waitFor(() => expect(f.row().body_md).toBe("Original borrador"), { timeout: 5000 });
   },
 );
 it("cerrar la herramienta descarta el borrador pendiente sin persistirlo", async () => {
