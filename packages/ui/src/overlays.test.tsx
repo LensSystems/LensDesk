@@ -117,7 +117,14 @@ describe("componentes superpuestos", () => {
     );
     const status = await screen.findByRole("status");
     expect(status.getAttribute("aria-live")).toBe("assertive");
-    fireEvent.click(screen.getByRole("button", { name: "Descartar" }));
+    const close = screen.getByRole("button", { name: "Descartar" });
+    expect(close).toHaveClass("size-6", "rounded-full");
+    expect(close.textContent).not.toContain("×");
+    expect(close.querySelector("svg")).toHaveClass("lucide-x", "text-muted");
+    expect(close.querySelector("svg")).toHaveAttribute("width", "14");
+    expect(close.querySelector("svg")).toHaveAttribute("height", "14");
+    expect(close.querySelector("svg")).toHaveAttribute("stroke-width", "2");
+    fireEvent.click(close);
     await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
   });
 });

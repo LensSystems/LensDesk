@@ -70,7 +70,12 @@ it("ofrece acciones plegadas y devuelve el foco al cerrar con Escape o elegir no
   const reopened = await screen.findByRole("dialog", { name: "Notas" });
   expect(within(reopened).getByRole("radiogroup", { name: "Vista de notas" })).toBeTruthy();
   expect(within(reopened).queryByRole("button", { name: "Nueva nota" })).toBeNull();
-  fireEvent.click(within(reopened).getByRole("button", { name: "Cerrar" }));
+  const close = within(reopened).getByRole("button", { name: "Cerrar" });
+  expect(close).toHaveClass("size-8");
+  expect(close.textContent).not.toContain("×");
+  expect(close.querySelector("svg")).toHaveClass("lucide-x");
+  expect(close.querySelector("svg")).toHaveAttribute("width", "16");
+  fireEvent.click(close);
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(document.activeElement).toBe(toggle);
 });

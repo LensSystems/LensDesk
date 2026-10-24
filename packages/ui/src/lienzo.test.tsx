@@ -10,8 +10,24 @@ import { Notice } from "./Notice.tsx";
 describe("estilos compartidos", () => {
   it.each([
     ["default", "border-border-control", "bg-surface-raised", "text-text"],
-    ["primary", "border-0", "bg-accent", "text-accent-fg"],
-    ["danger", "border-0", "bg-danger", "text-danger-fg"],
+    [
+      "primary",
+      "border",
+      "border-accent",
+      "hover:border-accent-hover",
+      "bg-accent",
+      "hover:bg-accent-hover",
+      "text-accent-fg",
+    ],
+    [
+      "danger",
+      "border",
+      "border-danger",
+      "hover:border-danger/90",
+      "bg-danger",
+      "hover:bg-danger/90",
+      "text-danger-fg",
+    ],
     ["ghost", "border-0", "bg-transparent", "text-text"],
   ] as const)("Button aplica la variante %s", (variant, ...classes) => {
     render(<Button variant={variant}>Acción</Button>);
@@ -95,7 +111,7 @@ describe("estilos compartidos", () => {
     }
   });
 
-  it("la × de un diálogo lo cierra", async () => {
+  it("el icono X de un diálogo lo cierra", async () => {
     function Example() {
       const [open, setOpen] = useState(true);
       return (
@@ -107,7 +123,15 @@ describe("estilos compartidos", () => {
       );
     }
     render(<Example />);
-    fireEvent.click(await screen.findByRole("button", { name: "Cerrar" }));
+    const close = await screen.findByRole("button", { name: "Cerrar" });
+    expect(close).toHaveClass("size-8", "rounded-full", "absolute", "right-2", "top-2");
+    expect(close.textContent).not.toContain("×");
+    expect(close.querySelector("svg")).toHaveAttribute("width", "16");
+    expect(close.querySelector("svg")).toHaveAttribute("height", "16");
+    expect(close.querySelector("svg")).toHaveAttribute("stroke-width", "2");
+    expect(close.querySelector("svg")).toHaveClass("lucide-x", "text-muted");
+    expect(close.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    fireEvent.click(close);
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 });
