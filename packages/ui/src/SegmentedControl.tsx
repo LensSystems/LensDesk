@@ -9,6 +9,7 @@ export type SegmentedControlProps = {
   "aria-label": string;
   className?: string;
   fullWidth?: boolean;
+  itemClassName?: string;
 };
 
 export function SegmentedControl({
@@ -17,6 +18,7 @@ export function SegmentedControl({
   options,
   className,
   fullWidth = false,
+  itemClassName,
   "aria-label": label,
 }: SegmentedControlProps) {
   return (
@@ -39,6 +41,7 @@ export function SegmentedControl({
           className={cn(
             "h-7 rounded-full px-3.5 text-[13px] text-muted transition-colors duration-150 ease-out hover:text-text data-[state=checked]:bg-surface-raised data-[state=checked]:font-semibold data-[state=checked]:text-text data-[state=checked]:shadow-sm disabled:opacity-45 motion-reduce:transition-none",
             fullWidth && "min-w-0 flex-1 basis-0 px-2 text-center",
+            itemClassName,
           )}
         >
           {option.label}

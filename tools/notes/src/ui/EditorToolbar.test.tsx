@@ -21,7 +21,28 @@ it.each([
       <EditorToolbar canUndo canRedo onUndo={vi.fn()} onRedo={vi.fn()} onFormat={vi.fn()} />
     </TooltipProvider>,
   );
-  fireEvent.keyDown(screen.getByRole("button", { name: i18n.t("format") }), { key: "ArrowDown" });
+  const formatButton = screen.getByRole("button", { name: i18n.t("format") });
+  expect(formatButton).toHaveClass(
+    "rounded-full",
+    "h-7",
+    "bg-border",
+    "text-text",
+    "hover:bg-border",
+  );
+  expect(formatButton.querySelector("span")).toHaveClass("text-sm", "font-bold");
+  expect(formatButton.parentElement).toHaveClass(
+    "rounded-full",
+    "p-[3px]",
+    "shadow-ld",
+    "top-[9px]",
+    "right-4",
+    "gap-0.5",
+  );
+  const undoButton = screen.getByRole("button", { name: i18n.t("undo") });
+  expect(undoButton).toHaveClass("size-8", "rounded-full", "disabled:opacity-45");
+  expect(undoButton.querySelector("svg")).toHaveClass("size-[15px]");
+  fireEvent.keyDown(formatButton, { key: "ArrowDown" });
+  expect(formatButton).toHaveClass("bg-border", "text-text");
   const menu = screen.getByRole("menu");
   expect(menu).toHaveClass("w-[244px]");
   const items = within(menu).getAllByRole("menuitem");

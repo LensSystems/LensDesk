@@ -40,6 +40,7 @@ export {
   ListOrdered,
   LoaderCircle,
   Lock,
+  LockOpen,
   type LucideIcon,
   Minus,
   MoreHorizontal,

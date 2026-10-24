@@ -64,11 +64,14 @@ export function NoteTitle({
         />
       ) : (
         // biome-ignore lint/a11y/useKeyWithClickEvents: con teclado se edita con el botón lápiz.
-        <h2 className="min-w-0 cursor-text truncate" onClick={begin}>
+        <h2
+          className="min-w-0 cursor-text truncate text-[18px] leading-7 font-bold text-text"
+          onClick={begin}
+        >
           {title || t("untitled")}
         </h2>
       )}
-      <IconButton label={t("editTitle")} onClick={begin}>
+      <IconButton className="shrink-0" label={t("editTitle")} onClick={begin}>
         <Pencil size={14} aria-hidden="true" />
       </IconButton>
     </div>

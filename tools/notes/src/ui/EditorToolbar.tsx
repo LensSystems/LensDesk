@@ -30,14 +30,14 @@ export function EditorToolbar({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="absolute right-4 top-2 z-10 flex items-center rounded-ld-md border border-border bg-surface-raised p-1">
+    <div className="absolute right-4 top-[9px] z-10 flex items-center gap-0.5 rounded-full border border-border bg-surface-raised p-[3px] shadow-ld">
       <IconButton
         label={t("undo")}
         disabled={!canUndo}
         onMouseDown={(event) => event.preventDefault()}
         onClick={onUndo}
       >
-        <Undo2 aria-hidden="true" className="size-4" />
+        <Undo2 aria-hidden="true" className="size-[15px]" strokeWidth={2} />
       </IconButton>
       <IconButton
         label={t("redo")}
@@ -45,13 +45,18 @@ export function EditorToolbar({
         onMouseDown={(event) => event.preventDefault()}
         onClick={onRedo}
       >
-        <Redo2 aria-hidden="true" className="size-4" />
+        <Redo2 aria-hidden="true" className="size-[15px]" strokeWidth={2} />
       </IconButton>
-      <span aria-hidden="true" className="mx-1 h-4 border-l border-border" />
+      <span aria-hidden="true" className="mx-1 h-[18px] w-px bg-border" />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <IconButton label={t("format")}>
-            <span aria-hidden="true">{t("formatSymbol")}</span>
+          <IconButton
+            label={t("format")}
+            className="h-7 w-auto gap-1 bg-border pl-2.5 pr-2 text-text hover:bg-border hover:text-text"
+          >
+            <span aria-hidden="true" className="text-sm font-bold">
+              {t("formatSymbol")}
+            </span>
             <ChevronDown aria-hidden="true" className="size-3" />
           </IconButton>
         </DropdownMenuTrigger>

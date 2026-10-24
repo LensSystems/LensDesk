@@ -4,6 +4,7 @@ import {
   Copy,
   Eye,
   Lock,
+  LockOpen,
   Pencil,
   SegmentedControl,
   Tooltip,
@@ -39,23 +40,28 @@ export function EditorHeader({
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyTimer.current), []);
   return (
-    <header className="editor-toolbar">
+    <header className="editor-toolbar flex h-[57px] min-w-0 shrink-0 items-center gap-2 border-b border-border px-4 py-3 @max-[960px]/notes:h-[51px] @max-[960px]/notes:gap-1 @max-[960px]/notes:py-2 @max-[960px]/notes:pr-2">
       <NoteTitle title={note.title} onRename={onRename} />
       <Tooltip label={t(note.private ? "vault.remove" : "vault.makePrivate")}>
         <Button
           variant="ghost"
-          className="size-8 p-0 text-muted"
+          className="size-8 shrink-0 p-0 text-muted"
           data-vault-trigger
           aria-label={t(note.private ? "vault.remove" : "vault.makePrivate")}
           aria-pressed={Boolean(note.private)}
           onClick={onPrivate}
         >
-          <Lock size={14} aria-hidden="true" />
+          {note.private ? (
+            <Lock size={16} aria-hidden="true" />
+          ) : (
+            <LockOpen size={16} aria-hidden="true" />
+          )}
         </Button>
       </Tooltip>
       <SegmentedControl
         aria-label={t("mode")}
-        className="h-6 items-center p-0 [&>button]:h-6 [&>button]:px-2"
+        className="h-8 shrink-0 items-center p-0.5 @max-[960px]/notes:h-[34px] @max-[960px]/notes:border @max-[960px]/notes:border-border"
+        itemClassName="h-7 px-3.5 font-normal data-[state=checked]:shadow-[0_1px_2px_rgb(0_0_0_/_0.25)] @max-[960px]/notes:w-8 @max-[960px]/notes:px-0"
         value={preview ? "preview" : "edit"}
         onValueChange={(value) => {
           onBlur();
@@ -67,9 +73,9 @@ export function EditorHeader({
             disabled: locked,
             label: (
               <Tooltip label={t("edit")}>
-                <span className="flex items-center gap-1">
-                  <Pencil size={12} aria-hidden="true" />
-                  <span className="compact-label">{t("edit")}</span>
+                <span className="flex items-center justify-center gap-1.5">
+                  <Pencil size={13} aria-hidden="true" />
+                  <span className="@max-[960px]/notes:sr-only">{t("edit")}</span>
                 </span>
               </Tooltip>
             ),
@@ -79,9 +85,9 @@ export function EditorHeader({
             disabled: locked,
             label: (
               <Tooltip label={t("preview")}>
-                <span className="flex items-center gap-1">
-                  <Eye size={12} aria-hidden="true" />
-                  <span className="compact-label">{t("preview")}</span>
+                <span className="flex items-center justify-center gap-1.5">
+                  <Eye size={13} aria-hidden="true" />
+                  <span className="@max-[960px]/notes:sr-only">{t("preview")}</span>
                 </span>
               </Tooltip>
             ),
@@ -91,7 +97,7 @@ export function EditorHeader({
       <Tooltip label={t(copied ? "copied" : "copyNote")}>
         <Button
           variant="ghost"
-          className={copied ? "copy-confirmation" : "size-8 p-0 text-muted"}
+          className={copied ? "copy-confirmation" : "size-8 shrink-0 p-0 text-muted"}
           aria-label={t(copied ? "copied" : "copyNote")}
           type="button"
           disabled={locked}
@@ -102,14 +108,20 @@ export function EditorHeader({
             copyTimer.current = setTimeout(() => setCopied(false), 2000);
           }}
         >
-          {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+          {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
           {copied && <span>{t("copied")}</span>}
         </Button>
       </Tooltip>
       <Tooltip label={t("export")}>
-        <Button aria-label={t("export")} type="button" disabled={locked} onClick={onExport}>
-          <Upload size={14} aria-hidden="true" />
-          <span className="compact-label">{t("export")}</span>
+        <Button
+          className="shrink-0 @max-[960px]/notes:size-8 @max-[960px]/notes:p-0"
+          aria-label={t("export")}
+          type="button"
+          disabled={locked}
+          onClick={onExport}
+        >
+          <Upload size={16} aria-hidden="true" />
+          <span className="@max-[960px]/notes:sr-only">{t("export")}</span>
         </Button>
       </Tooltip>
     </header>
