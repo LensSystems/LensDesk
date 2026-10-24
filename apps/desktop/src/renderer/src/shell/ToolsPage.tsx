@@ -40,15 +40,18 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
   };
   return (
     <PageFrame onDragOver={(event) => event.preventDefault()} onDrop={handleDrop}>
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <h1 className="text-[28px] font-bold leading-tight tracking-tight">
+      <div className="flex flex-wrap items-center gap-4 min-[900px]:items-end">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl leading-8 min-[900px]:text-[28px] min-[900px]:leading-tight font-bold tracking-tight">
             {t("toolsPage.title")}
           </h1>
-          <p className="text-muted">{t("toolsPage.subtitle")}</p>
+          <p className="text-[13px] leading-[1.45] min-[900px]:text-sm text-muted">
+            {t("toolsPage.subtitle")}
+          </p>
         </div>
         {tools.length > 0 && (
           <Button
+            className="h-8 px-3.5 text-[13px] font-semibold min-[900px]:h-9 min-[900px]:px-4 min-[900px]:text-sm min-[900px]:font-bold"
             aria-label={t("toolsPage.addTool")}
             variant="primary"
             size="lg"
@@ -82,7 +85,7 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
       ) : (
         <section
           aria-label={t("toolsPage.title")}
-          className="grid grid-cols-2 items-stretch gap-4 @min-[48rem]:items-start @min-[68rem]:grid-cols-3"
+          className="grid grid-cols-2 items-stretch gap-3 min-[900px]:gap-4 @min-[48rem]:items-start @min-[68rem]:grid-cols-3"
         >
           {tools.map((tool) => (
             <ToolCard

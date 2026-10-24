@@ -6,6 +6,7 @@ type SettingsRowProps = {
   descriptionId?: string;
   children: ReactNode;
   status?: ReactNode;
+  controlsClassName?: string;
 } & ComponentProps<"div">;
 
 export function SettingsRow({
@@ -14,6 +15,7 @@ export function SettingsRow({
   descriptionId,
   children,
   status,
+  controlsClassName = "",
   className = "",
   ...props
 }: SettingsRowProps) {
@@ -31,7 +33,9 @@ export function SettingsRow({
         )}
         {status}
       </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2">{children}</div>
+      <div className={`flex shrink-0 flex-wrap items-center gap-2 ${controlsClassName}`}>
+        {children}
+      </div>
     </div>
   );
 }

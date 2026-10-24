@@ -64,6 +64,7 @@
   },
   "settingsPage": {
     "openAtLogin": "Abrir al iniciar sesión",
+    "openAtLoginHint": "LensDesk se abre automáticamente al encender el equipo.",
     "installedAppOnly": "Disponible en la app instalada",
     "accent": "Color de acento",
     "blue": "Azul",

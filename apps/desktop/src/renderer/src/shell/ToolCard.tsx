@@ -43,14 +43,16 @@ export function ToolCard({
     <article
       className={`flex min-w-0 flex-col overflow-hidden rounded-ld-lg border bg-surface ${tool.enabled ? "border-border" : "border-dashed border-border-control"}`}
     >
-      <div className="flex flex-1 flex-col gap-4 p-5">
-        <div className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-4 @min-[48rem]:grid-cols-[auto_1fr_auto]">
+      <div
+        className={`flex flex-1 flex-col gap-3 min-[900px]:gap-4 px-5 pt-5 ${update ? "pb-3 min-[900px]:pb-4" : "pb-5"}`}
+      >
+        <div className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-3 @min-[48rem]:grid-cols-[auto_1fr_auto]">
           <div
             className={`grid size-11 shrink-0 place-items-center rounded-ld-md ${tool.enabled ? "bg-accent-soft text-accent-soft-fg" : "bg-bg text-muted"}`}
           >
-            <Icon aria-hidden size={22} />
+            <Icon aria-hidden size={20} />
           </div>
-          <div className="col-span-2 row-start-2 min-w-0 space-y-1 @min-[48rem]:col-span-1 @min-[48rem]:col-start-2 @min-[48rem]:row-start-1">
+          <div className="col-span-2 row-start-2 min-w-0 @min-[48rem]:col-span-1 @min-[48rem]:col-start-2 @min-[48rem]:row-start-1">
             <h2
               className={`truncate text-base font-bold ${tool.enabled ? "text-text" : "text-muted"}`}
             >
@@ -58,7 +60,7 @@ export function ToolCard({
             </h2>
             <p
               title={tool.enabled ? description : t("toolsPage.disabledDescription")}
-              className="truncate text-muted"
+              className="truncate text-[13px] leading-5 text-muted"
             >
               {tool.enabled ? description : t("toolsPage.disabledDescription")}
             </p>
@@ -88,7 +90,7 @@ export function ToolCard({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            className="min-w-24"
+            className="w-20 min-[900px]:w-24"
             disabled={!tool.enabled}
             onClick={onOpen}
             aria-label={t("toolsPage.openTool", { name })}

@@ -42,6 +42,9 @@ it("muestra el valor real y permite desactivarlo en la app instalada", async () 
   const toggle = screen.getByRole("switch", { name: "Abrir al iniciar sesión" });
   await waitFor(() => expect(toggle).toBeEnabled());
   expect(toggle).toHaveAttribute("aria-checked", "true");
+  expect(toggle).toHaveAccessibleDescription(
+    "LensDesk se abre automáticamente al encender el equipo.",
+  );
   fireEvent.click(toggle);
   await waitFor(() => expect(toggle).toHaveAttribute("aria-checked", "false"));
   expect(invoke).toHaveBeenCalledWith("settings.set", { key: "app.openAtLogin", value: false });

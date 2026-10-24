@@ -1,4 +1,4 @@
-import { BrushCleaning, ConfirmDialog, FileDropZone, IconButton } from "@lensdesk/ui";
+import { BrushCleaning, ConfirmDialog, FileDropZone, IconButton, Upload } from "@lensdesk/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { QueueCard } from "./QueueCard.tsx";
@@ -35,6 +35,7 @@ export function Queue({
     <aside className="queue-panel">
       <h1>{t("title")}</h1>
       <FileDropZone
+        icon={compact ? <Upload size={20} className="text-muted" aria-hidden /> : undefined}
         size="md"
         buttonVariant="primary"
         className={compact ? "compact-drop-zone" : "py-6"}
@@ -60,7 +61,7 @@ export function Queue({
             }}
           >
             <IconButton label={t("clearHistory")}>
-              <BrushCleaning size={16} aria-hidden="true" />
+              <BrushCleaning size={compact ? 15 : 16} aria-hidden="true" />
             </IconButton>
           </ConfirmDialog>
         </header>

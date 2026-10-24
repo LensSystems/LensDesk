@@ -3,7 +3,7 @@ import { HEADER_HEIGHT } from "../../../shared/layout.ts";
 
 export function PageFrame({
   children,
-  settings = false,
+  settings: _settings = false,
   ...props
 }: ComponentProps<"main"> & { settings?: boolean }) {
   const focusHeading = useCallback((element: HTMLElement | null) => {
@@ -19,7 +19,7 @@ export function PageFrame({
       {...props}
       ref={focusHeading}
       style={{ height: `calc(100dvh - ${HEADER_HEIGHT}px - 12px)` }}
-      className={`@container mx-3 mb-3 flex min-h-0 flex-col gap-7 overflow-y-auto rounded-ld-lg border border-border bg-surface-raised ${settings ? "p-6 min-[900px]:px-12 min-[900px]:py-10" : "p-4 min-[900px]:px-12 min-[900px]:py-10"} transition-[width,padding] duration-150 ease-out motion-reduce:transition-none`}
+      className={`@container mx-3 mb-3 flex min-h-0 flex-col gap-4 min-[900px]:gap-7 overflow-y-auto rounded-ld-lg border border-border bg-surface-raised p-6 min-[900px]:px-12 min-[900px]:py-10 transition-[width,padding] duration-150 ease-out motion-reduce:transition-none`}
     >
       {children}
     </main>

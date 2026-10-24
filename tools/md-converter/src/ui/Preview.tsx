@@ -9,7 +9,6 @@ import {
   MarkdownRaw,
   MarkdownView,
   Notice,
-  SaveAll,
   SaveMarkdown,
   Tabs,
   TabsContent,
@@ -21,6 +20,7 @@ import DOMPurify from "dompurify";
 import MarkdownIt from "markdown-it";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SaveAllStack } from "./SaveAllStack.tsx";
 import { errorCode, type QueueItem } from "./use-queue.ts";
 
 type Client = ReturnType<typeof createToolClient>;
@@ -89,16 +89,23 @@ export function Preview({
         <TabsList className="mr-auto" aria-label={t("resultTabs")}>
           {(["rendered", "raw"] as const).map((name) => (
             <Tooltip key={name} label={t(name)}>
-              <TabsTrigger value={name} aria-label={t(name)} onClick={() => setTab(name)}>
-                <span className="compact-icon">
-                  {name === "rendered" ? (
-                    <Eye size={16} aria-hidden="true" />
-                  ) : (
-                    <MarkdownRaw aria-hidden="true" />
-                  )}
-                </span>
-                <span className="normal-label">{t(name)}</span>
-              </TabsTrigger>
+              <span className="inline-flex">
+                <TabsTrigger
+                  className="data-[state=active]:bg-surface-raised data-[state=active]:text-text data-[state=active]:font-semibold data-[state=active]:shadow-none"
+                  value={name}
+                  aria-label={t(name)}
+                  onClick={() => setTab(name)}
+                >
+                  <span className="compact-icon">
+                    {name === "rendered" ? (
+                      <Eye size={15} aria-hidden="true" />
+                    ) : (
+                      <MarkdownRaw width={15} height={15} aria-hidden="true" />
+                    )}
+                  </span>
+                  <span className="normal-label">{t(name)}</span>
+                </TabsTrigger>
+              </span>
             </Tooltip>
           ))}
         </TabsList>
@@ -124,9 +131,9 @@ export function Preview({
             }
           >
             {copied ? (
-              <Check size={14} aria-hidden="true" />
+              <Check size={16} aria-hidden="true" />
             ) : (
-              <Copy size={14} aria-hidden="true" />
+              <Copy size={16} aria-hidden="true" />
             )}
             {copied && <span>{t("copied")}</span>}
           </Button>
@@ -141,14 +148,14 @@ export function Preview({
               item && void attempt(async () => t("saved", { count: (await saveOne(item)) ? 1 : 0 }))
             }
           >
-            <SaveMarkdown className="compact-icon" aria-hidden="true" />
+            <SaveMarkdown chip className="compact-icon" aria-hidden="true" />
             <span className="normal-label">{t("save")}</span>
           </Button>
         </Tooltip>
         <Tooltip label={t("saveAll")}>
           <Button
             type="button"
-            className="save-action"
+            className="save-action bg-surface"
             aria-label={t("saveAll")}
             disabled={results.length === 0}
             onClick={() =>
@@ -159,7 +166,7 @@ export function Preview({
               })
             }
           >
-            <SaveAll size={16} className="compact-icon" aria-hidden="true" />
+            <SaveAllStack className="compact-icon" />
             <span className="normal-label">{t("saveAll")}</span>
           </Button>
         </Tooltip>

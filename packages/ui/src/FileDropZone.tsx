@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { Button } from "./Button.tsx";
 import { cn } from "./cn.ts";
 
 export type FileDropZoneProps = {
+  icon?: ReactNode;
   size?: "md" | "compact";
   buttonVariant?: "default" | "primary";
   onFiles?: (files: File[]) => void;
@@ -17,6 +18,7 @@ export type FileDropZoneProps = {
   className?: string;
 };
 export function FileDropZone({
+  icon,
   size = "md",
   buttonVariant = "default",
   onFiles,
@@ -87,6 +89,7 @@ export function FileDropZone({
         if (onFiles) deliver(Array.from(event.dataTransfer.files));
       }}
     >
+      {icon}
       <p className={cn("text-[13px] text-muted", size === "compact" && "min-w-0 flex-1")}>
         {label}
       </p>

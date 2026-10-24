@@ -72,6 +72,22 @@ beforeEach(async () => {
 });
 
 describe("interfaz del Convertidor", () => {
+  it("aplica el estilo activo al cambiar entre vistas", async () => {
+    const fake = fakeClient([]);
+    render(<App client={fake.client as never} />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[0]).toHaveAttribute("data-state", "active");
+    expect(tabs[0]).toHaveClass(
+      "data-[state=active]:bg-surface-raised",
+      "data-[state=active]:font-semibold",
+      "data-[state=active]:text-text",
+    );
+    const raw = screen.getByRole("tab", { name: "Markdown crudo" });
+    fireEvent.click(raw);
+    expect(raw).toHaveAttribute("data-state", "active");
+    expect(tabs[0]).toHaveAttribute("data-state", "inactive");
+  });
+
   it("convierte en orden, muestra el progreso y cancela solo la fila elegida", async () => {
     const fake = fakeClient([handle("lento.pdf"), handle("datos.csv")]);
     render(<App client={fake.client as never} />);

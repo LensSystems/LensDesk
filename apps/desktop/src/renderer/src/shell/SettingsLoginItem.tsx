@@ -37,12 +37,12 @@ export function SettingsLoginItem({ bridge }: { bridge: Window["lensdeskHost"] }
   return (
     <SettingsRow
       label={t("settingsPage.openAtLogin")}
-      description={available ? undefined : t("settingsPage.installedAppOnly")}
+      description={t(available ? "settingsPage.openAtLoginHint" : "settingsPage.installedAppOnly")}
       descriptionId={descriptionId}
     >
       <Switch
         aria-label={t("settingsPage.openAtLogin")}
-        aria-describedby={available ? undefined : descriptionId}
+        aria-describedby={descriptionId}
         checked={checked}
         disabled={!available || busy}
         onCheckedChange={(value) => void update(value)}

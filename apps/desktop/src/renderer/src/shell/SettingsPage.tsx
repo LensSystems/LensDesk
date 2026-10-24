@@ -50,7 +50,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
   return (
     <PageFrame settings>
       <div className="mx-auto flex w-full min-[900px]:max-w-2xl flex-col gap-4 min-[900px]:gap-6">
-        <h1 className="col-span-full text-[28px] font-bold leading-tight tracking-tight">
+        <h1 className="col-span-full text-2xl leading-8 min-[900px]:text-[28px] min-[900px]:leading-tight font-bold tracking-tight">
           {t("settingsPage.title")}
         </h1>
         <SettingsSection title={t("settingsPage.appearance")}>
@@ -67,6 +67,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
           <SettingsRow label={t("settingsPage.theme")}>
             <SegmentedControl
+              itemClassName="data-[state=checked]:shadow-none"
               aria-label={t("settingsPage.theme")}
               value={settings.theme}
               onValueChange={(value) => update("theme", value)}
@@ -79,6 +80,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
           <SettingsRow label={t("settingsPage.accent")}>
             <SegmentedControl
+              itemClassName="data-[state=checked]:shadow-none"
               aria-label={t("settingsPage.accent")}
               value={settings.accent}
               onValueChange={(value) => update("accent", value)}
@@ -118,7 +120,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
         </SettingsSection>
         <SettingsSection title={t("settingsPage.dataAndLogs")}>
           <SettingsRow description={t("settingsPage.localDataDescription")}>
-            <div className="flex shrink-0 flex-wrap gap-2">
+            <div className="flex shrink-0 flex-wrap gap-4">
               <Button onClick={() => void exportLogs()}>{t("settingsPage.exportLogs")}</Button>
               <Button onClick={() => void bridge.invoke("app.openDataFolder", {})}>
                 {t("settingsPage.openDataFolder")}

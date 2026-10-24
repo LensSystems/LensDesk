@@ -155,27 +155,39 @@ body {
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ld-text-muted);
+  padding: 0 4px;
 }
 .queue-result-status {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
   min-height: 28px;
 }
 .saved-indicator {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   color: var(--ld-text-muted);
 }
 .saved-check {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
+  right: -2px;
+  bottom: -2px;
   border-radius: 50%;
   background: var(--ld-success);
-  color: var(--ld-surface-raised);
+  color: var(--ld-bg);
+  width: 12px;
+  height: 12px;
+  padding: 2px;
+  box-shadow: 0 0 0 2px var(--ld-surface-raised);
 }
 .preview-toolbar .copy-confirmation {
   border: 1px solid var(--ld-success);
@@ -204,14 +216,22 @@ body {
   padding-left: 24px;
 }
 @media (max-width: 900px) {
+  .workspace {
+    gap: 8px;
+  }
   .queue-panel {
     width: 216px;
-    padding: 8px;
+    padding: 12px 8px 8px;
     gap: 8px;
+    border: 0;
+  }
+  .preview-panel {
+    border: 0;
   }
   .queue-panel h1 {
     font-size: 16px;
-    padding: 4px;
+    padding: 0 4px;
+    line-height: 24px;
   }
   .normal-drop,
   .normal-label,
@@ -229,31 +249,63 @@ body {
     min-height: 124px;
     justify-items: center;
     text-align: center;
-    border-width: 1px;
-    border-radius: var(--ld-radius-sm);
+    border-width: 1.5px;
+    border-radius: var(--ld-radius-md);
+    background: transparent;
+    padding: 12px;
+    gap: 8px;
   }
   .queue-heading {
     font-size: 12px;
-    padding-left: 4px;
+    padding: 0 0 0 4px;
+    height: 28px;
+    gap: 4px;
   }
   .queue-heading h2 {
     white-space: nowrap;
   }
   .queue-list {
     padding: 0;
-    gap: 4px;
+    gap: 6px;
   }
   .queue-card {
-    padding: 8px;
+    padding: 8px 8px 8px 10px;
+    gap: 4px;
+    min-height: 46px;
+    background: var(--ld-bg);
     border-radius: var(--ld-radius-md);
     font-size: 13px;
   }
   .queue-result-status {
     flex-direction: row;
-    gap: 12px;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .queue-result-status .compact-icon.text-success {
+    width: 20px;
+    height: 20px;
+    align-items: center;
+  }
+  .queue-result-status .compact-icon.text-danger {
+    height: 20px;
+    padding: 2px 0;
+    align-items: center;
+  }
+  .queue-card .saved-indicator {
+    align-items: flex-start;
+  }
+  .queue-card.bg-danger-soft > button > span {
+    line-height: 20px;
+  }
+  .queue-card.bg-danger-soft .queue-result-status {
+    min-height: 20px;
+  }
+  .queue-card > .col-span-2 {
+    padding-top: 0;
   }
   .preview-toolbar {
-    height: 50px;
+    height: 51px;
+    gap: 4px;
     padding: 0 8px;
     overflow: visible;
   }
@@ -265,7 +317,8 @@ body {
     padding: 0;
   }
   .preview-toolbar .save-action {
-    width: 28px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     border-color: transparent;
     background: transparent;
@@ -299,5 +352,54 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .queue-filename[data-moving="true"] .queue-filename-track {
     animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .compact-drop-zone p {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .compact-drop-zone button {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .queue-heading button {
+    width: 28px;
+    height: 28px;
+  }
+  .queue-card > button > span {
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 600;
+  }
+  .queue-card-selected {
+    background: var(--ld-accent-soft);
+    border-color: var(--ld-accent);
+  }
+  .queue-card.bg-danger-soft {
+    background: var(--ld-danger-soft);
+    border-color: var(--ld-danger);
+  }
+  .queue-card .queue-error {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .queue-card .saved-check {
+    box-shadow: 0 0 0 2px var(--ld-bg);
+  }
+  .queue-card-selected .saved-check {
+    box-shadow: 0 0 0 2px var(--ld-accent-soft);
+  }
+  .preview-toolbar [role="tablist"] {
+    width: 70px;
+    height: 34px;
+    border: 1px solid var(--ld-border);
+    padding: 2px;
+  }
+  .preview-toolbar [role="tab"][data-state="active"] {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
   }
 }

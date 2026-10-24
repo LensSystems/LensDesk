@@ -27,6 +27,7 @@ export function SharedExamples() {
       <Example names={["BrushCleaning", "Save", "MarkdownRaw", "SaveMarkdown", "SaveAll"]}>
         <MarkdownRaw aria-label="Markdown crudo" />
         <SaveMarkdown aria-label="Guardar .md" />
+        <SaveMarkdown chip aria-label="Guardar .md con insignia" />
         <SaveAll size={16} aria-label="Guardar todos" />
         <BrushCleaning aria-label="Borrar historial" />
         <Save aria-label="Guardar" />

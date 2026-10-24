@@ -52,6 +52,7 @@ export function SettingsUpdateCheck({ bridge, version, enabled }: Props) {
   };
   return (
     <SettingsRow
+      controlsClassName="gap-3"
       ref={row}
       data-update-row
       data-highlighted={highlighted}

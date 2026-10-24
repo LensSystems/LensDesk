@@ -27,7 +27,7 @@ export function QueueCard({
         selected={selected}
         disabled={item.status !== "done"}
         onClick={() => onSelect(item.id)}
-        containerClassName={`queue-card ${item.status === "error" ? "border-danger bg-danger-soft" : ""}`}
+        containerClassName={`queue-card ${selected ? "queue-card-selected" : ""} ${item.status === "error" ? "border-danger bg-danger-soft" : ""}`}
         actions={
           active ? (
             <>
@@ -57,9 +57,9 @@ export function QueueCard({
                   aria-label={t(`status.${item.status}`)}
                 >
                   {item.status === "done" ? (
-                    <Check size={16} aria-hidden="true" />
+                    <Check size={15} aria-hidden="true" />
                   ) : (
-                    <CircleAlert size={16} aria-hidden="true" />
+                    <CircleAlert size={15} aria-hidden="true" />
                   )}
                 </span>
               )}
@@ -74,7 +74,7 @@ export function QueueCard({
               {item.status === "done" && item.saved && (
                 <span className="saved-indicator" role="img" aria-label={t("fileSaved")}>
                   <Save size={16} aria-hidden="true" />
-                  <Check size={12} className="saved-check" aria-hidden="true" />
+                  <Check size={8} className="saved-check" aria-hidden="true" />
                 </span>
               )}
             </span>
