@@ -112,7 +112,7 @@ body {
     13px / 1.7 "JetBrains Mono Variable",
     monospace;
   color: var(--ld-text);
-  background: var(--ld-bg);
+  background: var(--ld-surface);
 }
 .code-editor .cm-editor .cm-scroller {
   overflow: auto;
@@ -120,29 +120,32 @@ body {
 }
 .code-editor .cm-content {
   /* Franja derecha libre para la barra flotante de deshacer y formato. */
-  padding: 16px 144px 16px 0;
+  padding: 14px 144px 14px 0;
   caret-color: var(--ld-accent);
   line-height: 1.7;
 }
 .code-editor .cm-line {
-  padding: 0 20px;
+  padding: 0;
 }
 .code-editor .cm-line.cm-block-start,
 .code-editor .cm-gutterElement.cm-block-start {
-  padding-top: 0.35em;
+  padding-top: 10px;
 }
 .code-editor .cm-gutters {
-  color: var(--ld-text-muted);
-  background: var(--ld-surface);
-  border-right: 1px solid var(--ld-border);
+  color: var(--ld-border-control);
+  background: transparent;
+  border-right: none;
 }
 .code-editor .cm-gutterElement {
   text-align: center;
-  min-width: 3ch;
+  box-sizing: border-box;
+  width: 40px;
+  padding-right: 0;
+  padding-left: 0;
 }
 .code-editor .cm-activeLine,
 .code-editor .cm-activeLineGutter {
-  background: var(--ld-surface);
+  background: color-mix(in srgb, var(--ld-accent) 8%, transparent);
 }
 .code-editor .cm-cursor {
   border-left: 2px solid var(--ld-accent);
@@ -150,6 +153,26 @@ body {
 .code-editor .cm-selectionBackground,
 .code-editor .cm-content ::selection {
   background: var(--ld-accent-soft);
+  color: var(--ld-accent-soft-fg);
+}
+.code-editor .cm-md-heading,
+.code-editor .cm-md-heading span {
+  color: var(--ld-accent);
+  font-weight: 500;
+}
+.code-editor .cm-md-code,
+.code-editor .cm-md-code span {
+  color: var(--ld-success);
+  font-weight: 400;
+}
+.code-editor .cm-md-quote,
+.code-editor .cm-md-quote span {
+  color: var(--ld-text-muted);
+}
+.code-editor .cm-md-list-mark,
+.code-editor .cm-md-list-mark span {
+  color: var(--ld-text);
+  text-decoration: none;
 }
 .empty-state {
   align-items: center;
@@ -397,4 +420,10 @@ body {
 .ld-credential button:focus-visible {
   outline: 2px solid var(--ld-accent);
   outline-offset: 2px;
+}
+
+.ld-markdown-view .ld-code-block pre code {
+  color: var(--ld-success);
+  font-size: 13px;
+  line-height: 18.85px;
 }

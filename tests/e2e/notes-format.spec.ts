@@ -57,12 +57,12 @@ test("historial con botones y teclado, formato y reinicio entre notas", async ()
     expect(bar).not.toBeNull();
     expect(text).toBeLessThan(bar?.x ?? 0);
     await editor.fill(
-      "# Título\n\nPárrafo\ncontinuación\n\n- uno\n- dos\n\n> cita\n> continuación",
+      "# Título\nPárrafo\ncontinuación\n- uno\n- dos\n> cita\n> continuación\n\n## Otro\ntexto",
     );
     const lines = editor.locator(".cm-line");
     await expect(lines).toHaveCount(10);
     for (let index = 0; index < 10; index++) {
-      if ([0, 5, 8].includes(index)) {
+      if ([1, 3, 5, 9].includes(index)) {
         await expect(lines.nth(index)).toHaveClass(/cm-block-start/);
       } else {
         await expect(lines.nth(index)).not.toHaveClass(/cm-block-start/);
@@ -70,9 +70,9 @@ test("historial con botones y teclado, formato y reinicio entre notas", async ()
     }
     // Los números de línea de los inicios de bloque bajan igual que su texto.
     const numbers = notes.locator(".cm-lineNumbers .cm-gutterElement.cm-block-start");
-    await expect(numbers).toHaveCount(3);
+    await expect(numbers).toHaveCount(4);
     const [number, line] = await Promise.all([
-      numbers.nth(1).boundingBox(),
+      numbers.nth(2).boundingBox(),
       lines.nth(5).boundingBox(),
     ]);
     expect(Math.abs((number?.y ?? 0) - (line?.y ?? 99))).toBeLessThan(1);
@@ -83,12 +83,12 @@ test("historial con botones y teclado, formato y reinicio entre notas", async ()
       return {
         ratio: Number.parseFloat(content.lineHeight) / Number.parseFloat(content.fontSize),
         paddingRight: content.paddingRight,
-        blockRatio: Number.parseFloat(block.paddingTop) / Number.parseFloat(block.fontSize),
+        blockPadding: block.paddingTop,
       };
     });
     expect(spacing.ratio).toBeCloseTo(1.7, 2);
     expect(spacing.paddingRight).toBe("144px");
-    expect(spacing.blockRatio).toBeCloseTo(0.35, 2);
+    expect(spacing.blockPadding).toBe("10px");
     await test.info().attach("espaciado-editor", {
       body: await notes.locator(".editor-panel").screenshot(),
       contentType: "image/png",
