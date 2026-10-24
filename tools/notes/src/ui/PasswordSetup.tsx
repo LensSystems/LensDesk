@@ -1,16 +1,19 @@
-import { Button, Input } from "@lensdesk/ui";
+import { Button } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PasswordFields } from "./PasswordFields.tsx";
 import { validPassword } from "./password-validation.ts";
+import { SecurityQuestion } from "./SecurityQuestion.tsx";
 import { VaultDialog } from "./VaultDialog.tsx";
 export function PasswordSetup({
   onClose,
+  onBack,
   onSubmit,
   error,
   busy,
 }: {
   onClose: () => void;
+  onBack: () => void;
   onSubmit: (password: string, questions: [string, string], answers: [string, string]) => void;
   error: string;
   busy: boolean;
@@ -18,15 +21,22 @@ export function PasswordSetup({
   const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [questions, setQuestions] = useState<[string, string]>(["", ""]);
+  const [questions, setQuestions] = useState<[string, string]>(["pet", "city"]);
   const [answers, setAnswers] = useState<[string, string]>(["", ""]);
+  const valid = validPassword(password, confirmation) && answers.every((value) => value.trim());
   return (
     <VaultDialog title={t("vault.setup")} onClose={onClose}>
+      <p className="-mt-3 text-xs leading-[17.4px] text-muted">{t("vault.steps")}</p>
       <form
-        className="grid gap-3"
+        className="grid gap-[14px]"
         onSubmit={(event) => {
           event.preventDefault();
-          if (validPassword(password, confirmation)) onSubmit(password, questions, answers);
+          if (!busy && valid)
+            onSubmit(
+              password,
+              [t(`vault.questions.${questions[0]}`), t(`vault.questions.${questions[1]}`)],
+              answers,
+            );
         }}
       >
         <PasswordFields
@@ -34,42 +44,36 @@ export function PasswordSetup({
           onPassword={setPassword}
           onConfirmation={setConfirmation}
         />
+        <hr className="border-border" />
+        <p className="text-[13px] text-muted">{t("vault.questionsHelp")}</p>
         {([0, 1] as const).map((index) => (
-          <div key={index} className="grid gap-2">
-            <Input
-              label={t("vault.question", { number: index + 1 })}
-              value={questions[index]}
-              required
-              onChange={(event) =>
-                setQuestions((old) =>
-                  index === 0 ? [event.target.value, old[1]] : [old[0], event.target.value],
-                )
-              }
-            />
-            <Input
-              label={t("vault.answer", { number: index + 1 })}
-              type="password"
-              value={answers[index]}
-              required
-              onChange={(event) =>
-                setAnswers((old) =>
-                  index === 0 ? [event.target.value, old[1]] : [old[0], event.target.value],
-                )
-              }
-            />
-          </div>
+          <SecurityQuestion
+            key={index}
+            index={index}
+            question={questions[index]}
+            excluded={questions[1 - index] ?? ""}
+            answer={answers[index]}
+            onQuestion={(value) =>
+              setQuestions((old) => (index === 0 ? [value, old[1]] : [old[0], value]))
+            }
+            onAnswer={(value) =>
+              setAnswers((old) => (index === 0 ? [value, old[1]] : [old[0], value]))
+            }
+          />
         ))}
-        {error && <p role="alert">{error}</p>}
-        <Button
-          type="submit"
-          disabled={
-            busy ||
-            !validPassword(password, confirmation) ||
-            [...questions, ...answers].some((value) => !value.trim())
-          }
-        >
-          {t("vault.setup")}
-        </Button>
+        {error && (
+          <p role="alert" className="text-xs text-danger">
+            {error}
+          </p>
+        )}
+        <footer className="vault-footer">
+          <Button onClick={onBack} type="button">
+            {t("vault.back")}
+          </Button>
+          <Button variant="primary" type="submit" disabled={busy || !valid}>
+            {t("vault.saveLock")}
+          </Button>
+        </footer>
       </form>
     </VaultDialog>
   );

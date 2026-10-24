@@ -291,6 +291,44 @@ body {
   }
 }
 
+.secret-field label {
+  line-height: 17.4px;
+}
+.vault-footer button {
+  height: 32px;
+  padding: 0 16px;
+  font-weight: 400;
+}
+.vault-footer button:first-child {
+  border-color: var(--ld-border);
+}
+.vault-footer button:last-child {
+  font-weight: 600;
+}
+.ld-credential button {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ld-text-muted);
+  cursor: pointer;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+}
+.ld-credential button.copy-confirmation {
+  border-color: var(--ld-success);
+  color: var(--ld-success);
+  width: auto;
+  padding: 0 12px;
+  gap: 6px;
+  font-weight: 600;
+  border-radius: var(--ld-radius-xl);
+}
 .note-list > div:first-child {
   gap: 0;
 }
@@ -359,7 +397,6 @@ body {
   color: var(--ld-text-muted);
   font-size: 12px;
 }
-.ld-credential button,
 .ld-markdown-view .ld-code-block .ld-code-header button {
   position: static;
   display: inline-flex;
@@ -375,7 +412,6 @@ body {
   color: var(--ld-text-muted);
   cursor: pointer;
 }
-.ld-credential button.copy-confirmation,
 .ld-markdown-view .ld-code-block .ld-code-header button.copy-confirmation {
   border-color: var(--ld-success);
   color: var(--ld-success);
@@ -426,4 +462,82 @@ body {
   color: var(--ld-success);
   font-size: 13px;
   line-height: 18.85px;
+}
+
+/* Campos compartidos de privacidad y credenciales. */
+.secret-field-control {
+  height: 38px;
+  padding: 0 4px 0 12px;
+}
+.credential-input .secret-field-control {
+  padding-left: 10px;
+}
+.secret-field-control:focus-within {
+  border-color: var(--ld-accent);
+}
+.secret-field-control input {
+  height: 100%;
+  line-height: 18.85px;
+  outline: none;
+}
+.secret-field-control:has(input:focus-visible) {
+  outline: 2px solid var(--ld-accent);
+  outline-offset: 2px;
+}
+
+.secret-field-control .field-action {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--ld-text-muted);
+}
+.vault-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.question-select > span:last-child {
+  color: var(--ld-text-muted);
+  font-size: 15px;
+}
+
+.private-note-card {
+  position: relative;
+  padding-left: 23px;
+}
+.note-card-lock {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ld-credential {
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 18.85px;
+}
+.ld-credential header {
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.ld-credential header strong {
+  font-weight: 700;
+}
+.ld-credential > div {
+  min-height: 49px;
+  padding: 8px 0;
+}
+.ld-credential > div > strong {
+  width: 110px;
+  font-size: 12px;
+  line-height: 17.4px;
+}
+.ld-credential .credential-note {
+  min-height: 35.8px;
+  color: var(--ld-text-muted);
 }

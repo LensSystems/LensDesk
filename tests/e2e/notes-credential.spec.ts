@@ -28,14 +28,16 @@ test("credenciales privadas: insertar, enmascarar, copiar y revelar", async () =
     );
     await tool.getByRole("menu", { name: "Menú de edición" }).press("Escape");
     await tool.getByRole("button", { name: "Hacer privada", exact: true }).click();
-    await tool.getByRole("button", { name: "Continuar", exact: true }).click();
-    await tool.getByLabel("Contraseña", { exact: true }).fill("Abcd1!");
-    await tool.getByLabel("Confirmar contraseña", { exact: true }).fill("Abcd1!");
-    await tool.getByLabel("Pregunta de seguridad 1").fill("Ciudad");
-    await tool.getByLabel("Pregunta de seguridad 2").fill("Animal");
-    await tool.getByLabel("Respuesta 1").fill("Lima");
-    await tool.getByLabel("Respuesta 2").fill("Gato");
     await tool.getByRole("button", { name: "Crear contraseña", exact: true }).click();
+    const setup = tool.getByRole("dialog");
+    await setup.getByLabel("Contraseña", { exact: true }).fill("Abcd1!");
+    await setup.getByLabel("Confirmar contraseña", { exact: true }).fill("Abcd1!");
+    await setup.getByLabel("Respuesta 1").fill("Lima");
+    await setup.getByLabel("Respuesta 2").fill("Gato");
+    await setup.getByRole("button", { name: "Guardar y bloquear", exact: true }).click();
+    await expect(tool.getByRole("heading", { name: "Esta nota es privada" })).toBeVisible();
+    await tool.getByLabel("Contraseña", { exact: true }).fill("Abcd1!");
+    await tool.getByRole("button", { name: "Desbloquear", exact: true }).click();
     await expect(tool.getByRole("button", { name: "Quitar privada", exact: true })).toBeVisible();
     await editor.click({ button: "right" });
     await tool.getByRole("menuitem", { name: "Insertar", exact: true }).click();
@@ -46,13 +48,19 @@ test("credenciales privadas: insertar, enmascarar, copiar y revelar", async () =
     await dialog.getByLabel("Usuario", { exact: true }).fill("ada@example.test");
     await dialog.getByLabel("Contraseña", { exact: true }).fill("secreto-e2e-unico");
     await dialog.getByLabel("Notas", { exact: true }).fill("Servidor local");
-    await dialog.getByRole("button", { name: "Texto simple", exact: true }).click();
-    await dialog.getByLabel("Título del campo", { exact: true }).fill("Host");
-    await dialog.getByLabel("Texto simple", { exact: true }).fill("localhost");
-    await dialog.getByRole("button", { name: "Texto secreto", exact: true }).click();
-    await dialog.getByLabel("Título del campo", { exact: true }).nth(1).fill("PIN");
-    await dialog.getByLabel("Texto secreto", { exact: true }).fill("932871");
-    await dialog.getByRole("button", { name: "Guardar", exact: true }).click();
+    await dialog.getByRole("button", { name: "Añadir campo", exact: true }).click();
+    await tool.getByRole("menuitem", { name: "Texto simple", exact: true }).click();
+    await expect(dialog.getByLabel("Nombre del campo", { exact: true })).toBeFocused();
+    await tool.keyboard.type("Host");
+    await dialog.getByLabel("Host", { exact: true }).fill("localhost");
+    await dialog.getByRole("button", { name: "Añadir campo", exact: true }).click();
+    await tool.getByRole("menuitem", { name: "Texto secreto", exact: true }).click();
+    await expect(dialog.getByLabel("Nombre del campo", { exact: true }).nth(1)).toBeFocused();
+    await tool.keyboard.type("PIN");
+    await dialog.getByLabel("PIN", { exact: true }).fill("932871");
+    await expect(dialog.getByText("Texto simple", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("Texto secreto", { exact: true })).toBeVisible();
+    await dialog.getByRole("button", { name: "Insertar", exact: true }).click();
     await expect(dialog).toHaveCount(0);
     await expect(editor).toContainText("```credential");
     await expect(editor).toContainText("•••••••");
@@ -69,18 +77,19 @@ test("credenciales privadas: insertar, enmascarar, copiar y revelar", async () =
     const passwordRow = card
       .locator("div")
       .filter({ has: tool.getByText("Contraseña", { exact: true }) });
-    await card.getByRole("button", { name: "Copiar", exact: true }).nth(0).click();
+    await expect(card.getByRole("button", { name: "Copiar Notas" })).toHaveCount(0);
+    await card.getByRole("button", { name: "Copiar Usuario", exact: true }).click();
     await expect
       .poll(() => app.evaluate(({ clipboard }) => clipboard.readText()))
       .toBe("ada@example.test");
-    await passwordRow.getByRole("button", { name: "Copiar", exact: true }).click();
+    await passwordRow.getByRole("button", { name: "Copiar Contraseña", exact: true }).click();
     await expect
       .poll(() => app.evaluate(({ clipboard }) => clipboard.readText()))
       .toBe("secreto-e2e-unico");
     expect(await card.innerHTML()).not.toContain("secreto-e2e-unico");
-    await card.getByRole("button", { name: "Mostrar secreto", exact: true }).first().click();
+    await card.getByRole("button", { name: "Mostrar Contraseña", exact: true }).click();
     await expect(card).toContainText("secreto-e2e-unico");
-    await card.getByRole("button", { name: "Ocultar secreto", exact: true }).click();
+    await card.getByRole("button", { name: "Ocultar Contraseña", exact: true }).click();
     expect(await card.innerHTML()).not.toContain("secreto-e2e-unico");
     await tool.getByRole("button", { name: "Quitar privada", exact: true }).click();
     await expect(dialog).toContainText("Las contraseñas quedarán sin cifrar");

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { CREDENTIAL_TOKEN, type CredentialPreview } from "./credential-preview.ts";
 import { COPY_CODE_TOKEN, renderPreview } from "./preview.ts";
-import { confirmCopy, resetCopy } from "./preview-controls.ts";
+import { confirmCopy, eyeIcon, eyeOffIcon, resetCopy } from "./preview-controls.ts";
 
 export function NotePreview({
   body,
@@ -22,7 +22,9 @@ export function NotePreview({
       labels: Object.fromEntries(
         ["title", "user", "password", "note", "copy", "show", "hide"].map((key) => [
           key,
-          t(`credential.${key}`),
+          t(`credential.${["copy", "show", "hide"].includes(key) ? `${key}Field` : key}`, {
+            name: "{{name}}",
+          }),
         ]),
       ),
     };
@@ -39,14 +41,14 @@ export function NotePreview({
     if (!container) return;
     const timers = new Map<HTMLButtonElement, ReturnType<typeof setTimeout>>();
     let active = true;
-    const confirm = (button: HTMLButtonElement, key: string) => {
+    const confirm = (button: HTMLButtonElement, label: () => string) => {
       if (!active || !container.contains(button)) return;
       confirmCopy(button, latest.current.t("copied"));
       clearTimeout(timers.get(button));
       timers.set(
         button,
         setTimeout(() => {
-          resetCopy(button, latest.current.t(key));
+          resetCopy(button, label());
           timers.delete(button);
         }, 2000),
       );
@@ -61,7 +63,9 @@ export function NotePreview({
         if (credential.dataset.action === "copy") {
           try {
             await latest.current.onCopyCode(field.value);
-            confirm(credential, "credential.copy");
+            confirm(credential, () =>
+              latest.current.t("credential.copyField", { name: field.title }),
+            );
           } catch {
             /* Conserva el control al rechazar la copia. */
           }
@@ -69,11 +73,14 @@ export function NotePreview({
           const span = credential.parentElement?.querySelector("[data-credential-value]");
           if (!span) return;
           const shown = credential.dataset.shown !== "true";
-          span.textContent = shown ? field.value : "•••••••";
+          span.textContent = shown ? field.value : "*******";
           credential.dataset.shown = String(shown);
-          const label = latest.current.t(shown ? "credential.hide" : "credential.show");
+          const label = latest.current.t(shown ? "credential.hideField" : "credential.showField", {
+            name: field.title,
+          });
           credential.setAttribute("aria-label", label);
           credential.title = label;
+          credential.innerHTML = shown ? eyeOffIcon : eyeIcon;
         }
         return;
       }
@@ -84,7 +91,7 @@ export function NotePreview({
       if (!code) return;
       try {
         await latest.current.onCopyCode(code.textContent ?? "");
-        confirm(button, "copyCode");
+        confirm(button, () => latest.current.t("copyCode"));
       } catch {
         // Conserva la etiqueta si el portapapeles rechaza la copia.
       }

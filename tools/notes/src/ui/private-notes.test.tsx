@@ -53,7 +53,7 @@ function fake(privateNote = false, unlocked = false) {
         (method === "vaultUnlock" && args.password !== password) ||
         (method === "vaultReset" && JSON.stringify(args.answers) !== '["Lima","Gato"]')
       )
-        throw { code: "E_PERMISSION_DENIED", message: "Too many attempts. Wait 3 seconds" };
+        throw { code: "E_PERMISSION_DENIED", message: "Invalid credentials. 4 attempts left" };
       if (method === "vaultReset") password = args.password as string;
       unlocked = true;
       return {};
@@ -132,8 +132,8 @@ it("carga get antes de editar o guardar una privada y descarta respuestas despu�
   f.delay();
   render(<App client={f.client as never} />);
   await waitFor(() => expect(f.invoke).toHaveBeenCalledWith("get", { id: "one" }));
-  expect(screen.getByRole("button", { name: "Copiar nota" })).toBeDisabled();
-  expect(screen.getByRole("button", { name: "Exportar" })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Copiar nota" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Exportar" })).toBeNull();
   expect(document.querySelector(".cm-content")).toBeNull();
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 850));
@@ -148,7 +148,7 @@ it("carga get antes de editar o guardar una privada y descarta respuestas despu�
   });
   expect(f.invoke.mock.calls.filter(([method]) => method === "update")).toHaveLength(0);
   act(() => f.visibility(false));
-  await screen.findByText("Contenido privado bloqueado");
+  await screen.findByText("Esta nota es privada");
   expect(document.body).not.toHaveTextContent("Contenido secreto");
   expect(f.note().body_md).toBe("Contenido secreto");
 });
@@ -164,30 +164,35 @@ it("configura, bloquea, rechaza contraseña errónea, desbloquea y restablece si
   fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
   await waitFor(() => expect(trigger).toHaveFocus());
   fireEvent.click(trigger);
-  fireEvent.click(await screen.findByRole("button", { name: "Continuar" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Crear contraseña" }));
   await waitFor(() => expect(screen.getByLabelText("Contraseña")).toHaveFocus());
   fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
   await waitFor(() => expect(trigger).toHaveFocus());
   fireEvent.click(trigger);
-  fireEvent.click(await screen.findByRole("button", { name: "Continuar" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Crear contraseña" }));
   await waitFor(() => expect(screen.getByLabelText("Contraseña")).toHaveFocus());
+  fireEvent.click(screen.getByRole("button", { name: "Atrás" }));
+  expect(await screen.findByRole("dialog", { name: "Notas privadas" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Crear contraseña" }));
   fill("Contraseña", "Abcd1!");
   fill("Confirmar contraseña", "Abcd1!");
-  fill("Pregunta de seguridad 1", "Ciudad");
-  fill("Pregunta de seguridad 2", "Animal");
   fill("Respuesta 1", "Lima");
   fill("Respuesta 2", "Gato");
-  fireEvent.click(screen.getByRole("button", { name: "Crear contraseña" }));
+  fireEvent.click(screen.getByRole("button", { name: "Guardar y bloquear" }));
+  await screen.findByRole("heading", { name: "Esta nota es privada" });
+  expect(screen.queryByRole("button", { name: "Exportar" })).toBeNull();
+  fill("Contraseña", "Abcd1!");
+  fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
   await screen.findByRole("button", { name: "Quitar privada" });
   await waitFor(() =>
     expect(document.querySelector(".cm-content")).toHaveTextContent("Contenido secreto"),
   );
   act(() => f.visibility(false));
-  await screen.findByText("Contenido privado bloqueado");
+  await screen.findByText("Esta nota es privada");
   act(() => f.visibility(true));
   fill("Contraseña", "incorrecta");
   fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
-  await screen.findByText("Demasiados intentos. Espera 3 segundos.");
+  await screen.findByText("Contraseña incorrecta. Quedan 4 intentos antes de esperar 30 s.");
   fill("Contraseña", "Abcd1!");
   fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
   await waitFor(() =>
@@ -196,13 +201,15 @@ it("configura, bloquea, rechaza contraseña errónea, desbloquea y restablece si
   act(() => f.visibility(false));
   act(() => f.visibility(true));
   fireEvent.click(await screen.findByRole("button", { name: "¿Olvidaste la contraseña?" }));
-  await waitFor(() => expect(screen.getByLabelText("Ciudad")).toHaveFocus());
+  await waitFor(() =>
+    expect(screen.getByLabelText("¿Cómo se llamaba tu primera mascota?")).toHaveFocus(),
+  );
   fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
-  await waitFor(() => expect(screen.getByRole("button", { name: "Quitar privada" })).toHaveFocus());
+  await waitFor(() => expect(screen.getByRole("heading", { name: "Visible" })).toHaveFocus());
   fireEvent.click(screen.getByRole("button", { name: "¿Olvidaste la contraseña?" }));
   const dialog = await screen.findByRole("dialog");
-  fill("Ciudad", "Lima");
-  fill("Animal", "Gato");
+  fill("¿Cómo se llamaba tu primera mascota?", "Lima");
+  fill("¿En qué ciudad naciste?", "Gato");
   fireEvent.change(within(dialog).getByLabelText("Contraseña"), { target: { value: "Nuevo2!" } });
   fill("Confirmar contraseña", "Nuevo2!");
   fireEvent.click(within(dialog).getByRole("button", { name: "Restablecer contraseña" }));
@@ -245,8 +252,8 @@ it("guarda cambios privados antes de bloquear y detecta la caducidad del backend
   expect(methods.indexOf("update")).toBeLessThan(methods.indexOf("vaultLock"));
   expect(f.note().body_md).toBe("Contenido secreto editado");
   expect(document.body).not.toHaveTextContent("Contenido secreto");
-  expect(screen.getByRole("button", { name: "Copiar nota" })).toBeDisabled();
-  expect(screen.getByRole("button", { name: "Exportar" })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Copiar nota" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Exportar" })).toBeNull();
   act(() => f.visibility(true));
   fill("Contraseña", "Abcd1!");
   fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
@@ -254,6 +261,6 @@ it("guarda cambios privados antes de bloquear y detecta la caducidad del backend
     expect(document.querySelector(".cm-content")).toHaveTextContent("Contenido secreto editado"),
   );
   f.expire();
-  await screen.findByText("Contenido privado bloqueado", {}, { timeout: 2000 });
+  await screen.findByText("Esta nota es privada", {}, { timeout: 2000 });
   expect(document.querySelector(".cm-content")).toBeNull();
 });

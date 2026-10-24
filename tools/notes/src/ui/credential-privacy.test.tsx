@@ -26,7 +26,7 @@ it("advierte antes de quitar privacidad: cerrar conserva el cifrado, aceptar la 
   const card = document.querySelector(".ld-credential");
   if (!(card instanceof HTMLElement)) throw new Error("Tarjeta ausente");
   expect(card.innerHTML).not.toContain("clave-privada");
-  const copy = within(card).getAllByRole("button", { name: "Copiar" })[1];
+  const copy = within(card).getByRole("button", { name: "Copiar Contraseña" });
   if (!copy) throw new Error("Control de copia ausente");
   await act(async () => fireEvent.click(copy));
   expect(f.client.ui.copyText).toHaveBeenCalledWith("clave-privada");

@@ -23,6 +23,7 @@ export function NoteList({
   selectedId,
   trashed,
   archived = false,
+  vaultUnlocked = false,
   onArchive,
   onSelect,
   onTrash,
@@ -33,6 +34,7 @@ export function NoteList({
   selectedId: string | null;
   trashed: boolean;
   archived?: boolean;
+  vaultUnlocked?: boolean;
   onArchive?: (note: Note) => void;
   onSelect: (id: string) => void;
   onTrash: (id: string) => void;
@@ -46,17 +48,29 @@ export function NoteList({
           key={note.id}
           variant="card"
           containerClassName={`note-card rounded-ld-md ${selectedId === note.id ? "bg-accent-soft border-accent" : "bg-bg border-transparent"}`}
+          className={note.private ? "private-note-card" : undefined}
           aria-label={note.title || t("untitled")}
           title={
-            query.trim() ? (
-              <Highlighted text={note.title || t("untitled")} query={query} />
-            ) : (
-              note.title || t("untitled")
-            )
+            <>
+              {note.private && (
+                <Lock
+                  size={15}
+                  className={`note-card-lock ${selectedId === note.id ? "text-accent-soft-fg" : "text-muted"}`}
+                  aria-label={t("vault.private")}
+                />
+              )}
+              {query.trim() ? (
+                <Highlighted text={note.title || t("untitled")} query={query} />
+              ) : (
+                note.title || t("untitled")
+              )}
+            </>
           }
           secondaryText={
             note.private ? (
-              <Lock size={14} aria-label={t("vault.private")} />
+              vaultUnlocked ? null : (
+                t("vault.listLocked")
+              )
             ) : query.trim() ? (
               <Highlighted text={noteSummary(note.body_md, note.title, query)} query={query} />
             ) : (

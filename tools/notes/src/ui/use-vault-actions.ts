@@ -18,7 +18,7 @@ export function useVaultActions(
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const running = useRef(false);
-  const run = async (operation: () => Promise<void>) => {
+  const run = async (operation: () => Promise<void>, recovery = false) => {
     if (running.current) return false;
     running.current = true;
     setBusy(true);
@@ -32,10 +32,15 @@ export function useVaultActions(
           ? reason.message
           : String((reason as { message?: string })?.message ?? "");
       const seconds = /Wait (\d+) seconds/.exec(message)?.[1];
+      const remaining = /Invalid credentials\. (\d+) attempts left/.exec(message)?.[1];
       setError(
         seconds
           ? t("vault.wait", { seconds })
-          : t(message.includes("Wait") ? "vault.waitAgain" : "vault.invalid"),
+          : remaining
+            ? t(recovery ? "vault.answersRemaining" : "vault.passwordRemaining", {
+                count: Number(remaining),
+              })
+            : t(message.includes("Wait") ? "vault.waitAgain" : "vault.invalid"),
       );
       return false;
     } finally {
@@ -106,8 +111,9 @@ export function useVaultActions(
         }
         if (request !== document.epoch.current || !id || !(await write(id))) return;
         await client.backend.invoke("setPrivate", { id, private: true });
+        await client.backend.invoke("vaultLock", {});
         setDialog(null);
-        await refresh(true);
+        await refresh();
         await reload();
       });
     },
@@ -129,6 +135,6 @@ export function useVaultActions(
           return;
         }
         await refresh(true);
-      }),
+      }, true),
   };
 }

@@ -42,6 +42,7 @@ export function VaultPanels({ vault }: { vault: ReturnType<typeof useVault> }) {
       )}
       {vault.dialog === "setup" && (
         <PasswordSetup
+          onBack={() => vault.setDialog("notice")}
           onClose={onClose}
           error={vault.error}
           busy={vault.busy}

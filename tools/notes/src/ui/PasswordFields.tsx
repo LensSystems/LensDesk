@@ -1,5 +1,6 @@
-import { Input } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
+import { PasswordStrength } from "./PasswordStrength.tsx";
+import { SecretField } from "./SecretField.tsx";
 export function PasswordFields({
   password,
   confirmation,
@@ -14,23 +15,34 @@ export function PasswordFields({
   const { t } = useTranslation();
   return (
     <>
-      <p>{t("vault.rules")}</p>
-      <Input
-        label={t("vault.password")}
-        type="password"
-        autoComplete="new-password"
-        value={password}
-        onChange={(event) => onPassword(event.target.value)}
-        required
-      />
-      <Input
-        label={t("vault.confirmation")}
-        type="password"
-        autoComplete="new-password"
-        value={confirmation}
-        onChange={(event) => onConfirmation(event.target.value)}
-        required
-      />
+      <div className="grid gap-1.5">
+        <SecretField
+          label={t("vault.password")}
+          secret
+          autoComplete="new-password"
+          value={password}
+          onChange={(event) => onPassword(event.target.value)}
+          required
+        />
+        <PasswordStrength password={password} />
+      </div>
+      <div className="grid gap-1">
+        <SecretField
+          label={t("vault.confirmation")}
+          secret
+          autoComplete="new-password"
+          value={confirmation}
+          onChange={(event) => onConfirmation(event.target.value)}
+          required
+        />
+        {confirmation && (
+          <p
+            className={`text-xs leading-[17.4px] ${password === confirmation ? "text-success" : "text-muted"}`}
+          >
+            {t(password === confirmation ? "vault.matches" : "vault.mismatch")}
+          </p>
+        )}
+      </div>
     </>
   );
 }

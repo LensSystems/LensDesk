@@ -109,10 +109,13 @@ export function createVault(options: { now?: () => number; scrypt?: ScryptParams
       }
     } catch {
       failures++;
-      if (failures >= 5) retryAt = now() + Math.min(300_000, 1000 * 2 ** Math.min(failures - 5, 9));
+      if (failures >= 5)
+        retryAt = now() + Math.min(300_000, 30_000 * 2 ** Math.min(failures - 5, 9));
       throw new LensError(
         "E_PERMISSION_DENIED",
-        failures >= 5 ? "Invalid credentials. Wait before trying again" : "Invalid credentials",
+        failures >= 5
+          ? `Too many attempts. Wait ${Math.ceil((retryAt - now()) / 1000)} seconds`
+          : `Invalid credentials. ${5 - failures} attempts left`,
       );
     }
   }

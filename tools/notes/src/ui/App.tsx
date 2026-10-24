@@ -78,6 +78,7 @@ export function App({ client }: { client: Client }) {
           ) : (
             <div className="workspace">
               <NotesSidebar
+                vaultUnlocked={vault.status.unlocked}
                 notes={state.notes}
                 selectedId={state.selectedId}
                 query={state.query}
@@ -136,6 +137,7 @@ export function App({ client }: { client: Client }) {
                     locked={!vault.ready}
                     readOnly={vault.readOnly}
                     onPrivate={() => void vault.toggle()}
+                    onLock={() => void vault.lock()}
                     onCopyCode={(code) => client.ui.copyText(code)}
                     note={{ ...state.selected, body_md: body }}
                     onChange={updateBody}

@@ -16,10 +16,13 @@ export function credentialCard(
     { title: data.labels.note ?? "", value: value.note, secret: false },
   ];
   return `<section class="ld-credential"><header>${keyIcon}<strong>${escapeHtml(data.labels.title ?? "")}</strong></header>${fields
-    .map((field) => {
+    .map((field, position) => {
+      const note = position === fields.length - 1;
+      const label = (action: string) =>
+        escapeHtml((data.labels[action] ?? "").replace("{{name}}", field.title));
       const index = data.fields.push(field) - 1;
       const control = `data-credential="${CREDENTIAL_TOKEN}" data-field="${index}"`;
-      return `<div><strong>${escapeHtml(field.title)}</strong><span data-credential-value="${index}">${field.secret ? "•••••••" : escapeHtml(field.value)}</span>${field.secret ? `<button type="button" ${control} data-action="reveal" aria-label="${escapeHtml(data.labels.show ?? "")}" title="${escapeHtml(data.labels.show ?? "")}">${eyeIcon}</button>` : ""}<button type="button" ${control} data-action="copy" aria-label="${escapeHtml(data.labels.copy ?? "")}" title="${escapeHtml(data.labels.copy ?? "")}">${copyIcon}</button></div>`;
+      return `<div${note ? ' class="credential-note"' : ""}><strong>${escapeHtml(field.title)}</strong><span class="${field.secret ? "font-mono" : ""}" data-credential-value="${index}">${field.secret ? "*******" : escapeHtml(field.value)}</span>${field.secret ? `<button type="button" ${control} data-action="reveal" aria-label="${label("show")}" title="${label("show")}">${eyeIcon}</button>` : ""}${note ? "" : `<button type="button" ${control} data-action="copy" aria-label="${label("copy")}" title="${label("copy")}">${copyIcon}</button>`}</div>`;
     })
     .join("")}</section>\n`;
 }

@@ -69,6 +69,20 @@ export function useVault(
   }, [client, clear, current, refresh, setDialog]);
   return {
     ...actions,
+    lock: async () => {
+      const snapshot = current.current;
+      const saving =
+        snapshot.loaded && snapshot.loaded.body !== snapshot.body
+          ? persistRef.current(snapshot.loaded.id, snapshot.body)
+          : Promise.resolve();
+      onLock();
+      clear();
+      locking.current = saving
+        .catch(() => undefined)
+        .then(() => client.backend.invoke("vaultLock", {}))
+        .catch(() => undefined);
+      await locking.current;
+    },
     body: document.body,
     setBody: document.setBody,
     save: document.save,

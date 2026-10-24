@@ -32,6 +32,7 @@ export function Editor({
   onExport,
   onRename,
   onPrivate,
+  onLock,
   locked = false,
   readOnly = false,
   children,
@@ -39,6 +40,7 @@ export function Editor({
   spellcheck?: boolean;
   client?: ReturnType<typeof createToolClient>;
   onPrivate?: () => void;
+  onLock?: () => void;
   locked?: boolean;
   readOnly?: boolean;
   children?: ReactNode;
@@ -53,6 +55,7 @@ export function Editor({
   onRename: (title: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const headerActions = { onPrivate, onLock, onMode, onBlur, onCopy, onExport, onRename };
   const host = useRef<HTMLDivElement>(null);
   const editorLabel = useRef(t("edit"));
   const editable = useRef(new Compartment());
@@ -133,9 +136,7 @@ export function Editor({
   }, [note.body_md]);
   return (
     <section className="editor-panel">
-      <EditorHeader
-        {...{ note, preview, locked, onPrivate, onMode, onBlur, onCopy, onExport, onRename }}
-      />
+      <EditorHeader {...{ note, preview, locked }} {...headerActions} />
       {locked ? (
         children
       ) : (

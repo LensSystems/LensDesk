@@ -40,7 +40,7 @@ it("un fallo de autoguardado conserva el texto, muestra el error y reintenta al 
   await edit(" nuevo");
   await waitFor(() => expect(f.row().body_md).toBe("Original borrador nuevo"), { timeout: 2000 });
 });
-it.each(["ocultar", "permiso", "inactividad"])(
+it.each(["ocultar", "permiso", "inactividad", "candado"])(
   "recupera el borrador después de %s y lo vuelve a guardar",
   async (cause) => {
     const f = vaultTestClient();
@@ -50,9 +50,11 @@ it.each(["ocultar", "permiso", "inactividad"])(
       f.fail("E_INTERNAL");
       act(() => f.visibility(false));
     }
+    if (cause === "candado")
+      fireEvent.click(screen.getByRole("button", { name: "Bloquear notas privadas" }));
     if (cause === "permiso") f.fail("E_PERMISSION_DENIED");
     if (cause === "inactividad") f.expire();
-    await screen.findByText("Contenido privado bloqueado", {}, { timeout: 2000 });
+    await screen.findByText("Esta nota es privada", {}, { timeout: 2000 });
     expect(document.body).not.toHaveTextContent("Original borrador");
     if (cause === "ocultar")
       await waitFor(() => expect(f.invoke).toHaveBeenCalledWith("vaultLock", {}));
@@ -62,7 +64,11 @@ it.each(["ocultar", "permiso", "inactividad"])(
     await waitFor(() =>
       expect(document.querySelector(".cm-content")).toHaveTextContent("Original borrador"),
     );
-    await screen.findByText(restored);
+    if (cause !== "candado") await screen.findByText(restored);
+    else {
+      const methods = f.invoke.mock.calls.map(([method]) => method);
+      expect(methods.indexOf("update")).toBeLessThan(methods.indexOf("vaultLock"));
+    }
     await waitFor(() => expect(f.row().body_md).toBe("Original borrador"), { timeout: 2000 });
   },
 );

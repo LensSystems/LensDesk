@@ -47,17 +47,15 @@ it("setup congela el editor y usa el cuerpo vigente antes del update", async () 
   const f = vaultTestClient(false, false);
   render(<App client={f.client as never} />);
   fireEvent.click(await screen.findByRole("button", { name: "Hacer privada" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Continuar" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Crear contraseña" }));
   const fill = (label: string, value: string) =>
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
   fill("Contraseña", "Abcd1!");
   fill("Confirmar contraseña", "Abcd1!");
-  fill("Pregunta de seguridad 1", "Ciudad");
-  fill("Pregunta de seguridad 2", "Animal");
   fill("Respuesta 1", "Lima");
   fill("Respuesta 2", "Gato");
   const release = f.delaySetup();
-  fireEvent.click(screen.getByRole("button", { name: "Crear contraseña" }));
+  fireEvent.click(screen.getByRole("button", { name: "Guardar y bloquear" }));
   append(" vigente");
   expect(editor().state.readOnly).toBe(true);
   await act(async () => release());

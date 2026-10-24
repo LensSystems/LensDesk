@@ -54,7 +54,7 @@ it("una nota privada bloqueada no expone el editor ni su menú Insertar", () => 
   mount(true, true);
   expect(screen.queryByRole("textbox", { name: "Editar" })).toBeNull();
   expect(screen.queryByRole("menuitem", { name: "Contraseña…" })).toBeNull();
-  expect(screen.getByRole("radio", { name: "Editar" })).toBeDisabled();
+  expect(screen.queryByRole("radio", { name: "Editar" })).toBeNull();
 });
 it("habilita Contraseña en privadas desbloqueadas, inserta y permite editar el bloque", async () => {
   mount(true);
@@ -66,10 +66,11 @@ it("habilita Contraseña en privadas desbloqueadas, inserta y permite editar el 
   fireEvent.change(await screen.findByLabelText("Usuario"), { target: { value: "Ada" } });
   fireEvent.change(screen.getByLabelText("Contraseña"), { target: { value: "clave" } });
   fireEvent.change(screen.getByLabelText("Notas"), { target: { value: "Acceso local" } });
-  fireEvent.click(screen.getByRole("button", { name: "Texto secreto" }));
-  fireEvent.change(screen.getByLabelText("Título del campo"), { target: { value: "PIN" } });
-  fireEvent.change(screen.getByLabelText("Texto secreto"), { target: { value: "4321" } });
-  fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+  fireEvent.keyDown(screen.getByRole("button", { name: "Añadir campo" }), { key: "ArrowDown" });
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Texto secreto" }));
+  fireEvent.change(screen.getByLabelText("Nombre del campo"), { target: { value: "PIN" } });
+  fireEvent.change(screen.getByLabelText("PIN"), { target: { value: "4321" } });
+  fireEvent.click(screen.getByRole("button", { name: "Insertar" }));
   expect(view.state.doc.toString()).toContain("```credential");
   expect(parseCredential(view.state.doc.toString())).toEqual({
     user: "Ada",
@@ -82,7 +83,7 @@ it("habilita Contraseña en privadas desbloqueadas, inserta y permite editar el 
   fireEvent.click(openMenu());
   expect(await screen.findByLabelText("Usuario")).toHaveValue("Ada");
   fireEvent.change(screen.getByLabelText("Usuario"), { target: { value: "Grace" } });
-  fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+  fireEvent.click(screen.getByRole("button", { name: "Insertar" }));
   expect(parseCredential(view.state.doc.toString()).user).toBe("Grace");
   expect(view.state.doc.toString().match(/```credential/g)).toHaveLength(1);
 });

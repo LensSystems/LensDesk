@@ -108,3 +108,24 @@ it("oculta las estrellas en Archivadas incluso para notas fijadas", () => {
   rerender(<NoteList {...props} selectedId={null} />);
   expect(screen.queryByRole("img", { name: "Fijada" })).toBeNull();
 });
+
+it("muestra Bloqueada y mantiene el candado sin revelar contenido al desbloquear", () => {
+  const props = {
+    notes: [{ ...base, private: true, body_md: "No revelar" }],
+    selectedId: "a",
+    trashed: false,
+    onSelect: vi.fn(),
+    onTrash: vi.fn(),
+    onPin: vi.fn(),
+  };
+  const { rerender } = render(<NoteList {...props} />, { wrapper: TooltipProvider });
+  expect(screen.getByRole("button", { name: "Activa" })).toHaveTextContent("Bloqueada");
+  expect(screen.getByLabelText("Nota privada")).toHaveClass(
+    "note-card-lock",
+    "text-accent-soft-fg",
+  );
+  rerender(<NoteList {...props} vaultUnlocked />);
+  expect(screen.queryByText("Bloqueada")).toBeNull();
+  expect(screen.queryByText("No revelar")).toBeNull();
+  expect(screen.getByLabelText("Nota privada")).toHaveClass("note-card-lock");
+});

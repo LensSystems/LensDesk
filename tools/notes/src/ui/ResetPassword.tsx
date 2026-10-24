@@ -1,8 +1,9 @@
-import { Button, Input } from "@lensdesk/ui";
+import { Button } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PasswordFields } from "./PasswordFields.tsx";
 import { validPassword } from "./password-validation.ts";
+import { SecretField } from "./SecretField.tsx";
 import { VaultDialog } from "./VaultDialog.tsx";
 export function ResetPassword({
   questions,
@@ -24,17 +25,16 @@ export function ResetPassword({
   return (
     <VaultDialog title={t("vault.reset")} onClose={onClose}>
       <form
-        className="grid gap-3"
+        className="grid gap-[14px]"
         onSubmit={(event) => {
           event.preventDefault();
           if (validPassword(password, confirmation)) onSubmit(password, answers);
         }}
       >
         {([0, 1] as const).map((index) => (
-          <Input
+          <SecretField
             key={index}
-            label={questions[index]}
-            type="password"
+            label={questions[index] ?? ""}
             required
             value={answers[index]}
             onChange={(event) =>
@@ -49,15 +49,27 @@ export function ResetPassword({
           onPassword={setPassword}
           onConfirmation={setConfirmation}
         />
-        {error && <p role="alert">{error}</p>}
-        <Button
-          type="submit"
-          disabled={
-            busy || !validPassword(password, confirmation) || answers.some((value) => !value.trim())
-          }
-        >
-          {t("vault.reset")}
-        </Button>
+        {error && (
+          <p role="alert" className="text-xs text-danger">
+            {error}
+          </p>
+        )}
+        <footer className="vault-footer">
+          <Button type="button" onClick={onClose}>
+            {t("cancel")}
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={
+              busy ||
+              !validPassword(password, confirmation) ||
+              answers.some((value) => !value.trim())
+            }
+          >
+            {t("vault.reset")}
+          </Button>
+        </footer>
       </form>
     </VaultDialog>
   );

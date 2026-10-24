@@ -104,13 +104,28 @@ it("bloquea tras diez minutos y aplica una espera creciente desde el quinto fall
   repo.setPrivate({ id: item.id, private: true });
   advance(600_000);
   expect(() => repo.get({ id: item.id })).toThrow();
-  for (let i = 0; i < 5; i++) expect(() => repo.vaultUnlock({ password: "errónea" })).toThrow();
-  expect(() => repo.vaultUnlock({ password: "Abc123!" })).toThrow(/Wait/);
-  advance(1000);
-  expect(() => repo.vaultUnlock({ password: "errónea" })).toThrow();
-  advance(1000);
-  expect(() => repo.vaultUnlock({ password: "Abc123!" })).toThrow(/Wait/);
-  advance(1000);
+  for (let i = 1; i < 5; i++) {
+    expect(() => repo.vaultUnlock({ password: "errónea" })).toThrow(
+      `Invalid credentials. ${5 - i} attempts left`,
+    );
+  }
+  expect(() => repo.vaultUnlock({ password: "errónea" })).toThrow(
+    "Too many attempts. Wait 30 seconds",
+  );
+  expect(() => repo.vaultUnlock({ password: "Abc123!" })).toThrow(
+    "Too many attempts. Wait 30 seconds",
+  );
+  advance(30_000);
+  for (const seconds of [60, 120, 240, 300, 300]) {
+    expect(() => repo.vaultReset({ password: "Nueva1!", answers: ["no", "no"] })).toThrow(
+      `Too many attempts. Wait ${seconds} seconds`,
+    );
+    advance(seconds * 1000 - 1000);
+    expect(() => repo.vaultUnlock({ password: "Abc123!" })).toThrow(
+      "Too many attempts. Wait 1 seconds",
+    );
+    advance(1000);
+  }
   repo.vaultUnlock({ password: "Abc123!" });
   expect(repo.get({ id: item.id }).body_md).toBe("secreto");
   vault.lock();

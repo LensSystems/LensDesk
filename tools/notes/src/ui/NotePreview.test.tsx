@@ -102,16 +102,16 @@ it("mantiene secretos fuera del DOM y copia desde memoria; ignora controles fals
   expect(container.innerHTML).not.toContain("9876");
   await act(async () => fireEvent.click(screen.getByRole("button", { name: "Falso" })));
   expect(copy).not.toHaveBeenCalled();
-  const copyPassword = screen.getAllByRole("button", { name: "Copiar" })[1];
+  const copyPassword = screen.getByRole("button", { name: "Copiar Contraseña" });
   if (!copyPassword) throw new Error("Falta el botón de copiar");
   await act(async () => fireEvent.click(copyPassword));
   expect(copy).toHaveBeenLastCalledWith("secreto-unico");
   expect(container.innerHTML).not.toContain("secreto-unico");
-  const reveal = screen.getAllByRole("button", { name: "Mostrar secreto" })[0];
+  const reveal = screen.getByRole("button", { name: "Mostrar Contraseña" });
   if (!reveal) throw new Error("Falta el ojo");
   fireEvent.click(reveal);
   expect(container.textContent).toContain("secreto-unico");
-  fireEvent.click(screen.getByRole("button", { name: "Ocultar secreto" }));
+  fireEvent.click(screen.getByRole("button", { name: "Ocultar Contraseña" }));
   expect(container.innerHTML).not.toContain("secreto-unico");
   expect(screen.queryByRole("button", { name: "Copiar código" })).toBeNull();
 });
@@ -126,7 +126,7 @@ it("confirma la copia de un campo durante exactamente dos segundos sin revelar e
         onCopyCode={async () => {}}
       />,
     );
-    const button = screen.getAllByRole("button", { name: "Copiar" })[1];
+    const button = screen.getByRole("button", { name: "Copiar Contraseña" });
     if (!button) throw new Error("Falta el botón de copiar");
     await act(async () => fireEvent.click(button));
     expect(button).toHaveTextContent("Copiado");
@@ -134,9 +134,23 @@ it("confirma la copia de un campo durante exactamente dos segundos sin revelar e
     act(() => vi.advanceTimersByTime(1999));
     expect(button).toHaveTextContent("Copiado");
     act(() => vi.advanceTimersByTime(1));
-    expect(button).toHaveAttribute("aria-label", "Copiar");
+    expect(button).toHaveAttribute("aria-label", "Copiar Contraseña");
     expect(button).not.toHaveTextContent("Copiado");
   } finally {
     vi.useRealTimers();
   }
+});
+
+it("la fila Notas no tiene controles de copiar ni mostrar", () => {
+  render(
+    <NotePreview
+      privateNote
+      body={"```credential\nuser: Ada\npassword: secreta\nnote: Acceso local\n```"}
+      onCopyCode={vi.fn(async () => {})}
+    />,
+  );
+  expect(screen.getByText("Acceso local").parentElement?.querySelector("button")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Copiar Notas" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Mostrar Notas" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Copiar Usuario" })).toBeInTheDocument();
 });
