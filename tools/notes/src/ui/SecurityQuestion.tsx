@@ -11,6 +11,9 @@ import { useTranslation } from "react-i18next";
 import { SecretField } from "./SecretField.tsx";
 export const questionKeys = ["pet", "city", "school", "friend", "street", "job"] as const;
 export function SecurityQuestion({
+  invalid,
+  onBlur,
+  "aria-describedby": describedBy,
   index,
   question,
   excluded,
@@ -18,6 +21,9 @@ export function SecurityQuestion({
   onQuestion,
   onAnswer,
 }: {
+  invalid?: boolean;
+  onBlur?: () => void;
+  "aria-describedby"?: string;
   index: number;
   question: string;
   excluded: string;
@@ -53,6 +59,9 @@ export function SecurityQuestion({
         </Select>
       </div>
       <SecretField
+        invalid={invalid}
+        onBlur={onBlur}
+        aria-describedby={describedBy}
         hideLabel
         label={t("vault.answer", { number: index + 1 })}
         placeholder={t("vault.answerPlaceholder")}

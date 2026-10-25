@@ -49,7 +49,7 @@ test("notas privadas: configurar, bloquear, desbloquear y recuperar el contenido
       await tool.getByRole("button", { name: "Desbloquear", exact: true }).click();
     };
     await unlock("errónea");
-    await expect(tool.getByRole("alert")).toContainText("Quedan 4 intentos antes de esperar 30 s");
+    await expect(tool.getByRole("alert")).toContainText("4 intentos más antes de esperar 30 s");
     await unlock("Abcd1!");
     await expect(tool.locator(".cm-content")).toHaveText("Contenido privado persistente");
     await expect(tool.getByRole("button", { name: "Quitar privada", exact: true })).toBeVisible();

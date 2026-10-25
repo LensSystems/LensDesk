@@ -8,6 +8,7 @@ import es from "../../locales/es.json";
 import { App } from "./App.tsx";
 import type { Note } from "./NoteList.tsx";
 import { validPassword } from "./password-validation.ts";
+import { normalLockout } from "./vault-lockout.ts";
 
 beforeAll(async () => {
   await i18n.use(initReactI18next).init({
@@ -29,6 +30,7 @@ function fake(privateNote = false, unlocked = false) {
   };
   let configured = privateNote;
   let password = "Abcd1!";
+  const failures = { vaultUnlock: 0, vaultReset: 0 };
   let questions = ["Ciudad", "Animal"];
   let visibility = (_visible: boolean) => {};
   let resolveGet: (() => void) | undefined;
@@ -36,7 +38,14 @@ function fake(privateNote = false, unlocked = false) {
   const invoke = vi.fn(async (method: string, args: Record<string, unknown>) => {
     if (method === "list" || method === "search")
       return [{ ...note, body_md: note.private ? "" : note.body_md }];
-    if (method === "vaultStatus") return { configured, unlocked, questions };
+    if (method === "vaultStatus")
+      return {
+        configured,
+        unlocked,
+        questions,
+        privateCount: note.private ? 1 : 0,
+        lockout: normalLockout,
+      };
     if (method === "vaultLock") {
       unlocked = false;
       return {};
@@ -52,9 +61,16 @@ function fake(privateNote = false, unlocked = false) {
       if (
         (method === "vaultUnlock" && args.password !== password) ||
         (method === "vaultReset" && JSON.stringify(args.answers) !== '["Lima","Gato"]')
-      )
-        throw { code: "E_PERMISSION_DENIED", message: "Invalid credentials. 4 attempts left" };
+      ) {
+        failures[method] += 1;
+        throw {
+          code: "E_PERMISSION_DENIED",
+          message: `Invalid credentials. ${5 - failures[method]} attempts left`,
+        };
+      }
       if (method === "vaultReset") password = args.password as string;
+      failures.vaultUnlock = 0;
+      failures.vaultReset = 0;
       unlocked = true;
       return {};
     }
@@ -192,7 +208,28 @@ it("configura, bloquea, rechaza contraseña errónea, desbloquea y restablece si
   act(() => f.visibility(true));
   fill("Contraseña", "incorrecta");
   fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
-  await screen.findByText("Contraseña incorrecta. Quedan 4 intentos antes de esperar 30 s.");
+  await screen.findByText("Contraseña incorrecta. 4 intentos más antes de esperar 30 s.");
+  fireEvent.click(screen.getByRole("button", { name: "¿Olvidaste la contraseña?" }));
+  expect(
+    await screen.findByRole("dialog", { name: "Restablecer contraseña" }),
+  ).not.toHaveTextContent("Contraseña incorrecta");
+  fill("¿Cómo se llamaba tu primera mascota?", "no");
+  fill("¿En qué ciudad naciste?", "no");
+  fill("Contraseña", "Nueva1!");
+  fill("Confirmar contraseña", "Nueva1!");
+  fireEvent.click(screen.getByRole("button", { name: "Restablecer contraseña" }));
+  await screen.findByText("Respuestas incorrectas. Quedan 4 intentos antes de esperar 30 s.");
+  fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+  expect(screen.queryByRole("alert")).toBeNull();
+  fill("Contraseña", "incorrecta");
+  fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
+  await screen.findByText("Contraseña incorrecta. 3 intentos más antes de esperar 30 s.");
+  fireEvent.click(screen.getByRole("button", { name: "¿Olvidaste la contraseña?" }));
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.getByLabelText("¿Cómo se llamaba tu primera mascota?")).toHaveValue("");
+  expect(screen.getByLabelText("Contraseña")).toHaveValue("");
+  expect(screen.getByLabelText("Contraseña")).not.toHaveAttribute("aria-invalid");
+  fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
   fill("Contraseña", "Abcd1!");
   fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
   await waitFor(() =>

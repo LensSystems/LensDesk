@@ -1,11 +1,13 @@
 import { ConfirmDialog } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
+import { AttemptLimitNotice } from "./AttemptLimitNotice.tsx";
 import { PasswordSetup } from "./PasswordSetup.tsx";
 import { PrivateNotice } from "./PrivateNotice.tsx";
 import { ResetPassword } from "./ResetPassword.tsx";
-import { UnlockPanel } from "./UnlockPanel.tsx";
 import type { useVault } from "./use-vault.ts";
 import { VaultDialog } from "./VaultDialog.tsx";
+import { VaultUnlock } from "./VaultUnlock.tsx";
+import { WipeVaultDialog } from "./WipeVaultDialog.tsx";
 export function VaultPanels({ vault }: { vault: ReturnType<typeof useVault> }) {
   const { t } = useTranslation();
   const onClose = () => vault.setDialog(null);
@@ -25,16 +27,7 @@ export function VaultPanels({ vault }: { vault: ReturnType<typeof useVault> }) {
       />
       {vault.dialog === "unlock" && (
         <VaultDialog title={t("vault.unlock")} onClose={onClose}>
-          <UnlockPanel
-            error={vault.error}
-            busy={vault.busy}
-            onSubmit={(password) =>
-              void vault.unlock(password).then((success) => {
-                if (success) void vault.toggle().then(onClose);
-              })
-            }
-            onForgot={() => vault.setDialog("reset")}
-          />
+          <VaultUnlock vault={vault} protecting />
         </VaultDialog>
       )}
       {vault.dialog === "notice" && (
@@ -56,8 +49,36 @@ export function VaultPanels({ vault }: { vault: ReturnType<typeof useVault> }) {
           onClose={onClose}
           error={vault.error}
           busy={vault.busy}
+          lockout={vault.status.lockout}
           questions={vault.status.questions}
           onSubmit={(password, answers) => void vault.reset(password, answers)}
+        />
+      )}
+      {vault.dialog === "limit" && (
+        <AttemptLimitNotice
+          onClose={vault.dismissAttemptNotice}
+          onWipe={() => vault.setDialog("wipe")}
+        />
+      )}
+      <ConfirmDialog
+        open={vault.dialog === "exhausted"}
+        tone="danger"
+        title={t("vault.exhausted")}
+        description={t("vault.lastFailed")}
+        cancelLabel={t("close")}
+        confirmLabel={t("vault.wipe")}
+        onOpenChange={(open) => {
+          if (!open) vault.dismissAttemptNotice();
+        }}
+        onConfirm={() => vault.setDialog("wipe")}
+      />
+      {vault.dialog === "wipe" && (
+        <WipeVaultDialog
+          privateCount={vault.status.privateCount}
+          busy={vault.busy}
+          error={vault.error}
+          onClose={vault.dismissAttemptNotice}
+          onConfirm={() => void vault.wipe()}
         />
       )}
     </>

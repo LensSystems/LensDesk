@@ -1,5 +1,5 @@
 import { Button } from "@lensdesk/ui";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { validAnswer } from "./answer-validation.ts";
 import { PasswordFields } from "./PasswordFields.tsx";
@@ -24,6 +24,9 @@ export function PasswordSetup({
   const [confirmation, setConfirmation] = useState("");
   const [questions, setQuestions] = useState<[string, string]>(["pet", "city"]);
   const [answers, setAnswers] = useState<[string, string]>(["", ""]);
+  const answerId = useId();
+  const [touched, setTouched] = useState([false, false]);
+  const invalidAnswers = answers.map((answer, index) => touched[index] && !validAnswer(answer));
   const valid = validPassword(password, confirmation) && answers.every(validAnswer);
   return (
     <VaultDialog title={t("vault.setup")} onClose={onClose}>
@@ -49,6 +52,9 @@ export function PasswordSetup({
         <p className="text-[13px] text-muted">{t("vault.questionsHelp")}</p>
         {([0, 1] as const).map((index) => (
           <SecurityQuestion
+            invalid={invalidAnswers[index]}
+            onBlur={() => setTouched((old) => old.map((value, i) => value || i === index))}
+            aria-describedby={answerId}
             key={index}
             index={index}
             question={questions[index]}
@@ -62,7 +68,12 @@ export function PasswordSetup({
             }
           />
         ))}
-        <p className="text-xs text-muted">{t("vault.answerLength")}</p>
+        <p
+          id={answerId}
+          className={`text-xs ${invalidAnswers.some(Boolean) ? "text-danger" : "text-muted"}`}
+        >
+          {t("vault.answerLength")}
+        </p>
         {error && (
           <p role="alert" className="text-xs text-danger">
             {error}

@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import type { Note } from "./NoteList.tsx";
+import { normalLockout } from "./vault-lockout.ts";
 export function vaultTestClient(privateNote = true, configured = true) {
   let row: Note = {
     id: "one",
@@ -21,7 +22,13 @@ export function vaultTestClient(privateNote = true, configured = true) {
     if (method === "list") return [{ ...row, body_md: row.private ? "" : row.body_md }];
     if (method === "vaultStatus") {
       await statusGate;
-      return { configured, unlocked, questions: ["Ciudad", "Animal"] };
+      return {
+        configured,
+        unlocked,
+        questions: ["Ciudad", "Animal"],
+        privateCount: row.private ? 1 : 0,
+        lockout: normalLockout,
+      };
     }
     if (method === "vaultSetup") {
       await setupGate;

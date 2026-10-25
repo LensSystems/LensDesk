@@ -3,6 +3,7 @@ import { type InputHTMLAttributes, type ReactNode, useId, useState } from "react
 import { useTranslation } from "react-i18next";
 
 export function SecretField({
+  invalid = false,
   label,
   secret = false,
   compact = false,
@@ -14,6 +15,7 @@ export function SecretField({
   className = "",
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
+  invalid?: boolean;
   label: string;
   secret?: boolean;
   compact?: boolean;
@@ -32,9 +34,12 @@ export function SecretField({
       >
         {label}
       </label>
-      <div className="secret-field-control flex items-center gap-1 rounded-ld-md border border-border-control bg-bg">
+      <div
+        className={`secret-field-control flex items-center gap-1 rounded-ld-md border ${invalid ? "border-danger" : "border-border-control"} bg-bg`}
+      >
         <input
           {...props}
+          aria-invalid={invalid || undefined}
           maxLength={maxLength}
           onChange={(event) => {
             if (maxLength === undefined || [...event.target.value].length <= maxLength)

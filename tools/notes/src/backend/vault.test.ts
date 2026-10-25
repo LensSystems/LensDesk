@@ -116,8 +116,8 @@ it("bloquea tras diez minutos y aplica una espera creciente desde el quinto fall
     "Too many attempts. Wait 30 seconds",
   );
   advance(30_000);
-  for (const seconds of [60, 120, 240, 300, 300]) {
-    expect(() => repo.vaultReset({ password: "Nueva1!", answers: ["no", "no"] })).toThrow(
+  for (const seconds of [60, 120, 240, 300]) {
+    expect(() => repo.vaultUnlock({ password: "errónea" })).toThrow(
       `Too many attempts. Wait ${seconds} seconds`,
     );
     advance(seconds * 1000 - 1000);
@@ -217,5 +217,24 @@ it("limpia restos de una base anterior a secure_delete al crear la bóveda", () 
     if (existsSync(file))
       expect(readFileSync(file).includes(Buffer.from("historialantiguo"))).toBe(false);
   }
+  db.close();
+});
+
+it.each(["password", "recovery"])("el éxito de %s limpia ambos contadores", (purpose) => {
+  const { repo, db, vault, advance } = setup();
+  const wrongPassword = () => repo.vaultUnlock({ password: "errónea" });
+  const wrongRecovery = () => repo.vaultReset({ password: "Nueva1!", answers: ["no", "no"] });
+  for (let i = 0; i < 4; i++) expect(wrongPassword).toThrow();
+  expect(wrongRecovery).toThrow("Invalid credentials. 4 attempts left");
+  expect(wrongPassword).toThrow("Wait 30 seconds");
+  // La espera de contraseña permite seguir intentando respuestas.
+  expect(wrongRecovery).toThrow("Invalid credentials. 3 attempts left");
+  if (purpose === "password") {
+    advance(30_000);
+    repo.vaultUnlock({ password: "Abc123!" });
+  } else repo.vaultReset({ password: "Nueva1!", answers: ["mexico", "maria jose"] });
+  expect(wrongPassword).toThrow("Invalid credentials. 4 attempts left");
+  expect(wrongRecovery).toThrow("Invalid credentials. 4 attempts left");
+  vault.lock();
   db.close();
 });

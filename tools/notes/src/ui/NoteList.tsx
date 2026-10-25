@@ -8,6 +8,7 @@ export type Note = {
   title: string;
   body_md: string;
   private?: boolean;
+  orphaned?: boolean;
   pinned: boolean;
   created_at: string;
   updated_at: string;
@@ -52,7 +53,7 @@ export function NoteList({
           aria-label={note.title || t("untitled")}
           title={
             <>
-              {note.private && (
+              {(note.private || note.orphaned) && (
                 <Lock
                   size={15}
                   className={`note-card-lock ${selectedId === note.id ? "text-accent-soft-fg" : "text-muted"}`}
@@ -67,7 +68,9 @@ export function NoteList({
             </>
           }
           secondaryText={
-            note.private ? (
+            note.orphaned ? (
+              t("vault.orphaned")
+            ) : note.private ? (
               vaultUnlocked ? null : (
                 t("vault.listLocked")
               )
@@ -80,7 +83,7 @@ export function NoteList({
           selected={selectedId === note.id}
           onClick={() => onSelect(note.id)}
           actions={
-            !trashed && selectedId === note.id ? (
+            !note.orphaned && !trashed && selectedId === note.id ? (
               <>
                 {!archived && !note.archived_at && (
                   <IconButton
@@ -119,7 +122,7 @@ export function NoteList({
                   <Trash2 size={15} strokeWidth={2} aria-hidden="true" />
                 </IconButton>
               </>
-            ) : !trashed && !archived && !note.archived_at && note.pinned ? (
+            ) : !note.orphaned && !trashed && !archived && !note.archived_at && note.pinned ? (
               <Star
                 className="note-pin text-warning"
                 size={14}

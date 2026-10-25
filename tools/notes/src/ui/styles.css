@@ -481,7 +481,7 @@ body {
 .credential-input .secret-field-control {
   padding-left: 10px;
 }
-.secret-field-control:focus-within {
+.secret-field-control:not(:has(input[aria-invalid="true"])):focus-within {
   border-color: var(--ld-accent);
 }
 .secret-field-control input {

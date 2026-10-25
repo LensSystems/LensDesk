@@ -6,11 +6,11 @@ import { Editor } from "./Editor.tsx";
 import { EmptyNote } from "./EmptyNote.tsx";
 import { NotesSidebar } from "./NotesSidebar.tsx";
 import { TrashView } from "./TrashView.tsx";
-import { UnlockPanel } from "./UnlockPanel.tsx";
 import { useAutosave } from "./use-autosave.ts";
 import { useNotes } from "./use-notes.ts";
 import { useVault } from "./use-vault.ts";
 import { VaultPanels } from "./VaultPanels.tsx";
+import { VaultUnlock } from "./VaultUnlock.tsx";
 
 type Client = ReturnType<typeof createToolClient>;
 
@@ -123,6 +123,14 @@ export function App({ client }: { client: Client }) {
                     onCopyCode={(code) => client.ui.copyText(code)}
                     note={{ ...state.selected, body_md: body }}
                     onRestore={() => void state.restore(state.selected?.id ?? "")}
+                    onDelete={async () => {
+                      try {
+                        await client.backend.invoke("deleteForever", { id: state.selected?.id });
+                        await state.load();
+                      } catch (reason) {
+                        await state.fail(reason);
+                      }
+                    }}
                   />
                 ) : (
                   <Editor
@@ -150,12 +158,7 @@ export function App({ client }: { client: Client }) {
                     {vault.status.unlocked ? (
                       <p role="status">{t("loading")}</p>
                     ) : (
-                      <UnlockPanel
-                        error={vault.error}
-                        busy={vault.busy}
-                        onSubmit={(password) => void vault.unlock(password)}
-                        onForgot={() => vault.setDialog("reset")}
-                      />
+                      vault.dialog !== "reset" && <VaultUnlock vault={vault} />
                     )}
                   </Editor>
                 )

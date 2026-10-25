@@ -41,9 +41,9 @@ it("muestra fuerza, confirmación y preguntas distintas; envía sus textos", asy
     "4",
   );
   fill("Contraseña", "Abcdef1!");
-  expect(screen.getByText("✓ 8 de 10 caracteres")).toBeInTheDocument();
+  expect(screen.getByText("✓ 6 a 10 caracteres")).toBeInTheDocument();
   expect(screen.getByText("✓ carácter especial")).toBeInTheDocument();
-  expect(screen.queryByText("○ minúscula")).toBeNull();
+  expect(screen.getByText("✓ minúscula")).toHaveClass("text-success");
   fireEvent.click(screen.getByRole("button", { name: "Mostrar Contraseña" }));
   expect(screen.getByLabelText("Contraseña")).toHaveAttribute("type", "text");
   fireEvent.click(screen.getByRole("button", { name: "Ocultar Contraseña" }));

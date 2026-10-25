@@ -1,5 +1,5 @@
 import type { createToolClient } from "@lensdesk/sdk";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { credentialFences } from "./credential-fences.ts";
 import type { VaultStatus } from "./use-vault.ts";
@@ -12,14 +12,21 @@ export function useVaultActions(
   reload: () => Promise<boolean>,
 ) {
   const { t } = useTranslation();
-  const [dialog, setDialog] = useState<
-    "notice" | "setup" | "reset" | "unlock" | "unprotect" | null
+  const [dialog, updateDialog] = useState<
+    "notice" | "setup" | "reset" | "unlock" | "unprotect" | "limit" | "exhausted" | "wipe" | null
   >(null);
   const [error, setError] = useState("");
+  const view = useRef(0);
+  const setDialog = useCallback((next: typeof dialog) => {
+    view.current++;
+    setError("");
+    updateDialog(next);
+  }, []);
   const [busy, setBusy] = useState(false);
   const running = useRef(false);
   const run = async (operation: () => Promise<void>, recovery = false) => {
     if (running.current) return false;
+    const requestView = view.current;
     running.current = true;
     setBusy(true);
     setError("");
@@ -33,15 +40,27 @@ export function useVaultActions(
           : String((reason as { message?: string })?.message ?? "");
       const seconds = /Wait (\d+) seconds/.exec(message)?.[1];
       const remaining = /Invalid credentials\. (\d+) attempts left/.exec(message)?.[1];
-      setError(
-        seconds
-          ? t("vault.wait", { seconds })
-          : remaining
-            ? t(recovery ? "vault.answersRemaining" : "vault.passwordRemaining", {
-                count: Number(remaining),
-              })
-            : t(message.includes("Wait") ? "vault.waitAgain" : "vault.invalid"),
-      );
+      const next = await Promise.resolve(refresh()).catch(() => undefined);
+      if (
+        requestView === view.current &&
+        visible.current &&
+        (message.startsWith("Attempt limit reached") || message === "No attempts left")
+      ) {
+        setDialog(message === "No attempts left" ? "exhausted" : "limit");
+        return false;
+      }
+      if (requestView === view.current)
+        setError(
+          seconds
+            ? next?.lockout
+              ? ""
+              : t("vault.wait", { seconds })
+            : remaining
+              ? t(recovery ? "vault.answersRemaining" : "vault.passwordRemaining", {
+                  count: Number(remaining),
+                })
+              : t(message.includes("Wait") ? "vault.waitAgain" : "vault.invalid"),
+        );
       return false;
     } finally {
       running.current = false;
@@ -59,6 +78,7 @@ export function useVaultActions(
     } else await client.backend.invoke("update", { id, body_md: snapshot.publicBody });
     return true;
   };
+  const wiped = useRef(false);
   const pending = useRef<{ id: string; epoch: number } | null>(null);
   const toggle = (confirmed = false) => {
     const target = document.current.current.note;
@@ -96,10 +116,23 @@ export function useVaultActions(
     dialog,
     setDialog,
     error,
+    dismissAttemptNotice: () =>
+      setDialog(
+        document.current.current.note && !document.current.current.note.private ? "unlock" : null,
+      ),
     busy,
     readOnly: busy || dialog !== null,
     toggle: () => toggle(),
     confirmUnprotect: () => toggle(true),
+    wipe: () =>
+      run(async () => {
+        await client.backend.invoke("vaultWipe", {});
+        wiped.current = true;
+        document.discard();
+        await refresh();
+        await reload();
+        if (visible.current) setDialog("notice");
+      }),
     setup: (password: string, questions: [string, string], answers: [string, string]) => {
       const id = document.current.current.note?.id;
       const request = document.epoch.current;
@@ -109,8 +142,11 @@ export function useVaultActions(
           await client.backend.invoke("vaultLock", {});
           return;
         }
-        if (request !== document.epoch.current || !id || !(await write(id))) return;
-        await client.backend.invoke("setPrivate", { id, private: true });
+        if (wiped.current) wiped.current = false;
+        else {
+          if (request !== document.epoch.current || !id || !(await write(id))) return;
+          await client.backend.invoke("setPrivate", { id, private: true });
+        }
         await client.backend.invoke("vaultLock", {});
         setDialog(null);
         await refresh();

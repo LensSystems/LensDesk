@@ -1,6 +1,8 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 import { LensError } from "@lensdesk/sdk/errors";
 
+import { type AttemptStore, createAttempts } from "./vault-attempts.ts";
+
 export type ScryptParams = { N: number; r: number; p: number; length: number };
 type Ciphertext = { nonce: string; tag: string; data: string };
 type Wrap = { salt: string; params: ScryptParams; secret: Ciphertext };
@@ -45,14 +47,15 @@ function open(key: Buffer, value: Ciphertext, aad: string): Buffer {
   cipher.setAuthTag(Buffer.from(value.tag, "base64"));
   return Buffer.concat([cipher.update(Buffer.from(value.data, "base64")), cipher.final()]);
 }
-export function createVault(options: { now?: () => number; scrypt?: ScryptParams } = {}) {
+export function createVault(
+  options: { now?: () => number; scrypt?: ScryptParams; attempts?: AttemptStore } = {},
+) {
   const now = options.now ?? Date.now;
   const params = options.scrypt ?? defaults;
   let key: Buffer | undefined;
   let lastUse = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let failures = 0;
-  let retryAt = 0;
+  const attempts = createAttempts(now, options.attempts);
   function lock() {
     key?.fill(0);
     key = undefined;
@@ -93,11 +96,7 @@ export function createVault(options: { now?: () => number; scrypt?: ScryptParams
     text: string,
     purpose: "password" | "recovery",
   ) {
-    if (now() < retryAt)
-      throw new LensError(
-        "E_PERMISSION_DENIED",
-        `Too many attempts. Wait ${Math.ceil((retryAt - now()) / 1000)} seconds`,
-      );
+    attempts.check(purpose);
     try {
       if (!record) throw new Error("Unavailable");
       const value = record[purpose];
@@ -108,27 +107,20 @@ export function createVault(options: { now?: () => number; scrypt?: ScryptParams
         derived.fill(0);
       }
     } catch {
-      failures++;
-      if (failures >= 5)
-        retryAt = now() + Math.min(300_000, 30_000 * 2 ** Math.min(failures - 5, 9));
-      throw new LensError(
-        "E_PERMISSION_DENIED",
-        failures >= 5
-          ? `Too many attempts. Wait ${Math.ceil((retryAt - now()) / 1000)} seconds`
-          : `Invalid credentials. ${5 - failures} attempts left`,
-      );
+      return attempts.fail(purpose);
     }
   }
   const answers = (values: [string, string]) => JSON.stringify(values.map(normalizeAnswer));
   function activate(value: Buffer) {
     lock();
     key = value;
-    failures = 0;
-    retryAt = 0;
+    attempts.reset();
     touch();
   }
   return {
     lock,
+    lockout: attempts.status,
+    resetAttempts: attempts.reset,
     unlocked() {
       if (key && now() - lastUse >= 600_000) lock();
       return Boolean(key);

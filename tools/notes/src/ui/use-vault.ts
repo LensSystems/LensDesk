@@ -4,7 +4,14 @@ import type { Note } from "./NoteList.tsx";
 import { useVaultActions } from "./use-vault-actions.ts";
 import { useVaultDocument } from "./use-vault-document.ts";
 
-export type VaultStatus = { configured: boolean; unlocked: boolean; questions: string[] };
+import { normalLockout, type VaultLockout } from "./vault-lockout.ts";
+export type VaultStatus = {
+  configured: boolean;
+  unlocked: boolean;
+  questions: string[];
+  privateCount: number;
+  lockout: VaultLockout;
+};
 export function useVault(
   client: ReturnType<typeof createToolClient>,
   note: Note | null,
@@ -15,6 +22,8 @@ export function useVault(
     configured: false,
     unlocked: false,
     questions: [],
+    privateCount: 0,
+    lockout: normalLockout,
   });
   const visible = useRef(true);
   const locking = useRef<Promise<unknown>>(Promise.resolve());
@@ -86,7 +95,7 @@ export function useVault(
     body: document.body,
     setBody: document.setBody,
     save: document.save,
-    ready: !note?.private || (status.unlocked && document.loaded?.id === note.id),
+    ready: note?.orphaned || !note?.private || (status.unlocked && document.loaded?.id === note.id),
     status,
     message: document.message,
     // Cambia al bloquear, ocultar o cambiar de nota: invalida copias y exportaciones en curso.

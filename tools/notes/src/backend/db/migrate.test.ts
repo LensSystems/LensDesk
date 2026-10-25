@@ -10,7 +10,7 @@ it("migra una copia de la base anterior sin cambiar títulos, fechas ni otros da
     const original = join(directory, "original");
     let db = openNotesDatabase(original);
     db.exec(
-      "DROP TABLE vault; DROP TABLE notes; DROP TABLE notes_fts; DELETE FROM schema_migrations WHERE version >= 2;",
+      "DROP TABLE vault_attempts; DROP TABLE vault; DROP TABLE notes; DROP TABLE notes_fts; DELETE FROM schema_migrations WHERE version >= 2;",
     );
     db.exec(readFileSync(new URL("./migrations/001_init.sql", import.meta.url), "utf8"));
     const bodies = [
@@ -77,6 +77,7 @@ it("migra una copia de la base anterior sin cambiar títulos, fechas ni otros da
         ...row,
         archived_at: null,
         private: 0,
+        orphaned: 0,
         secret: null,
         body_md: expectedBodies[index],
       })),

@@ -100,7 +100,7 @@ export function useVaultDocument(
     [persist],
   );
   const id = note?.id;
-  const privateNote = note?.private;
+  const privateNote = note?.private && !note.orphaned;
   useEffect(() => {
     const request = ++epoch.current;
     setLoaded(null);
@@ -123,5 +123,9 @@ export function useVaultDocument(
       epoch.current++;
     };
   }, [client, id, privateNote, unlocked, clear, t]);
-  return { body, setBody, loaded, clear, save, persist, settle, current, epoch, message };
+  const discard = () => {
+    clear();
+    drafts.current.clear();
+  };
+  return { body, setBody, loaded, clear, discard, save, persist, settle, current, epoch, message };
 }
