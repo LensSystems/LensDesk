@@ -101,7 +101,7 @@
 .ld-update-link {
   text-decoration-color: transparent;
 }
-.ld-update-link:is(:hover, :focus-visible) {
+.ld-update-link:is(:hover, :focus-visible:not([data-modalidad="puntero"] *)) {
   text-decoration-color: currentColor;
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -111,7 +111,7 @@
   .ld-update-arrow {
     transition: transform var(--ld-motion-fast) var(--ld-ease-out);
   }
-  .ld-update-link:is(:hover, :focus-visible) .ld-update-arrow {
+  .ld-update-link:is(:hover, :focus-visible:not([data-modalidad="puntero"] *)) .ld-update-arrow {
     transform: translate(2px, -2px);
   }
 }

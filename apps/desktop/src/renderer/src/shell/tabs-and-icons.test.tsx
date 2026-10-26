@@ -354,7 +354,7 @@ describe("pestañas", () => {
       expect(tab.parentElement).toHaveClass("relative");
       expect(tab.firstElementChild).toHaveClass(
         "group-hover:-translate-x-[9.5px]",
-        "group-has-[:focus-visible]:-translate-x-[9.5px]",
+        "group-has-[:focus-visible:not([data-modalidad=puntero]_*)]:-translate-x-[9.5px]",
         "duration-[140ms]",
         "ease-out",
         "motion-reduce:transition-none",
@@ -400,7 +400,7 @@ describe("pestañas", () => {
     for (const name of [
       "opacity-0",
       "group-hover:opacity-100",
-      "group-has-[:focus-visible]:opacity-100",
+      "group-has-[:focus-visible:not([data-modalidad=puntero]_*)]:opacity-100",
       "transition-opacity",
       "duration-[140ms]",
       "ease-out",

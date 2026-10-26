@@ -16,9 +16,9 @@ it("funde el subrayado y mueve solo la flecha con movimiento permitido", () => {
   );
   expect(css).toMatch(/\.ld-update-link\s*\{\s*text-decoration-color: transparent;/);
   expect(css).toMatch(
-    /\.ld-update-link:is\(:hover, :focus-visible\)\s*\{\s*text-decoration-color: currentColor;/,
+    /\.ld-update-link:is\(:hover, :focus-visible:not\(\[data-modalidad="puntero"\] \*\)\)\s*\{\s*text-decoration-color: currentColor;/,
   );
   expect(css).toMatch(
-    /@media \(prefers-reduced-motion: no-preference\)\s*\{\s*\.ld-update-link\s*\{\s*transition: text-decoration-color var\(--ld-motion-fast\) var\(--ld-ease-out\);\s*\}\s*\.ld-update-arrow\s*\{\s*transition: transform var\(--ld-motion-fast\) var\(--ld-ease-out\);\s*\}\s*\.ld-update-link:is\(:hover, :focus-visible\) \.ld-update-arrow\s*\{\s*transform: translate\(2px, -2px\);/,
+    /@media \(prefers-reduced-motion: no-preference\)\s*\{\s*\.ld-update-link\s*\{\s*transition: text-decoration-color var\(--ld-motion-fast\) var\(--ld-ease-out\);\s*\}\s*\.ld-update-arrow\s*\{\s*transition: transform var\(--ld-motion-fast\) var\(--ld-ease-out\);\s*\}\s*\.ld-update-link:is\(:hover, :focus-visible:not\(\[data-modalidad="puntero"\] \*\)\) \.ld-update-arrow\s*\{\s*transform: translate\(2px, -2px\);/,
   );
 });

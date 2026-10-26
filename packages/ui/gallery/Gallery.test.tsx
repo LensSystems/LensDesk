@@ -12,6 +12,8 @@ describe("galería", () => {
       ([name, value]) =>
         name !== "cn" &&
         name !== "applyDocumentContext" &&
+        name !== "trackInputModality" &&
+        name !== "keyboardFocus" &&
         name !== "UiLabelsProvider" &&
         !iconExports.has(value) &&
         (typeof value === "function" ||

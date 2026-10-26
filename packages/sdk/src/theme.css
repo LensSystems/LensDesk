@@ -107,6 +107,27 @@ body {
   outline: 2px solid var(--ld-accent);
   outline-offset: 2px;
 }
+/* Tras un clic, el contorno solo queda en los campos de texto (lo marca trackInputModality). */
+:root[data-modalidad="puntero"]
+:focus-visible:not(
+  :where(
+    input:not(
+      [type="checkbox"],
+      [type="radio"],
+      [type="range"],
+      [type="button"],
+      [type="submit"],
+      [type="reset"],
+      [type="file"],
+      [type="color"]
+    ),
+    textarea,
+    select,
+    [contenteditable]:not([contenteditable="false"])
+  )
+) {
+  outline: none;
+}
 
 /* biome-ignore-start lint/complexity/noImportantStyles: la preferencia de movimiento reducido debe ganar a cualquier transición de un componente */
 @media (prefers-reduced-motion: reduce) {

@@ -1,5 +1,6 @@
 import { Tooltip as Primitive } from "radix-ui";
 import { type ComponentProps, type ReactElement, useEffect, useRef, useState } from "react";
+import { keyboardFocus } from "./input-modality.ts";
 import { TooltipContent } from "./TooltipContent.tsx";
 import { TooltipTarget } from "./TooltipTarget.tsx";
 import { TooltipMotionContext, type TooltipPosition } from "./tooltip-motion.ts";
@@ -50,7 +51,7 @@ export function Tooltip({
     const leave = () => {
       suppressed.current = true;
       // Con foco de teclado en el disparador, la etiqueta sigue visible aunque salga el ratón.
-      if (!trigger.current?.matches(":focus-visible")) setOpen(false);
+      if (!trigger.current || !keyboardFocus(trigger.current)) setOpen(false);
     };
     const blur = () => {
       suppressed.current = true;
@@ -92,7 +93,7 @@ export function Tooltip({
   const changeOpen = (next: boolean) => {
     if (next && (suppressed.current || inactive)) return;
     // Con foco de teclado, que el ratón salga del disparador no la cierra (los demás cierres sí).
-    if (!next && leaving.current && trigger.current?.matches(":focus-visible")) return;
+    if (!next && leaving.current && trigger.current && keyboardFocus(trigger.current)) return;
     setOpen(next);
   };
   if (disabled) return children;

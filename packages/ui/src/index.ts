@@ -90,6 +90,7 @@ export * from "./EmptyState.tsx";
 export * from "./FileDropZone.tsx";
 export * from "./IconButton.tsx";
 export * from "./Input.tsx";
+export { keyboardFocus, trackInputModality } from "./input-modality.ts";
 export * from "./ListItem.tsx";
 export * from "./MarkdownRaw.tsx";
 export * from "./MarkdownView.tsx";

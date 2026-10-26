@@ -83,7 +83,7 @@ export function TabItem({
           type="button"
         >
           <span
-            className={`flex min-w-0 items-center gap-2 ${compact ? "" : "transition-transform duration-[140ms] ease-out group-hover:-translate-x-[9.5px] group-has-[:focus-visible]:-translate-x-[9.5px] motion-reduce:transition-none"}`}
+            className={`flex min-w-0 items-center gap-2 ${compact ? "" : "transition-transform duration-[140ms] ease-out group-hover:-translate-x-[9.5px] group-has-[:focus-visible:not([data-modalidad=puntero]_*)]:-translate-x-[9.5px] motion-reduce:transition-none"}`}
           >
             <Icon aria-hidden="true" className="ld-no-drag shrink-0" size={15} />
             <span data-tab-name className={compact ? "sr-only whitespace-nowrap" : "truncate"}>
@@ -94,7 +94,7 @@ export function TabItem({
         {!compact && (
           <IconButton
             tooltip={false}
-            className="ld-no-drag absolute right-[3px] size-6 shrink-0 opacity-0 transition-opacity duration-[140ms] ease-out group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 motion-reduce:transition-none"
+            className="ld-no-drag absolute right-[3px] size-6 shrink-0 opacity-0 transition-opacity duration-[140ms] ease-out group-hover:opacity-100 group-has-[:focus-visible:not([data-modalidad=puntero]_*)]:opacity-100 motion-reduce:transition-none"
             tooltipSide="left"
             label={t("shell.closeTab", { name })}
             onClick={() => void bridge.invoke("tabs.close", { toolId: tab.toolId })}

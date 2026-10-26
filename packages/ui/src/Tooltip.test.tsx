@@ -14,6 +14,7 @@ Element.prototype.scrollIntoView = vi.fn();
 describe("Tooltip", () => {
   afterEach(() => {
     cleanup();
+    document.documentElement.removeAttribute("data-modalidad");
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -64,6 +65,34 @@ describe("Tooltip", () => {
     });
     expect(screen.getByRole("tooltip").textContent).toBe("Herramientas");
   });
+
+  it.each(["disparador", "ventana"])(
+    "cierra con falso foco de puntero al salir de %s",
+    (salida) => {
+      vi.useFakeTimers();
+      document.documentElement.dataset.modalidad = "puntero";
+      render(
+        <TooltipProvider>
+          <IconButton label="Ajustes">x</IconButton>
+        </TooltipProvider>,
+      );
+      const trigger = screen.getByRole("button", { name: "Ajustes" });
+      const matches = trigger.matches.bind(trigger);
+      vi.spyOn(trigger, "matches").mockImplementation(
+        (selector) => selector === ":focus-visible" || matches(selector),
+      );
+      fireEvent.pointerMove(trigger, { pointerType: "mouse" });
+      act(() => vi.advanceTimersByTime(300));
+      expect(screen.getByRole("tooltip")).toBeTruthy();
+      if (salida === "ventana") fireEvent(document.documentElement, new Event("pointerleave"));
+      else {
+        fireEvent.pointerOut(trigger, { relatedTarget: document.body, pointerType: "mouse" });
+        fireEvent.pointerLeave(trigger, { pointerType: "mouse" });
+      }
+      act(() => vi.advanceTimersByTime(100));
+      expect(screen.queryByRole("tooltip")).toBeNull();
+    },
+  );
 
   it("desplaza la etiqueta vecina desde la última posición visible", async () => {
     vi.useFakeTimers();

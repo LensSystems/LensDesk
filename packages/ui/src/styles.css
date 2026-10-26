@@ -198,7 +198,10 @@
   background: var(--ld-accent-soft);
   color: var(--ld-accent-soft-fg);
 }
-.ld-markdown-view .ld-code-block button[data-copy-code]:focus-visible {
+:root:not([data-modalidad="puntero"])
+  .ld-markdown-view
+  .ld-code-block
+  button[data-copy-code]:focus-visible {
   outline: 2px solid var(--ld-accent);
   outline-offset: 2px;
 }
