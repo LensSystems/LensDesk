@@ -1,4 +1,11 @@
-import { BrushCleaning, ConfirmDialog, FileDropZone, IconButton, Upload } from "@lensdesk/ui";
+import {
+  BrushCleaning,
+  ConfirmDialog,
+  FileDropZone,
+  IconButton,
+  SwapText,
+  Upload,
+} from "@lensdesk/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { QueueCard } from "./QueueCard.tsx";
@@ -19,7 +26,11 @@ export function Queue({
   onCancel: (id: string) => void;
   onClear: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // El número va en su propia pieza, esté donde esté en la frase de cada idioma.
+  const [headingBefore, headingAfter = ""] = t("historyHeading", { count: "\u0000" }).split(
+    "\u0000",
+  );
   const [compact, setCompact] = useState(
     () => window.matchMedia?.("(max-width: 900px)").matches ?? false,
   );
@@ -46,7 +57,14 @@ export function Queue({
       />
       {items.length > 0 && (
         <header className="queue-heading">
-          <h2>{t("historyHeading", { count: items.length })}</h2>
+          <h2>
+            {headingBefore}
+            <SwapText
+              speed="fast"
+              value={new Intl.NumberFormat(i18n.language).format(items.length)}
+            />
+            {headingAfter}
+          </h2>
           <ConfirmDialog
             open={confirmOpen}
             onOpenChange={setConfirmOpen}

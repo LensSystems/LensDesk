@@ -60,7 +60,7 @@ export function FileDropZone({
       aria-disabled={disabled}
       data-dragging={!disabled && dragging}
       className={cn(
-        "grid justify-items-start gap-2 rounded-ld-lg border-2 border-dashed border-border-control bg-surface p-3 text-text data-[dragging=true]:border-accent data-[dragging=true]:bg-accent-soft",
+        "ld-file-drop grid justify-items-start gap-2 rounded-ld-lg border-2 border-dashed border-border-control bg-surface p-3 text-text data-[dragging=true]:border-accent data-[dragging=true]:bg-accent-soft",
         size === "compact" && "flex items-center gap-3 px-3.5",
         disabled && "opacity-60",
         className,

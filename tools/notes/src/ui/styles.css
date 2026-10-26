@@ -557,3 +557,20 @@ body {
 .sidebar-rail button[aria-expanded="true"] {
   background: var(--ld-surface-raised);
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .secret-field-control[data-failure]:not([data-failure="0"]) {
+    animation: ld-shake 200ms var(--ld-ease-out);
+  }
+  .vault-error {
+    animation: error-boveda var(--ld-motion) var(--ld-ease-out);
+  }
+  @keyframes error-boveda {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ExhaustedUnlock } from "./ExhaustedUnlock.tsx";
 import { PausedUnlock } from "./PausedUnlock.tsx";
 import { SecretField } from "./SecretField.tsx";
+import { useVaultFeedback } from "./use-vault-feedback.ts";
 import { normalLockout, secondsLeft, type VaultLockout, visibleAttempt } from "./vault-lockout.ts";
 export function UnlockPanel({
   onSubmit,
@@ -21,6 +22,7 @@ export function UnlockPanel({
   onWipe?: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const failure = useVaultFeedback(busy, error, lockout.password.failures);
   const [password, setPassword] = useState("");
   const attempt = visibleAttempt(lockout, "password");
   const waiting = attempt.stage === "wait" && secondsLeft(attempt) > 0;
@@ -55,6 +57,7 @@ export function UnlockPanel({
         <p className="text-[13px] leading-[18.85px] text-muted">{t("vault.unlockHelp")}</p>
         <div className="text-left">
           <SecretField
+            failure={failure}
             label={t("vault.password")}
             maxLength={10}
             secret
@@ -81,7 +84,11 @@ export function UnlockPanel({
           </p>
         )}
         {error && !waiting && (
-          <p role="alert" className="text-left text-xs leading-[17.4px] text-danger">
+          <p
+            key={failure}
+            role="alert"
+            className="vault-error text-left text-xs leading-[17.4px] text-danger"
+          >
             {error}
           </p>
         )}

@@ -304,4 +304,128 @@
   .ld-swap-new {
     animation: ld-text-in var(--ld-motion) var(--ld-ease-out) both;
   }
+  .ld-swap-text[data-speed="fast"] > :is(.ld-swap-old, .ld-swap-new) {
+    animation-duration: var(--ld-motion-fast);
+  }
+  .ld-file-drop {
+    transform-origin: center;
+    transition:
+      border-color var(--ld-motion) var(--ld-ease-out),
+      background-color var(--ld-motion) var(--ld-ease-out),
+      transform var(--ld-motion) var(--ld-ease-out);
+  }
+  .ld-file-drop[data-dragging="true"] {
+    transform: scale(1.01);
+  }
+}
+
+.ld-esqueleto {
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+}
+.ld-esqueleto-bloques {
+  display: flex;
+  gap: 12px;
+  height: 100%;
+}
+.ld-esqueleto-lista {
+  width: 324px;
+  max-width: 44%;
+  flex: none;
+  padding: 12px;
+  background: var(--ld-surface);
+  border-radius: var(--ld-radius-md);
+}
+.ld-esqueleto-tarjeta {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--ld-border);
+}
+.ld-esqueleto-documento {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+  background: var(--ld-surface);
+  border-radius: var(--ld-radius-md);
+}
+.ld-esqueleto-bloques span {
+  display: block;
+  height: 12px;
+  background: var(--ld-border);
+}
+.ld-esqueleto-bloques span:nth-child(3n + 1) {
+  width: 64%;
+}
+.ld-esqueleto-documento span:first-child {
+  height: 24px;
+  margin-bottom: 16px;
+}
+.ld-esqueleto-documento span:last-child {
+  width: 48%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-copy-motion] {
+    transition: width var(--ld-motion) var(--ld-ease-out);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  [data-copy-motion] > :not(.copia-saliente) {
+    animation: entrada-copia var(--ld-motion) var(--ld-ease-out);
+  }
+  [data-copy-motion] > .copia-saliente {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: inherit;
+    pointer-events: none;
+    animation: salida-copia var(--ld-motion) var(--ld-ease-out) forwards;
+  }
+  @keyframes entrada-copia {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes salida-copia {
+    to {
+      opacity: 0;
+      transform: scale(0.6);
+      filter: blur(2px);
+    }
+  }
+
+  .ld-esqueleto-bloques {
+    animation: ld-carga-latido 1.2s ease-in-out infinite;
+  }
+  .ld-carga-entrada {
+    animation: ld-carga-aparicion var(--ld-motion-slow) var(--ld-ease-out);
+  }
+  @keyframes ld-carga-latido {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+  @keyframes ld-carga-aparicion {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }

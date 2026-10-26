@@ -1,5 +1,5 @@
 import type { createToolClient } from "@lensdesk/sdk";
-import { ConfirmDialog, Notice, TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
+import { ConfirmDialog, Notice, Skeleton, TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Editor } from "./Editor.tsx";
@@ -73,9 +73,7 @@ export function App({ client }: { client: Client }) {
             />
           )}
           {vault.message && vault.ready && <Notice tone="warning" title={vault.message} />}
-          {state.loading ? (
-            <p>{t("loading")}</p>
-          ) : (
+          <Skeleton loading={state.loading} variant="notes" label={t("loading")}>
             <div className="workspace">
               <NotesSidebar
                 vaultUnlocked={vault.status.unlocked}
@@ -156,7 +154,9 @@ export function App({ client }: { client: Client }) {
                     }}
                   >
                     {vault.status.unlocked ? (
-                      <p role="status">{t("loading")}</p>
+                      <Skeleton loading label={t("loading")}>
+                        <div />
+                      </Skeleton>
                     ) : (
                       vault.dialog !== "reset" && <VaultUnlock vault={vault} />
                     )}
@@ -171,7 +171,7 @@ export function App({ client }: { client: Client }) {
                 />
               )}
             </div>
-          )}
+          </Skeleton>
           <VaultPanels vault={vault} />
           <ConfirmDialog
             open={confirmingEmpty}

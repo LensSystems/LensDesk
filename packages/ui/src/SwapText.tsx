@@ -3,6 +3,7 @@ import { cn } from "./cn.ts";
 
 export type SwapTextProps = {
   value: string;
+  speed?: "fast";
   children?: ReactNode;
   className?: string;
   wrap?: (content: ReactNode) => ReactNode;
@@ -16,6 +17,7 @@ export function SwapText({
   className,
   wrap,
   align = "start",
+  speed,
 }: SwapTextProps) {
   const [state, setState] = useState({ value, old: null as ReactNode });
   const root = useRef<HTMLSpanElement>(null);
@@ -49,7 +51,11 @@ export function SwapText({
     return () => clearTimeout(timer);
   }, [moving, state.value]);
   const content = (
-    <span ref={root} className={cn("ld-swap-text", align === "end" && "ld-swap-end", className)}>
+    <span
+      ref={root}
+      data-speed={speed}
+      className={cn("ld-swap-text", align === "end" && "ld-swap-end", className)}
+    >
       {moving && (
         <span
           key={state.value}

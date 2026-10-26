@@ -1,4 +1,4 @@
-import { Check, Copy, Eye, EyeOff, KeyRound } from "@lensdesk/ui";
+import { Check, Copy, changeCopyState, Eye, EyeOff, KeyRound } from "@lensdesk/ui";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -12,16 +12,22 @@ export const keyIcon = icon(KeyRound);
 export const checkIcon = icon(Check);
 
 export function confirmCopy(button: HTMLButtonElement, label: string) {
-  button.replaceChildren();
-  const icon = document.createElement("span");
-  icon.innerHTML = checkIcon;
-  button.append(icon, document.createTextNode(label));
-  button.classList.add("copy-confirmation");
-  button.setAttribute("aria-label", label);
+  changeCopyState(button, () => {
+    button.replaceChildren();
+    const icon = document.createElement("span");
+    icon.innerHTML = checkIcon;
+    const text = document.createElement("span");
+    text.textContent = label;
+    button.append(icon, text);
+    button.classList.add("copy-confirmation");
+    button.setAttribute("aria-label", label);
+  });
 }
 
 export function resetCopy(button: HTMLButtonElement, label: string) {
-  button.innerHTML = copyIcon;
-  button.classList.remove("copy-confirmation");
-  button.setAttribute("aria-label", label);
+  changeCopyState(button, () => {
+    button.innerHTML = copyIcon;
+    button.classList.remove("copy-confirmation");
+    button.setAttribute("aria-label", label);
+  });
 }

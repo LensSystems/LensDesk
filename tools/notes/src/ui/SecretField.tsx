@@ -1,8 +1,16 @@
 import { Eye, EyeOff } from "@lensdesk/ui";
-import { type InputHTMLAttributes, type ReactNode, useId, useState } from "react";
+import {
+  type InputHTMLAttributes,
+  type ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 export function SecretField({
+  failure = 0,
   invalid = false,
   label,
   secret = false,
@@ -15,6 +23,7 @@ export function SecretField({
   className = "",
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
+  failure?: number;
   invalid?: boolean;
   label: string;
   secret?: boolean;
@@ -26,6 +35,18 @@ export function SecretField({
   const { t } = useTranslation();
   const id = useId();
   const [shown, setShown] = useState(false);
+  const control = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = control.current;
+    if (!element || !failure) return;
+    // Reinicia incluso si el fallo anterior sigue en movimiento.
+    element.removeAttribute("data-failure");
+    void element.offsetWidth;
+    element.setAttribute("data-failure", String(failure));
+    // Solo recupera el foco perdido (el campo estuvo desactivado); nunca lo quita de otro control.
+    const active = document.activeElement;
+    if (!active || active === document.body) element.querySelector("input")?.focus();
+  }, [failure]);
   return (
     <div className={`secret-field grid gap-1 ${compact ? "credential-input" : ""}`}>
       <label
@@ -35,6 +56,8 @@ export function SecretField({
         {label}
       </label>
       <div
+        ref={control}
+        data-failure={failure}
         className={`secret-field-control flex items-center gap-1 rounded-ld-md border ${invalid ? "border-danger" : "border-border-control"} bg-bg`}
       >
         <input

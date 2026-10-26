@@ -1,9 +1,10 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { cn } from "./cn.ts";
 import { Progress } from "./Progress.tsx";
 import { useUiLabels } from "./ui-labels.ts";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  ref?: Ref<HTMLButtonElement>;
   variant?: "default" | "primary" | "danger" | "ghost";
   size?: "md" | "lg";
   loading?: boolean;

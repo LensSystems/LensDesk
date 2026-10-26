@@ -2,6 +2,8 @@ import {
   Button,
   Check,
   Copy,
+  changeCopyState,
+  copiedText,
   Eye,
   Lock,
   LockOpen,
@@ -11,6 +13,7 @@ import {
   Upload,
 } from "@lensdesk/ui";
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { editorHeaderBase, editorHeaderResponsive } from "./editor-header-classes.ts";
 import type { Note } from "./NoteList.tsx";
@@ -39,6 +42,11 @@ export function EditorHeader({
   onRename: (title: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const copyButton = useRef<HTMLButtonElement>(null);
+  const updateCopied = (value: boolean) => {
+    if (!copyButton.current) return setCopied(value);
+    changeCopyState(copyButton.current, () => flushSync(() => setCopied(value)));
+  };
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyTimer.current), []);
@@ -125,18 +133,20 @@ export function EditorHeader({
               },
             ]}
           />
-          <Tooltip disabled={copied} label={t(copied ? "copied" : "copyNote")}>
+          {/* Sin desmontar el botón: la etiqueta se apaga sola mientras se ve «Copiado». */}
+          <Tooltip label={t(copied ? "copied" : "copyNote")} visibleTextSelector={copiedText}>
             <Button
               variant="ghost"
+              ref={copyButton}
               className={copied ? "copy-confirmation" : "size-8 shrink-0 p-0 text-muted"}
               aria-label={t(copied ? "copied" : "copyNote")}
               type="button"
               disabled={locked}
               onClick={async () => {
                 if (!(await onCopy())) return;
-                setCopied(true);
+                updateCopied(true);
                 clearTimeout(copyTimer.current);
-                copyTimer.current = setTimeout(() => setCopied(false), 2000);
+                copyTimer.current = setTimeout(() => updateCopied(false), 2000);
               }}
             >
               {copied ? (

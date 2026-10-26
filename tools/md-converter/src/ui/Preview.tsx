@@ -3,6 +3,8 @@ import {
   Button,
   Check,
   Copy,
+  changeCopyState,
+  copiedText,
   EmptyState,
   Eye,
   FileText,
@@ -10,39 +12,24 @@ import {
   MarkdownView,
   Notice,
   SaveMarkdown,
+  Skeleton,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   Tooltip,
 } from "@lensdesk/ui";
-import DOMPurify from "dompurify";
-import MarkdownIt from "markdown-it";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { renderMarkdown } from "./render-markdown.ts";
+
+export { renderMarkdown } from "./render-markdown.ts";
+
 import { SaveAllStack } from "./SaveAllStack.tsx";
 import { errorCode, type QueueItem } from "./use-queue.ts";
 
 type Client = ReturnType<typeof createToolClient>;
-
-const markdown = new MarkdownIt({ html: true, linkify: true });
-
-// Todo HTML generado pasa por DOMPurify; las imágenes solo conservan orígenes data:.
-export function renderMarkdown(source: string): string {
-  DOMPurify.addHook("uponSanitizeAttribute", (node, data) => {
-    if (
-      node.nodeName === "IMG" &&
-      data.attrName === "src" &&
-      !data.attrValue.toLowerCase().startsWith("data:")
-    )
-      data.keepAttr = false;
-  });
-  try {
-    return DOMPurify.sanitize(markdown.render(source));
-  } finally {
-    DOMPurify.removeHook("uponSanitizeAttribute");
-  }
-}
 
 export function Preview({
   client,
@@ -56,6 +43,11 @@ export function Preview({
   onSaved: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const copyButton = useRef<HTMLButtonElement>(null);
+  const updateCopied = (value: boolean) => {
+    if (!copyButton.current) return setCopied(value);
+    changeCopyState(copyButton.current, () => flushSync(() => setCopied(value)));
+  };
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(copyTimer.current), []);
@@ -110,21 +102,23 @@ export function Preview({
             </Tooltip>
           ))}
         </TabsList>
-        <Tooltip disabled={copied} label={t(copied ? "copied" : "copy")}>
+        {/* Sin desmontar el botón: la etiqueta se apaga sola mientras se ve «Copiado». */}
+        <Tooltip label={t(copied ? "copied" : "copy")} visibleTextSelector={copiedText}>
           <Button
             type="button"
             variant="ghost"
+            ref={copyButton}
             className={copied ? "copy-confirmation" : "size-8 p-0 text-muted"}
             aria-label={t(copied ? "copied" : "copy")}
-            disabled={!item}
+            disabled={item?.status !== "done"}
             onClick={() =>
               item &&
               void (async () => {
                 try {
                   await client.ui.copyText(item.markdown);
                   clearTimeout(copyTimer.current);
-                  setCopied(true);
-                  copyTimer.current = setTimeout(() => setCopied(false), 2000);
+                  updateCopied(true);
+                  copyTimer.current = setTimeout(() => updateCopied(false), 2000);
                 } catch (reason) {
                   setNotice(t("errors.generic", { code: errorCode(reason) }));
                 }
@@ -144,7 +138,7 @@ export function Preview({
             type="button"
             className="save-action"
             aria-label={t("save")}
-            disabled={!item}
+            disabled={item?.status !== "done"}
             onClick={() => item && void attempt(() => saveOne(item))}
           >
             <SaveMarkdown chip className="compact-icon" aria-hidden="true" />
@@ -174,18 +168,24 @@ export function Preview({
       {notice && <Notice className="result-notice" tone="info" title={notice} />}
       {(["rendered", "raw"] as const).map((name) => (
         <TabsContent key={name} value={name} className="preview-body">
-          {!item ? (
-            <div className="result-empty">
-              <FileText size={32} aria-hidden="true" />
-              <EmptyState title={t("noResult")} />
-            </div>
-          ) : name === "raw" ? (
-            <pre className="result-column raw-markdown">
-              <code>{item.markdown}</code>
-            </pre>
-          ) : (
-            <MarkdownView className="result-column" html={html} />
-          )}
+          <Skeleton
+            key={item?.id ?? "empty"}
+            loading={item?.status === "queued" || item?.status === "converting"}
+            label={t("loading")}
+          >
+            {item?.status !== "done" ? (
+              <div className="result-empty">
+                <FileText size={32} aria-hidden="true" />
+                <EmptyState title={t("noResult")} />
+              </div>
+            ) : name === "raw" ? (
+              <pre className="result-column raw-markdown">
+                <code>{item.markdown}</code>
+              </pre>
+            ) : (
+              <MarkdownView className="result-column" html={html} />
+            )}
+          </Skeleton>
         </TabsContent>
       ))}
     </Tabs>

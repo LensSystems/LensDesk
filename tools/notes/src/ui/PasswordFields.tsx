@@ -4,11 +4,13 @@ import { PasswordStrength } from "./PasswordStrength.tsx";
 import { validPassword } from "./password-validation.ts";
 import { SecretField } from "./SecretField.tsx";
 export function PasswordFields({
+  failure = 0,
   password,
   confirmation,
   onPassword,
   onConfirmation,
 }: {
+  failure?: number;
   password: string;
   confirmation: string;
   onPassword: (value: string) => void;
@@ -23,6 +25,7 @@ export function PasswordFields({
     <>
       <div className="grid gap-1.5">
         <SecretField
+          failure={failure}
           invalid={invalid}
           onBlur={() => setTouched(([_, second]) => [true, second])}
           aria-describedby={`${id}-requirements`}

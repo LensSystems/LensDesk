@@ -44,7 +44,7 @@ afterEach(() => vi.useRealTimers());
 it("cancelar conserva la cola y confirmar la vacía sin guardar archivos", async () => {
   const client = setup();
   await screen.findByRole("heading", { name: "Resultado" });
-  expect(screen.getByText("Archivos convertidos · 1")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Archivos convertidos · 1" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: es.clearHistory }));
   const dialog = screen.getByRole("dialog");
   expect(dialog).toHaveTextContent("Los archivos .md que ya guardaste no se borran.");

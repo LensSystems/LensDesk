@@ -1,7 +1,9 @@
-import { Badge, Check, CircleAlert, IconButton, ListItem, Save, SwapText, X } from "@lensdesk/ui";
+import { IconButton, ListItem, X } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import { QueueFilename } from "./QueueFilename.tsx";
+import { QueueState } from "./QueueState.tsx";
 import { StatusText } from "./StatusText.tsx";
+import { useCompletionMotion } from "./use-completion-motion.ts";
 import type { QueueItem } from "./use-queue.ts";
 
 export function QueueCard({
@@ -15,11 +17,22 @@ export function QueueCard({
   onSelect: (id: string) => void;
   onCancel: (id: string) => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { motion, clearMotion, root } = useCompletionMotion(item);
   const active = item.status === "queued" || item.status === "converting";
   const progress = Math.round(item.progress * 100);
   return (
-    <li className="min-w-0">
+    <li ref={root} className="min-w-0 fila-conversion">
+      {motion.old?.status === "converting" && (
+        <div
+          className="progreso-saliente queue-progress"
+          style={motion.bar ? { inset: "auto", ...motion.bar } : undefined}
+          aria-hidden="true"
+          inert
+        >
+          <div style={{ width: `${Math.round(motion.old.progress * 100)}%` }} />
+        </div>
+      )}
       <ListItem
         variant="card"
         title={<QueueFilename name={item.file.name} />}
@@ -30,55 +43,17 @@ export function QueueCard({
         containerClassName={`queue-card ${selected ? "queue-card-selected" : ""} ${item.status === "error" ? "border-danger bg-danger-soft" : ""}`}
         actions={
           <>
-            <span className={active ? "queue-status" : "queue-result-status"}>
-              {!active && (item.status === "done" || item.status === "error") && (
-                <span
-                  className={`compact-icon ${item.status === "done" ? "text-success" : "text-danger"}`}
-                  role="img"
-                  aria-label={t(`status.${item.status}`)}
-                >
-                  {item.status === "done" ? (
-                    <Check size={15} aria-hidden="true" />
-                  ) : (
-                    <CircleAlert size={15} aria-hidden="true" />
-                  )}
-                </span>
-              )}
-              <SwapText
-                key="status"
-                align="end"
-                value={t(`status.${item.status}`)}
-                wrap={(content) =>
-                  active ? (
-                    <span>{content}</span>
-                  ) : (
-                    <Badge
-                      className="normal-status"
-                      tone={
-                        item.status === "done"
-                          ? "accent"
-                          : item.status === "error"
-                            ? "danger"
-                            : "neutral"
-                      }
-                    >
-                      {content}
-                    </Badge>
-                  )
-                }
-              />
-              {item.status === "converting" && (
-                <span>
-                  {new Intl.NumberFormat(i18n.language, { style: "percent" }).format(item.progress)}
-                </span>
-              )}
-              {item.status === "done" && item.saved && (
-                <span className="saved-indicator" role="img" aria-label={t("fileSaved")}>
-                  <Save size={16} aria-hidden="true" />
-                  <Check size={8} className="saved-check" aria-hidden="true" />
-                </span>
-              )}
-            </span>
+            <QueueState
+              item={item}
+              motion={motion.done}
+              savedMotion={motion.saved}
+              onEnd={clearMotion}
+            />
+            {motion.old && (
+              <span className="estado-saliente" aria-hidden="true" inert>
+                <QueueState item={motion.old} />
+              </span>
+            )}
             {active && (
               <IconButton
                 tooltip={false}

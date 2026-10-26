@@ -12,10 +12,12 @@ import {
   SaveAll,
   SaveMarkdown,
   SegmentedControl,
+  Skeleton,
   SwapText,
   Toolbar,
 } from "@lensdesk/ui";
 import { useState } from "react";
+import { CopyExample } from "./CopyExample.tsx";
 import { Example } from "./Example.tsx";
 
 export function SharedExamples() {
@@ -33,11 +35,18 @@ export function SharedExamples() {
         <BrushCleaning aria-label="Borrar historial" />
         <Save aria-label="Guardar" />
       </Example>
+      <CopyExample />
+      <Example names={["Skeleton"]}>
+        <Skeleton loading>
+          <div />
+        </Skeleton>
+      </Example>
       <Example names={["SwapText"]}>
         <Button onClick={() => setNotice(notice === "Listo" ? "En cola" : "Listo")}>
           Cambiar estado
         </Button>
         <SwapText value={notice || "En cola"} />
+        <SwapText speed="fast" value={notice || "En cola"} />
       </Example>
       <Example names={["Panel"]}>
         <Panel title="Panel" actions={<Button>Acción</Button>}>

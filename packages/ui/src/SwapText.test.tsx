@@ -42,3 +42,11 @@ it("la capa saliente muestra lo último que se veía aunque children cambiara si
   rerender(<SwapText value="b">Nuevo</SwapText>);
   expect(container.querySelector(".ld-swap-old")).toHaveTextContent("Actualizado");
 });
+
+it("permite texto rápido con la capa anterior inaccesible", () => {
+  const { container, rerender } = render(<SwapText speed="fast" value="1" />);
+  expect(container.querySelector("[data-speed=fast]")).not.toBeNull();
+  rerender(<SwapText speed="fast" value="2" />);
+  expect(container.querySelector(".ld-swap-old")).toHaveAttribute("aria-hidden", "true");
+  expect(container.querySelector(".ld-swap-old")).toHaveAttribute("inert");
+});

@@ -5,6 +5,7 @@ import { validAnswer } from "./answer-validation.ts";
 import { PasswordFields } from "./PasswordFields.tsx";
 import { validPassword } from "./password-validation.ts";
 import { SecretField } from "./SecretField.tsx";
+import { useVaultFeedback } from "./use-vault-feedback.ts";
 import { VaultDialog } from "./VaultDialog.tsx";
 import { normalLockout, secondsLeft, type VaultLockout, visibleAttempt } from "./vault-lockout.ts";
 export function ResetPassword({
@@ -23,6 +24,7 @@ export function ResetPassword({
   lockout?: VaultLockout;
 }) {
   const { t, i18n } = useTranslation();
+  const failure = useVaultFeedback(busy, error, lockout.recovery.failures);
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [answers, setAnswers] = useState<[string, string]>(["", ""]);
@@ -63,6 +65,7 @@ export function ResetPassword({
         ))}
         <PasswordFields
           {...{ password, confirmation }}
+          failure={failure}
           onPassword={setPassword}
           onConfirmation={setConfirmation}
         />
@@ -86,7 +89,7 @@ export function ResetPassword({
           </p>
         )}
         {error && !waiting && (
-          <p role="alert" className="text-xs text-danger">
+          <p key={failure} role="alert" className="vault-error text-xs text-danger">
             {error}
           </p>
         )}

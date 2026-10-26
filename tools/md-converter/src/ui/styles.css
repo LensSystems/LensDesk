@@ -406,3 +406,63 @@ body {
     box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
   }
 }
+
+.fila-conversion {
+  position: relative;
+}
+.queue-card > .col-start-2 {
+  position: relative;
+}
+.estado-saliente,
+.progreso-saliente {
+  position: absolute;
+  pointer-events: none;
+  visibility: hidden;
+}
+.estado-saliente {
+  right: 0;
+  top: 0;
+  width: max-content;
+}
+.progreso-saliente {
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .estado-saliente,
+  .progreso-saliente {
+    visibility: visible;
+    animation: salida-estado var(--ld-motion-slow) var(--ld-ease-out) both;
+  }
+  .queue-result-status[data-motion="on"],
+  .saved-indicator[data-motion="on"] {
+    animation: entrada-estado var(--ld-motion-slow) var(--ld-ease-out) both;
+  }
+  [data-motion="on"] .estado-listo > :is(.ld-swap-old, .ld-swap-new) {
+    animation: none;
+  }
+  [data-motion="on"] .estado-listo > .ld-swap-old {
+    visibility: hidden;
+  }
+  [data-motion="on"] .text-success :is(path, polyline),
+  .saved-indicator[data-motion="on"] .saved-check :is(path, polyline) {
+    stroke-dasharray: 1;
+    animation: ld-check-draw var(--ld-motion-slow) var(--ld-ease-out) both;
+  }
+  @keyframes entrada-estado {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes salida-estado {
+    to {
+      opacity: 0;
+    }
+  }
+}

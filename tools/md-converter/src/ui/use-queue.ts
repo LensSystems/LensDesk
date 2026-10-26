@@ -142,7 +142,10 @@ export function useQueue(client: Client) {
   };
   const markSaved = (id: string) => patch(id, { saved: true }, "done");
 
-  const selected = items.find((item) => item.id === selectedId && item.status === "done") ?? null;
+  const selected =
+    items.find((item) => item.id === selectedId && item.status === "done") ??
+    items.find((item) => item.status === "queued" || item.status === "converting") ??
+    null;
   return { items, add, cancel, clear, markSaved, selected, setSelectedId };
 }
 
