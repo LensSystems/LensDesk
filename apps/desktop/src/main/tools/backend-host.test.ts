@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { createBackendHost } from "./backend-host.ts";
 
@@ -86,7 +87,7 @@ describe("cerrar durante el arranque", () => {
     await expect(first).rejects.toMatchObject({ code: "E_CANCELLED" });
     expect(paths).toEqual([]);
     await host.invoke("notes", "r2", "m", {}, noProgress);
-    expect(paths).toEqual(["/tool-v2/backend/index.js"]);
+    expect(paths).toEqual([join("/tool-v2", "backend/index.js")]);
   });
 });
 
