@@ -32,7 +32,8 @@ export function NoticeText({
       const natural = Math.max(content.scrollWidth, content.getBoundingClientRect().width);
       // Con medio píxel de margen: el redondeo de subpíxeles no cuenta como texto recortado.
       setOverflow(natural > Math.max(node.clientWidth, node.getBoundingClientRect().width) + 0.5);
-      setDistance(natural + 24);
+      // Redondeado: las medidas con decimales cambian en cada lectura y redibujarían sin fin.
+      setDistance(Math.ceil(natural) + 24);
     };
     measure();
     if (typeof ResizeObserver === "undefined") return;
