@@ -100,3 +100,42 @@ for (const width of [1280, 760]) {
     }
   });
 }
+
+test("el tema desliza la píldora solo con puntero y movimiento permitido", async () => {
+  const app = await launchApp();
+  try {
+    const page = await shellPage(app);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.getByRole("button", { name: "Ajustes", exact: true }).click();
+    const group = page.getByRole("radiogroup", { name: "Tema", exact: true });
+    const pill = group.locator(".ld-indicator");
+    await expect(pill).toBeVisible();
+    await expect(group).toHaveAttribute("data-motion", "off");
+    await group.getByRole("radio", { name: "Claro", exact: true }).click();
+    await group.getByRole("radio", { name: "Oscuro", exact: true }).click();
+    await expect(group).toHaveAttribute("data-motion", "on");
+    await expect
+      .poll(() =>
+        pill.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return [
+            style.transitionProperty,
+            style.transitionDuration,
+            style.transitionTimingFunction,
+          ];
+        }),
+      )
+      .toEqual(["transform, width", "0.15s, 0.15s", "ease-out, ease-out"]);
+    await group.getByRole("radio", { name: "Oscuro", exact: true }).press("ArrowLeft");
+    await expect(group).toHaveAttribute("data-motion", "off");
+    await expect.poll(() => pill.evaluate((element) => element.getAnimations().length)).toBe(0);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await group.getByRole("radio", { name: "Oscuro", exact: true }).click();
+    await expect.poll(() => pill.evaluate((element) => element.getAnimations().length)).toBe(0);
+    await expect
+      .poll(() => pill.evaluate((element) => getComputedStyle(element).transitionDuration))
+      .toBe("0s");
+  } finally {
+    await app.close();
+  }
+});

@@ -124,7 +124,8 @@
   border-color: var(--ld-accent);
   background: var(--ld-accent);
 }
-.ld-checkbox:checked::after {
+.ld-checkbox::after {
+  opacity: 0;
   content: "";
   position: absolute;
   left: 9px;
@@ -134,6 +135,9 @@
   border: solid var(--ld-accent-fg);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+.ld-checkbox:checked::after {
+  opacity: 1;
 }
 .ld-switch::before {
   content: "";
@@ -146,13 +150,20 @@
   background: var(--ld-text-muted);
 }
 .ld-switch:checked::before {
-  left: 17px;
+  transform: translateX(16px);
   background: var(--ld-accent-fg);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .ld-tooltip[data-state="closed"] {
-    animation: ld-pop-out 100ms ease-out;
+  .ld-tooltip[data-state="delayed-open"] {
+    animation: ld-pop-in var(--ld-motion-fast) var(--ld-ease-out);
+  }
+  .ld-tooltip[data-travel="start"] {
+    transform: translate(var(--ld-tooltip-x), var(--ld-tooltip-y));
+  }
+  .ld-tooltip[data-travel="end"] {
+    transform: translate(0, 0);
+    transition: transform var(--ld-motion-fast) var(--ld-ease-out);
   }
 }
 
@@ -194,4 +205,73 @@
 .ld-markdown-view .ld-code-block figcaption {
   color: var(--ld-text-muted);
   font-size: 12px;
+}
+
+.ld-selector {
+  position: relative;
+  isolation: isolate;
+}
+.ld-indicator {
+  position: absolute;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.ld-selector[data-indicator="ready"] .ld-option:is([data-state="checked"], [data-state="active"]) {
+  background: transparent;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ld-selector[data-motion="on"] > .ld-indicator {
+    transition:
+      transform var(--ld-motion) var(--ld-ease-out),
+      width var(--ld-motion) var(--ld-ease-out);
+  }
+  .ld-option {
+    transition: color var(--ld-motion) var(--ld-ease-out);
+  }
+}
+
+/* Movimiento de los controles. */
+@media (prefers-reduced-motion: no-preference) {
+  .ld-switch {
+    transition:
+      background-color var(--ld-motion) var(--ld-ease-out),
+      border-color var(--ld-motion) var(--ld-ease-out);
+  }
+  .ld-switch::before {
+    transition:
+      transform var(--ld-motion) var(--ld-ease-out),
+      background-color var(--ld-motion) var(--ld-ease-out);
+  }
+  .ld-checkbox::before {
+    transition:
+      background-color 120ms var(--ld-ease-out),
+      border-color 120ms var(--ld-ease-out);
+  }
+  .ld-checkbox::after {
+    transition: opacity 120ms var(--ld-ease-out);
+  }
+  .ld-checkbox:checked::before {
+    transition:
+      background-color var(--ld-motion-slow) var(--ld-ease-out),
+      border-color var(--ld-motion-slow) var(--ld-ease-out);
+  }
+  .ld-checkbox:checked::after {
+    transition: none;
+  }
+  .ld-checkbox[data-motion="on"]:checked::after {
+    animation: ld-palomita var(--ld-motion-slow) var(--ld-ease-out);
+  }
+  @keyframes ld-palomita {
+    from {
+      clip-path: inset(80% 100% 0 0);
+    }
+    40% {
+      clip-path: inset(80% 0 0 0);
+    }
+    to {
+      clip-path: inset(0);
+    }
+  }
 }

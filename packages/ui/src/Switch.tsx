@@ -26,7 +26,7 @@ export function Switch({
       aria-checked={isChecked}
       checked={isChecked}
       className={cn(
-        "ld-switch relative size-6 w-10 shrink-0 cursor-pointer appearance-none rounded-full border border-border-control bg-border transition-colors duration-150 ease-out checked:border-accent checked:bg-accent disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none",
+        "ld-switch relative size-6 w-10 shrink-0 cursor-pointer appearance-none rounded-full border border-border-control bg-border checked:border-accent checked:bg-accent disabled:cursor-not-allowed disabled:opacity-45",
         className,
       )}
       id={props.id ?? id}

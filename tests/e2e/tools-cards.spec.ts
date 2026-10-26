@@ -16,6 +16,7 @@ for (const width of [1280, 760]) {
           (window, width) => window.setSize(width, width === 760 ? 520 : 800),
           width,
         );
+        await shell.emulateMedia({ reducedMotion: "no-preference" });
         await enableDeveloperMode(shell);
         await shell.evaluate(async (theme) => {
           await window.lensdeskHost.invoke("settings.set", { key: "theme", value: theme });
@@ -91,6 +92,50 @@ for (const width of [1280, 760]) {
             await expect(description).toHaveAttribute("title", /.+/);
           }
         }
+        const trigger = cards.first().getByRole("button", { name: /Acciones/ });
+        // Se mide antes de abrir: con el menú abierto, el resto de la página queda oculto.
+        const buttonBox = await trigger.boundingBox();
+        await trigger.click();
+        const menu = shell.getByRole("menu");
+        await expect(menu).toBeVisible();
+        await expect(menu).toHaveCSS("animation-duration", "0.14s");
+        await expect(menu).toHaveCSS("animation-timing-function", "ease-out");
+        expect(await menu.evaluate((element) => getComputedStyle(element).animationName)).not.toBe(
+          "none",
+        );
+        // Esperar el reposo evita medir la escala intermedia de apertura.
+        await menu.evaluate(async (element) => {
+          await Promise.all(element.getAnimations().map((animation) => animation.finished));
+        });
+        expect(buttonBox).not.toBeNull();
+        if (!buttonBox) throw new Error("No se encontró el botón del menú");
+        const geometry = await menu.evaluate((element) => {
+          const style = getComputedStyle(element);
+          const box = element.getBoundingClientRect();
+          return {
+            origin: style.transformOrigin.split(" ").map(Number.parseFloat),
+            x: box.x,
+            y: box.y,
+            width: box.width,
+            height: box.height,
+          };
+        });
+        const [originX, originY] = geometry.origin;
+        if (originX === undefined || originY === undefined) {
+          throw new Error("El menú no tiene un origen calculado de dos coordenadas");
+        }
+        const nearestX =
+          buttonBox.x + buttonBox.width / 2 < geometry.x + geometry.width / 2 ? 0 : geometry.width;
+        const nearestY =
+          buttonBox.y + buttonBox.height / 2 < geometry.y + geometry.height / 2
+            ? 0
+            : geometry.height;
+        expect(Math.abs(originX - nearestX)).toBeLessThan(1);
+        expect(Math.abs(originY - nearestY)).toBeLessThan(1);
+        expect(Math.abs(originX - geometry.width / 2)).toBeGreaterThan(1);
+        expect(Math.abs(originY - geometry.height / 2)).toBeGreaterThan(1);
+        await shell.keyboard.press("Escape");
+        await expect(menu).toHaveCount(0);
         await shell.screenshot({ path: test.info().outputPath(`tools-${width}-${theme}.png`) });
       } finally {
         await app.close().catch(() => undefined);

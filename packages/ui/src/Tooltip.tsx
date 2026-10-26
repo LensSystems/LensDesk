@@ -1,17 +1,21 @@
 import { Tooltip as Primitive } from "radix-ui";
 import { type ComponentProps, type ReactElement, useEffect, useRef, useState } from "react";
-import { cn } from "./cn.ts";
+import { TooltipContent } from "./TooltipContent.tsx";
 import { TooltipTarget } from "./TooltipTarget.tsx";
+import { TooltipMotionContext, type TooltipPosition } from "./tooltip-motion.ts";
 import { useTooltipTextVisible } from "./use-tooltip-text-visible.ts";
 
 export function TooltipProvider(props: ComponentProps<typeof Primitive.Provider>) {
+  const position = useRef<TooltipPosition>(null);
   return (
-    <Primitive.Provider
-      delayDuration={150}
-      skipDelayDuration={300}
-      disableHoverableContent
-      {...props}
-    />
+    <TooltipMotionContext.Provider value={position}>
+      <Primitive.Provider
+        delayDuration={150}
+        skipDelayDuration={300}
+        disableHoverableContent
+        {...props}
+      />
+    </TooltipMotionContext.Provider>
   );
 }
 
@@ -102,16 +106,9 @@ export function Tooltip({
         />
       </Primitive.Trigger>
       <Primitive.Portal>
-        <Primitive.Content
-          className={cn(
-            "ld-tooltip ld-pop z-50 rounded-ld-md border border-border bg-surface-raised px-2 py-1 text-xs text-text shadow-ld",
-            className,
-          )}
-          side={side}
-          sideOffset={4}
-        >
+        <TooltipContent className={className} side={side}>
           {label}
-        </Primitive.Content>
+        </TooltipContent>
       </Primitive.Portal>
     </Primitive.Root>
   );

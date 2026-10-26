@@ -2,7 +2,7 @@ import { ContextMenu as Primitive } from "radix-ui";
 import { type ReactNode, useRef, useState } from "react";
 import { type ContextMenuEntry, ContextMenuItems } from "./ContextMenuItems.tsx";
 import { cn } from "./cn.ts";
-import { menuContentClass, menuItemClass } from "./menu-styles.ts";
+import { contextMenuContentClass, menuItemClass } from "./menu-styles.ts";
 
 export function ContextMenu({
   children,
@@ -68,7 +68,7 @@ export function ContextMenu({
       </Primitive.Trigger>
       <Primitive.Portal>
         <Primitive.Content
-          className={cn(menuContentClass, contentClassName)}
+          className={cn(contextMenuContentClass, contentClassName)}
           aria-label={label}
           onCloseAutoFocus={(event) => {
             event.preventDefault();

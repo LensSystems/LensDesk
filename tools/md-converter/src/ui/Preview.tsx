@@ -87,7 +87,7 @@ export function Preview({
   return (
     <Tabs value={tab} onValueChange={setTab} className="preview-panel">
       <header className="preview-toolbar">
-        <TabsList className="mr-auto" aria-label={t("resultTabs")}>
+        <TabsList indicatorClassName="shadow-none" className="mr-auto" aria-label={t("resultTabs")}>
           {(["rendered", "raw"] as const).map((name) => (
             <Tooltip key={name} label={t(name)} visibleTextSelector=".normal-label">
               <span className="inline-flex">

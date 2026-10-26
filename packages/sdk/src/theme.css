@@ -69,6 +69,10 @@
 }
 
 :root {
+  --ld-motion-fast: 140ms;
+  --ld-motion: 150ms;
+  --ld-motion-slow: 160ms;
+  --ld-ease-out: ease-out;
   --ld-radius-sm: 6px;
   --ld-radius-md: 10px;
   --ld-radius-lg: 14px;

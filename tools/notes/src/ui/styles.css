@@ -357,6 +357,9 @@ body {
   height: 34px;
   flex-shrink: 0;
 }
+.notes-segmented > .ld-indicator {
+  box-shadow: none;
+}
 .notes-segmented > button {
   padding: 0 14px;
   font-weight: 400;

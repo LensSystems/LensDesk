@@ -67,6 +67,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
           <SettingsRow label={t("settingsPage.theme")}>
             <SegmentedControl
+              indicatorClassName="shadow-none"
               itemClassName="data-[state=checked]:shadow-none"
               aria-label={t("settingsPage.theme")}
               value={settings.theme}
@@ -80,6 +81,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
           <SettingsRow label={t("settingsPage.accent")}>
             <SegmentedControl
+              indicatorClassName="shadow-none"
               itemClassName="data-[state=checked]:shadow-none"
               aria-label={t("settingsPage.accent")}
               value={settings.accent}

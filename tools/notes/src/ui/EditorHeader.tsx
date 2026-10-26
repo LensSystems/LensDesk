@@ -85,6 +85,7 @@ export function EditorHeader({
             </Button>
           </Tooltip>
           <SegmentedControl
+            indicatorClassName="shadow-[0_1px_2px_rgb(0_0_0_/_0.25)]"
             aria-label={t("mode")}
             className="h-8 shrink-0 items-center p-0.5 @max-[960px]/notes:h-[34px] @max-[960px]/notes:border @max-[960px]/notes:border-border"
             itemClassName="h-7 px-3.5 font-normal data-[state=checked]:shadow-[0_1px_2px_rgb(0_0_0_/_0.25)] @max-[960px]/notes:w-8 @max-[960px]/notes:px-0"

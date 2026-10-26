@@ -1,7 +1,7 @@
 import { ContextMenu as Primitive } from "radix-ui";
 import type { ReactNode } from "react";
 import { cn } from "./cn.ts";
-import { menuContentClass, menuItemClass, menuShortcutClass } from "./menu-styles.ts";
+import { contextMenuContentClass, menuItemClass, menuShortcutClass } from "./menu-styles.ts";
 
 export type ContextMenuEntry =
   | { separator: true }
@@ -58,7 +58,7 @@ export function ContextMenuItems({ items }: { items: ContextMenuEntry[] }) {
         <Primitive.Portal>
           <Primitive.SubContent
             aria-label={item.label}
-            className={cn(menuContentClass, item.contentClassName)}
+            className={cn(contextMenuContentClass, item.contentClassName)}
             sideOffset={-8}
             alignOffset={-7}
           >
