@@ -49,6 +49,17 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
             });
           });
         });
+        // La capa saliente no debe hacer crecer la lista: se mide el ancho de la tarjeta
+        // en cuanto aparece la capa, antes de pintar.
+        await tool.evaluate(() => {
+          const anchos: number[] = [];
+          Object.assign(window, { anchos });
+          new MutationObserver(() => {
+            const card = document.querySelectorAll(".queue-card")[1];
+            if (card && document.querySelector(".progreso-saliente"))
+              anchos.push(card.getBoundingClientRect().width);
+          }).observe(document.body, { childList: true, subtree: true });
+        });
         // Un archivo grande tarda lo bastante para ver «Convirtiendo» antes de «Listo».
         const grande = join(userDataDir, "grande.html");
         await writeFile(
@@ -87,6 +98,18 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
                   expect.objectContaining({ nombre: "ld-check-draw", duracion: "0.16s" }),
                 ]),
               );
+        }
+        if (reducedMotion === "no-preference") {
+          await expect(tool.locator(".progreso-saliente")).toHaveCount(0);
+          const final = await tool
+            .locator(".queue-card")
+            .nth(1)
+            .evaluate((card) => card.getBoundingClientRect().width);
+          const anchos = await tool.evaluate(
+            () => (window as Window & { anchos?: number[] }).anchos ?? [],
+          );
+          expect(anchos.length).toBeGreaterThan(0);
+          for (const ancho of anchos) expect(ancho).toBeCloseTo(final, 0);
         }
         const zona = tool.locator(".ld-file-drop");
         await zona.evaluate((element) => {

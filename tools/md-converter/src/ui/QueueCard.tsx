@@ -26,7 +26,17 @@ export function QueueCard({
       {motion.old?.status === "converting" && (
         <div
           className="progreso-saliente queue-progress"
-          style={motion.bar ? { inset: "auto", ...motion.bar } : undefined}
+          // La tarjeta «Listo» es más baja: la barra no baja de su borde para no alargar la lista.
+          style={
+            motion.bar
+              ? {
+                  inset: "auto",
+                  left: motion.bar.left,
+                  width: motion.bar.width,
+                  top: `min(${motion.bar.top}px, calc(100% - 6px))`,
+                }
+              : undefined
+          }
           aria-hidden="true"
           inert
         >
