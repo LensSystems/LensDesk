@@ -47,13 +47,36 @@ export function createBackendHost(options: {
   const launch =
     options.fork ??
     ((path, settings) => utilityProcess.fork(path, [], settings) as unknown as Child);
-  async function get(id: string) {
+  // Arranques en curso: dos llamadas simultáneas comparten el mismo proceso en lugar de lanzar dos
+  // sobre la misma base de datos. `generation` sube con cada terminate(): un arranque iniciado
+  // antes ya no lanza el proceso.
+  const starting = new Map<
+    string,
+    Promise<{ child: Child; session: ReturnType<typeof createRpcSession> }>
+  >();
+  const generation = new Map<string, number>();
+  function get(id: string) {
     const existing = children.get(id);
-    if (existing) return existing;
-    const tool = options.getTool(id);
-    if (!tool) throw new LensError("E_TOOL_NOT_FOUND", "Herramienta no encontrada.");
+    if (existing) return Promise.resolve(existing);
+    let pending = starting.get(id);
+    if (!pending) {
+      const started = start(id, generation.get(id) ?? 0).finally(() => {
+        if (starting.get(id) === started) starting.delete(id);
+      });
+      pending = started;
+      starting.set(id, pending);
+    }
+    return pending;
+  }
+  async function start(id: string, startedAt: number) {
+    if (!options.getTool(id)) throw new LensError("E_TOOL_NOT_FOUND", "Herramienta no encontrada.");
     const dataDir = join(options.userData, "tool-data", id);
     await mkdir(dataDir, { recursive: true });
+    if ((generation.get(id) ?? 0) !== startedAt)
+      throw new LensError("E_CANCELLED", "La herramienta se cerró mientras arrancaba.");
+    // Se lee después de esperar: si se actualizó entretanto, se usa la versión instalada ahora.
+    const tool = options.getTool(id);
+    if (!tool) throw new LensError("E_TOOL_NOT_FOUND", "Herramienta no encontrada.");
     const child = launch(join(tool.installPath, "backend/index.js"), {
       serviceName: `lensdesk-tool-${id}`,
       env: { LENSDESK_TOOL_ID: id },
@@ -122,6 +145,8 @@ export function createBackendHost(options: {
       }
     },
     terminate(id: string) {
+      generation.set(id, (generation.get(id) ?? 0) + 1);
+      starting.delete(id);
       const backend = children.get(id);
       if (!backend) return;
       children.delete(id);
@@ -131,7 +156,7 @@ export function createBackendHost(options: {
       backend.child.kill();
     },
     terminateAll() {
-      for (const id of [...children.keys()]) this.terminate(id);
+      for (const id of new Set([...children.keys(), ...starting.keys()])) this.terminate(id);
     },
   };
 }

@@ -26,6 +26,14 @@ describe("tool bridge", () => {
     const client = createToolClient(bridge);
     await expect(client.storage.get("x")).resolves.toEqual({ saved: true });
     await expect(client.storage.set("x", 1)).rejects.toBeInstanceOf(LensError);
+    const visibility = vi.fn();
+    const stopVisibility = client.app.onVisibilityChange(visibility);
+    listeners.get("app.visibilityChanged")?.(false);
+    listeners.get("app.visibilityChanged")?.(true);
+    listeners.get("app.visibilityChanged")?.("false");
+    expect(visibility.mock.calls).toEqual([[false], [true]]);
+    stopVisibility();
+    expect(listeners.has("app.visibilityChanged")).toBe(false);
     const onContextChange = vi.fn();
     const unsubscribe = client.app.onContextChange(onContextChange);
     listeners.get("app.contextChanged")?.({
@@ -38,4 +46,36 @@ describe("tool bridge", () => {
     unsubscribe();
     expect(listeners.has("app.contextChanged")).toBe(false);
   });
+});
+
+it("valida ortografía y descarta campos ajenos", () => {
+  let receive: (payload: unknown) => void = () => {};
+  const stop = vi.fn();
+  const bridge = createToolBridge(vi.fn(), (event, callback) => {
+    expect(event).toBe("app.spelling");
+    receive = callback;
+    return stop;
+  });
+  const callback = vi.fn();
+  const cancel = bridge.app.onSpelling(callback);
+  for (const payload of [
+    null,
+    {},
+    { word: "a\nb", suggestions: [] },
+    { word: "x".repeat(101), suggestions: [] },
+    { word: "a", suggestions: [""] },
+    { word: "a", suggestions: Array(9).fill("a") },
+    { word: "a", suggestions: [1] },
+    { word: "a", suggestions: ["x".repeat(101)] },
+  ])
+    receive(payload);
+  expect(callback).not.toHaveBeenCalled();
+  receive({ word: "", suggestions: [], selectionText: "privado" });
+  receive({ word: "árbol", suggestions: ["árboles"] });
+  expect(callback.mock.calls).toEqual([
+    [{ word: "", suggestions: [] }],
+    [{ word: "árbol", suggestions: ["árboles"] }],
+  ]);
+  cancel();
+  expect(stop).toHaveBeenCalledOnce();
 });

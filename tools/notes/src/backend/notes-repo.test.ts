@@ -28,8 +28,12 @@ describe("backend de Notas", () => {
     for (const table of ["notes", "notes_fts", "schema_migrations"]) {
       expect(db.get("SELECT name FROM sqlite_master WHERE name = ?", table)).toBeTruthy();
     }
-    expect(db.get<{ version: number }>("SELECT version FROM schema_migrations")).toEqual({
-      version: 1,
+    expect(
+      db.get<{ version: number }>(
+        "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1",
+      ),
+    ).toEqual({
+      version: 5,
     });
     db.close();
   });
@@ -43,6 +47,30 @@ describe("backend de Notas", () => {
     expect(repo.search({ query: "Nue" })).toHaveLength(1);
     db.run("DELETE FROM notes WHERE id = ?", item.id);
     expect(repo.search({ query: "Nue" })).toHaveLength(0);
+    db.close();
+  });
+
+  it("valida títulos y los conserva al actualizar solo el cuerpo", () => {
+    const { db, repo } = setup();
+    const item = repo.create({ body_md: "# Cuerpo" });
+    expect(item.title).toBe("");
+    expect(repo.rename({ id: item.id, title: "a".repeat(200) }).title).toHaveLength(200);
+    expect(repo.update({ id: item.id, body_md: "otro" }).title).toHaveLength(200);
+    expect(repo.update({ id: item.id, body_md: "otro", title: "Explícito" }).title).toBe(
+      "Explícito",
+    );
+    expect(repo.search({ query: "Explíc" })).toHaveLength(1);
+    for (const title of ["a".repeat(201), "a\nb", "a\rb", 42, null]) {
+      for (const call of [
+        () => repo.rename({ id: item.id, title }),
+        () => repo.create({ body_md: "", title }),
+        () => repo.update({ id: item.id, body_md: "", title }),
+      ])
+        expect(call).toThrow(expect.objectContaining({ code: "E_INVALID_PARAMS" }));
+    }
+    expect(() => repo.rename({ id: "ausente", title: "x" })).toThrow(
+      expect.objectContaining({ code: "E_NOT_FOUND" }),
+    );
     db.close();
   });
 
@@ -89,9 +117,9 @@ describe("backend de Notas", () => {
     db.close();
   });
 
-  it("ordena las fijadas primero y deriva el título desde el cuerpo", () => {
+  it("ordena las fijadas primero y conserva el título independiente", () => {
     const { db, repo } = setup();
-    const first = repo.create({ body_md: "  \n\n### Título inicial\nTexto" });
+    const first = repo.create({ title: "Título inicial", body_md: "  \n\n### Otro título\nTexto" });
     const second = repo.create({ body_md: "\n  \n" });
     repo.setPinned({ id: first.id, pinned: true });
     expect(first.title).toBe("Título inicial");
@@ -123,6 +151,64 @@ describe("backend de Notas", () => {
     }
     durations.sort((a, b) => a - b);
     expect(durations[2]).toBeLessThan(100);
+    db.close();
+  });
+
+  it("guarda el título sin espacios al principio ni al final", () => {
+    const { db, repo } = setup();
+    const created = repo.create({ body_md: "x", title: "  Tema ### " });
+    expect(created.title).toBe("Tema ###");
+    db.close();
+  });
+});
+
+describe("notas archivadas", () => {
+  it("excluye archivadas de notas y búsqueda, permite editarlas y desarchivarlas", () => {
+    const { db, repo } = setup();
+    const item = repo.create({ title: "Archivo", body_md: "Contenido" });
+    const archived = repo.archive({ id: item.id });
+    expect(archived.archived_at).toBeTruthy();
+    expect(repo.list({})).toEqual([]);
+    expect(repo.list({ trashed: false })).toEqual([]);
+    expect(repo.search({ query: "Archivo" })).toEqual([]);
+    expect(repo.search({ query: "" })).toEqual([]);
+    expect(repo.list({ view: "archived" })).toEqual([archived]);
+    expect(repo.update({ id: item.id, body_md: "Editado" }).body_md).toBe("Editado");
+    expect(repo.unarchive({ id: item.id }).archived_at).toBeNull();
+    expect(repo.list({ view: "notes" })).toHaveLength(1);
+    expect(repo.search({ query: "Editado" })).toHaveLength(1);
+    expect(repo.list({ view: "archived" })).toEqual([]);
+    db.close();
+  });
+
+  it("conserva el archivo al pasar por papelera y restaurar", () => {
+    const { db, repo } = setup();
+    const item = repo.create({ body_md: "Archivo" });
+    const archived = repo.archive({ id: item.id });
+    repo.trash({ id: item.id });
+    expect(repo.list({ view: "archived" })).toEqual([]);
+    expect(repo.list({ view: "trash" })[0]?.archived_at).toBe(archived.archived_at);
+    repo.restore({ id: item.id });
+    expect(repo.list({ view: "notes" })).toEqual([]);
+    expect(repo.list({ view: "archived" })[0]?.id).toBe(item.id);
+    expect(repo.list({ trashed: true })).toEqual([]);
+    db.close();
+  });
+
+  it("valida las operaciones y la vista", () => {
+    const { db, repo } = setup();
+    for (const method of ["archive", "unarchive"] as const) {
+      for (const params of [null, {}, { id: 1 }, { id: "x", extra: true }])
+        expect(() => repo[method](params)).toThrow(
+          expect.objectContaining({ code: "E_INVALID_PARAMS" }),
+        );
+      expect(() => repo[method]({ id: "ausente" })).toThrow(
+        expect.objectContaining({ code: "E_NOT_FOUND" }),
+      );
+    }
+    expect(() => repo.list({ view: "invalid" })).toThrow(
+      expect.objectContaining({ code: "E_INVALID_PARAMS" }),
+    );
     db.close();
   });
 });

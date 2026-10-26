@@ -1,14 +1,16 @@
 import { join } from "node:path";
 import { HOST_IPC_CHANNEL } from "../shared/host-channels.ts";
-import { HEADER_HEIGHT } from "../shared/layout.ts";
-import { createAppActions } from "./app-actions.ts";
+import { HEADER_HEIGHT, MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "../shared/layout.ts";
+import { createAppActions, createLoginSettingsActions } from "./app-actions.ts";
 import type { createSettingsHandlers, ResolvedTheme } from "./context.ts";
 import type { SqliteDatabase } from "./db/database.ts";
 import { createRouter } from "./ipc/router.ts";
 import { ipcSchemas } from "./ipc/schemas.ts";
 import { exportLogs } from "./log/export.ts";
 import { createLogger, type Logger } from "./log/logger.ts";
+import { createLoginItem, type LoginItemDependencies } from "./login-item.ts";
 import { titleBarColors, titleBarOverlayFor } from "./shell/title-bar.ts";
+import { spellcheckEnabled } from "./spellcheck.ts";
 import { createUpdateService } from "./updates/update-service.ts";
 
 type SettingsHandlers = Pick<
@@ -19,6 +21,7 @@ type SettingsHandlers = Pick<
 // Une las actualizaciones y las acciones del shell con sus ajustes y registros. Las piezas de
 // Electron (diálogo, `shell`, `fetch`) llegan por parámetro desde `index.ts`.
 export function wireAppServices(options: {
+  loginItem: LoginItemDependencies;
   // Sin `lensdesk.releasesRepo` la comprobación se omite siempre y no hay red.
   repo: string;
   currentVersion: string;
@@ -27,7 +30,11 @@ export function wireAppServices(options: {
   logger: Logger;
   settings: SettingsHandlers;
   fetch: Parameters<typeof createUpdateService>[0]["fetch"];
-  emitUpdate(payload: { version: string; html_url: string }): void;
+  platform?: string;
+  arch?: string;
+  installedTools?: Parameters<typeof createUpdateService>[0]["installedTools"];
+  emitTools?: Parameters<typeof createUpdateService>[0]["emitTools"];
+  emitUpdate: Parameters<typeof createUpdateService>[0]["emit"];
   showSaveDialog(options: {
     defaultPath: string;
     filters: { name: string; extensions: string[] }[];
@@ -38,6 +45,10 @@ export function wireAppServices(options: {
   const { settings, logger } = options;
   const updates = createUpdateService({
     repo: options.repo,
+    platform: options.platform,
+    arch: options.arch,
+    installedTools: options.installedTools,
+    emitTools: options.emitTools,
     currentVersion: options.currentVersion,
     fetch: options.fetch,
     now: () => new Date(),
@@ -68,7 +79,13 @@ export function wireAppServices(options: {
     checkNow: () => updates.run(true),
     log: (event, message) => logger.error(event, message),
   });
-  return { updates, appActions };
+  return {
+    updates,
+    appActions: {
+      ...appActions,
+      ...createLoginSettingsActions(settings, createLoginItem(options.loginItem)),
+    },
+  };
 }
 
 type UtilityLike = {
@@ -141,7 +158,7 @@ export function schemaTooNewDialog(
 
 // Opciones de la ventana del shell: aislada, con sandbox y sin Node.
 export function shellWindowOptions(
-  bounds: object,
+  bounds: { width?: number; height?: number },
   show: boolean,
   preload: string,
   platform: string,
@@ -165,9 +182,13 @@ export function shellWindowOptions(
   return {
     ...bounds,
     ...titleOptions,
+    // Si el área de trabajo es menor que el mínimo, el mínimo baja al tamaño restaurado.
+    minWidth: Math.min(MIN_WINDOW_WIDTH, bounds.width ?? MIN_WINDOW_WIDTH),
+    minHeight: Math.min(MIN_WINDOW_HEIGHT, bounds.height ?? MIN_WINDOW_HEIGHT),
     show,
     webPreferences: {
       preload,
+      spellcheck: spellcheckEnabled(platform),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,

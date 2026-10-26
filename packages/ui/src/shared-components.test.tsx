@@ -114,7 +114,9 @@ describe("componentes compartidos", () => {
         expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancelar" })),
       );
       expect(screen.getAllByRole("button", { name: "Cancelar" })).toHaveLength(1);
-      expect(screen.getByRole("button", { name: "Cerrar" }).textContent).toBe("×");
+      const close = screen.getByRole("button", { name: "Cerrar" });
+      expect(close.textContent).not.toContain("×");
+      expect(close.querySelector("svg")).toHaveClass("lucide-x");
     },
   );
 

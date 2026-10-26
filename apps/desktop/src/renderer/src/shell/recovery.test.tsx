@@ -48,7 +48,12 @@ describe("recuperación del shell", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
-    useShellStore.setState({ update: null, crashedToolId: null });
+    useShellStore.setState({
+      update: null,
+      dismissedVersion: null,
+      updateSettingsRequest: 0,
+      crashedToolId: null,
+    });
   });
   it("muestra recuperación al fallar y permite recargar", async () => {
     await rendererI18n.changeLanguage("es");
@@ -75,21 +80,29 @@ describe("recuperación del shell", () => {
     vi.unstubAllGlobals();
   });
 
-  it("muestra aviso descartable que abre html_url", async () => {
+  it("lleva el aviso a Ajustes y conserva los enlaces después de descartarlo", async () => {
     const { bridge, listeners, invoke } = makeBridge();
     render(<App bridge={bridge} />);
-    listeners.get("update.available")?.({
-      version: "2.0.0",
-      html_url: "https://example.com/release",
-    });
-    fireEvent.click(await screen.findByRole("button", { name: "Ver actualización" }));
-    await waitFor(() =>
-      expect(invoke).toHaveBeenCalledWith("app.openExternal", {
-        url: "https://example.com/release",
+    await screen.findByRole("main", { name: "Herramienta activa" });
+    act(() =>
+      listeners.get("update.available")?.({
+        version: "2.0.0",
+        html_url: "https://github.com/o/r/releases/tag/v2.0.0",
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Descartar" }));
-    expect(screen.queryByRole("status")).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Ir a Ajustes" }));
+    const link = await screen.findByRole("link", { name: "Versión 2.0.0 disponible" });
+    expect(useShellStore.getState().page).toBe("settings");
+    expect(link).toHaveFocus();
+    expect(screen.queryByRole("button", { name: "Descartar" })).toBeNull();
+    fireEvent.click(link);
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith("app.openExternal", {
+        url: "https://github.com/o/r/releases/tag/v2.0.0",
+      }),
+    );
+    expect(screen.getByRole("link", { name: "Ver novedades" })).toBeTruthy();
+    expect(useShellStore.getState().update?.version).toBe("2.0.0");
   });
 
   it("solo muestra y reabre la herramienta activa que falló", async () => {

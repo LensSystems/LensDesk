@@ -5,10 +5,12 @@ import {
   EmptyState,
   IconButton,
   Input,
+  PanelLeft,
   Plus,
   Progress,
   Search,
   Switch,
+  X,
 } from "@lensdesk/ui";
 import { Example } from "./Example.tsx";
 
@@ -17,6 +19,11 @@ const states = ["Normal", "Hover simulado", "Foco", "Deshabilitado", "Error"] as
 export function ControlExamples() {
   return (
     <>
+      <Example names={["IconButton"]}>
+        <IconButton tooltip={false} label="Cerrar">
+          <X size={16} />
+        </IconButton>
+      </Example>
       {(["Button", "IconButton", "Input", "Checkbox", "Switch"] as const).map((name) => (
         <Example key={name} names={[name]}>
           <div className="gallery-states">
@@ -71,6 +78,11 @@ export function ControlExamples() {
           )}
         </Example>
       ))}
+      <Example names={["PanelLeft"]}>
+        <IconButton label="Mostrar panel">
+          <PanelLeft size={16} />
+        </IconButton>
+      </Example>
       <Example names={["Input"]}>
         <Input label="Buscar" leadingIcon={<Search size={16} />} />
       </Example>

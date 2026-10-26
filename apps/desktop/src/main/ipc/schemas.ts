@@ -3,6 +3,14 @@ import type { HostChannel } from "../../shared/host-channels.ts";
 import { isHttpsUrl } from "../app-actions.ts";
 import { type SettingKey, settingSchemas } from "../db/settings-repo.ts";
 
+export const closedForLimitSchema = z
+  .object({ toolId: z.string().min(1), openedToolId: z.string().min(1).optional() })
+  .strict();
+
+const toolUpdatesSchema = z.array(
+  z.object({ id: z.string(), version: z.string(), url: z.string().refine(isHttpsUrl) }).strict(),
+);
+
 const settingKeySchema = z.enum(Object.keys(settingSchemas) as [SettingKey, ...SettingKey[]]);
 
 const tabsResponseSchema = z
@@ -44,7 +52,13 @@ export const ipcSchemas = {
   "app.getInfo": {
     request: z.object({}).strict(),
     response: z
-      .object({ version: z.string(), platform: z.string(), fullScreen: z.boolean() })
+      .object({
+        version: z.string(),
+        platform: z.string(),
+        fullScreen: z.boolean(),
+        releasesRepo: z.string().optional(),
+        isPackaged: z.boolean().optional(),
+      })
       .strict(),
   },
   "settings.get": {
@@ -73,8 +87,18 @@ export const ipcSchemas = {
     request: z.object({ toolId: z.string().min(1) }).strict(),
     response: tabsResponseSchema,
   },
+  "tabs.undoClose": {
+    request: z.object({ toolId: z.string().min(1) }).strict(),
+    response: tabsResponseSchema,
+  },
   "tabs.close": {
     request: z.object({ toolId: z.string().min(1) }).strict(),
+    response: tabsResponseSchema,
+  },
+  "tabs.move": {
+    request: z
+      .object({ toolId: z.string().min(1), toIndex: z.number().int().nonnegative() })
+      .strict(),
     response: tabsResponseSchema,
   },
   "tabs.activate": {
@@ -123,12 +147,15 @@ export const ipcSchemas = {
     request: z.object({}).strict(),
     response: z.discriminatedUnion("kind", [
       z.object({ kind: z.literal("skipped") }).strict(),
-      z.object({ kind: z.literal("none") }).strict(),
+      z.object({ kind: z.literal("none"), tools: toolUpdatesSchema.optional() }).strict(),
+      z.object({ kind: z.literal("error") }).strict(),
       z
         .object({
           kind: z.literal("available"),
           version: z.string(),
           url: z.string().refine(isHttpsUrl),
+          installerUrl: z.string().refine(isHttpsUrl).optional(),
+          tools: toolUpdatesSchema.optional(),
         })
         .strict(),
     ]),

@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { Toast as Primitive } from "radix-ui";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "./cn.ts";
@@ -11,7 +12,7 @@ export function ToastViewport({ className, ...props }: ComponentProps<typeof Pri
   );
 }
 
-export type ToastProps = Omit<ComponentProps<typeof Primitive.Root>, "children"> & {
+export type ToastProps = Omit<ComponentProps<typeof Primitive.Root>, "children" | "title"> & {
   title: ReactNode;
   description?: ReactNode;
   dismissLabel?: string;
@@ -33,9 +34,9 @@ export function Toast({ className, title, description, dismissLabel, ...props }:
       )}
       <Primitive.Close
         aria-label={dismissLabel ?? labels.dismiss}
-        className="size-6 shrink-0 rounded-full text-muted hover:bg-surface"
+        className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface"
       >
-        ×
+        <X size={14} strokeWidth={2} className="text-muted" aria-hidden="true" />
       </Primitive.Close>
     </Primitive.Root>
   );

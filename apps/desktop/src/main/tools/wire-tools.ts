@@ -11,6 +11,7 @@ import {
   logInstallFailure,
 } from "../log/wire-logging.ts";
 import { createTabsStore } from "../shell/tabs-store.ts";
+import { spellcheckEnabled } from "../spellcheck.ts";
 import { createBackendHost } from "./backend-host.ts";
 import { scanDevTools } from "./dev-tools.ts";
 import { createFileTokens } from "./file-tokens.ts";
@@ -31,6 +32,8 @@ export function createToolWiring(options: {
   context: () => { locale: string; theme: string; accent?: "blue" | "green" };
   showingTab: () => boolean;
   onShowActiveTool(callback: () => void): void;
+  // Herramientas o pestañas cambiaron fuera del almacén de pestañas (instalar, quitar).
+  onCatalogChanged?: () => void;
   logger: Logger;
 }) {
   const fileTokens = createFileTokens({
@@ -69,12 +72,15 @@ export function createToolWiring(options: {
   const showActive = () => {
     const db = options.database();
     if (!views || !window || !db) return;
-    views.hideAll();
-    if (!options.showingTab()) return;
+    if (!options.showingTab()) {
+      views.hideAll();
+      return;
+    }
     const active = createTabsStore(db, () => undefined)
       .list()
       .find((tab) => tab.active);
     if (active) views.show(active.toolId, window.getContentBounds());
+    else views.hideAll();
   };
   options.onShowActiveTool(showActive);
   const handlers = createToolHandlers({
@@ -91,11 +97,13 @@ export function createToolWiring(options: {
         properties: ["openFile"],
         filters: [{ name: "LensDesk Tool", extensions: ["lenspkg"] }],
       }),
-    emit: () =>
+    emit: () => {
       options.shellContents()?.send("tools.changed", {
         tools: installer?.registry.list().map(({ installPath: _path, ...tool }) => tool) ?? [],
         pendingDowngrade: installer?.getPendingDowngrade() ?? null,
-      }),
+      });
+      options.onCatalogChanged?.();
+    },
   });
   return {
     handlers,
@@ -128,6 +136,7 @@ export function createToolWiring(options: {
             () => createTabsStore(db, () => undefined).list(),
             (tabs) => options.shellContents()?.send("tabs.changed", { tabs }),
           );
+          options.onCatalogChanged?.();
           showActive();
         },
         trustedKeys: () =>
@@ -154,6 +163,7 @@ export function createToolWiring(options: {
         registry: installer.registry,
         views,
         context: options.context,
+        spellcheck: spellcheckEnabled(process.platform),
         hostVersion: options.version,
         shellContents: options.shellContents,
         clipboard: (text) => clipboard.writeText(text),

@@ -5,7 +5,7 @@
     "es": "Convierte documentos a Markdown",
     "en": "Convert documents to Markdown"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "apiVersion": 1,
   "icon": "file-output",
   "ui": { "entry": "ui/index.html" },

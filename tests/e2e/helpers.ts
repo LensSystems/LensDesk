@@ -75,9 +75,10 @@ export async function installTool(
   app: ElectronApplication,
   page: Page,
   lenspkgPath: string,
+  name = "Plantilla",
 ): Promise<void> {
   await stubDialog(app, "open", { canceled: false, filePaths: [lenspkgPath] });
   await page.getByRole("button", { name: "Herramientas" }).click();
   await page.getByRole("button", { name: "Agregar herramienta…" }).click();
-  await page.getByText("Plantilla", { exact: true }).waitFor();
+  await page.getByText(name, { exact: true }).waitFor();
 }

@@ -21,6 +21,8 @@ export type ShellToast = {
   kind: "success" | "error" | "info";
   message: string;
   source?: string;
+  closedToolId?: string;
+  openedToolId?: string;
 };
 // Máximo de avisos en cola: al superarlo se descarta el más antiguo.
 const maxToasts = 3;
@@ -30,6 +32,7 @@ type State = {
   fullScreen: boolean;
   tabs: ShellTab[];
   tools: ToolSummary[];
+  toolUpdates: HostEventPayloads["tools.updatesAvailable"]["tools"];
   pendingDowngrade: PendingDowngrade | null;
   settings: SettingValues;
   context: HostEventPayloads["context.changed"];
@@ -37,6 +40,8 @@ type State = {
   toasts: ShellToast[];
   update: HostEventPayloads["update.available"] | null;
   dismissedVersion: string | null;
+  updateSettingsRequest: number;
+  showUpdateSettings: (bridge: HostBridge) => Promise<void>;
   pushToast: (kind: ShellToast["kind"], message: string, source?: string) => void;
   removeToast: (id: number) => void;
   dismissUpdate: (bridge: HostBridge) => void;
@@ -56,10 +61,23 @@ const defaults: SettingValues = {
 // Cuenta los eventos recibidos por campo: si uno llega mientras hydrate espera, su dato es más
 // reciente que la respuesta de hydrate y no se pisa.
 const eventCounts = { tabs: 0, settings: 0, context: 0, fullScreen: 0 };
-export const useShellStore = create<State>((set) => ({
+// Compara x.y.z (sin preversiones; la anunciada siempre es x.y.z).
+function isOlderVersion(installed: string, announced: string): boolean {
+  const parse = (value: string) => value.split(/[-+]/)[0]?.split(".").map(Number) ?? [];
+  const [a, b] = [parse(installed), parse(announced)];
+  for (let index = 0; index < 3; index++) {
+    const left = a[index] ?? 0;
+    const right = b[index] ?? 0;
+    if (left !== right) return left < right;
+  }
+  return false;
+}
+
+export const useShellStore = create<State>((set, get) => ({
   fullScreen: false,
   tabs: [],
   tools: [],
+  toolUpdates: [],
   pendingDowngrade: null,
   settings: defaults,
   context: { locale: "es", theme: "dark", accent: "blue" },
@@ -67,6 +85,7 @@ export const useShellStore = create<State>((set) => ({
   toasts: [],
   update: null,
   dismissedVersion: null,
+  updateSettingsRequest: 0,
   crashedToolId: null,
   pushToast(kind, message, source) {
     set((state) => ({
@@ -78,13 +97,19 @@ export const useShellStore = create<State>((set) => ({
   },
   dismissUpdate(bridge) {
     const version = useShellStore.getState().update?.version;
-    set({ update: null, ...(version ? { dismissedVersion: version } : {}) });
+    set(version ? { dismissedVersion: version } : {});
     if (version)
       void bridge.invoke("settings.set", { key: "updates.dismissedVersion", value: version });
   },
+  async showUpdateSettings(bridge) {
+    const result = await bridge.invoke("shell.showPage", { page: "settings" });
+    if (!result.ok) return;
+    get().dismissUpdate(bridge);
+    set((state) => ({ page: "settings", updateSettingsRequest: state.updateSettingsRequest + 1 }));
+  },
   async showPage(bridge, page) {
     const result = await bridge.invoke("shell.showPage", { page });
-    if (result.ok) set({ page: result.data.page });
+    if (result.ok) set({ page: result.data.page, updateSettingsRequest: 0 });
   },
   async hydrate(bridge) {
     const before = { ...eventCounts };
@@ -152,7 +177,13 @@ export const useShellStore = create<State>((set) => ({
                 : defaults.updatesCheck,
           },
       dismissedVersion: dismissedVersion ?? state.dismissedVersion,
-      update: dismissedVersion && state.update?.version === dismissedVersion ? null : state.update,
+      update:
+        info.ok &&
+        typeof info.data.version === "string" &&
+        state.update &&
+        !isOlderVersion(info.data.version, state.update.version)
+          ? null
+          : state.update,
       context: context.ok && !stale("context") ? context.data : state.context,
       ...(tools.ok && Array.isArray(tools.data.tools)
         ? { tools: tools.data.tools, pendingDowngrade: tools.data.pendingDowngrade }
@@ -167,7 +198,20 @@ export const useShellStore = create<State>((set) => ({
       }),
       bridge.on("tabs.changed", ({ tabs }) => {
         eventCounts.tabs += 1;
-        set({ tabs, page: tabs.some((tab) => tab.active) ? "tab" : "tools" });
+        const { tabs: before, page } = get();
+        // Solo reordenar (mismas pestañas y activa, otro orden) no saca de Herramientas ni de
+        // Ajustes; activar la pestaña ya activa publica la misma lista y sí vuelve a ella.
+        const entries = (list: typeof tabs) => list.map((tab) => `${tab.toolId}:${tab.active}`);
+        const reordered =
+          entries(before).join() !== entries(tabs).join() &&
+          entries(before).sort().join() === entries(tabs).sort().join();
+        if (page !== "tab" && reordered) set({ tabs });
+        else
+          set({
+            tabs,
+            page: tabs.some((tab) => tab.active) ? "tab" : "tools",
+            updateSettingsRequest: 0,
+          });
       }),
       bridge.on("settings.changed", ({ key, value }) => {
         eventCounts.settings += 1;
@@ -191,10 +235,33 @@ export const useShellStore = create<State>((set) => ({
         eventCounts.context += 1;
         set({ context });
       }),
-      bridge.on("tools.changed", ({ tools, pendingDowngrade }) => set({ tools, pendingDowngrade })),
-      bridge.on("update.available", (update) =>
-        set((state) => (update.version === state.dismissedVersion ? {} : { update })),
+      bridge.on("tabs.closedForLimit", ({ toolId, openedToolId }) => {
+        set((state) => ({
+          toasts: [
+            ...state.toasts,
+            {
+              id: nextToastId++,
+              kind: "info" as const,
+              message: "",
+              closedToolId: toolId,
+              openedToolId,
+            },
+          ].slice(-maxToasts),
+        }));
+      }),
+      bridge.on("tools.changed", ({ tools, pendingDowngrade }) =>
+        set((state) => ({
+          tools,
+          pendingDowngrade,
+          // El aviso sigue mientras la versión instalada sea menor que la anunciada.
+          toolUpdates: state.toolUpdates.filter((update) => {
+            const tool = tools.find((tool) => tool.id === update.id);
+            return !!tool && isOlderVersion(tool.version, update.version);
+          }),
+        })),
       ),
+      bridge.on("tools.updatesAvailable", ({ tools }) => set({ toolUpdates: tools })),
+      bridge.on("update.available", (update) => set({ update })),
       bridge.on("tools.toast", ({ toolId, kind, message }) =>
         useShellStore
           .getState()

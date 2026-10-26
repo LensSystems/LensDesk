@@ -1,12 +1,14 @@
 import type { createToolClient } from "@lensdesk/sdk";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Note } from "./NoteList.tsx";
+import { ensureGuide } from "./guide.ts";
+import type { Note, NotesView } from "./NoteList.tsx";
 import { useAppContext } from "./use-app-context.ts";
 import { errorCode, useFail, useNotice } from "./use-failure.ts";
+import { useNoteActions } from "./use-note-actions.ts";
+import { useNoteFiles } from "./use-note-files.ts";
 
 type Client = ReturnType<typeof createToolClient>;
-
 export function useNotes(client: Client) {
   const { t } = useTranslation();
   const [notes, setNotes] = useState<Note[]>([]);
@@ -18,39 +20,41 @@ export function useNotes(client: Client) {
     setBody(value);
   }, []);
   const [query, setQuery] = useState("");
-  const [trashed, setTrashed] = useState(false);
+  const [notesView, setView] = useState<NotesView>("notes");
+  const trashed = notesView === "trash";
   const [loading, setLoading] = useState(true);
   const { error, errorKind, setError } = useNotice();
   const selected = useMemo(
     () => notes.find((note) => note.id === selectedId) ?? null,
     [notes, selectedId],
   );
-
-  // La selección se lee desde una referencia para que elegir una nota no vuelva a cargar la lista.
+  // Elegir una nota no debe volver a cargar la lista.
   const selectedRef = useRef(selectedId);
   selectedRef.current = selectedId;
-  // Último estado conocido de las notas: el autoguardado solo escribe si el cuerpo difiere.
   const notesRef = useRef(notes);
   notesRef.current = notes;
-
-  // Con un backend lento las respuestas pueden llegar desordenadas: solo cuenta la petición más
-  // reciente, y crear una nota descarta las cargas en curso para que no la borren de la lista.
+  // Las respuestas antiguas no reemplazan una lista más reciente.
   const latestLoad = useRef(0);
-  // Vista visible ahora mismo: tras borrar o restaurar se recarga esta, no la de cuando se pulsó.
-  const view = useRef({ trashed, query });
-  view.current = { trashed, query };
-
-  // Solo la primera carga muestra "Cargando": las siguientes conservan la lista, el cuadro de
-  // búsqueda con su foco y el texto que el editor aún no ha guardado.
+  const view = useRef({ notesView, query });
+  view.current = { notesView, query };
   const load = useCallback(
-    async (inTrash = trashed, search = query): Promise<boolean> => {
+    async (currentView = notesView, search = query): Promise<boolean> => {
       const request = ++latestLoad.current;
       try {
+        await ensureGuide(client).catch(() => undefined);
         const rows =
-          search.trim() && !inTrash
+          search.trim() && currentView === "notes"
             ? await client.backend.invoke<Note[]>("search", { query: search })
-            : await client.backend.invoke<Note[]>("list", { trashed: inTrash });
+            : await client.backend.invoke<Note[]>("list", { view: currentView });
         if (request !== latestLoad.current) return true;
+        const previous = notesRef.current.find((item) => item.id === selectedRef.current);
+        const next = rows.find((item) => item.id === selectedRef.current);
+        // La lista nunca es una fuente de cuerpos privados ni de borradores descifrados.
+        if (next?.private) {
+          drafts.current.delete(next.id);
+          setBody("");
+        }
+        if (previous?.private && next && !next.private) setBody(next.body_md);
         setNotes(rows);
         if (!rows.some((note) => note.id === selectedRef.current)) {
           setSelectedId(rows[0]?.id ?? null);
@@ -66,21 +70,19 @@ export function useNotes(client: Client) {
         setLoading(false);
       }
     },
-    [client, query, setError, t, trashed],
+    [client, query, setError, t, notesView],
   );
-
-  useAppContext(client);
-
+  const context = useAppContext(client);
   useEffect(() => {
-    void load(trashed, query);
-  }, [trashed, query, load]);
-
+    void load(notesView, query);
+  }, [notesView, query, load]);
   const fail = useFail(load, setError);
-
-  // Si la nota desapareció mientras se editaba, el texto se conserva como nota nueva.
   const recover = useCallback(
     async (id: string, value: string) => {
-      const note = await client.backend.invoke<Note>("create", { body_md: value });
+      const note = await client.backend.invoke<Note>("create", {
+        body_md: value,
+        title: notesRef.current.find((note) => note.id === id)?.title ?? "",
+      });
       setNotes((current) => [note, ...current.filter((item) => item.id !== id)]);
       setSelectedId(note.id);
       setBody(note.body_md);
@@ -88,13 +90,12 @@ export function useNotes(client: Client) {
     },
     [client, setError, t],
   );
-
-  // Guardados en curso por nota: el mismo contenido no se envía dos veces a la vez.
   const pending = useRef(new Map<string, string>());
   const save = useCallback(
     (id: string, value: string) => {
       const known = notesRef.current.find((note) => note.id === id);
-      if (known && known.body_md === value) return;
+      // Los cuerpos privados solo se guardan desde la bóveda, después de get.
+      if (known?.private || (known && known.body_md === value)) return;
       if (pending.current.get(id) === value) return;
       pending.current.set(id, value);
       void client.backend
@@ -104,7 +105,13 @@ export function useNotes(client: Client) {
         })
         .then((updated) => {
           if (drafts.current.get(id) === value) drafts.current.delete(id);
-          setNotes((current) => current.map((note) => (note.id === id ? updated : note)));
+          setNotes((current) =>
+            current.map((note) =>
+              note.id === id
+                ? { ...note, body_md: updated.body_md, updated_at: updated.updated_at }
+                : note,
+            ),
+          );
           setError("");
         })
         .catch((reason: unknown) =>
@@ -115,88 +122,59 @@ export function useNotes(client: Client) {
     },
     [client, fail, recover, setError],
   );
-
-  const create = async (content = "") => {
+  const create = async (content = "", title = "") => {
     try {
-      const note = await client.backend.invoke<Note>("create", { body_md: content });
+      const note = await client.backend.invoke<Note>("create", { body_md: content, title });
       latestLoad.current++;
-      setTrashed(false);
+      setView("notes");
       setQuery("");
       setNotes((current) => [note, ...current]);
       setSelectedId(note.id);
       setBody(note.body_md);
       setError("");
+      return true;
     } catch (reason) {
       await fail(reason);
     }
   };
-
-  const importNotes = async () => {
+  const renaming = useRef(new Map<string, Promise<Note>>());
+  const rename = async (id: string, title: string) => {
+    const request = client.backend.invoke<Note>("rename", { id, title });
+    renaming.current.set(id, request);
     try {
-      const files = await client.files.pickOpen({
-        multiple: true,
-        filters: [{ name: t("markdownFiles"), extensions: ["md", "markdown"] }],
-      });
-      for (const file of files) await create(await client.files.readText(file.token));
+      const updated = await request;
+      notesRef.current = notesRef.current.map((note) =>
+        note.id === id ? { ...note, title: updated.title } : note,
+      );
+      setNotes((current) =>
+        current.map((note) => (note.id === id ? { ...note, title: updated.title } : note)),
+      );
     } catch (reason) {
       await fail(reason);
+      throw reason;
+    } finally {
+      if (renaming.current.get(id) === request) renaming.current.delete(id);
     }
   };
-
-  const exportNote = async () => {
-    if (!selected) return;
-    try {
-      const file = await client.files.pickSave({
-        defaultName: `${selected.title || t("untitled")}.md`,
-        filters: [{ name: t("markdownFiles"), extensions: ["md"] }],
-      });
-      if (file) await client.files.writeText(file.token, body);
-    } catch (reason) {
-      await fail(reason);
-    }
-  };
-
-  const trashNote = async (id: string) => {
-    try {
-      await client.backend.invoke("trash", { id });
-      await load(view.current.trashed, view.current.query);
-    } catch (reason) {
-      await fail(reason);
-    }
-  };
-  const restore = async (id: string) => {
-    try {
-      await client.backend.invoke("restore", { id });
-      await load(view.current.trashed, view.current.query);
-    } catch (reason) {
-      await fail(reason);
-    }
-  };
-  const emptyTrash = async () => {
-    try {
-      await client.backend.invoke("emptyTrash", {});
-      setSelectedId(null);
-      setBody("");
-      await load(true, "");
-    } catch (reason) {
-      await fail(reason);
-    }
-  };
-
+  const files = useNoteFiles(client, selected, body, notesRef, renaming, create, fail);
+  const actions = useNoteActions(client, load, view, fail, () => {
+    setSelectedId(null);
+    setBody("");
+  });
   return {
+    context,
     body,
+    ...files,
     create,
-    emptyTrash,
+    ...actions,
     fail,
     error,
     errorKind,
-    exportNote,
-    importNotes,
     load,
     loading,
     notes,
     query,
-    restore,
+    rename,
     save,
     selected,
     selectedId,
@@ -208,8 +186,8 @@ export function useNotes(client: Client) {
     setError,
     setQuery,
     setSelectedId,
-    setTrashed,
-    trashNote,
+    setView,
+    notesView,
     trashed,
   };
 }

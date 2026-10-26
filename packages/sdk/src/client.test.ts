@@ -35,6 +35,7 @@ function makeBridge() {
         data: { locale: "es", theme: "dark", hostVersion: "1.0.0", toolVersion: "1.0.0" },
       })),
       onContextChange: vi.fn(() => () => {}),
+      onVisibilityChange: vi.fn(() => () => {}),
     },
     ui: {
       toast: vi.fn(async () => ({ ok: true as const, data: undefined })),
@@ -120,4 +121,26 @@ describe("createToolClient backend invoke", () => {
     ).rejects.toMatchObject({ code: "E_CANCELLED" });
     expect(bridge.backend.invoke).not.toHaveBeenCalled();
   });
+
+  it("en un host sin el evento de visibilidad, suscribirse no falla", () => {
+    const { bridge } = makeBridge();
+    const { onVisibilityChange: _absent, ...oldApp } = bridge.app;
+    const client = createToolClient({ ...bridge, app: oldApp });
+    const unsubscribe = client.app.onVisibilityChange(() => undefined);
+    expect(() => unsubscribe()).not.toThrow();
+  });
+});
+
+it("ortografía compatible con hosts anteriores y cancelable", () => {
+  const { bridge } = makeBridge();
+  const callback = vi.fn();
+  expect(createToolClient(bridge).app.onSpelling(callback)()).toBeUndefined();
+  const stop = vi.fn();
+  bridge.app.onSpelling = vi.fn((receive) => {
+    receive({ word: "holaa", suggestions: ["hola"] });
+    return stop;
+  });
+  createToolClient(bridge).app.onSpelling(callback)();
+  expect(callback).toHaveBeenCalledWith({ word: "holaa", suggestions: ["hola"] });
+  expect(stop).toHaveBeenCalledOnce();
 });

@@ -14,6 +14,7 @@ export type QueueItem = {
   markdown: string;
   warnings: string[];
   errorCode: string;
+  saved?: boolean;
 };
 
 type ConvertResult = { markdown: string; warnings: string[] };
@@ -77,7 +78,8 @@ export function useQueue(client: Client) {
             },
             "converting",
           );
-          setSelectedId((current) => current ?? next.id);
+          if (itemsRef.current.some((item) => item.id === next.id))
+            setSelectedId((current) => current ?? next.id);
         } catch (reason) {
           const code = controller.signal.aborted ? "E_CANCELLED" : errorCode(reason);
           patch(next.id, {
@@ -133,8 +135,18 @@ export function useQueue(client: Client) {
     };
   }, []);
 
-  const selected = items.find((item) => item.id === selectedId && item.status === "done") ?? null;
-  return { items, add, cancel, selected, setSelectedId };
+  const clear = () => {
+    for (const controller of controllers.current.values()) controller.abort();
+    commit([]);
+    setSelectedId(null);
+  };
+  const markSaved = (id: string) => patch(id, { saved: true }, "done");
+
+  const selected =
+    items.find((item) => item.id === selectedId && item.status === "done") ??
+    items.find((item) => item.status === "queued" || item.status === "converting") ??
+    null;
+  return { items, add, cancel, clear, markSaved, selected, setSelectedId };
 }
 
 export function errorCode(error: unknown): string {

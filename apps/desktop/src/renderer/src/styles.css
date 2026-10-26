@@ -9,3 +9,181 @@
 .ld-no-drag * {
   -webkit-app-region: no-drag;
 }
+
+.ld-notice-text[data-moving="true"] > span {
+  display: inline-flex;
+  gap: 24px;
+  animation: ld-notice-scroll 6s linear infinite;
+}
+.ld-notice-text[data-paused="true"] > span {
+  animation-play-state: paused;
+}
+.ld-notice-repeat {
+  display: none;
+}
+.ld-notice-text[data-moving="true"] .ld-notice-repeat {
+  display: inline;
+}
+@keyframes ld-notice-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--notice-distance));
+  }
+}
+.ld-closed-notice {
+  animation: ld-notice-enter 150ms ease-out;
+}
+@keyframes ld-notice-enter {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-notice-text[data-moving="true"] > span,
+  .ld-closed-notice {
+    animation: none;
+  }
+  .ld-notice-text[data-overflow] > span {
+    display: inline;
+  }
+}
+
+.ld-tool-update {
+  display: grid;
+  animation: ld-tool-update-enter 160ms ease-out;
+}
+.ld-tool-update > div {
+  overflow: hidden;
+  min-height: 0;
+}
+@keyframes ld-tool-update-enter {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-tool-update {
+    animation: none;
+  }
+}
+
+.ld-active-tab-indicator {
+  position: absolute;
+  left: 0;
+  pointer-events: none;
+  border-radius: calc(infinity * 1px);
+  background: var(--ld-border);
+}
+.ld-window-tabs[data-active-indicator] .ld-selected-tab {
+  background: transparent;
+  transition: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ld-active-tab-indicator[data-motion="on"] {
+    transition:
+      transform var(--ld-motion) var(--ld-ease-out),
+      width var(--ld-motion) var(--ld-ease-out);
+  }
+}
+
+.ld-update-link {
+  text-decoration-color: transparent;
+}
+.ld-update-link:is(:hover, :focus-visible:not([data-modalidad="puntero"] *)) {
+  text-decoration-color: currentColor;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ld-update-link {
+    transition: text-decoration-color var(--ld-motion-fast) var(--ld-ease-out);
+  }
+  .ld-update-arrow {
+    transition: transform var(--ld-motion-fast) var(--ld-ease-out);
+  }
+  .ld-update-link:is(:hover, :focus-visible:not([data-modalidad="puntero"] *)) .ld-update-arrow {
+    transform: translate(2px, -2px);
+  }
+}
+
+/* Solo el aviso delantero participa en el ancho reservado. */
+[data-notice-stack] {
+  position: relative;
+  z-index: 20;
+}
+.ld-notice-front {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+}
+.ld-notice-back {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  z-index: 1;
+  /* Se encoge hacia su borde izquierdo: así asoma 7 px por la izquierda del de delante. */
+  transform-origin: left center;
+  transform: translateX(-7px) scale(0.94);
+  opacity: 0.6;
+  filter: blur(1px);
+  pointer-events: none;
+}
+[data-notice-stack][data-expanded="true"] .ld-notice-back {
+  right: calc(100% + 8px);
+  max-width: min(60vw, 480px);
+  transform: translateX(0) scale(1);
+  opacity: 1;
+  filter: blur(0);
+  pointer-events: auto;
+  background: var(--ld-bg);
+}
+[data-notice-stack][data-expanded="true"]::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  width: 8px;
+  height: 100%;
+}
+[data-stack-motion="true"][data-closing="true"] {
+  opacity: 0;
+  transform: translateY(-7px) scale(0.94);
+  filter: blur(2px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ld-notice-back,
+  [data-stack-motion="true"] {
+    transition:
+      transform var(--ld-motion-slow) var(--ld-ease-out),
+      opacity var(--ld-motion-slow) var(--ld-ease-out),
+      filter var(--ld-motion-slow) var(--ld-ease-out),
+      right var(--ld-motion-slow) var(--ld-ease-out);
+  }
+  [data-notice-stack][data-stacked="true"] .ld-notice-front {
+    animation: ld-stack-enter var(--ld-motion-slow) var(--ld-ease-out);
+  }
+  @keyframes ld-stack-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.97);
+      filter: blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+}

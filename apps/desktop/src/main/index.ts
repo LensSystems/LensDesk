@@ -9,6 +9,7 @@ import {
   Menu,
   nativeTheme,
   screen,
+  session,
   shell,
   utilityProcess,
 } from "electron";
@@ -18,14 +19,18 @@ import { openHostDatabase, readStoredLocale, supportsFts5 } from "./db/driver.ts
 import { SchemaTooNewError } from "./db/migrate.ts";
 import { getSetting, setSetting } from "./db/settings-repo.ts";
 import { createTranslator } from "./i18n.ts";
+import { closedForLimitSchema } from "./ipc/schemas.ts";
 import { createErrorNotifier } from "./log/error-notifier.ts";
 import { logProcessErrors, logRendererCrashes } from "./log/wire-logging.ts";
-import { buildMenuTemplate } from "./menu.ts";
+import { buildMenuTemplate, tabMenuEntries } from "./menu.ts";
 import { configureRuntime, runSmoke } from "./runtime.ts";
 import { createTabHandlers } from "./shell/tab-handlers.ts";
 import { createTabsStore } from "./shell/tabs-store.ts";
 import { updateTitleBar, wireFullScreen } from "./shell/title-bar.ts";
 import { restoreWindowBounds, saveWindowBounds } from "./shell/window-state.ts";
+import { configureSingleInstance } from "./single-instance.ts";
+import { applySpellcheckPolicy } from "./spellcheck.ts";
+import { createToolRegistry } from "./tools/registry.ts";
 import { createToolWiring } from "./tools/wire-tools.ts";
 import {
   createMainLogger,
@@ -44,8 +49,16 @@ const packageJson = JSON.parse(
 const smoke = configureRuntime(process.argv, process.env.LENSDESK_USER_DATA, (path) =>
   app.setPath("userData", path),
 );
-const { logger, logsDir } = createMainLogger(app.getPath("userData"));
 let shellWindow: BrowserWindow | undefined;
+// LensDesk solo se abre una vez por carpeta de datos (el bloqueo depende de `userData`, ya fijada).
+// El segundo arranque sale aquí, antes de abrir el registro o la base, y enfoca la primera ventana.
+configureSingleInstance({
+  requestLock: () => app.requestSingleInstanceLock(),
+  quit: () => process.exit(0),
+  onSecondInstance: (listener) => app.on("second-instance", listener),
+  getWindow: () => shellWindow,
+});
+const { logger, logsDir } = createMainLogger(app.getPath("userData"));
 let shellContents: Electron.WebContents | undefined;
 // Aviso al shell por errores no capturados, como mucho uno cada 10 s y sin detalles.
 logProcessErrors(
@@ -78,7 +91,20 @@ const setNativeMenu = (locale: "es" | "en"): void => {
   const t = createTranslator(locale);
   Menu.setApplicationMenu(
     Menu.buildFromTemplate(
-      buildMenuTemplate(t, process.platform) as Electron.MenuItemConstructorOptions[],
+      buildMenuTemplate(
+        t,
+        process.platform,
+        database ? tabMenuEntries(tabsStore().list(), createToolRegistry(database), locale) : [],
+        (toolId) => {
+          // La entrada puede quedar vieja un instante si la pestaña se acaba de cerrar.
+          if (
+            tabsStore()
+              .list()
+              .some((tab) => tab.toolId === toolId)
+          )
+            tabHandlers["tabs.activate"]({ toolId });
+        },
+      ) as Electron.MenuItemConstructorOptions[],
     ),
   );
 };
@@ -103,8 +129,12 @@ const settingsHandlers = createSettingsHandlers({
   },
   getSystemIsDark: () => nativeTheme.shouldUseDarkColors,
 });
+let persistentTabs: ReturnType<typeof createTabsStore> | undefined;
 const tabsStore = () =>
-  createTabsStore(requireDatabase(), (tabs) => shellContents?.send("tabs.changed", { tabs }));
+  (persistentTabs ??= createTabsStore(requireDatabase(), (tabs) => {
+    shellContents?.send("tabs.changed", { tabs });
+    setNativeMenu(settingsHandlers["app.getContext"]().locale);
+  }));
 toolWiring = createToolWiring({
   app,
   database: () => database,
@@ -116,6 +146,7 @@ toolWiring = createToolWiring({
   onShowActiveTool: (callback) => {
     showActiveTool = callback;
   },
+  onCatalogChanged: () => setNativeMenu(settingsHandlers["app.getContext"]().locale),
   logger,
 });
 logRendererCrashes(app as never, {
@@ -128,6 +159,11 @@ logRendererCrashes(app as never, {
   },
 });
 const { updates, appActions } = wireAppServices({
+  loginItem: {
+    isPackaged: app.isPackaged,
+    getLoginItemSettings: () => app.getLoginItemSettings(),
+    setLoginItemSettings: (settings) => app.setLoginItemSettings(settings),
+  },
   // Sin `lensdesk.releasesRepo` la comprobación se omite siempre y no hay red.
   repo: __RELEASES_REPO__,
   currentVersion: packageJson.version,
@@ -136,6 +172,10 @@ const { updates, appActions } = wireAppServices({
   logger,
   settings: settingsHandlers,
   fetch: (url, init) => fetch(url, init),
+  platform: process.platform,
+  arch: process.arch,
+  installedTools: () => toolWiring.registry?.list() ?? [],
+  emitTools: (payload) => shellContents?.send("tools.updatesAvailable", payload),
   emitUpdate: (payload) => shellContents?.send("update.available", payload),
   showSaveDialog: (options) => {
     const window = BrowserWindow.getFocusedWindow();
@@ -146,6 +186,11 @@ const { updates, appActions } = wireAppServices({
 });
 const tabHandlers = createTabHandlers({
   tabsStore,
+  notifyClosed: (toolId, openedToolId) =>
+    shellContents?.send(
+      "tabs.closedForLimit",
+      closedForLimitSchema.parse({ toolId, openedToolId }),
+    ),
   follow: followTabs,
   closeTool: (toolId) => toolWiring.close(toolId),
   hideAll: () => toolWiring.hideAll(),
@@ -159,9 +204,9 @@ registerHostIpc(ipcMain, {
       version: packageJson.version,
       platform: process.platform,
       fullScreen: shellWindow?.isFullScreen() ?? false,
+      releasesRepo: __RELEASES_REPO__,
+      isPackaged: app.isPackaged,
     }),
-    "settings.get": settingsHandlers["settings.get"],
-    "settings.set": settingsHandlers["settings.set"],
     "app.getContext": settingsHandlers["app.getContext"],
     ...tabHandlers,
     ...toolWiring.handlers,
@@ -171,6 +216,7 @@ registerHostIpc(ipcMain, {
 });
 
 void app.whenReady().then(async () => {
+  applySpellcheckPolicy(session.defaultSession, process.platform);
   try {
     database = openHostDatabase(app.getPath("userData"));
   } catch (error) {
@@ -187,7 +233,7 @@ void app.whenReady().then(async () => {
   nativeTheme.on("updated", settingsHandlers.emitContextChanged);
   const bounds = restoreWindowBounds(
     database,
-    screen.getAllDisplays().map(({ bounds: rect }) => rect),
+    screen.getAllDisplays().map(({ workArea }) => workArea),
   );
   const window = new BrowserWindow(
     shellWindowOptions(

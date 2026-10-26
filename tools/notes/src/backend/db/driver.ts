@@ -15,7 +15,8 @@ export type Db = {
 export function openNotesDatabase(dataDir: string): Db {
   mkdirSync(dataDir, { recursive: true });
   const database = new DatabaseSync(join(dataDir, "notes.db"));
-  database.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
+  // secure_delete: lo borrado se sobrescribe con ceros, para que no queden restos de notas privadas.
+  database.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA secure_delete = ON;");
   const db: Db = {
     exec: (sql) => database.exec(sql),
     run: (sql, ...params) => {

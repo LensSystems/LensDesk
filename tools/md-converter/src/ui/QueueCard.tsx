@@ -1,6 +1,9 @@
-import { Badge, IconButton, ListItem, X } from "@lensdesk/ui";
+import { IconButton, ListItem, X } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
+import { QueueFilename } from "./QueueFilename.tsx";
+import { QueueState } from "./QueueState.tsx";
 import { StatusText } from "./StatusText.tsx";
+import { useCompletionMotion } from "./use-completion-motion.ts";
 import type { QueueItem } from "./use-queue.ts";
 
 export function QueueCard({
@@ -14,47 +17,63 @@ export function QueueCard({
   onSelect: (id: string) => void;
   onCancel: (id: string) => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { motion, clearMotion, root } = useCompletionMotion(item);
   const active = item.status === "queued" || item.status === "converting";
   const progress = Math.round(item.progress * 100);
   return (
-    <li className="min-w-0">
+    <li ref={root} className="min-w-0 fila-conversion">
+      {motion.old?.status === "converting" && (
+        <div
+          className="progreso-saliente queue-progress"
+          // La tarjeta «Listo» es más baja: la barra no baja de su borde para no alargar la lista.
+          style={
+            motion.bar
+              ? {
+                  inset: "auto",
+                  left: motion.bar.left,
+                  width: motion.bar.width,
+                  top: `min(${motion.bar.top}px, calc(100% - 6px))`,
+                }
+              : undefined
+          }
+          aria-hidden="true"
+          inert
+        >
+          <div style={{ width: `${Math.round(motion.old.progress * 100)}%` }} />
+        </div>
+      )}
       <ListItem
         variant="card"
-        title={item.file.name}
+        title={<QueueFilename name={item.file.name} />}
+        aria-label={item.file.name}
         selected={selected}
         disabled={item.status !== "done"}
         onClick={() => onSelect(item.id)}
-        containerClassName={item.status === "error" ? "border-danger bg-danger-soft" : undefined}
+        containerClassName={`queue-card ${selected ? "queue-card-selected" : ""} ${item.status === "error" ? "border-danger bg-danger-soft" : ""}`}
         actions={
-          active ? (
-            <>
-              <span className="queue-status">
-                <span>{t(`status.${item.status}`)}</span>
-                {item.status === "converting" && (
-                  <span>
-                    {new Intl.NumberFormat(i18n.language, { style: "percent" }).format(
-                      item.progress,
-                    )}
-                  </span>
-                )}
+          <>
+            <QueueState
+              item={item}
+              motion={motion.done}
+              savedMotion={motion.saved}
+              onEnd={clearMotion}
+            />
+            {motion.old && (
+              <span className="estado-saliente" aria-hidden="true" inert>
+                <QueueState item={motion.old} />
               </span>
+            )}
+            {active && (
               <IconButton
+                tooltip={false}
                 label={t("cancelFile", { name: item.file.name })}
                 onClick={() => onCancel(item.id)}
               >
                 <X size={14} aria-hidden="true" />
               </IconButton>
-            </>
-          ) : (
-            <Badge
-              tone={
-                item.status === "done" ? "accent" : item.status === "error" ? "danger" : "neutral"
-              }
-            >
-              {t(`status.${item.status}`)}
-            </Badge>
-          )
+            )}
+          </>
         }
         footer={
           item.status === "converting" ? (

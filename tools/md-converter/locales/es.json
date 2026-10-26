@@ -4,7 +4,7 @@
   "title": "Convertidor",
   "chooseFiles": "Elegir archivos…",
   "dropZone": "Zona para soltar archivos",
-  "dropHint": "Suelta aquí documentos HTML, DOCX, CSV, PDF o XLSX, o elígelos para convertirlos a Markdown.",
+  "dropHint": "Arrastra documentos HTML, DOCX, CSV, PDF o XLSX a esta zona, o elige archivos para convertirlos a Markdown.",
   "supportedFiles": "Documentos compatibles",
   "markdownFiles": "Archivos Markdown",
   "queue": "Cola de conversión",
@@ -25,8 +25,7 @@
   "copy": "Copiar",
   "save": "Guardar .md",
   "saveAll": "Guardar todos…",
-  "copied": "Markdown copiado al portapapeles.",
-  "saved": "Archivos guardados: {{count}}",
+  "copied": "Copiado",
   "noResult": "Elige un archivo convertido para ver su Markdown.",
   "imagesOmitted": "El documento original tenía imágenes que se omitieron.",
   "errors": {
@@ -36,5 +35,11 @@
     "E_CANCELLED": "Conversión cancelada.",
     "generic": "No se pudo completar la acción ({{code}})."
   },
-  "dropMore": "Suelta más documentos aquí"
+  "dropMore": "Arrastra más documentos a esta zona",
+  "historyHeading": "Archivos convertidos · {{count}}",
+  "clearHistory": "Borrar historial",
+  "clearHistoryTitle": "¿Borrar el historial?",
+  "clearHistoryDescription": "Se quitan los {{count}} archivos de esta lista. Los archivos .md que ya guardaste no se borran.",
+  "fileSaved": "Archivo guardado",
+  "dropHintCompact": "Suelta aquí HTML, DOCX, CSV, PDF o XLSX"
 }

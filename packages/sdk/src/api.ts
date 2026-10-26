@@ -1,7 +1,10 @@
 import type { Result } from "./errors.ts";
 
+export type SpellingInfo = { word: string; suggestions: string[] };
+
 export type FileHandle = { token: string; name: string; size: number };
 export type ToolContext = {
+  spellcheck?: boolean;
   locale: string;
   theme: string;
   accent?: "blue" | "green";
@@ -43,6 +46,9 @@ export type ToolBridge = {
     onProgress: (callback: (event: BackendProgressEvent) => void) => () => void;
   };
   app: {
+    onSpelling?: (callback: (info: SpellingInfo) => void) => () => void;
+    // Opcional: los hosts anteriores no lo tienen.
+    onVisibilityChange?: (callback: (visible: boolean) => void) => () => void;
     getContext: () => Promise<Result<ToolContext>>;
     onContextChange: (callback: (context: ToolContext) => void) => () => void;
   };

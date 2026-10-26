@@ -1,15 +1,23 @@
 import {
+  BrushCleaning,
   Button,
   ConfirmDialog,
   FileDropZone,
   ListItem,
+  MarkdownRaw,
   MarkdownView,
   Notice,
   Panel,
+  Save,
+  SaveAll,
+  SaveMarkdown,
   SegmentedControl,
+  Skeleton,
+  SwapText,
   Toolbar,
 } from "@lensdesk/ui";
 import { useState } from "react";
+import { CopyExample } from "./CopyExample.tsx";
 import { Example } from "./Example.tsx";
 
 export function SharedExamples() {
@@ -19,6 +27,27 @@ export function SharedExamples() {
   const [notice, setNotice] = useState("");
   return (
     <>
+      <Example names={["BrushCleaning", "Save", "MarkdownRaw", "SaveMarkdown", "SaveAll"]}>
+        <MarkdownRaw aria-label="Markdown crudo" />
+        <SaveMarkdown aria-label="Guardar .md" />
+        <SaveMarkdown chip aria-label="Guardar .md con insignia" />
+        <SaveAll size={16} aria-label="Guardar todos" />
+        <BrushCleaning aria-label="Borrar historial" />
+        <Save aria-label="Guardar" />
+      </Example>
+      <CopyExample />
+      <Example names={["Skeleton"]}>
+        <Skeleton loading>
+          <div />
+        </Skeleton>
+      </Example>
+      <Example names={["SwapText"]}>
+        <Button onClick={() => setNotice(notice === "Listo" ? "En cola" : "Listo")}>
+          Cambiar estado
+        </Button>
+        <SwapText value={notice || "En cola"} />
+        <SwapText speed="fast" value={notice || "En cola"} />
+      </Example>
       <Example names={["Panel"]}>
         <Panel title="Panel" actions={<Button>Acción</Button>}>
           Contenido
@@ -40,6 +69,19 @@ export function SharedExamples() {
             { value: "edit", label: "Editar" },
             { value: "disabled", label: "No disponible", disabled: true },
             { value: "preview", label: "Vista previa" },
+          ]}
+        />
+      </Example>
+      <Example names={["SegmentedControl"]}>
+        <SegmentedControl
+          fullWidth
+          aria-label="Vista a todo el ancho"
+          value={value}
+          onValueChange={setValue}
+          options={[
+            { value: "edit", label: "Editar" },
+            { value: "preview", label: "Vista previa" },
+            { value: "other", label: "Otra vista" },
           ]}
         />
       </Example>
@@ -124,7 +166,7 @@ export function SharedExamples() {
         <FileDropZone
           size="compact"
           buttonVariant="primary"
-          label="Suelta más documentos aquí"
+          label="Arrastra más documentos a esta zona"
           buttonLabel="Elegir archivos"
           onBrowse={() => setNotice("Selector solicitado")}
         />

@@ -8,7 +8,9 @@ export const HOST_CHANNELS = [
   "tabs.list",
   "tabs.open",
   "tabs.close",
+  "tabs.undoClose",
   "tabs.activate",
+  "tabs.move",
   "shell.showPage",
   "tools.list",
   "tools.pickAndInstall",
@@ -25,9 +27,11 @@ export const HOST_EVENTS = [
   "settings.changed",
   "context.changed",
   "tabs.changed",
+  "tabs.closedForLimit",
   "tools.changed",
   "tools.toast",
   "update.available",
+  "tools.updatesAvailable",
   "tool.crashed",
   "app.error",
   "window.fullScreenChanged",
@@ -43,7 +47,9 @@ export type HostPayloads = {
   "tabs.list": Record<string, never>;
   "tabs.open": { toolId: string };
   "tabs.close": { toolId: string };
+  "tabs.undoClose": { toolId: string };
   "tabs.activate": { toolId: string };
+  "tabs.move": { toolId: string; toIndex: number };
   "shell.showPage": { page: "tools" | "settings" };
   "tools.list": Record<string, never>;
   "tools.pickAndInstall": Record<string, never>;
@@ -61,20 +67,29 @@ export type HostSettingKey =
   | "theme"
   | "accent"
   | "developerMode"
+  | "app.openAtLogin"
   | "updates.check"
   | "updates.lastCheckedAt"
   | "updates.dismissedVersion"
   | "window.bounds";
 export type HostSettingValue = unknown;
 export type HostResponses = {
-  "app.getInfo": { version: string; platform: string; fullScreen: boolean };
+  "app.getInfo": {
+    version: string;
+    platform: string;
+    fullScreen: boolean;
+    releasesRepo?: string;
+    isPackaged?: boolean;
+  };
   "settings.get": { key: HostSettingKey; value: HostSettingValue };
   "settings.set": { key: HostSettingKey; value: HostSettingValue };
   "app.getContext": { locale: "es" | "en"; theme: "dark" | "light"; accent: "blue" | "green" };
   "tabs.list": { tabs: ShellTab[] };
   "tabs.open": { tabs: ShellTab[] };
   "tabs.close": { tabs: ShellTab[] };
+  "tabs.undoClose": { tabs: ShellTab[] };
   "tabs.activate": { tabs: ShellTab[] };
+  "tabs.move": { tabs: ShellTab[] };
   "shell.showPage": { page: "tools" | "settings" };
   "tools.list": ToolState;
   "tools.pickAndInstall": ToolState;
@@ -87,10 +102,18 @@ export type HostResponses = {
   "app.openExternal": Record<string, never>;
   "updates.checkNow": UpdateCheckResult;
 };
+export type ToolUpdate = { id: string; version: string; url: string };
 export type UpdateCheckResult =
   | { kind: "skipped" }
-  | { kind: "none" }
-  | { kind: "available"; version: string; url: string };
+  | { kind: "none"; tools?: ToolUpdate[] }
+  | { kind: "error" }
+  | {
+      kind: "available";
+      version: string;
+      url: string;
+      installerUrl?: string;
+      tools?: ToolUpdate[];
+    };
 export type PendingDowngrade = {
   toolId: string;
   installedVersion: string;
@@ -117,9 +140,17 @@ export type HostEventPayloads = {
   "settings.changed": { key: HostSettingKey; value: HostSettingValue };
   "context.changed": { locale: "es" | "en"; theme: "dark" | "light"; accent: "blue" | "green" };
   "tabs.changed": { tabs: ShellTab[] };
+  "tabs.closedForLimit": { toolId: string; openedToolId?: string };
   "tools.changed": ToolState;
   "tools.toast": { toolId: string; kind: string; message: string };
-  "update.available": { version: string; html_url: string };
+  "update.available": {
+    version: string;
+    html_url: string;
+    installerUrl?: string;
+    tools?: ToolUpdate[];
+  };
+  // Se emite también con la app al día; una lista vacía limpia avisos anteriores.
+  "tools.updatesAvailable": { tools: ToolUpdate[] };
   "tool.crashed": { toolId: string };
   "app.error": { kind: "uncaught" | "rejection" };
 };

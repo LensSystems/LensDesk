@@ -15,21 +15,26 @@ import { useShellStore } from "../state/store.ts";
 
 import { AppLogo } from "./AppLogo.tsx";
 import { PageFrame } from "./PageFrame.tsx";
+import { SettingsLoginItem } from "./SettingsLoginItem.tsx";
 import { SettingsRow } from "./SettingsRow.tsx";
 import { SettingsSection } from "./SettingsSection.tsx";
+import { SettingsUpdateCheck } from "./SettingsUpdateCheck.tsx";
 
 type SettingsPageProps = { bridge: Window["lensdeskHost"] };
 
 export function SettingsPage({ bridge }: SettingsPageProps) {
   const { t, i18n } = useTranslation();
-  const updatesDescriptionId = useId();
   const developerDescriptionId = useId();
   const theme = useShellStore((state) => state.context.theme);
   const settings = useShellStore((state) => state.settings);
+  const [releasesRepo, setReleasesRepo] = useState("");
   const [version, setVersion] = useState<string | null>(null);
   useEffect(() => {
     void bridge.invoke("app.getInfo", {}).then((result) => {
-      if (result.ok) setVersion(result.data.version);
+      if (result.ok) {
+        setVersion(result.data.version);
+        setReleasesRepo(result.data.releasesRepo ?? "");
+      }
     });
   }, [bridge]);
   const pushToast = useShellStore((state) => state.pushToast);
@@ -43,9 +48,9 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
   const update = (key: HostSettingKey, value: unknown) =>
     void bridge.invoke("settings.set", { key, value });
   return (
-    <PageFrame>
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-        <h1 className="text-[28px] font-bold leading-tight tracking-tight">
+    <PageFrame settings>
+      <div className="mx-auto flex w-full min-[900px]:max-w-2xl flex-col gap-4 min-[900px]:gap-6">
+        <h1 className="col-span-full text-2xl leading-8 min-[900px]:text-[28px] min-[900px]:leading-tight font-bold tracking-tight">
           {t("settingsPage.title")}
         </h1>
         <SettingsSection title={t("settingsPage.appearance")}>
@@ -62,6 +67,8 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
           <SettingsRow label={t("settingsPage.theme")}>
             <SegmentedControl
+              indicatorClassName="shadow-none"
+              itemClassName="data-[state=checked]:shadow-none"
               aria-label={t("settingsPage.theme")}
               value={settings.theme}
               onValueChange={(value) => update("theme", value)}
@@ -74,6 +81,8 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
           <SettingsRow label={t("settingsPage.accent")}>
             <SegmentedControl
+              indicatorClassName="shadow-none"
+              itemClassName="data-[state=checked]:shadow-none"
               aria-label={t("settingsPage.accent")}
               value={settings.accent}
               onValueChange={(value) => update("accent", value)}
@@ -92,18 +101,12 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
         </SettingsSection>
         <SettingsSection title={t("settingsPage.general")}>
-          <SettingsRow
-            label={t("settingsPage.checkUpdates")}
-            description={t("settingsPage.checkUpdatesDescription")}
-            descriptionId={updatesDescriptionId}
-          >
-            <Switch
-              aria-label={t("settingsPage.checkUpdates")}
-              aria-describedby={updatesDescriptionId}
-              checked={settings.updatesCheck}
-              onCheckedChange={(value) => update("updates.check", value)}
-            />
-          </SettingsRow>
+          <SettingsUpdateCheck
+            bridge={bridge}
+            version={version ?? ""}
+            enabled={releasesRepo !== "" && settings.updatesCheck}
+          />
+          <SettingsLoginItem bridge={bridge} />
           <SettingsRow
             label={t("settingsPage.developerMode")}
             description={t("settingsPage.developerModeDescription")}
@@ -119,7 +122,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
         </SettingsSection>
         <SettingsSection title={t("settingsPage.dataAndLogs")}>
           <SettingsRow description={t("settingsPage.localDataDescription")}>
-            <div className="flex shrink-0 flex-wrap gap-2">
+            <div className="flex shrink-0 flex-wrap gap-4">
               <Button onClick={() => void exportLogs()}>{t("settingsPage.exportLogs")}</Button>
               <Button onClick={() => void bridge.invoke("app.openDataFolder", {})}>
                 {t("settingsPage.openDataFolder")}
@@ -136,7 +139,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
                 <span className="text-accent">Desk</span>
               </p>
               <p className="text-xs text-muted">{t("settingsPage.byline")}</p>
-              <p className="mt-1 font-mono text-xs text-muted">
+              <p className="ld-selectable mt-1 font-mono text-xs text-muted">
                 {t("settingsPage.appVersion", { version: version ?? t("ui.loading") })}
               </p>
             </div>

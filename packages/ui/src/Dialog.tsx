@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { Dialog as Primitive } from "radix-ui";
 import type { ComponentProps } from "react";
 import { cn } from "./cn.ts";
@@ -13,9 +14,18 @@ export function DialogTitle({ className, ...props }: ComponentProps<typeof Primi
 export const DialogDescription = Primitive.Description;
 export const DialogClose = Primitive.Close;
 
-export type DialogContentProps = ComponentProps<typeof Primitive.Content> & { closeLabel?: string };
+export type DialogContentProps = ComponentProps<typeof Primitive.Content> & {
+  closeLabel?: string;
+  closeClassName?: string;
+};
 
-export function DialogContent({ className, children, closeLabel, ...props }: DialogContentProps) {
+export function DialogContent({
+  className,
+  children,
+  closeLabel,
+  closeClassName,
+  ...props
+}: DialogContentProps) {
   const labels = useUiLabels();
   return (
     <Primitive.Portal>
@@ -30,8 +40,12 @@ export function DialogContent({ className, children, closeLabel, ...props }: Dia
         {children}
         <TooltipProvider>
           <Primitive.Close asChild>
-            <IconButton label={closeLabel ?? labels.close} className="absolute right-2 top-2">
-              ×
+            <IconButton
+              tooltip={false}
+              label={closeLabel ?? labels.close}
+              className={cn("absolute right-2 top-2", closeClassName)}
+            >
+              <X size={16} strokeWidth={2} className="text-muted" aria-hidden="true" />
             </IconButton>
           </Primitive.Close>
         </TooltipProvider>

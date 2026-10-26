@@ -72,6 +72,22 @@ beforeEach(async () => {
 });
 
 describe("interfaz del Convertidor", () => {
+  it("aplica el estilo activo al cambiar entre vistas", async () => {
+    const fake = fakeClient([]);
+    render(<App client={fake.client as never} />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[0]).toHaveAttribute("data-state", "active");
+    expect(tabs[0]).toHaveClass(
+      "data-[state=active]:bg-surface-raised",
+      "data-[state=active]:font-semibold",
+      "data-[state=active]:text-text",
+    );
+    const raw = screen.getByRole("tab", { name: "Markdown crudo" });
+    fireEvent.click(raw);
+    expect(raw).toHaveAttribute("data-state", "active");
+    expect(tabs[0]).toHaveAttribute("data-state", "inactive");
+  });
+
   it("convierte en orden, muestra el progreso y cancela solo la fila elegida", async () => {
     const fake = fakeClient([handle("lento.pdf"), handle("datos.csv")]);
     render(<App client={fake.client as never} />);
@@ -100,7 +116,9 @@ describe("interfaz del Convertidor", () => {
       expect(within(row("lento.pdf")).getByText("Conversión cancelada.")).toBeInTheDocument(),
     );
     expect(performance.now() - started).toBeLessThan(1000);
-    expect(within(row("lento.pdf")).getByText("Cancelado")).toHaveClass("bg-surface");
+    expect(within(row("lento.pdf")).getByText("Cancelado").closest(".normal-status")).toHaveClass(
+      "bg-surface",
+    );
     await waitFor(() => expect(within(row("datos.csv")).getByText("Listo")).toBeInTheDocument());
     expect(fake.invoke).toHaveBeenLastCalledWith(
       "convert",
@@ -147,12 +165,16 @@ describe("interfaz del Convertidor", () => {
     expect(
       screen.getByText("El documento original tenía imágenes que se omitieron."),
     ).toBeInTheDocument();
-    expect(within(row("notas.txt")).getByText("Error")).toHaveClass("text-danger");
+    expect(within(row("notas.txt")).getByText("Error").closest(".normal-status")).toHaveClass(
+      "text-danger",
+    );
     expect(row("notas.txt").firstElementChild).toHaveClass("border-danger", "bg-danger-soft");
     expect(within(row("pagina-img.html")).queryByText(es.imagesOmitted)).toBeNull();
     fake.drop([handle("clean.html")]);
     await waitFor(() =>
-      expect(within(row("clean.html")).getByText("Listo")).toHaveClass("bg-accent-soft"),
+      expect(within(row("clean.html")).getByText("Listo").closest(".normal-status")).toHaveClass(
+        "bg-accent-soft",
+      ),
     );
     fireEvent.click(screen.getByRole("button", { name: "clean.html" }));
     expect(screen.queryByText(es.imagesOmitted)).toBeNull();
@@ -201,7 +223,7 @@ describe("interfaz del Convertidor", () => {
     expect(fake.client.files.pickSave).toHaveBeenCalledTimes(3);
     expect(fake.client.files.writeText).toHaveBeenCalledWith("save-2", `# a.html\n\n${TABLE}`);
     expect(fake.client.files.writeText).toHaveBeenCalledWith("save-3", `# b.csv\n\n${TABLE}`);
-    expect(await screen.findByText("Archivos guardados: 2")).toBeInTheDocument();
+    expect(screen.queryByText(/Archivos guardados:/)).toBeNull();
   });
 
   it("usa MarkdownView, pestañas con flechas y el selector del SDK sin input de archivos", async () => {
@@ -215,8 +237,8 @@ describe("interfaz del Convertidor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Elegir archivos…" }));
     expect(fake.client.files.pickOpen).toHaveBeenCalledOnce();
     await screen.findByRole("heading", { name: "sample.html" });
-    expect(screen.getByRole("region", { name: es.dropZone })).toHaveTextContent(es.dropMore);
-    expect(screen.getByRole("region", { name: es.dropZone })).toHaveClass("flex");
+    expect(screen.getByRole("region", { name: es.dropZone })).toHaveTextContent(es.dropHint);
+    expect(screen.getByRole("region", { name: es.dropZone })).not.toHaveClass("flex");
     expect(container.querySelector(".ld-markdown-view")).toBeInTheDocument();
     const rendered = screen.getByRole("tab", { name: "Vista renderizada" });
     const raw = screen.getByRole("tab", { name: "Markdown crudo" });

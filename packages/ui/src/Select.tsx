@@ -1,5 +1,5 @@
 import { Select as Primitive } from "radix-ui";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "./cn.ts";
 
 export const Select = Primitive.Root;
@@ -11,8 +11,9 @@ export const SelectSeparator = Primitive.Separator;
 export function SelectTrigger({
   className,
   children,
+  icon = "⌄",
   ...props
-}: ComponentProps<typeof Primitive.Trigger>) {
+}: ComponentProps<typeof Primitive.Trigger> & { icon?: ReactNode }) {
   return (
     <Primitive.Trigger
       {...props}
@@ -22,7 +23,7 @@ export function SelectTrigger({
       )}
     >
       {children}
-      <Primitive.Icon aria-hidden>⌄</Primitive.Icon>
+      <Primitive.Icon aria-hidden>{icon}</Primitive.Icon>
     </Primitive.Trigger>
   );
 }
@@ -56,7 +57,7 @@ export function SelectItem({
     <Primitive.Item
       {...props}
       className={cn(
-        "relative flex h-7 cursor-default select-none items-center rounded-ld-sm pr-2 pl-6 focus:bg-surface data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex h-7 select-none items-center rounded-ld-sm pr-2 pl-6 focus:bg-surface data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
     >

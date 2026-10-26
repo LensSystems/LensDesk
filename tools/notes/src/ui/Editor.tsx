@@ -1,44 +1,102 @@
+import { history, historyKeymap, redo, redoDepth, undo, undoDepth } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
-import { highlightActiveLine, highlightActiveLineGutter, lineNumbers } from "@codemirror/view";
-import { Button, Download, MarkdownView, SegmentedControl } from "@lensdesk/ui";
+import { Compartment, EditorState } from "@codemirror/state";
+import {
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  keymap,
+  lineNumbers,
+} from "@codemirror/view";
+import type { createToolClient } from "@lensdesk/sdk";
 import { EditorView } from "codemirror";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { credentialMask } from "./credential-mask.ts";
+import { EditorHeader } from "./EditorHeader.tsx";
+import { EditorMenu } from "./EditorMenu.tsx";
+import { EditorToolbar } from "./EditorToolbar.tsx";
+import { formatCommand, formatKeymap } from "./editor-commands.ts";
 import { markdownHighlighting } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
-import { renderPreview } from "./preview.ts";
-
+import { NotePreview } from "./NotePreview.tsx";
 export function Editor({
+  spellcheck = false,
+  client,
   note,
+  preview,
+  onMode,
+  onCopy,
+  onCopyCode,
   onChange,
   onBlur,
   onExport,
+  onRename,
+  onPrivate,
+  onLock,
+  locked = false,
+  readOnly = false,
+  children,
 }: {
+  spellcheck?: boolean;
+  client?: ReturnType<typeof createToolClient>;
+  onPrivate?: () => void;
+  onLock?: () => void;
+  locked?: boolean;
+  readOnly?: boolean;
+  children?: ReactNode;
   note: Note;
+  preview: boolean;
+  onMode: (preview: boolean) => void;
+  onCopy: () => Promise<boolean>;
+  onCopyCode: (code: string) => Promise<void>;
   onChange: (value: string) => void;
   onBlur: () => void;
   onExport: () => void;
+  onRename: (title: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const headerActions = { onPrivate, onLock, onMode, onBlur, onCopy, onExport, onRename };
   const host = useRef<HTMLDivElement>(null);
   const editorLabel = useRef(t("edit"));
-  const initialBody = useRef(note.body_md);
+  const editable = useRef(new Compartment());
+  const spelling = useRef(new Compartment());
+  const spellcheckRef = useRef(spellcheck);
+  spellcheckRef.current = spellcheck;
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
+  const bodyRef = useRef(note.body_md);
+  bodyRef.current = note.body_md;
   const view = useRef<EditorView | null>(null);
-  const [preview, setPreview] = useState(false);
+  const [depth, setDepth] = useState({ undo: 0, redo: 0 });
 
   useEffect(() => {
-    if (!host.current) return;
+    if (locked || !host.current) return;
     const instance = new EditorView({
-      doc: initialBody.current,
+      doc: bodyRef.current,
       extensions: [
+        editable.current.of([
+          EditorState.readOnly.of(readOnlyRef.current),
+          EditorView.editable.of(!readOnlyRef.current),
+        ]),
+        spelling.current.of(spellingAttributes(spellcheckRef.current)),
         EditorView.lineWrapping,
+        history(),
+        keymap.of([
+          ...formatKeymap,
+          ...historyKeymap,
+          { key: "Mod-Shift-z", run: redo },
+          { key: "Ctrl-y", run: redo },
+        ]),
         EditorView.contentAttributes.of(() => ({ "aria-label": editorLabel.current })),
         markdown(),
+        credentialMask,
         markdownHighlighting,
         lineNumbers(),
         highlightActiveLine(),
         highlightActiveLineGutter(),
         EditorView.updateListener.of((update) => {
+          const next = { undo: undoDepth(update.state), redo: redoDepth(update.state) };
+          setDepth((old) => (old.undo === next.undo && old.redo === next.redo ? old : next));
           if (update.docChanged) onChange(update.state.doc.toString());
         }),
       ],
@@ -52,47 +110,82 @@ export function Editor({
       instance.destroy();
       view.current = null;
     };
-  }, [onChange, onBlur]);
-
+  }, [onChange, onBlur, locked]);
+  // El contexto llega después de crear el editor: se cambia sin rehacerlo (conserva el historial).
+  useLayoutEffect(() => {
+    view.current?.dispatch({
+      effects: spelling.current.reconfigure(spellingAttributes(spellcheck)),
+    });
+  }, [spellcheck]);
+  useLayoutEffect(() => {
+    view.current?.dispatch({
+      effects: editable.current.reconfigure([
+        EditorState.readOnly.of(readOnly),
+        EditorView.editable.of(!readOnly),
+      ]),
+    });
+  }, [readOnly]);
   useEffect(() => {
     editorLabel.current = t("edit");
     view.current?.dispatch({});
   }, [t]);
-
   useEffect(() => {
     const editor = view.current;
     if (editor && editor.state.doc.toString() !== note.body_md)
       editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: note.body_md } });
   }, [note.body_md]);
-
   return (
     <section className="editor-panel">
-      <header className="editor-toolbar">
-        <h2>{note.title || t("untitled")}</h2>
-        <SegmentedControl
-          aria-label={t("mode")}
-          value={preview ? "preview" : "edit"}
-          onValueChange={(value) => {
-            onBlur();
-            setPreview(value === "preview");
-          }}
-          options={[
-            { value: "edit", label: t("edit") },
-            { value: "preview", label: t("preview") },
-          ]}
-        />
-        <Button type="button" onClick={onExport}>
-          <Download size={14} aria-hidden="true" />
-          {t("export")}
-        </Button>
-      </header>
-      <div className="code-editor" ref={host} hidden={preview} />
-      {preview && (
-        <MarkdownView
-          className="min-h-0 flex-1 overflow-auto p-6"
-          html={renderPreview(note.body_md)}
-        />
+      <EditorHeader {...{ note, preview, locked }} {...headerActions} />
+      {locked ? (
+        children
+      ) : (
+        <>
+          <div
+            className="relative min-h-0 flex-1 flex-col"
+            style={{ display: preview ? "none" : "flex" }}
+          >
+            <EditorToolbar
+              canUndo={!readOnly && depth.undo > 0}
+              canRedo={!readOnly && depth.redo > 0}
+              onUndo={() => {
+                if (view.current && !view.current.state.readOnly) {
+                  undo(view.current);
+                  view.current.focus();
+                }
+              }}
+              onRedo={() => {
+                if (view.current && !view.current.state.readOnly) {
+                  redo(view.current);
+                  view.current.focus();
+                }
+              }}
+              onFormat={(format) => {
+                if (view.current && !view.current.state.readOnly) {
+                  formatCommand(format)(view.current);
+                  view.current.focus();
+                }
+              }}
+            />
+            <EditorMenu
+              client={client}
+              spellcheck={spellcheck}
+              view={view}
+              privateNote={!!note.private && !locked}
+              readOnly={readOnly}
+            >
+              <div className="code-editor" ref={host} />
+            </EditorMenu>
+          </div>
+          {preview && (
+            <NotePreview privateNote={!!note.private} body={note.body_md} onCopyCode={onCopyCode} />
+          )}
+        </>
       )}
     </section>
   );
+}
+
+function spellingAttributes(enabled: boolean) {
+  return enabled ? EditorView.contentAttributes.of({ spellcheck: "true" }) : [];
 }

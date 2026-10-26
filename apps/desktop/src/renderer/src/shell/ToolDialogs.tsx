@@ -12,20 +12,24 @@ import {
 import { useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import type { HostBridge, PendingDowngrade, ToolSummary } from "../../../shared/host-channels.ts";
+import { ToolUpdateActions } from "./ToolUpdateActions.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
-
 export type ToolDialogState =
   | { kind: "details" | "remove"; tool: ToolSummary }
   | { kind: "error"; code: string; install: boolean }
   | null;
 export function ToolDialogs({
   state,
+  update,
+  onInstall,
   pending,
   bridge,
   onClose,
   onError,
 }: {
+  update?: import("../../../shared/host-channels.ts").ToolUpdate;
+  onInstall?: () => void;
   state: ToolDialogState;
   pending: PendingDowngrade | null;
   bridge: HostBridge;
@@ -38,7 +42,6 @@ export function ToolDialogs({
   useEffect(() => {
     setDowngradeOpen(Boolean(pending));
   }, [pending]);
-  // Cada confirmación de quitar empieza con la casilla desmarcada.
   useEffect(() => {
     if (state?.kind === "remove") setDeleteData(false);
   }, [state]);
@@ -78,7 +81,7 @@ export function ToolDialogs({
               </div>
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
                 <dt className="text-muted">{t("toolsPage.version")}</dt>
-                <dd className="font-mono text-text">{tool.version}</dd>
+                <dd className="ld-selectable font-mono text-text">{tool.version}</dd>
                 <dt className="text-muted">{t("toolsPage.signature")}</dt>
                 <dd className="text-text">
                   <Badge tone={tool.signed ? "accent" : "warning"}>
@@ -96,6 +99,7 @@ export function ToolDialogs({
                     : t("toolsPage.noPermissions")}
                 </dd>
               </dl>
+              <ToolUpdateActions update={update} bridge={bridge} onInstall={onInstall} />
               <div className="flex justify-end gap-2">
                 <Button size="lg" onClick={onClose}>
                   {t("ui.close")}
@@ -140,13 +144,13 @@ export function ToolDialogs({
                   {t(state.install ? "toolsPage.installError" : "toolsPage.actionError")}
                 </DialogTitle>
               </div>
-              <DialogDescription className="text-muted">
+              <DialogDescription className="ld-selectable text-muted">
                 {t(`errors.${state.code}`, { defaultValue: t("errors.E_INTERNAL") })}
               </DialogDescription>
               <dl>
                 <dt className="sr-only">{t("toolsPage.errorCode")}</dt>
                 <dd>
-                  <code className="select-text rounded-ld-sm bg-surface px-2 py-1 font-mono text-xs">
+                  <code className="ld-selectable rounded-ld-sm bg-surface px-2 py-1 font-mono text-xs">
                     {state.code}
                   </code>
                 </dd>

@@ -1,38 +1,37 @@
-import { Button } from "@lensdesk/ui";
+import { Button, IconButton, X } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import type { HostEventPayloads } from "../../../shared/host-channels.ts";
 
+import { NoticeCapsule } from "./NoticeCapsule.tsx";
+
 type Props = {
   update: HostEventPayloads["update.available"];
-  bridge: Window["lensdeskHost"];
+  onOpenSettings: () => void;
   onDismiss: () => void;
 };
 
-// Aviso compacto dentro del encabezado: una línea, sin empujar el contenido.
-export function UpdateBanner({ update, bridge, onDismiss }: Props) {
+export function UpdateBanner({ update, onOpenSettings, onDismiss }: Props) {
   const { t } = useTranslation();
   return (
-    <div
-      className="flex h-8 min-w-0 items-center gap-1 rounded-full bg-accent-soft pl-3 pr-1 text-xs text-accent-soft-fg"
-      role="status"
-    >
-      <span className="truncate">{t("recovery.updateAvailable", { version: update.version })}</span>
+    <NoticeCapsule status text={t("recovery.updateAvailable", { version: update.version })}>
       <Button
         variant="primary"
-        className="ld-no-drag h-6 shrink-0 px-2 text-xs"
-        onClick={() => void bridge.invoke("app.openExternal", { url: update.html_url })}
+        aria-label={t("recovery.goToSettings")}
+        className="ld-no-drag h-6 w-20 shrink-0 border-0 px-2 text-xs leading-4 font-bold"
+        onClick={onOpenSettings}
         type="button"
       >
-        {t("recovery.viewUpdate")}
+        {t("recovery.goToSettings")}
       </Button>
-      <Button
-        variant="ghost"
-        className="ld-no-drag h-6 shrink-0 px-2 text-xs text-accent-soft-fg"
+      <IconButton
+        tooltip={false}
+        className="ld-no-drag size-6 shrink-0 text-accent-soft-fg"
+        label={t("ui.dismiss")}
+        tooltipSide="bottom"
         onClick={onDismiss}
-        type="button"
       >
-        {t("ui.dismiss")}
-      </Button>
-    </div>
+        <X aria-hidden size={14} />
+      </IconButton>
+    </NoticeCapsule>
   );
 }

@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, useId, useState } from "react";
+import { type InputHTMLAttributes, useId, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "./cn.ts";
 
 export type CheckboxProps = Omit<
@@ -20,10 +20,25 @@ export function Checkbox({
   const id = useId();
   const [internalChecked, setInternalChecked] = useState(defaultChecked ?? false);
   const isChecked = checked ?? internalChecked;
+  const previousChecked = useRef(isChecked);
+  const [motion, setMotion] = useState(false);
+  useLayoutEffect(() => {
+    if (previousChecked.current === isChecked) return;
+    previousChecked.current = isChecked;
+    // El dibujo solo acompaña a un cambio hecho con el movimiento permitido y se apaga al terminar.
+    setMotion(
+      isChecked && window.matchMedia?.("(prefers-reduced-motion: no-preference)").matches === true,
+    );
+  }, [isChecked]);
   return (
     <input
       {...props}
       checked={isChecked}
+      data-motion={motion ? "on" : undefined}
+      onAnimationEnd={(event) => {
+        props.onAnimationEnd?.(event);
+        setMotion(false);
+      }}
       className={cn(
         "ld-checkbox size-6 shrink-0 cursor-pointer appearance-none rounded-ld-sm disabled:cursor-not-allowed disabled:opacity-45",
         className,

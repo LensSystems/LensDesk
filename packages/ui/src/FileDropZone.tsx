@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { Button } from "./Button.tsx";
 import { cn } from "./cn.ts";
 
 export type FileDropZoneProps = {
+  icon?: ReactNode;
   size?: "md" | "compact";
   buttonVariant?: "default" | "primary";
   onFiles?: (files: File[]) => void;
@@ -17,6 +18,7 @@ export type FileDropZoneProps = {
   className?: string;
 };
 export function FileDropZone({
+  icon,
   size = "md",
   buttonVariant = "default",
   onFiles,
@@ -58,7 +60,7 @@ export function FileDropZone({
       aria-disabled={disabled}
       data-dragging={!disabled && dragging}
       className={cn(
-        "grid justify-items-start gap-2 rounded-ld-lg border-2 border-dashed border-border-control bg-surface p-3 text-text data-[dragging=true]:border-accent data-[dragging=true]:bg-accent-soft",
+        "ld-file-drop grid justify-items-start gap-2 rounded-ld-lg border-2 border-dashed border-border-control bg-surface p-3 text-text data-[dragging=true]:border-accent data-[dragging=true]:bg-accent-soft",
         size === "compact" && "flex items-center gap-3 px-3.5",
         disabled && "opacity-60",
         className,
@@ -87,6 +89,7 @@ export function FileDropZone({
         if (onFiles) deliver(Array.from(event.dataTransfer.files));
       }}
     >
+      {icon}
       <p className={cn("text-[13px] text-muted", size === "compact" && "min-w-0 flex-1")}>
         {label}
       </p>

@@ -6,10 +6,12 @@ import { useShellStore } from "../state/store.ts";
 import { PageFrame } from "./PageFrame.tsx";
 import { ToolCard } from "./ToolCard.tsx";
 import { type ToolDialogState, ToolDialogs } from "./ToolDialogs.tsx";
+import { ToolUpdateGuide } from "./ToolUpdateGuide.tsx";
 
 export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridge } = {}) {
   const { t } = useTranslation();
   const tools = useShellStore((state) => state.tools);
+  const updates = useShellStore((state) => state.toolUpdates);
   const pending = useShellStore((state) => state.pendingDowngrade);
   const [dialog, setDialog] = useState<ToolDialogState>(null);
   const install = async (
@@ -38,17 +40,26 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
   };
   return (
     <PageFrame onDragOver={(event) => event.preventDefault()} onDrop={handleDrop}>
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <h1 className="text-[28px] font-bold leading-tight tracking-tight">
+      <div className="flex flex-wrap items-center gap-4 min-[900px]:items-end">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl leading-8 min-[900px]:text-[28px] min-[900px]:leading-tight font-bold tracking-tight">
             {t("toolsPage.title")}
           </h1>
-          <p className="text-muted">{t("toolsPage.subtitle")}</p>
+          <p className="text-[13px] leading-[1.45] min-[900px]:text-sm text-muted">
+            {t("toolsPage.subtitle")}
+          </p>
         </div>
         {tools.length > 0 && (
-          <Button variant="primary" size="lg" onClick={() => void install("tools.pickAndInstall")}>
-            <Plus aria-hidden size={16} />
-            {t("toolsPage.addTool")}
+          <Button
+            className="h-8 px-3.5 text-[13px] font-semibold min-[900px]:h-9 min-[900px]:px-4 min-[900px]:text-sm min-[900px]:font-bold"
+            aria-label={t("toolsPage.addTool")}
+            variant="primary"
+            size="lg"
+            onClick={() => void install("tools.pickAndInstall")}
+          >
+            <Plus aria-hidden size={16} className="@min-[48rem]:hidden" />
+            <span className="@min-[48rem]:hidden">{t("toolsPage.addToolCompact")}</span>
+            <span className="hidden @min-[48rem]:inline">{t("toolsPage.addTool")}</span>
           </Button>
         )}
       </div>
@@ -74,12 +85,15 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
       ) : (
         <section
           aria-label={t("toolsPage.title")}
-          className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4"
+          className="grid grid-cols-2 items-stretch gap-3 min-[900px]:gap-4 @min-[48rem]:items-start @min-[68rem]:grid-cols-3"
         >
           {tools.map((tool) => (
             <ToolCard
               key={tool.id}
               tool={tool}
+              bridge={bridge}
+              onInstall={() => void install("tools.pickAndInstall")}
+              update={updates.find((update) => update.id === tool.id)}
               onOpen={() => void act(() => bridge.invoke("tabs.open", { toolId: tool.id }))}
               actions={{
                 enabled: () =>
@@ -96,8 +110,16 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
           ))}
         </section>
       )}
+      {tools.some((tool) => updates.some((update) => update.id === tool.id)) && <ToolUpdateGuide />}
       <ToolDialogs
         state={dialog}
+        update={updates.find(
+          (update) => dialog && "tool" in dialog && update.id === dialog.tool.id,
+        )}
+        onInstall={() => {
+          setDialog(null);
+          void install("tools.pickAndInstall");
+        }}
         pending={pending}
         bridge={bridge}
         onClose={() => setDialog(null)}

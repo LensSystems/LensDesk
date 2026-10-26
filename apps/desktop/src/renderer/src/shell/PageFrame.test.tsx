@@ -10,5 +10,6 @@ it("lleva el foco al título al montar una página", () => {
     </PageFrame>,
   );
   expect(document.activeElement).toBe(screen.getByRole("heading", { level: 1 }));
+  expect(document.activeElement).toHaveStyle({ outline: "none" });
   expect(document.activeElement?.getAttribute("tabindex")).toBe("-1");
 });

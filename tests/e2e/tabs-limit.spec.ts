@@ -1,0 +1,158 @@
+import { execFileSync } from "node:child_process";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { expect, test } from "@playwright/test";
+import { enableDeveloperMode, installTool, launchApp, shellPage } from "./helpers.ts";
+
+// Límite fijo compartido con apps/desktop/src/shared/layout.ts.
+const MAX_OPEN_TABS = 6;
+
+for (const width of [1280, 760]) {
+  test(`limita a seis pestañas, restaura la posición y no desborda a ${width}px`, async () => {
+    test.setTimeout(90_000);
+    const directory = await mkdtemp(join(tmpdir(), "lensdesk-tabs-limit-"));
+    const app = await launchApp();
+    try {
+      const shell = await shellPage(app);
+      const window = await app.browserWindow(shell);
+      await window.evaluate(
+        (browserWindow, width) => browserWindow.setContentSize(width, 520),
+        width,
+      );
+      await enableDeveloperMode(shell);
+      for (let index = 0; index < MAX_OPEN_TABS + 1; index++) {
+        const source = join(directory, `tool-${index}`);
+        await cp(resolve("tools/_template/dist"), source, { recursive: true });
+        const manifestPath = join(source, "lensdesk.tool.json");
+        const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+        manifest.id = `tabs-test-${index}`;
+        manifest.name = { es: `Plantilla ${index}`, en: `Template ${index}` };
+        await writeFile(manifestPath, JSON.stringify(manifest));
+        const outFile = join(directory, `tool-${index}.lenspkg`);
+        execFileSync(process.execPath, [
+          resolve("packages/lenspkg/src/cli.ts"),
+          "pack",
+          source,
+          "--out",
+          outFile,
+          "--unsigned",
+        ]);
+        await installTool(app, shell, outFile, `Plantilla ${index}`);
+      }
+      for (let index = 0; index < MAX_OPEN_TABS; index++) {
+        await shell.getByRole("button", { name: "Herramientas", exact: true }).click();
+        await shell.getByRole("button", { name: `Abrir Plantilla ${index}`, exact: true }).click();
+      }
+      await expect(shell.getByRole("tab")).toHaveCount(MAX_OPEN_TABS);
+      await shell.getByRole("tab", { name: "Plantilla 0", exact: true }).click();
+      await shell.getByRole("button", { name: "Herramientas", exact: true }).click();
+      await shell
+        .getByRole("button", { name: `Abrir Plantilla ${MAX_OPEN_TABS}`, exact: true })
+        .click();
+      await expect(shell.getByRole("tab")).toHaveCount(MAX_OPEN_TABS);
+      await expect(shell.getByRole("tab", { name: "Plantilla 1", exact: true })).toHaveCount(0);
+      await expect(shell.getByRole("tab", { name: "Plantilla 0", exact: true })).toBeVisible();
+      await expect(shell.locator("li[role=status]")).toContainText(
+        `Se cerró Plantilla 1 para abrir Plantilla ${MAX_OPEN_TABS}`,
+      );
+      const notice = await shell.locator("li[role=status]").boundingBox();
+      const header = await shell.getByRole("banner").boundingBox();
+      expect(notice).not.toBeNull();
+      expect(header).not.toBeNull();
+      if (notice && header) {
+        expect(notice.y).toBeGreaterThanOrEqual(header.y);
+        expect(notice.y + notice.height).toBeLessThanOrEqual(header.y + header.height);
+      }
+      const list = shell.getByRole("tablist");
+      await expect
+        .poll(async () => {
+          const noticeBox = await shell.locator("li[role=status]").boundingBox();
+          const listBox = await list.boundingBox();
+          return !!noticeBox && !!listBox && listBox.x + listBox.width <= noticeBox.x;
+        })
+        .toBe(true);
+      // Tampoco tapa los botones de la derecha ni desborda la página.
+      // Se mide cuando termina la entrada del aviso, que se desliza unos píxeles.
+      await expect
+        .poll(async () => {
+          const noticeBox = await shell.locator("li[role=status]").boundingBox();
+          const toolsBox = await shell
+            .getByRole("button", { name: "Herramientas", exact: true })
+            .boundingBox();
+          return (
+            !!noticeBox &&
+            !!toolsBox &&
+            Math.abs(toolsBox.x - noticeBox.x - noticeBox.width - 8) < 1
+          );
+        })
+        .toBe(true);
+      expect(
+        await shell.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+      const activeName = shell.locator("[role=tab][aria-selected=true] [data-tab-name]");
+      const compactActive = width === 760 && process.platform === "win32";
+      await expect(activeName).toHaveClass(
+        compactActive ? "sr-only whitespace-nowrap" : "truncate",
+      );
+      if (compactActive) {
+        await expect
+          .poll(() =>
+            shell.locator("[data-notice-capsule]").evaluate((capsule) => {
+              const tools = document.querySelector('button[aria-label="Herramientas"]');
+              if (!tools) return false;
+              return (
+                Math.abs(
+                  tools.getBoundingClientRect().left - capsule.getBoundingClientRect().right - 8,
+                ) <= 1
+              );
+            }),
+          )
+          .toBe(true);
+      } else {
+        await expect(activeName).toHaveText(`Plantilla ${MAX_OPEN_TABS}`);
+        expect(
+          await activeName.evaluate((name) => {
+            const rect = name.getBoundingClientRect();
+            const listRect = name.closest("[role=tablist]")?.getBoundingClientRect();
+            return (
+              !!listRect &&
+              rect.width > 1 &&
+              rect.height > 1 &&
+              rect.left >= listRect.left &&
+              rect.right <= listRect.right &&
+              name.scrollWidth <= name.clientWidth
+            );
+          }),
+        ).toBe(true);
+      }
+      const compactTabs = shell.locator("[role=tab][aria-selected=false]");
+      const compactBoxes = await compactTabs.evaluateAll((tabs) =>
+        tabs.map((tab) => {
+          const rect = tab.getBoundingClientRect();
+          return { x: rect.x, width: rect.width, height: rect.height };
+        }),
+      );
+      for (const box of compactBoxes) {
+        expect(box.width).toBe(31);
+        expect(box.height).toBe(30);
+      }
+      const [first, second] = compactBoxes;
+      expect(first).toBeDefined();
+      expect(second).toBeDefined();
+      if (first && second) expect(second.x - first.x - 31).toBe(4);
+      await shell.getByRole("button", { name: "Deshacer", exact: true }).click();
+      await expect(shell.getByRole("tab")).toHaveCount(MAX_OPEN_TABS);
+      await expect(shell.getByRole("tab").nth(1)).toHaveAccessibleName("Plantilla 1");
+      await expect(shell.getByRole("tab", { name: "Plantilla 2", exact: true })).toHaveCount(0);
+      expect(
+        await shell.getByRole("tablist").evaluate((list) => list.scrollWidth <= list.clientWidth),
+      ).toBe(true);
+    } finally {
+      await app.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+}

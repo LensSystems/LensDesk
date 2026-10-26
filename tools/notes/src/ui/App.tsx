@@ -1,5 +1,5 @@
 import type { createToolClient } from "@lensdesk/sdk";
-import { ConfirmDialog, Notice, TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
+import { ConfirmDialog, Notice, Skeleton, TooltipProvider, UiLabelsProvider } from "@lensdesk/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Editor } from "./Editor.tsx";
@@ -8,18 +8,54 @@ import { NotesSidebar } from "./NotesSidebar.tsx";
 import { TrashView } from "./TrashView.tsx";
 import { useAutosave } from "./use-autosave.ts";
 import { useNotes } from "./use-notes.ts";
+import { useVault } from "./use-vault.ts";
+import { VaultPanels } from "./VaultPanels.tsx";
+import { VaultUnlock } from "./VaultUnlock.tsx";
 
 type Client = ReturnType<typeof createToolClient>;
 
 export function App({ client }: { client: Client }) {
   const { t } = useTranslation();
   const state = useNotes(client);
+  const vault = useVault(client, state.selected, state.load, state.body);
+  // Para notas privadas: vale mientras no se bloquee la bóveda ni se cambie de nota.
+  const stillUnlocked = () => {
+    if (!state.selected?.private) return () => true;
+    const at = vault.epoch.current;
+    return () => vault.epoch.current === at;
+  };
+  const privateNote = Boolean(state.selected?.private);
+  const body = privateNote ? vault.body : state.body;
   useEffect(() => {
     document.title = t("title");
   }, [t]);
+  const [preview, setPreview] = useState(false);
   const [confirmingEmpty, setConfirmingEmpty] = useState(false);
-  const flush = useAutosave(state.selected?.id ?? null, state.body, state.save);
-  const updateBody = useCallback((value: string) => state.setBody(value), [state.setBody]);
+  const flush = useAutosave(
+    vault.ready && !vault.readOnly ? (state.selected?.id ?? null) : null,
+    body,
+    privateNote ? vault.save : state.save,
+  );
+  useEffect(
+    () =>
+      client.app.onVisibilityChange((visible) => {
+        if (!visible) {
+          flush();
+          setPreview(true);
+        }
+      }),
+    [client, flush],
+  );
+  const create = () => {
+    flush();
+    void state.create().then((created) => {
+      if (created) setPreview(false);
+    });
+  };
+  const updateBody = useCallback(
+    (value: string) => (privateNote ? vault.setBody(value) : state.setBody(value)),
+    [privateNote, vault.setBody, state.setBody],
+  );
 
   return (
     <UiLabelsProvider labels={{ loading: t("loading"), close: t("close"), dismiss: t("close") }}>
@@ -36,18 +72,20 @@ export function App({ client }: { client: Client }) {
               }
             />
           )}
-          {state.loading ? (
-            <p>{t("loading")}</p>
-          ) : (
+          {vault.message && vault.ready && <Notice tone="warning" title={vault.message} />}
+          <Skeleton loading={state.loading} variant="notes" label={t("loading")}>
             <div className="workspace">
               <NotesSidebar
+                vaultUnlocked={vault.status.unlocked}
                 notes={state.notes}
                 selectedId={state.selectedId}
                 query={state.query}
                 trashed={state.trashed}
+                archived={state.notesView === "archived"}
                 onQuery={state.setQuery}
                 onSelect={(id) => {
                   flush();
+                  if (id !== state.selectedId) setPreview(true);
                   state.selectNote(id);
                 }}
                 onImport={() => {
@@ -55,48 +93,86 @@ export function App({ client }: { client: Client }) {
                   void state.importNotes();
                 }}
                 onEmpty={() => setConfirmingEmpty(true)}
-                onView={(trash) => {
+                onView={(view) => {
                   flush();
-                  state.setTrashed(trash);
+                  setPreview(true);
+                  state.setView(view);
                 }}
-                onCreate={() => {
+                onCreate={create}
+                onArchive={(note) => {
                   flush();
-                  void state.create();
+                  setPreview(true);
+                  void state.archive(note);
                 }}
-                onTrash={(id) => void state.trashNote(id)}
+                onTrash={(id) => {
+                  flush();
+                  void state.trashNote(id);
+                }}
                 onPin={(note) =>
                   void client.backend
                     .invoke("setPinned", { id: note.id, pinned: !note.pinned })
-                    .then(() => state.load(false, state.query))
+                    .then(() => state.load(state.notesView, state.query))
                     .catch((reason: unknown) => state.fail(reason))
                 }
               />
               {state.selected ? (
-                state.trashed ? (
+                state.trashed && vault.ready ? (
                   <TrashView
-                    note={state.selected}
+                    onCopyCode={(code) => client.ui.copyText(code)}
+                    note={{ ...state.selected, body_md: body }}
                     onRestore={() => void state.restore(state.selected?.id ?? "")}
+                    onDelete={async () => {
+                      try {
+                        await client.backend.invoke("deleteForever", { id: state.selected?.id });
+                        await state.load();
+                      } catch (reason) {
+                        await state.fail(reason);
+                      }
+                    }}
                   />
                 ) : (
                   <Editor
-                    key={state.selected.id}
-                    note={{ ...state.selected, body_md: state.body }}
+                    spellcheck={state.context?.spellcheck === true}
+                    client={client}
+                    key={`${state.selected.id}:${vault.ready}`}
+                    preview={preview}
+                    onMode={setPreview}
+                    onCopy={() =>
+                      vault.ready ? state.copyNote(body, stillUnlocked()) : Promise.resolve(false)
+                    }
+                    locked={!vault.ready}
+                    readOnly={vault.readOnly}
+                    onPrivate={() => void vault.toggle()}
+                    onLock={() => void vault.lock()}
+                    onCopyCode={(code) => client.ui.copyText(code)}
+                    note={{ ...state.selected, body_md: body }}
                     onChange={updateBody}
                     onBlur={flush}
-                    onExport={() => void state.exportNote()}
-                  />
+                    onRename={(title) => state.rename(state.selected?.id ?? "", title)}
+                    onExport={() => {
+                      if (vault.ready) void state.exportNote(body, stillUnlocked());
+                    }}
+                  >
+                    {vault.status.unlocked ? (
+                      <Skeleton loading label={t("loading")}>
+                        <div />
+                      </Skeleton>
+                    ) : (
+                      vault.dialog !== "reset" && <VaultUnlock vault={vault} />
+                    )}
+                  </Editor>
                 )
               ) : (
                 <EmptyNote
+                  query={state.query}
                   trashed={state.trashed}
-                  onCreate={() => {
-                    flush();
-                    void state.create();
-                  }}
+                  archived={state.notesView === "archived"}
+                  onCreate={create}
                 />
               )}
             </div>
-          )}
+          </Skeleton>
+          <VaultPanels vault={vault} />
           <ConfirmDialog
             open={confirmingEmpty}
             title={t("confirmEmptyTitle")}

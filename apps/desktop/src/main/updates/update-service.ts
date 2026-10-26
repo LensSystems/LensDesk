@@ -1,8 +1,13 @@
+import type { HostEventPayloads } from "../../shared/host-channels.ts";
 import { checkForUpdate, type UpdateCheckResult, type UpdateFetch } from "./check.ts";
 
 // Une la comprobación con los ajustes: lee `updates.check` y `updates.lastCheckedAt`, guarda la
 // hora cuando hubo consulta y avisa al shell con `update.available` si hay una versión mayor.
 export function createUpdateService(options: {
+  platform?: string;
+  arch?: string;
+  installedTools?: () => { id: string; version: string }[];
+  emitTools?: (payload: HostEventPayloads["tools.updatesAvailable"]) => void;
   repo: string;
   currentVersion: string;
   fetch: UpdateFetch;
@@ -12,33 +17,51 @@ export function createUpdateService(options: {
     lastCheckedAt(): string | null;
     setLastCheckedAt(value: string): void;
   };
-  emit(payload: { version: string; html_url: string }): void;
+  emit(payload: HostEventPayloads["update.available"]): void;
   log(message: string): void;
 }) {
-  return {
-    // `force` ignora el intervalo de 24 h (botón "Comprobar ahora"), nunca el repositorio vacío
-    // ni el ajuste desactivado.
-    async run(force = false): Promise<UpdateCheckResult> {
-      const result = await checkForUpdate({
-        repo: options.repo,
-        enabled: options.settings.enabled(),
-        lastCheckedAt: force ? null : options.settings.lastCheckedAt(),
-        now: options.now,
-        currentVersion: options.currentVersion,
-        fetch: options.fetch,
-        log: options.log,
+  // Una consulta a la vez: la búsqueda manual y la automática comparten la que esté en curso.
+  let running: Promise<UpdateCheckResult> | null = null;
+  const check = async (force: boolean): Promise<UpdateCheckResult> => {
+    const result = await checkForUpdate({
+      repo: options.repo,
+      platform: options.platform,
+      arch: options.arch,
+      installedTools: options.installedTools,
+      enabled: options.settings.enabled(),
+      lastCheckedAt: force ? null : options.settings.lastCheckedAt(),
+      now: options.now,
+      currentVersion: options.currentVersion,
+      fetch: options.fetch,
+      log: options.log,
+    });
+    if (result.kind === "skipped") return result;
+    try {
+      options.settings.setLastCheckedAt(options.now().toISOString());
+    } catch (error) {
+      options.log(
+        `No se pudo guardar la hora de la comprobación: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    if (result.kind === "available")
+      options.emit({
+        version: result.version,
+        html_url: result.url,
+        ...(result.installerUrl ? { installerUrl: result.installerUrl } : {}),
+        ...(result.tools ? { tools: result.tools } : {}),
       });
-      if (result.kind === "skipped") return result;
-      try {
-        options.settings.setLastCheckedAt(options.now().toISOString());
-      } catch (error) {
-        options.log(
-          `No se pudo guardar la hora de la comprobación: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-      if (result.kind === "available")
-        options.emit({ version: result.version, html_url: result.url });
-      return result;
+    if (result.kind === "available" || result.kind === "none")
+      options.emitTools?.({ tools: result.tools ?? [] });
+    return result;
+  };
+  return {
+    // `force` ignora el intervalo de 24 h (botón "Buscar ahora"), nunca el repositorio vacío
+    // ni el ajuste desactivado.
+    run(force = false): Promise<UpdateCheckResult> {
+      running ??= check(force).finally(() => {
+        running = null;
+      });
+      return running;
     },
   };
 }

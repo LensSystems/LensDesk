@@ -18,7 +18,13 @@ test("Notas conserva una nota después de reiniciar LensDesk", async () => {
     await shell.getByRole("button", { name: "Abrir Notas", exact: true }).click();
     let tool = await toolPage(app, "notes");
     await tool.getByRole("button", { name: "Nueva nota" }).first().click();
-    await tool.locator(".cm-content").fill("# Persistencia local\nTexto que debe seguir aquí");
+    await tool.getByRole("textbox", { name: "Título de la nota" }).fill("Inicial");
+    await tool.getByRole("textbox", { name: "Título de la nota" }).press("Enter");
+    await tool.getByRole("heading", { name: "Inicial" }).waitFor();
+    await tool.getByRole("button", { name: "Editar título" }).click();
+    await tool.getByRole("textbox", { name: "Título de la nota" }).fill("Persistencia local");
+    await tool.getByRole("textbox", { name: "Título de la nota" }).press("Enter");
+    await tool.locator(".cm-content").fill("Texto que debe seguir aquí");
     await expect(tool.getByRole("heading", { name: "Persistencia local" })).toBeVisible();
     await tool.getByRole("textbox", { name: "Buscar notas" }).fill("Persistencia local");
     await expect(tool.getByRole("button", { name: "Persistencia local" })).toBeVisible();
@@ -56,13 +62,15 @@ test("un título largo no saca de la lista los botones de fijar y borrar", async
     await shell.getByRole("button", { name: "Abrir Notas", exact: true }).click();
     const tool = await toolPage(app, "notes");
     await tool.getByRole("button", { name: "Nueva nota" }).first().click();
-    const title = "Un título muy largo ".repeat(12).trim();
-    await tool.locator(".cm-content").fill(`# ${title}\nCuerpo`);
+    const title = "Un título muy largo ".repeat(10).trim();
+    await tool.getByRole("textbox", { name: "Título de la nota" }).fill(title);
+    await tool.getByRole("textbox", { name: "Título de la nota" }).press("Enter");
+    await tool.locator(".cm-content").fill("Cuerpo");
     await expect(tool.getByRole("button", { name: title })).toBeVisible();
 
     const list = await tool.getByRole("navigation", { name: "Lista de notas" }).boundingBox();
-    for (const name of ["Fijar nota", "Mover a la papelera"]) {
-      const button = tool.getByRole("button", { name, exact: true });
+    for (const name of ["Fijar nota", "Archivar nota", "Mover a la papelera"]) {
+      const button = tool.getByRole("button", { name, exact: true }).first();
       await expect(button).toBeInViewport({ ratio: 1 });
       const box = await button.boundingBox();
       expect(list && box && box.x + box.width <= list.x + list.width, name).toBe(true);

@@ -1,15 +1,35 @@
 import { Tabs as Primitive } from "radix-ui";
 import type { ComponentProps } from "react";
 import { cn } from "./cn.ts";
+import { useSlidingIndicator } from "./useSlidingIndicator.ts";
 
 export const Tabs = Primitive.Root;
 
-export function TabsList({ className, ...props }: ComponentProps<typeof Primitive.List>) {
+export function TabsList({
+  className,
+  indicatorClassName,
+  children,
+  ...props
+}: ComponentProps<typeof Primitive.List> & { indicatorClassName?: string }) {
+  const { style, ...indicator } = useSlidingIndicator();
   return (
     <Primitive.List
+      {...indicator}
       {...props}
-      className={cn("inline-flex items-center rounded-full bg-bg p-0.5", className)}
-    />
+      className={cn("ld-selector inline-flex items-center rounded-full bg-bg p-0.5", className)}
+    >
+      {style && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "ld-indicator rounded-full bg-surface-raised shadow-sm",
+            indicatorClassName,
+          )}
+          style={style}
+        />
+      )}
+      {children}
+    </Primitive.List>
   );
 }
 
@@ -18,7 +38,7 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof Primi
     <Primitive.Trigger
       {...props}
       className={cn(
-        "h-7 rounded-full px-3.5 text-[13px] text-muted transition-colors duration-150 ease-out hover:text-text data-[state=active]:bg-surface-raised data-[state=active]:font-semibold data-[state=active]:text-text data-[state=active]:shadow-sm disabled:opacity-45 motion-reduce:transition-none",
+        "ld-option h-7 rounded-full px-3.5 text-[13px] text-muted hover:text-text data-[state=active]:bg-surface-raised data-[state=active]:font-semibold data-[state=active]:text-text data-[state=active]:shadow-sm disabled:opacity-45",
         className,
       )}
     />

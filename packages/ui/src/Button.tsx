@@ -1,9 +1,10 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { cn } from "./cn.ts";
 import { Progress } from "./Progress.tsx";
 import { useUiLabels } from "./ui-labels.ts";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  ref?: Ref<HTMLButtonElement>;
   variant?: "default" | "primary" | "danger" | "ghost";
   size?: "md" | "lg";
   loading?: boolean;
@@ -30,8 +31,10 @@ export function Button({
         {
           default:
             "border border-border-control bg-surface-raised font-semibold text-text hover:bg-surface",
-          primary: "border-0 bg-accent font-bold text-accent-fg hover:bg-accent-hover",
-          danger: "border-0 bg-danger font-bold text-danger-fg hover:bg-danger/90",
+          primary:
+            "border border-accent bg-accent font-bold text-accent-fg hover:border-accent-hover hover:bg-accent-hover",
+          danger:
+            "border border-danger bg-danger font-bold text-danger-fg hover:border-danger/90 hover:bg-danger/90",
           ghost: "border-0 bg-transparent font-semibold text-text hover:bg-surface",
         }[variant],
         className,

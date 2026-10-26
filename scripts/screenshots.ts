@@ -15,34 +15,46 @@ const css =
 // El aviso de versiones depende de la red y no forma parte de las pantallas.
 const shellCss = `${css}header > [role="status"]{display:none!important}`;
 const sample =
-  "# Guía del proyecto\n\nTodo queda guardado localmente.\n\n- Revisar cambios\n- Ejecutar pruebas\n\n```ts\nconst saludo = 'Hola, LensDesk';\nconsole.log(saludo);\n```";
+  "Todo queda guardado localmente.\n\n- Revisar cambios\n- Ejecutar pruebas\n\n```ts\nconst saludo = 'Hola, LensDesk';\nconsole.log(saludo);\n```";
 
 function options() {
   const args = process.argv.slice(2);
   let out = resolve(root, "screenshots");
   let compare: string | undefined;
   let accent = "blue";
+  let size: [number, number] | undefined;
   while (args.length) {
     const flag = args.shift();
     const value = args.shift();
     if (
-      (flag !== "--out" && flag !== "--compare" && flag !== "--accent") ||
+      (flag !== "--out" && flag !== "--compare" && flag !== "--accent" && flag !== "--size") ||
       !value ||
       value.startsWith("--")
     ) {
       throw new Error(
-        "Uso: pnpm screenshots [--out carpeta] [--compare carpeta] [--accent blue|green]",
+        "Uso: pnpm screenshots [--out carpeta] [--compare carpeta] [--accent blue|green] [--size ANCHOxALTO (760x520)]",
       );
     }
     if (flag === "--out") out = resolve(value);
     else if (flag === "--compare") compare = resolve(value);
-    else {
+    else if (flag === "--size") {
+      if (!/^[1-9]\d*x[1-9]\d*$/.test(value)) throw new Error("Tamaño inválido");
+      const [width = 0, height = 0] = value.split("x").map(Number);
+      if (
+        !Number.isSafeInteger(width) ||
+        !Number.isSafeInteger(height) ||
+        width < 760 ||
+        height < 520
+      )
+        throw new Error("Tamaño mínimo: 760x520");
+      size = [width, height];
+    } else {
       if (value !== "blue" && value !== "green") throw new Error("Acento inválido");
       accent = value;
     }
   }
   if (out === compare) throw new Error("Salida y referencia deben ser carpetas diferentes.");
-  return { out, compare, accent };
+  return { out, compare, accent, size };
 }
 
 async function packages() {
@@ -176,7 +188,7 @@ async function pngFiles(directory: string): Promise<string[]> {
 }
 
 async function run() {
-  const { out, compare, accent } = options();
+  const { out, compare, accent, size } = options();
   const pkgs = await packages();
   if (compare) await access(compare);
   const generated = new Set<string>();
@@ -206,9 +218,11 @@ async function run() {
         },
       });
       const shell = await app.firstWindow();
-      await app.evaluate(({ BrowserWindow }) =>
-        BrowserWindow.getAllWindows()[0]?.setContentSize(1280, 800),
-      );
+      await app.evaluate(({ BrowserWindow }, size) => {
+        const window = BrowserWindow.getAllWindows()[0];
+        if (size) window?.setSize(...size);
+        else window?.setContentSize(1280, 800);
+      }, size);
       await shell.getByRole("button", { name: "Ajustes", exact: true }).click();
       const updates = shell.getByRole("switch", { name: "Buscar actualizaciones", exact: true });
       if ((await updates.getAttribute("aria-checked")) === "true") await updates.click();
@@ -274,28 +288,42 @@ async function run() {
         return tool;
       };
       const notes = await open("Notas", "notes");
-      await notes.getByRole("button", { name: "Nueva nota" }).first().click();
-      await notes
-        .locator(".cm-content")
-        .fill("# Borrador archivado\n\nIdeas para revisar más adelante.");
+      // El título se escribe aparte del cuerpo.
+      const newNote = async (title: string, body: string) => {
+        await notes.getByRole("button", { name: "Nueva nota" }).first().click();
+        const titleInput = notes.getByRole("textbox", { name: "Título de la nota" });
+        await titleInput.fill(title);
+        await titleInput.press("Enter");
+        await notes.locator(".cm-content").fill(body);
+      };
+      // En ventanas estrechas la lista está plegada: se abre su panel para usarla.
+      const rail = notes.locator(".sidebar-rail");
+      const list = async () => {
+        if (!(await rail.isVisible())) return notes;
+        await rail.getByRole("button", { name: "Mostrar lista de notas" }).click();
+        return notes.getByRole("dialog", { name: "Notas", exact: true });
+      };
+      await newNote("Borrador archivado", "Ideas para revisar más adelante.");
       await notes.waitForTimeout(1000);
+      const drafts = await list();
       await expect(
-        notes.getByRole("button", { name: "Borrador archivado", exact: true }),
+        drafts.getByRole("button", { name: "Borrador archivado", exact: true }),
       ).toBeVisible();
-      await notes.getByRole("button", { name: "Mover a la papelera" }).first().click();
+      await drafts.getByRole("button", { name: "Mover a la papelera" }).first().click();
       await expect(
-        notes.getByRole("button", { name: "Borrador archivado", exact: true }),
+        drafts.getByRole("button", { name: "Borrador archivado", exact: true }),
       ).toHaveCount(0);
-      await notes.getByRole("button", { name: "Nueva nota" }).first().click();
-      await notes.locator(".cm-content").fill(sample);
+      if (drafts !== notes) await notes.keyboard.press("Escape");
+      await newNote("Guía del proyecto", sample);
       await notes.waitForTimeout(1000);
       await expect(notes.getByRole("heading", { name: "Guía del proyecto" })).toBeVisible();
       await snap("notas-edicion", notes);
-      await notes.getByRole("radio", { name: "Vista previa", exact: true }).click();
+      await notes.getByRole("radio", { name: "Ver", exact: true }).click();
       await snap("notas-vista-previa", notes);
-      await notes.getByRole("radio", { name: "Papelera", exact: true }).click();
+      const trash = await list();
+      await trash.getByRole("radio", { name: "Papelera", exact: true }).click();
       await expect(
-        notes.getByRole("button", { name: "Borrador archivado", exact: true }),
+        trash.getByRole("button", { name: "Borrador archivado", exact: true }),
       ).toBeVisible();
       await snap("notas-papelera", notes);
       const converter = await open("Convertidor", "md-converter");

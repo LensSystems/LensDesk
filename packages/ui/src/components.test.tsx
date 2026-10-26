@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Button } from "./Button.tsx";
 import { Checkbox } from "./Checkbox.tsx";
 import { IconButton } from "./IconButton.tsx";
@@ -74,5 +74,46 @@ describe("componentes de formulario y estado", () => {
     );
     expect(screen.getByRole("button", { name: "Guardar" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByRole("progressbar", { name: "Cargando" })).toBeTruthy();
+  });
+});
+
+function motionPreference(allowed: boolean) {
+  vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: allowed } as MediaQueryList));
+}
+
+describe("dibujo de la palomita", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("se habilita solo al marcar, nunca al montarla marcada ni al desmarcar", () => {
+    motionPreference(true);
+    const { rerender } = render(<Checkbox aria-label="Datos" defaultChecked />);
+    const control = screen.getByRole("checkbox", { name: "Datos" });
+    expect(control.getAttribute("data-motion")).toBeNull();
+    fireEvent.click(control);
+    expect(control.getAttribute("data-motion")).toBeNull();
+    fireEvent.click(control);
+    expect(control.getAttribute("data-motion")).toBe("on");
+    rerender(<Checkbox aria-label="Datos" checked={false} />);
+    expect(control.getAttribute("data-motion")).toBeNull();
+  });
+
+  it("se habilita cuando el estado controlado cambia desde fuera y se apaga al terminar", () => {
+    motionPreference(true);
+    const { rerender } = render(<Checkbox aria-label="Datos" checked={false} />);
+    const control = screen.getByRole("checkbox", { name: "Datos" });
+    rerender(<Checkbox aria-label="Datos" checked />);
+    expect(control.getAttribute("data-motion")).toBe("on");
+    // jsdom no tiene AnimationEvent: React escucha aquí el nombre con prefijo.
+    fireEvent(control, new Event("webkitAnimationEnd", { bubbles: true }));
+    expect(control.getAttribute("data-motion")).toBeNull();
+  });
+
+  it("no se habilita con reducir movimiento", () => {
+    motionPreference(false);
+    render(<Checkbox aria-label="Datos" />);
+    const control = screen.getByRole("checkbox", { name: "Datos" });
+    fireEvent.click(control);
+    expect(control).toBeChecked();
+    expect(control.getAttribute("data-motion")).toBeNull();
   });
 });
