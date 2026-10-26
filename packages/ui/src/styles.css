@@ -275,3 +275,33 @@
     }
   }
 }
+
+.ld-swap-text {
+  position: relative;
+  display: inline-flex;
+}
+.ld-swap-old {
+  display: inherit;
+  gap: inherit;
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: max-content;
+  pointer-events: none;
+  visibility: hidden;
+}
+.ld-swap-end > .ld-swap-old {
+  inset: 0 0 auto auto;
+}
+.ld-swap-text > [data-swap-new] {
+  display: inherit;
+  gap: inherit;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ld-swap-old {
+    visibility: visible;
+    animation: ld-text-out var(--ld-motion) var(--ld-ease-out) both;
+  }
+  .ld-swap-new {
+    animation: ld-text-in var(--ld-motion) var(--ld-ease-out) both;
+  }
+}

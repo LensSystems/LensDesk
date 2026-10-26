@@ -98,6 +98,7 @@ export * from "./Progress.tsx";
 export * from "./SaveMarkdown.tsx";
 export * from "./SegmentedControl.tsx";
 export * from "./Select.tsx";
+export * from "./SwapText.tsx";
 export * from "./Switch.tsx";
 export * from "./Tabs.tsx";
 export * from "./Toast.tsx";

@@ -1,6 +1,10 @@
+import { readFileSync } from "node:fs";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { rendererI18n } from "../i18n.ts";
+import { useShellStore } from "../state/store.ts";
 import { ClosedTabNotice } from "./ClosedTabNotice.tsx";
+import { HeaderNotices } from "./HeaderNotices.tsx";
 import { NoticeCapsule } from "./NoticeCapsule.tsx";
 
 beforeEach(() => {
@@ -148,4 +152,67 @@ it("reinicia la espera cuando cambia el texto del aviso", () => {
   expect(text).toHaveAttribute("data-moving", "false");
   act(() => vi.advanceTimersByTime(1000));
   expect(text).toHaveAttribute("data-moving", "true");
+});
+
+function renderStack() {
+  void rendererI18n.changeLanguage("es");
+  useShellStore.setState({
+    update: { version: "9.1", html_url: "https://example.com" },
+    dismissedVersion: null,
+    toasts: [
+      { id: 900, kind: "success", message: "Listo", closedToolId: "uno", openedToolId: "dos" },
+    ],
+  });
+  return render(
+    <HeaderNotices bridge={{ invoke: vi.fn() } as unknown as Window["lensdeskHost"]} />,
+  );
+}
+it("coloca el temporal delante y oculta el anterior hasta entrar con teclado", () => {
+  const { container } = renderStack();
+  const back = container.querySelector("[data-notice-back]");
+  expect(back).toHaveAttribute("inert");
+  expect(back).toHaveAttribute("aria-hidden", "true");
+  expect(screen.queryByRole("button", { name: "Ir a Ajustes" })).toBeNull();
+  fireEvent.focus(screen.getByRole("button", { name: "Deshacer" }));
+  expect(back).not.toHaveAttribute("inert");
+  expect(back).not.toHaveAttribute("aria-hidden");
+  expect(screen.getAllByRole("button")[0]).toHaveTextContent("Deshacer");
+  expect(screen.getAllByRole("button")[1]).toHaveAccessibleName("Ir a Ajustes");
+});
+it("pausa el temporal en toda la pila y devuelve la actualización al frente", () => {
+  const { container } = renderStack();
+  const stack = container.querySelector("[data-notice-stack]") as HTMLElement;
+  act(() => vi.advanceTimersByTime(3000));
+  fireEvent.pointerEnter(stack);
+  act(() => vi.advanceTimersByTime(6000));
+  expect(screen.getByRole("button", { name: "Deshacer" })).toBeInTheDocument();
+  fireEvent.pointerLeave(stack);
+  act(() => vi.advanceTimersByTime(2000));
+  expect(container.querySelector("[data-closed-notice]")).toHaveAttribute("data-closing", "true");
+  act(() => vi.advanceTimersByTime(160));
+  expect(container.querySelector("[data-notice-back]")).toBeNull();
+  expect(screen.getByRole("button", { name: "Ir a Ajustes" })).toBeInTheDocument();
+});
+it("lleva al frente una actualización recibida después del temporal", () => {
+  const { container } = renderStack();
+  act(() =>
+    useShellStore.setState({ update: { version: "9.2", html_url: "https://example.com" } }),
+  );
+  expect(container.querySelector(".ld-notice-front")).toHaveAttribute("data-notice-kind", "update");
+  expect(container.querySelector("[data-notice-back]")).toHaveAttribute(
+    "data-notice-kind",
+    "toast",
+  );
+});
+it("fija geometría y movimiento de la pila solo cuando se permite movimiento", () => {
+  const css = readFileSync("apps/desktop/src/renderer/src/styles.css", "utf8");
+  expect(css).toMatch(
+    /transform-origin: left center;\s*transform: translateX\(-7px\) scale\(0\.94\);/,
+  );
+  expect(css).toContain("opacity: 0.6");
+  expect(css).toContain("filter: blur(1px)");
+  const motion = css.slice(css.lastIndexOf("@media (prefers-reduced-motion: no-preference)"));
+  expect(motion).toContain("var(--ld-motion-slow) var(--ld-ease-out)");
+  expect(motion).toContain("translateY(8px) scale(0.97)");
+  expect(readFileSync("packages/sdk/src/theme.css", "utf8")).toMatch(/--ld-motion-slow:\s*160ms/);
 });

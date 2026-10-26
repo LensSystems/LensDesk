@@ -23,7 +23,8 @@ export function SettingsUpdateCheck({ bridge, version, enabled }: Props) {
     setHighlighted(true);
     row.current?.scrollIntoView?.({ block: "nearest" });
     row.current
-      ?.querySelector<HTMLAnchorElement>("[data-update-download]")
+      // La copia saliente del texto es inerte: el foco va al enlace vigente.
+      ?.querySelector<HTMLAnchorElement>("[data-update-download]:not([inert] *)")
       ?.focus({ preventScroll: true });
     const timer = setTimeout(() => setHighlighted(false), 1200);
     return () => clearTimeout(timer);

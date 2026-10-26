@@ -50,7 +50,7 @@ export function TabItem({
       )}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: El cierre central abarca ambos botones; el teclado usa el botón de cierre. */}
       <div
-        className={`group relative flex h-[30px] min-w-0 max-w-48 items-center rounded-full transition-colors duration-150 ease-out motion-reduce:transition-none ${compact ? "w-[31px] shrink-0" : "shrink"} ${selected ? "bg-border font-semibold text-text" : "bg-transparent text-muted hover:bg-surface-raised"}`}
+        className={`group relative flex h-[30px] min-w-0 max-w-48 items-center rounded-full transition-colors duration-150 ease-out motion-reduce:transition-none ${compact ? "w-[31px] shrink-0" : "shrink"} ${selected ? "ld-selected-tab bg-border font-semibold text-text" : "bg-transparent text-muted hover:bg-surface-raised"}`}
         onAuxClick={(event) => {
           if (event.button === 1) void bridge.invoke("tabs.close", { toolId: tab.toolId });
         }}
@@ -60,6 +60,7 @@ export function TabItem({
         role="presentation"
       >
         <button
+          data-tab-id={tab.toolId}
           aria-posinset={index + 1}
           aria-setsize={total}
           aria-selected={selected}

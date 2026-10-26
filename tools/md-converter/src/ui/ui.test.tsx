@@ -116,7 +116,9 @@ describe("interfaz del Convertidor", () => {
       expect(within(row("lento.pdf")).getByText("Conversión cancelada.")).toBeInTheDocument(),
     );
     expect(performance.now() - started).toBeLessThan(1000);
-    expect(within(row("lento.pdf")).getByText("Cancelado")).toHaveClass("bg-surface");
+    expect(within(row("lento.pdf")).getByText("Cancelado").closest(".normal-status")).toHaveClass(
+      "bg-surface",
+    );
     await waitFor(() => expect(within(row("datos.csv")).getByText("Listo")).toBeInTheDocument());
     expect(fake.invoke).toHaveBeenLastCalledWith(
       "convert",
@@ -163,12 +165,16 @@ describe("interfaz del Convertidor", () => {
     expect(
       screen.getByText("El documento original tenía imágenes que se omitieron."),
     ).toBeInTheDocument();
-    expect(within(row("notas.txt")).getByText("Error")).toHaveClass("text-danger");
+    expect(within(row("notas.txt")).getByText("Error").closest(".normal-status")).toHaveClass(
+      "text-danger",
+    );
     expect(row("notas.txt").firstElementChild).toHaveClass("border-danger", "bg-danger-soft");
     expect(within(row("pagina-img.html")).queryByText(es.imagesOmitted)).toBeNull();
     fake.drop([handle("clean.html")]);
     await waitFor(() =>
-      expect(within(row("clean.html")).getByText("Listo")).toHaveClass("bg-accent-soft"),
+      expect(within(row("clean.html")).getByText("Listo").closest(".normal-status")).toHaveClass(
+        "bg-accent-soft",
+      ),
     );
     fireEvent.click(screen.getByRole("button", { name: "clean.html" }));
     expect(screen.queryByText(es.imagesOmitted)).toBeNull();

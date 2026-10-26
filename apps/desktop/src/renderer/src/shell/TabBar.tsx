@@ -8,15 +8,16 @@ import {
   WIN_CONTROLS_WIDTH,
 } from "../../../shared/layout.ts";
 import { useShellStore } from "../state/store.ts";
+import { ActiveTabIndicator } from "./ActiveTabIndicator.tsx";
 import { HeaderNotices } from "./HeaderNotices.tsx";
 import { TabItem } from "./TabItem.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
+import { useActiveTabIndicator } from "./use-active-tab-indicator.ts";
 import { useTabDrag } from "./use-tab-drag.ts";
-import { tabInsets, useCompactTabs, useTabCenter } from "./use-tab-layout.ts";
+import { handleTabKey, tabInsets, useCompactTabs, useTabCenter } from "./use-tab-layout.ts";
 
-type TabBarProps = { tabs: ShellTab[]; bridge: Window["lensdeskHost"] };
-export function TabBar({ tabs, bridge }: TabBarProps) {
+export function TabBar({ tabs, bridge }: { tabs: ShellTab[]; bridge: Window["lensdeskHost"] }) {
   const { t, i18n } = useTranslation();
   const [announcement, setAnnouncement] = useState("");
   const reorder = async (toolId: string, toIndex: number) => {
@@ -68,7 +69,10 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
   // Mientras el foco está dentro de la barra manda el índice enfocado; fuera de ella, la pestaña activa.
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const rovingIndex = Math.max(0, Math.min(focusedIndex ?? activeIndex, tabs.length - 1));
-  const moveFocus = (index: number) => tabRefs.current[index]?.focus();
+  const indicator = useActiveTabIndicator(
+    JSON.stringify([tabs.map((tab) => tab.toolId), names, compact, width, page, hasNotice]),
+    drag.drop !== null,
+  );
   return (
     <header
       ref={headerRef}
@@ -104,13 +108,17 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
         className={`${hasNotice ? "relative w-max shrink-0" : "absolute"} flex min-w-0 justify-center transition-[left,right] duration-160 ease-out motion-reduce:transition-none`}
       >
         <div
+          ref={indicator.ref}
+          onClickCapture={indicator.onClickCapture}
+          data-active-indicator={indicator.ready || undefined}
           aria-label={t("shell.tabsLabel")}
-          className={`flex min-w-0 max-w-full shrink items-center gap-1 overflow-hidden rounded-full ${tabs.length > 0 ? "bg-surface p-1" : ""}`}
+          className={`ld-window-tabs relative flex min-w-0 max-w-full shrink items-center gap-1 overflow-hidden rounded-full ${tabs.length > 0 ? "bg-surface p-1" : ""}`}
           onBlur={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget)) setFocusedIndex(null);
           }}
           role="tablist"
         >
+          <ActiveTabIndicator indicator={indicator} />
           {tabs.map((tab, index) => {
             const tool = tools.find((candidate) => candidate.id === tab.toolId);
             const Icon = toolIcon((tool?.manifest as { icon?: unknown } | undefined)?.icon);
@@ -142,27 +150,18 @@ export function TabBar({ tabs, bridge }: TabBarProps) {
                   tabRefs.current[index] = node;
                 }}
                 onFocus={() => setFocusedIndex(index)}
-                onKeyDown={(event) => {
-                  if (
-                    event.ctrlKey &&
-                    event.shiftKey &&
-                    (event.key === "ArrowLeft" || event.key === "ArrowRight")
-                  ) {
-                    event.preventDefault();
-                    void reorder(tab.toolId, index + (event.key === "ArrowRight" ? 1 : -1));
-                    return;
-                  }
-                  let target = index;
-                  if (event.key === "ArrowRight") target = (index + 1) % tabs.length;
-                  else if (event.key === "ArrowLeft")
-                    target = (index - 1 + tabs.length) % tabs.length;
-                  else if (event.key === "Home") target = 0;
-                  else if (event.key === "End") target = tabs.length - 1;
-                  else return;
-                  event.preventDefault();
-                  setFocusedIndex(target);
-                  moveFocus(target);
-                }}
+                onKeyDown={(event) =>
+                  handleTabKey(
+                    event,
+                    index,
+                    tabs.length,
+                    (target) => {
+                      setFocusedIndex(target);
+                      tabRefs.current[target]?.focus();
+                    },
+                    (offset) => void reorder(tab.toolId, index + offset),
+                  )
+                }
               />
             );
           })}

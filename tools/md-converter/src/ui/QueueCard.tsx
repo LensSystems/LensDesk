@@ -1,4 +1,4 @@
-import { Badge, Check, CircleAlert, IconButton, ListItem, Save, X } from "@lensdesk/ui";
+import { Badge, Check, CircleAlert, IconButton, ListItem, Save, SwapText, X } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import { QueueFilename } from "./QueueFilename.tsx";
 import { StatusText } from "./StatusText.tsx";
@@ -29,29 +29,9 @@ export function QueueCard({
         onClick={() => onSelect(item.id)}
         containerClassName={`queue-card ${selected ? "queue-card-selected" : ""} ${item.status === "error" ? "border-danger bg-danger-soft" : ""}`}
         actions={
-          active ? (
-            <>
-              <span className="queue-status">
-                <span>{t(`status.${item.status}`)}</span>
-                {item.status === "converting" && (
-                  <span>
-                    {new Intl.NumberFormat(i18n.language, { style: "percent" }).format(
-                      item.progress,
-                    )}
-                  </span>
-                )}
-              </span>
-              <IconButton
-                tooltip={false}
-                label={t("cancelFile", { name: item.file.name })}
-                onClick={() => onCancel(item.id)}
-              >
-                <X size={14} aria-hidden="true" />
-              </IconButton>
-            </>
-          ) : (
-            <span className="queue-result-status">
-              {(item.status === "done" || item.status === "error") && (
+          <>
+            <span className={active ? "queue-status" : "queue-result-status"}>
+              {!active && (item.status === "done" || item.status === "error") && (
                 <span
                   className={`compact-icon ${item.status === "done" ? "text-success" : "text-danger"}`}
                   role="img"
@@ -64,14 +44,34 @@ export function QueueCard({
                   )}
                 </span>
               )}
-              <Badge
-                className="normal-status"
-                tone={
-                  item.status === "done" ? "accent" : item.status === "error" ? "danger" : "neutral"
+              <SwapText
+                key="status"
+                align="end"
+                value={t(`status.${item.status}`)}
+                wrap={(content) =>
+                  active ? (
+                    <span>{content}</span>
+                  ) : (
+                    <Badge
+                      className="normal-status"
+                      tone={
+                        item.status === "done"
+                          ? "accent"
+                          : item.status === "error"
+                            ? "danger"
+                            : "neutral"
+                      }
+                    >
+                      {content}
+                    </Badge>
+                  )
                 }
-              >
-                {t(`status.${item.status}`)}
-              </Badge>
+              />
+              {item.status === "converting" && (
+                <span>
+                  {new Intl.NumberFormat(i18n.language, { style: "percent" }).format(item.progress)}
+                </span>
+              )}
               {item.status === "done" && item.saved && (
                 <span className="saved-indicator" role="img" aria-label={t("fileSaved")}>
                   <Save size={16} aria-hidden="true" />
@@ -79,7 +79,16 @@ export function QueueCard({
                 </span>
               )}
             </span>
-          )
+            {active && (
+              <IconButton
+                tooltip={false}
+                label={t("cancelFile", { name: item.file.name })}
+                onClick={() => onCancel(item.id)}
+              >
+                <X size={14} aria-hidden="true" />
+              </IconButton>
+            )}
+          </>
         }
         footer={
           item.status === "converting" ? (

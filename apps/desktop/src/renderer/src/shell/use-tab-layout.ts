@@ -1,4 +1,11 @@
-import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type RefObject,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 export function tabInsets(width: number, left: number, right: number, required: number) {
   const symmetric = Math.max(left, right);
@@ -24,14 +31,13 @@ export function useTabCenter() {
         header.dataset.hasNotice === "true"
           ? 12
           : Number.parseFloat(getComputedStyle(header).columnGap) || 0;
-      const overflow = [...actions.querySelectorAll<HTMLElement>("[data-notice-text]")].reduce(
-        (sum, node) => {
+      const overflow = [...actions.querySelectorAll<HTMLElement>("[data-notice-text]")]
+        .filter((node) => !node.closest("[data-notice-back]"))
+        .reduce((sum, node) => {
           const copy = node.querySelector<HTMLElement>("[data-notice-copy]");
           const natural = copy ? Math.max(copy.scrollWidth, copy.getBoundingClientRect().width) : 0;
           return sum + Math.max(0, natural - node.clientWidth);
-        },
-        0,
-      );
+        }, 0);
       setBounds({
         width: rect.width,
         left: brand.getBoundingClientRect().right - rect.left + gap,
@@ -83,4 +89,31 @@ export function useCompactTabs(
     padding,
   );
   return { compact, required };
+}
+
+// El foco sigue siendo independiente de la activación.
+export function handleTabKey(
+  event: KeyboardEvent<HTMLButtonElement>,
+  index: number,
+  total: number,
+  focus: (target: number) => void,
+  reorder: (offset: number) => void,
+) {
+  if (
+    event.ctrlKey &&
+    event.shiftKey &&
+    (event.key === "ArrowLeft" || event.key === "ArrowRight")
+  ) {
+    event.preventDefault();
+    reorder(event.key === "ArrowRight" ? 1 : -1);
+    return;
+  }
+  let target: number;
+  if (event.key === "ArrowRight") target = (index + 1) % total;
+  else if (event.key === "ArrowLeft") target = (index - 1 + total) % total;
+  else if (event.key === "Home") target = 0;
+  else if (event.key === "End") target = total - 1;
+  else return;
+  event.preventDefault();
+  focus(target);
 }

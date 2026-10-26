@@ -76,3 +76,44 @@ it.each(["tools", "settings"] as const)(
     unsubscribe();
   },
 );
+
+it("enfoca el enlace vigente aunque el texto anterior siga saliendo", async () => {
+  const listeners = new Map<string, (payload: unknown) => void>();
+  const invoke = vi.fn(async (channel: string) => ({
+    ok: true,
+    data:
+      channel === "shell.showPage"
+        ? { page: "settings" }
+        : channel === "app.getInfo"
+          ? { version: "0.3.0", releasesRepo: "o/r", platform: "darwin" }
+          : channel === "settings.get"
+            ? { key: "app.openAtLogin", value: false }
+            : {},
+  }));
+  const bridge = createHostBridge(invoke, (event, callback) => {
+    listeners.set(event, callback);
+    return () => listeners.delete(event);
+  });
+  const unsubscribe = useShellStore.getState().subscribe(bridge);
+  useShellStore.setState({ page: "settings" });
+  render(
+    <TooltipProvider>
+      <HeaderNotices bridge={bridge} />
+      <SettingsPage bridge={bridge} />
+    </TooltipProvider>,
+  );
+  await screen.findByText("Versión 0.3.0");
+  act(() => listeners.get("update.available")?.({ version: "1.2.0", html_url: url }));
+  act(() =>
+    listeners.get("update.available")?.({
+      version: "1.3.0",
+      html_url: "https://github.com/o/r/releases/tag/v1.3.0",
+    }),
+  );
+  expect(document.querySelector(".ld-swap-old")).toHaveTextContent("Versión 1.2.0 disponible");
+  fireEvent.click(screen.getByRole("button", { name: "Ir a Ajustes" }));
+  await waitFor(() =>
+    expect(screen.getByRole("link", { name: "Versión 1.3.0 disponible" })).toHaveFocus(),
+  );
+  unsubscribe();
+});

@@ -12,6 +12,7 @@ import {
   SaveAll,
   SaveMarkdown,
   SegmentedControl,
+  SwapText,
   Toolbar,
 } from "@lensdesk/ui";
 import { useState } from "react";
@@ -31,6 +32,12 @@ export function SharedExamples() {
         <SaveAll size={16} aria-label="Guardar todos" />
         <BrushCleaning aria-label="Borrar historial" />
         <Save aria-label="Guardar" />
+      </Example>
+      <Example names={["SwapText"]}>
+        <Button onClick={() => setNotice(notice === "Listo" ? "En cola" : "Listo")}>
+          Cambiar estado
+        </Button>
+        <SwapText value={notice || "En cola"} />
       </Example>
       <Example names={["Panel"]}>
         <Panel title="Panel" actions={<Button>Acción</Button>}>

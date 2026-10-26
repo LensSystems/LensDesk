@@ -56,6 +56,84 @@ function makeBridge(dismissed: string | null = null) {
 }
 
 describe("pestañas", () => {
+  it.each(["clic", "teclado", "sin clic", "caducado", "estructura", "página"])(
+    "el indicador distingue el origen: %s",
+    (origin) => {
+      const geometry = vi
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: HTMLElement) {
+          const first = this.querySelector('[data-tab-id="notas"]');
+          const left = this.getAttribute("role") === "presentation" ? (first ? 10.2 : 110.2) : 0.2;
+          return { left, right: left + 90, top: 4, bottom: 34, width: 90, height: 30 } as DOMRect;
+        });
+      const now = vi.spyOn(Date, "now").mockReturnValue(1000);
+      const bridge = makeBridge().bridge;
+      const view = renderBar(bridge);
+      const indicator = () => view.container.querySelector(".ld-active-tab-indicator");
+      try {
+        expect(indicator()).toHaveAttribute("aria-hidden", "true");
+        expect(indicator()).toHaveAttribute("data-motion", "off");
+        if (origin !== "sin clic")
+          fireEvent.click(screen.getByRole("tab", { name: "Notas" }), { detail: 1 });
+        expect(indicator()).toHaveAttribute("data-motion", "off");
+        if (origin === "teclado") fireEvent.keyDown(window, { key: "1", metaKey: true });
+        if (origin === "caducado") now.mockReturnValue(2001);
+        if (origin === "página") act(() => useShellStore.setState({ page: "tools" }));
+        const next = tabs.map((tab) => ({ ...tab, active: tab.toolId === "notas" }));
+        view.rerender(
+          <TooltipProvider>
+            <TabBar bridge={bridge} tabs={origin === "estructura" ? next.slice(0, 2) : next} />
+          </TooltipProvider>,
+        );
+        if (origin === "página") {
+          expect(indicator()).toBeNull();
+          act(() => useShellStore.setState({ page: "tab" }));
+        }
+        expect(indicator()).toHaveAttribute("data-motion", origin === "clic" ? "on" : "off");
+        expect(indicator()).toHaveStyle({ transform: "translateX(10px)", height: "30px" });
+      } finally {
+        geometry.mockRestore();
+        now.mockRestore();
+      }
+    },
+  );
+
+  it("arrastrar una pestaña con el fondo activo visible no entra en un bucle de renders", () => {
+    const geometry = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 10,
+      right: 100,
+      top: 4,
+      bottom: 34,
+      width: 90,
+      height: 30,
+    } as DOMRect);
+    // jsdom no implementa la captura del puntero.
+    Object.assign(HTMLElement.prototype, {
+      setPointerCapture() {},
+      releasePointerCapture() {},
+    });
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const view = renderBar(makeBridge().bridge);
+      const indicator = () => view.container.querySelector(".ld-active-tab-indicator");
+      expect(indicator()).not.toBeNull();
+      const tab = screen.getByRole("tab", { name: "Notas" });
+      const pointer = { pointerId: 1, isPrimary: true, button: 0 };
+      fireEvent.pointerDown(tab, { ...pointer, clientX: 10, clientY: 10 });
+      fireEvent.pointerMove(tab, { ...pointer, clientX: 60, clientY: 10 });
+      expect(view.container.querySelector(".border-dashed")).not.toBeNull();
+      expect(indicator()).toHaveAttribute("data-motion", "off");
+      fireEvent.pointerCancel(tab, pointer);
+      expect(errors).not.toHaveBeenCalledWith(expect.stringContaining("Maximum update depth"));
+    } finally {
+      geometry.mockRestore();
+      errors.mockRestore();
+      const prototype = HTMLElement.prototype as Partial<HTMLElement>;
+      delete prototype.setPointerCapture;
+      delete prototype.releasePointerCapture;
+    }
+  });
+
   it("reordena con Ctrl+Mayús y anuncia la posición sin activar otra pestaña", async () => {
     const { bridge, invoke } = makeBridge();
     invoke.mockImplementation(async (channel: string) => {
@@ -186,9 +264,9 @@ describe("pestañas", () => {
       expect(header.style.paddingRight).toBe(platform === "win32" ? "154px" : "");
       expect(header.style.height).toBe("52px");
       for (const item of [
-        ...within(header).getAllByRole("button"),
+        ...within(header).getAllByRole("button", { hidden: true }),
         ...within(header).getAllByRole("tab"),
-        ...within(header).queryAllByRole("link"),
+        ...within(header).queryAllByRole("link", { hidden: true }),
       ]) {
         expect(item.closest(".ld-no-drag")).not.toBeNull();
       }
@@ -463,13 +541,18 @@ describe("avisos dentro del encabezado", () => {
     const header = screen.getByRole("banner");
     expect(header.style.height).toBe(`${HEADER_HEIGHT}px`);
     for (const item of [
-      ...within(header).getAllByRole("button"),
+      ...within(header).getAllByRole("button", { hidden: true }),
       ...within(header).queryAllByRole("tab"),
-      ...within(header).queryAllByRole("link"),
+      ...within(header).queryAllByRole("link", { hidden: true }),
     ]) {
       expect(item.closest(".ld-no-drag")).not.toBeNull();
     }
     expect(header.contains(screen.getByText("LensDesk 9.0.0 está disponible"))).toBe(true);
+    const updateButton = header.querySelector("[data-notice-back] button");
+    expect(updateButton).not.toBeNull();
+    expect(header.contains(updateButton)).toBe(true);
+    expect(screen.queryByRole("button", { name: "Ir a Ajustes" })).toBeNull();
+    fireEvent.focus(header.querySelector(".ld-notice-front button") as HTMLElement);
     expect(header.contains(screen.getByRole("button", { name: "Ir a Ajustes" }))).toBe(true);
     expect(header.contains(screen.getByText("Hecho"))).toBe(true);
     expect(header.contains(screen.getByRole("region", { name: /Notificaciones/ }))).toBe(true);
