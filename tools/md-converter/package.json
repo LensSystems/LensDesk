@@ -1,6 +1,6 @@
 {
   "name": "@lensdesk/tool-md-converter",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Herramienta Convertidor a Markdown de LensDesk",
   "license": "MIT",
