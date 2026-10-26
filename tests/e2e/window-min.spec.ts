@@ -17,14 +17,23 @@ for (const width of [760, 900]) {
       const shell = await shellPage(app);
       const window = await app.browserWindow(shell);
       await window.evaluate((browserWindow) => browserWindow.setContentSize(1280, 720));
-      const workAreaWidth = await app.evaluate(
-        ({ screen }) => screen.getPrimaryDisplay().workAreaSize.width,
-      );
-      const compactBrand = workAreaWidth - (process.platform === "win32" ? 170 : 112) <= 880;
-      // En pantallas pequeñas la ventana puede ajustarse al área de trabajo.
-      await expect(
-        shell.locator("[data-brand]").getByText(compactBrand ? "LD" : "LensDesk", { exact: true }),
-      ).toBeVisible();
+      // Windows puede dejar la ventana más ancha o más estrecha que la pantalla: manda el
+      // ancho real del contenido de la cabecera (la marca se compacta hasta 880 px).
+      await expect
+        .poll(() =>
+          shell.getByRole("banner").evaluate((header) => {
+            const style = getComputedStyle(header);
+            const inner =
+              header.clientWidth -
+              Number.parseFloat(style.paddingLeft) -
+              Number.parseFloat(style.paddingRight);
+            const visible = [...header.querySelectorAll<HTMLElement>("[data-brand] > span")].find(
+              (span) => getComputedStyle(span).display !== "none",
+            );
+            return visible?.textContent === (inner <= 880 ? "LD" : "LensDesk");
+          }),
+        )
+        .toBe(true);
       await window.evaluate((browserWindow) => browserWindow.setSize(400, 300));
       const size = await window.evaluate((browserWindow) => browserWindow.getSize());
       expect(size[0]).toBeGreaterThanOrEqual(760);
