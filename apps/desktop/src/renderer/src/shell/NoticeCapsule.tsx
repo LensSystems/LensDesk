@@ -37,7 +37,7 @@ export function NoticeCapsule({
         }
       }}
       data-notice-capsule
-      className="flex h-8 min-w-0 items-center gap-1 rounded-full bg-accent-soft pl-3 pr-1 text-xs text-accent-soft-fg"
+      className="flex h-8 min-w-0 [&>[data-notice-text]]:min-w-10 [&>:not([data-notice-text])]:shrink-0 items-center gap-1 rounded-full bg-accent-soft pl-3 pr-1 text-xs text-accent-soft-fg"
     >
       {icon}
       <NoticeText paused={paused}>{text}</NoticeText>

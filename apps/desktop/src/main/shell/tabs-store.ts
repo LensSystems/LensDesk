@@ -54,7 +54,7 @@ export function createTabsStore(database: SqliteDatabase, emit: (tabs: ShellTab[
         .run(index, tab.toolId);
     });
   };
-  // Una sesión guardada por una versión sin límite puede traer más de ocho pestañas.
+  // Una sesión guardada puede superar el límite actual de pestañas.
   const saved = list();
   if (saved.length > MAX_OPEN_TABS) {
     const extra = leastUsed(saved, saved.length - MAX_OPEN_TABS);

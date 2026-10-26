@@ -5,6 +5,9 @@ import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { enableDeveloperMode, installTool, launchApp, shellPage } from "./helpers.ts";
 
+// Límite fijo compartido con apps/desktop/src/shared/layout.ts.
+const MAX_OPEN_TABS = 6;
+
 for (const reducedMotion of ["no-preference", "reduce"] as const) {
   test(`apila avisos y permite desplegarlos con movimiento ${reducedMotion}`, async () => {
     test.setTimeout(120_000);
@@ -16,7 +19,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       const window = await app.browserWindow(shell);
       await window.evaluate((browserWindow) => browserWindow.setContentSize(760, 520));
       await enableDeveloperMode(shell);
-      for (let index = 0; index < 9; index++) {
+      for (let index = 0; index < MAX_OPEN_TABS + 1; index++) {
         const source = join(directory, `tool-${index}`);
         await cp(resolve("tools/_template/dist"), source, { recursive: true });
         const manifestPath = join(source, "lensdesk.tool.json");
@@ -34,7 +37,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
           "--unsigned",
         ]);
         await installTool(app, shell, outFile, `Plantilla ${index}`);
-        if (index === 8) {
+        if (index === MAX_OPEN_TABS) {
           await app.evaluate(({ BrowserWindow }) => {
             BrowserWindow.getAllWindows()[0]?.webContents.send("update.available", {
               version: "9.9.9",
@@ -45,6 +48,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         }
         await shell.getByRole("button", { name: `Abrir Plantilla ${index}`, exact: true }).click();
       }
+      await expect(shell.getByRole("tab")).toHaveCount(MAX_OPEN_TABS);
       await shell.mouse.move(0, 200);
       const stack = shell.locator("[data-notice-stack]");
       const front = stack.locator(".ld-notice-front");

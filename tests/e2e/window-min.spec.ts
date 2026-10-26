@@ -5,6 +5,9 @@ import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { enableDeveloperMode, installTool, launchApp, shellPage } from "./helpers.ts";
 
+// Límite fijo compartido con apps/desktop/src/shared/layout.ts.
+const MAX_OPEN_TABS = 6;
+
 for (const width of [760, 900]) {
   test(`mantiene el mínimo y separa marca, pestañas y aviso a ${width}px`, async () => {
     test.setTimeout(90_000);
@@ -13,9 +16,14 @@ for (const width of [760, 900]) {
     try {
       const shell = await shellPage(app);
       const window = await app.browserWindow(shell);
-      // Con el tamaño inicial (1100 px) cabe la marca completa.
+      await window.evaluate((browserWindow) => browserWindow.setContentSize(1280, 720));
+      const workAreaWidth = await app.evaluate(
+        ({ screen }) => screen.getPrimaryDisplay().workAreaSize.width,
+      );
+      const compactBrand = workAreaWidth - (process.platform === "win32" ? 170 : 112) <= 880;
+      // En pantallas pequeñas la ventana puede ajustarse al área de trabajo.
       await expect(
-        shell.locator("[data-brand]").getByText("LensDesk", { exact: true }),
+        shell.locator("[data-brand]").getByText(compactBrand ? "LD" : "LensDesk", { exact: true }),
       ).toBeVisible();
       await window.evaluate((browserWindow) => browserWindow.setSize(400, 300));
       const size = await window.evaluate((browserWindow) => browserWindow.getSize());
@@ -23,7 +31,7 @@ for (const width of [760, 900]) {
       expect(size[1]).toBeGreaterThanOrEqual(520);
       await window.evaluate((browserWindow, width) => browserWindow.setSize(width, 520), width);
       await enableDeveloperMode(shell);
-      for (let index = 0; index < 9; index++) {
+      for (let index = 0; index < MAX_OPEN_TABS + 1; index++) {
         const source = join(directory, `tool-${index}`);
         await cp(resolve("tools/_template/dist"), source, { recursive: true });
         const manifestPath = join(source, "lensdesk.tool.json");
@@ -50,11 +58,11 @@ for (const width of [760, 900]) {
           )
           .toBe(true);
       }
-      for (let index = 0; index < 9; index++) {
+      for (let index = 0; index < MAX_OPEN_TABS + 1; index++) {
         await shell.getByRole("button", { name: "Herramientas", exact: true }).click();
         await shell.getByRole("button", { name: `Abrir Plantilla ${index}`, exact: true }).click();
       }
-      await expect(shell.getByRole("tab")).toHaveCount(8);
+      await expect(shell.getByRole("tab")).toHaveCount(MAX_OPEN_TABS);
       const notice = shell.locator("li[role=status]");
       await expect(notice).toBeVisible();
       const parts = [

@@ -2,7 +2,7 @@ import { Puzzle, StickyNote, TooltipProvider } from "@lensdesk/ui";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HostBridge } from "../../../shared/host-channels.ts";
-import { HEADER_HEIGHT } from "../../../shared/layout.ts";
+import { HEADER_HEIGHT, MAX_OPEN_TABS } from "../../../shared/layout.ts";
 import { rendererI18n } from "../i18n.ts";
 import { useShellStore } from "../state/store.ts";
 import { App } from "./App.tsx";
@@ -202,10 +202,10 @@ describe("pestañas", () => {
   });
 
   it("con más de cinco pestañas conserva solo el nombre de la activa", () => {
-    const many = Array.from({ length: 8 }, (_, position) => ({
+    const many = Array.from({ length: MAX_OPEN_TABS }, (_, position) => ({
       toolId: `tool-${position}`,
       position,
-      active: position === 7,
+      active: position === MAX_OPEN_TABS - 1,
     }));
     render(
       <TooltipProvider>

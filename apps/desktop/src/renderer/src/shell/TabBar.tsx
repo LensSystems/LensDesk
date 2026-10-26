@@ -15,7 +15,7 @@ import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 import { useActiveTabIndicator } from "./use-active-tab-indicator.ts";
 import { useTabDrag } from "./use-tab-drag.ts";
-import { handleTabKey, tabInsets, useCompactTabs, useTabCenter } from "./use-tab-layout.ts";
+import { handleTabKey, useTabLayout } from "./use-tab-layout.ts";
 
 export function TabBar({ tabs, bridge }: { tabs: ShellTab[]; bridge: Window["lensdeskHost"] }) {
   const { t, i18n } = useTranslation();
@@ -41,7 +41,6 @@ export function TabBar({ tabs, bridge }: { tabs: ShellTab[]; bridge: Window["len
       (!!state.update && state.update.version !== state.dismissedVersion) ||
       state.toasts.length > 0,
   );
-  const { headerRef, brandRef, actionsRef, width, left, right, naturalRight } = useTabCenter();
   const listRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const fullScreen = useShellStore((state) => state.fullScreen);
@@ -58,19 +57,21 @@ export function TabBar({ tabs, bridge }: { tabs: ShellTab[]; bridge: Window["len
     [tabs, tools, i18n.resolvedLanguage],
   );
   const activeIndex = tabs.findIndex((tab) => tab.active);
-  const { compact, required } = useCompactTabs(
-    listRef,
-    names,
-    width < 900 && page !== "tab" ? -1 : activeIndex,
-    width - left - (hasNotice ? naturalRight : right),
-    width,
-  );
-  const insets = hasNotice ? { left, right } : tabInsets(width, left, right, required);
+  const { headerRef, brandRef, actionsRef, width, compact, squeeze, listStyle, actionsStyle } =
+    useTabLayout(listRef, names, activeIndex, page, hasNotice, windowInset);
   // Mientras el foco está dentro de la barra manda el índice enfocado; fuera de ella, la pestaña activa.
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const rovingIndex = Math.max(0, Math.min(focusedIndex ?? activeIndex, tabs.length - 1));
   const indicator = useActiveTabIndicator(
-    JSON.stringify([tabs.map((tab) => tab.toolId), names, compact, width, page, hasNotice]),
+    JSON.stringify([
+      tabs.map((tab) => tab.toolId),
+      names,
+      compact,
+      squeeze,
+      width,
+      page,
+      hasNotice,
+    ]),
     drag.drop !== null,
   );
   return (
@@ -104,7 +105,7 @@ export function TabBar({ tabs, bridge }: { tabs: ShellTab[]; bridge: Window["len
       </div>
       <div
         ref={listRef}
-        style={hasNotice ? { maxWidth: required } : insets}
+        style={listStyle}
         className={`${hasNotice ? "relative w-max shrink-0" : "absolute"} flex min-w-0 justify-center transition-[left,right] duration-160 ease-out motion-reduce:transition-none`}
       >
         <div
@@ -144,7 +145,7 @@ export function TabBar({ tabs, bridge }: { tabs: ShellTab[]; bridge: Window["len
                 name={names[index] ?? tab.toolId}
                 Icon={Icon}
                 selected={selected}
-                compact={compact && !(width < 900 ? selected : tab.active)}
+                compact={squeeze || (compact && !(width < 900 ? selected : tab.active))}
                 tabIndex={rovingIndex === index ? 0 : -1}
                 buttonRef={(node) => {
                   tabRefs.current[index] = node;
@@ -169,12 +170,7 @@ export function TabBar({ tabs, bridge }: { tabs: ShellTab[]; bridge: Window["len
       </div>
       <div
         ref={actionsRef}
-        style={{
-          maxWidth:
-            hasNotice && Number.isFinite(width)
-              ? Math.max(0, width - left - required - 12 - windowInset)
-              : "50%",
-        }}
+        style={actionsStyle}
         className={`${hasNotice ? "" : "ml-auto"} flex min-w-0 items-center justify-end gap-1`}
       >
         <HeaderNotices bridge={bridge} />

@@ -14,11 +14,33 @@ export function tabInsets(width: number, left: number, right: number, required: 
     : { left, right };
 }
 
+export function squeezeActiveTab({
+  hasNotice,
+  width,
+  left,
+  minRight,
+  required,
+}: {
+  hasNotice: boolean;
+  width: number;
+  left: number;
+  minRight: number;
+  required: number;
+}) {
+  return hasNotice && width - left - required - 12 < minRight;
+}
+
 export function useTabCenter() {
   const headerRef = useRef<HTMLElement>(null);
   const brandRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
-  const [bounds, setBounds] = useState({ width: Infinity, left: 0, right: 0, naturalRight: 0 });
+  const [bounds, setBounds] = useState({
+    width: Infinity,
+    left: 0,
+    right: 0,
+    naturalRight: 0,
+    minRight: 0,
+  });
   useLayoutEffect(() => {
     const header = headerRef.current;
     const brand = brandRef.current;
@@ -38,7 +60,39 @@ export function useTabCenter() {
           const natural = copy ? Math.max(copy.scrollWidth, copy.getBoundingClientRect().width) : 0;
           return sum + Math.max(0, natural - node.clientWidth);
         }, 0);
+      const number = (value: string) => Number.parseFloat(value) || 0;
+      const capsule = actions.querySelector<HTMLElement>(".ld-notice-front [data-notice-capsule]");
+      let minRight = 0;
+      if (capsule) {
+        const style = getComputedStyle(capsule);
+        const children = [...capsule.children] as HTMLElement[];
+        const capsuleMin =
+          40 +
+          number(style.paddingLeft) +
+          number(style.paddingRight) +
+          number(style.columnGap) * Math.max(0, children.length - 1) +
+          children
+            .filter((child) => !child.matches("[data-notice-text]"))
+            .reduce(
+              (sum, child) =>
+                sum +
+                child.getBoundingClientRect().width +
+                number(getComputedStyle(child).marginLeft) +
+                number(getComputedStyle(child).marginRight),
+              0,
+            );
+        const fixed = [...actions.children].slice(1) as HTMLElement[];
+        const notices = actions.firstElementChild;
+        // Solo controles fijos y estilos: independiente del ancho actual de la tira.
+        minRight =
+          number(getComputedStyle(header).paddingRight) +
+          capsuleMin +
+          fixed.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0) +
+          number(getComputedStyle(actions).columnGap) * fixed.length +
+          (notices ? number(getComputedStyle(notices).marginRight) : 0);
+      }
       setBounds({
+        minRight,
         width: rect.width,
         left: brand.getBoundingClientRect().right - rect.left + gap,
         right: rect.right - actions.getBoundingClientRect().left + gap,
@@ -47,8 +101,13 @@ export function useTabCenter() {
     };
     const observer = new ResizeObserver(measure);
     for (const element of [header, brand, actions]) observer.observe(element);
+    const mutations = new MutationObserver(measure);
+    mutations.observe(actions, { childList: true, subtree: true, characterData: true });
     measure();
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      mutations.disconnect();
+    };
   }, []);
   return { headerRef, brandRef, actionsRef, ...bounds };
 }
@@ -88,7 +147,45 @@ export function useCompactTabs(
     (sum, width, index) => sum + (compact && index !== activeIndex ? 31 : width),
     padding,
   );
-  return { compact, required };
+  return { compact, required, compactRequired: padding + names.length * 31 };
+}
+
+export function useTabLayout(
+  listRef: RefObject<HTMLDivElement | null>,
+  names: string[],
+  activeIndex: number,
+  page: string,
+  hasNotice: boolean,
+  windowInset: number,
+) {
+  const bounds = useTabCenter();
+  const { width, left, right, naturalRight, minRight } = bounds;
+  const {
+    compact,
+    required: namedRequired,
+    compactRequired,
+  } = useCompactTabs(
+    listRef,
+    names,
+    width < 900 && page !== "tab" ? -1 : activeIndex,
+    width - left - (hasNotice ? naturalRight : right),
+    width,
+  );
+  const squeeze = squeezeActiveTab({ hasNotice, width, left, minRight, required: namedRequired });
+  const required = squeeze ? compactRequired : namedRequired;
+  return {
+    ...bounds,
+    compact,
+    squeeze,
+    listStyle: hasNotice ? { maxWidth: required } : tabInsets(width, left, right, required),
+    actionsStyle: {
+      minWidth: hasNotice ? Math.max(0, minRight - windowInset) : undefined,
+      maxWidth:
+        hasNotice && Number.isFinite(width)
+          ? Math.max(0, width - left - required - 12 - windowInset)
+          : "50%",
+    },
+  };
 }
 
 // El foco sigue siendo independiente de la activación.

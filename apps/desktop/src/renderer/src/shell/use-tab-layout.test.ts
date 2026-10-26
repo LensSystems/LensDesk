@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { tabInsets, useCompactTabs, useTabCenter } from "./use-tab-layout.ts";
+import { squeezeActiveTab, tabInsets, useCompactTabs, useTabCenter } from "./use-tab-layout.ts";
 
 describe("distribución de pestañas", () => {
   it("centra la tira cuando cabe completa, incluido el límite exacto", () => {
@@ -26,14 +26,14 @@ for (const [width, activeIndex, compact, required] of [
     const { result } = renderHook(() =>
       useCompactTabs({ current: null }, ["Notas", "Convertidor"], activeIndex, 1000, width),
     );
-    expect(result.current).toEqual({ compact, required });
+    expect(result.current).toEqual({ compact, required, compactRequired: 74 });
   });
 }
 it("usa 31 px por compacta al faltar espacio en una ventana amplia", () => {
   const { result } = renderHook(() =>
     useCompactTabs({ current: null }, ["Notas", "Convertidor"], 1, 250, 1280),
   );
-  expect(result.current).toEqual({ compact: true, required: 235 });
+  expect(result.current).toEqual({ compact: true, required: 235, compactRequired: 74 });
 });
 
 it.each([false, true])("reserva solo el texto delantero, con aviso trasero %s", (withBack) => {
@@ -52,11 +52,22 @@ it.each([false, true])("reserva solo el texto delantero, con aviso trasero %s", 
   header.dataset.hasNotice = "true";
   const brand = document.createElement("div");
   const actions = document.createElement("div");
+  actions.innerHTML = "<span data-notice-text><span data-notice-copy>Delante</span></span>";
+  header.style.paddingRight = "154px";
+  actions.style.columnGap = "4px";
   actions.innerHTML =
-    "<span data-notice-text><span data-notice-copy>Delante</span></span>" +
-    (withBack
-      ? "<div data-notice-back inert><span data-notice-text><span data-notice-copy>Detrás</span></span></div>"
-      : "");
+    '<div style="margin-right:4px"><div class="ld-notice-front"><div data-notice-capsule style="padding:0 4px 0 12px;column-gap:4px">' +
+    actions.innerHTML +
+    "<button data-fixed></button><button data-fixed></button></div></div></div><button data-fixed></button><button data-fixed></button>";
+  if (withBack)
+    actions.firstElementChild?.insertAdjacentHTML(
+      "beforeend",
+      "<div data-notice-back inert><span data-notice-text><span data-notice-copy>Detrás</span></span></div>",
+    );
+  const fixedWidths = [80, 24, 32, 32];
+  actions.querySelectorAll<HTMLElement>("[data-fixed]").forEach((node, index) => {
+    node.getBoundingClientRect = () => ({ width: fixedWidths[index] }) as DOMRect;
+  });
   header.getBoundingClientRect = () => ({ left: 0, right: 1000, width: 1000 }) as DOMRect;
   brand.getBoundingClientRect = () => ({ right: 100 }) as DOMRect;
   actions.getBoundingClientRect = () => ({ left: 700 }) as DOMRect;
@@ -76,10 +87,31 @@ it.each([false, true])("reserva solo el texto delantero, con aviso trasero %s", 
       return layout;
     });
     act(() => measure?.());
+    expect(result.current.minRight).toBe(398);
+    actions.getBoundingClientRect = () => ({ left: 800 }) as DOMRect;
+    act(() => measure?.());
+    expect(result.current.minRight).toBe(398);
+    actions.getBoundingClientRect = () => ({ left: 700 }) as DOMRect;
+    act(() => measure?.());
     expect(result.current.right).toBe(312);
     expect(result.current.naturalRight).toBe(372);
     unmount();
   } finally {
     vi.unstubAllGlobals();
   }
+});
+
+describe("activa compacta con aviso", () => {
+  it.each([
+    [true, 760, 50, 350, 380, true],
+    [true, 760, 50, 318, 380, false],
+    [true, 760, 50, 319, 380, true],
+    [false, 760, 50, 400, 380, false],
+    [true, 1100, 100, 300, 380, false],
+  ])(
+    "decide con aviso %s, ancho %s y mínimo %s/%s/%s",
+    (hasNotice, width, left, minRight, required, expected) => {
+      expect(squeezeActiveTab({ hasNotice, width, left, minRight, required })).toBe(expected);
+    },
+  );
 });

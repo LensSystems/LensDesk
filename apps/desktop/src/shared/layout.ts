@@ -4,7 +4,7 @@ export const MAC_TRAFFIC_LIGHTS_WIDTH = 96;
 // Tres controles de ventana de 46 px; reserva conservadora independiente del primer layout.
 export const WIN_CONTROLS_WIDTH = 138;
 
-export const MAX_OPEN_TABS = 8;
+export const MAX_OPEN_TABS = 6;
 
 export const MIN_WINDOW_WIDTH = 760;
 export const MIN_WINDOW_HEIGHT = 520;
