@@ -1,6 +1,6 @@
 import { copyFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import {
   enableDeveloperMode,
@@ -38,7 +38,7 @@ test("el Convertidor cabe en la ventana mínima con su barra de iconos", async (
     await tool.getByRole("button", { name: "Borrar historial" }).focus();
     await tool.keyboard.press("Tab");
     await tool.keyboard.press("Tab");
-    const longName = queue.getByRole("button", { name: longFile.split("/").at(-1), exact: true });
+    const longName = queue.getByRole("button", { name: basename(longFile), exact: true });
     await expect(longName).toBeFocused();
     await expect
       .poll(() =>
