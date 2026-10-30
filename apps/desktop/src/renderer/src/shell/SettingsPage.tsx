@@ -8,17 +8,18 @@ import {
   SelectValue,
   Switch,
 } from "@lensdesk/ui";
-import { useEffect, useId, useState } from "react";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
-import type { HostSettingKey } from "../../../shared/host-channels.ts";
 import { useShellStore } from "../state/store.ts";
 
 import { AppLogo } from "./AppLogo.tsx";
 import { PageFrame } from "./PageFrame.tsx";
+import { SettingsActionStatus } from "./SettingsActionStatus.tsx";
 import { SettingsLoginItem } from "./SettingsLoginItem.tsx";
 import { SettingsRow } from "./SettingsRow.tsx";
 import { SettingsSection } from "./SettingsSection.tsx";
 import { SettingsUpdateCheck } from "./SettingsUpdateCheck.tsx";
+import { type SettingsAction, useSettingsActions } from "./use-settings-actions.ts";
 
 type SettingsPageProps = { bridge: Window["lensdeskHost"] };
 
@@ -27,16 +28,20 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
   const developerDescriptionId = useId();
   const theme = useShellStore((state) => state.context.theme);
   const settings = useShellStore((state) => state.settings);
-  const [releasesRepo, setReleasesRepo] = useState("");
-  const [version, setVersion] = useState<string | null>(null);
-  useEffect(() => {
-    void bridge.invoke("app.getInfo", {}).then((result) => {
-      if (result.ok) {
-        setVersion(result.data.version);
-        setReleasesRepo(result.data.releasesRepo ?? "");
-      }
-    });
-  }, [bridge]);
+  const { states, info, update, openFolder } = useSettingsActions(bridge);
+  const version = info?.version;
+  const availability = (action: SettingsAction) => ({
+    "aria-busy": states[action]?.pending ?? false,
+    "aria-disabled": states[action]?.pending ?? false,
+  });
+  const status = (action: SettingsAction, label?: string) => (
+    <SettingsActionStatus
+      action={action}
+      state={states[action]}
+      label={label}
+      targetId={`${developerDescriptionId}-${action}`}
+    />
+  );
   const pushToast = useShellStore((state) => state.pushToast);
   const exportLogs = async () => {
     const result = await bridge.invoke("logs.export", {});
@@ -45,8 +50,6 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
       pushToast("error", i18n.exists(key) ? t(key) : t("settingsPage.exportLogsError"));
     } else if (result.data.saved) pushToast("success", t("settingsPage.exportLogsSaved"));
   };
-  const update = (key: HostSettingKey, value: unknown) =>
-    void bridge.invoke("settings.set", { key, value });
   return (
     <PageFrame settings>
       <div className="mx-auto flex w-full min-[900px]:max-w-2xl flex-col gap-4 min-[900px]:gap-6">
@@ -54,9 +57,18 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           {t("settingsPage.title")}
         </h1>
         <SettingsSection title={t("settingsPage.appearance")}>
-          <SettingsRow label={t("settingsPage.language")}>
+          <SettingsRow
+            id={`${developerDescriptionId}-locale`}
+            label={t("settingsPage.language")}
+            status={status("locale", t("settingsPage.language"))}
+          >
             <Select value={settings.locale} onValueChange={(value) => update("locale", value)}>
-              <SelectTrigger className="w-44" aria-label={t("settingsPage.language")}>
+              <SelectTrigger
+                {...availability("locale")}
+                id={`${developerDescriptionId}-locale-control`}
+                className="w-44"
+                aria-label={t("settingsPage.language")}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -65,7 +77,12 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
               </SelectContent>
             </Select>
           </SettingsRow>
-          <SettingsRow label={t("settingsPage.theme")}>
+          <SettingsRow
+            id={`${developerDescriptionId}-theme`}
+            label={t("settingsPage.theme")}
+            controlsState={availability("theme")}
+            status={status("theme", t("settingsPage.theme"))}
+          >
             <SegmentedControl
               indicatorClassName="shadow-none"
               itemClassName="data-[state=checked]:shadow-none"
@@ -79,7 +96,12 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
               ]}
             />
           </SettingsRow>
-          <SettingsRow label={t("settingsPage.accent")}>
+          <SettingsRow
+            id={`${developerDescriptionId}-accent`}
+            label={t("settingsPage.accent")}
+            controlsState={availability("accent")}
+            status={status("accent", t("settingsPage.accent"))}
+          >
             <SegmentedControl
               indicatorClassName="shadow-none"
               itemClassName="data-[state=checked]:shadow-none"
@@ -104,15 +126,19 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           <SettingsUpdateCheck
             bridge={bridge}
             version={version ?? ""}
-            enabled={releasesRepo !== "" && settings.updatesCheck}
+            enabled={!!info?.releasesRepo && settings.updatesCheck}
           />
           <SettingsLoginItem bridge={bridge} />
           <SettingsRow
             label={t("settingsPage.developerMode")}
+            id={`${developerDescriptionId}-developerMode`}
             description={t("settingsPage.developerModeDescription")}
             descriptionId={developerDescriptionId}
+            status={status("developerMode", t("settingsPage.developerMode"))}
           >
             <Switch
+              {...availability("developerMode")}
+              id={`${developerDescriptionId}-developerMode-control`}
               aria-label={t("settingsPage.developerMode")}
               aria-describedby={developerDescriptionId}
               checked={settings.developerMode}
@@ -121,10 +147,18 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           </SettingsRow>
         </SettingsSection>
         <SettingsSection title={t("settingsPage.dataAndLogs")}>
-          <SettingsRow description={t("settingsPage.localDataDescription")}>
+          <SettingsRow
+            description={t("settingsPage.localDataDescription")}
+            id={`${developerDescriptionId}-folder`}
+            status={status("folder")}
+          >
             <div className="flex shrink-0 flex-wrap gap-4">
               <Button onClick={() => void exportLogs()}>{t("settingsPage.exportLogs")}</Button>
-              <Button onClick={() => void bridge.invoke("app.openDataFolder", {})}>
+              <Button
+                id={`${developerDescriptionId}-folder-control`}
+                onClick={openFolder}
+                {...availability("folder")}
+              >
                 {t("settingsPage.openDataFolder")}
               </Button>
             </div>
@@ -139,11 +173,20 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
                 <span className="text-accent">Desk</span>
               </p>
               <p className="text-xs text-muted">{t("settingsPage.byline")}</p>
-              <p className="ld-selectable mt-1 font-mono text-xs text-muted">
-                {t("settingsPage.appVersion", { version: version ?? t("ui.loading") })}
+              <p
+                id={`${developerDescriptionId}-info`}
+                tabIndex={-1}
+                className="ld-selectable mt-1 font-mono text-xs text-muted"
+              >
+                {t("settingsPage.appVersion", {
+                  version:
+                    version ??
+                    t(states.info?.error ? "settingsPage.versionUnavailable" : "ui.loading"),
+                })}
               </p>
             </div>
           </div>
+          <div className="px-4">{status("info")}</div>
           <p className="px-4 pb-4 text-[13px] text-muted">{t("settingsPage.aboutDescription")}</p>
         </SettingsSection>
       </div>

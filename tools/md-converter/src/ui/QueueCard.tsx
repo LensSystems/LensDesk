@@ -1,4 +1,5 @@
-import { IconButton, ListItem, X } from "@lensdesk/ui";
+import { IconButton, keyboardFocus, ListItem, X } from "@lensdesk/ui";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { QueueFilename } from "./QueueFilename.tsx";
 import { QueueState } from "./QueueState.tsx";
@@ -19,10 +20,22 @@ export function QueueCard({
 }) {
   const { t } = useTranslation();
   const { motion, clearMotion, root } = useCompletionMotion(item);
+  // Cambiar de foco no debe mover los botones de esta fila ni de las que están debajo.
+  const [expanded, setExpanded] = useState(false);
   const active = item.status === "queued" || item.status === "converting";
+  const unavailable = item.status !== "done";
   const progress = Math.round(item.progress * 100);
   return (
-    <li ref={root} className="min-w-0 fila-conversion">
+    <li
+      ref={root}
+      className="min-w-0 fila-conversion"
+      data-filename-expanded={expanded}
+      onFocusCapture={(event) => {
+        if (keyboardFocus(event.target)) setExpanded(true);
+      }}
+      tabIndex={unavailable ? 0 : undefined}
+      aria-label={unavailable ? `${item.file.name}, ${t(`status.${item.status}`)}` : undefined}
+    >
       {motion.old?.status === "converting" && (
         <div
           className="progreso-saliente queue-progress"
@@ -48,7 +61,7 @@ export function QueueCard({
         title={<QueueFilename name={item.file.name} />}
         aria-label={item.file.name}
         selected={selected}
-        disabled={item.status !== "done"}
+        disabled={unavailable}
         onClick={() => onSelect(item.id)}
         containerClassName={`queue-card ${selected ? "queue-card-selected" : ""} ${item.status === "error" ? "border-danger bg-danger-soft" : ""}`}
         actions={

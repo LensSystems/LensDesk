@@ -7,6 +7,7 @@ import { useAppContext } from "./use-app-context.ts";
 import { errorCode, useFail, useNotice } from "./use-failure.ts";
 import { useNoteActions } from "./use-note-actions.ts";
 import { useNoteFiles } from "./use-note-files.ts";
+import { usePublicSaves } from "./use-public-saves.ts";
 
 type Client = ReturnType<typeof createToolClient>;
 export function useNotes(client: Client) {
@@ -15,10 +16,6 @@ export function useNotes(client: Client) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [body, setBody] = useState("");
   const drafts = useRef(new Map<string, string>());
-  const editBody = useCallback((value: string) => {
-    if (selectedRef.current) drafts.current.set(selectedRef.current, value);
-    setBody(value);
-  }, []);
   const [query, setQuery] = useState("");
   const [notesView, setView] = useState<NotesView>("notes");
   const trashed = notesView === "trash";
@@ -58,7 +55,11 @@ export function useNotes(client: Client) {
         setNotes(rows);
         if (!rows.some((note) => note.id === selectedRef.current)) {
           setSelectedId(rows[0]?.id ?? null);
-          setBody(rows[0]?.body_md ?? "");
+          setBody(
+            rows[0]?.private
+              ? ""
+              : (drafts.current.get(rows[0]?.id ?? "") ?? rows[0]?.body_md ?? ""),
+          );
         }
         setError("");
         return true;
@@ -83,45 +84,31 @@ export function useNotes(client: Client) {
         body_md: value,
         title: notesRef.current.find((note) => note.id === id)?.title ?? "",
       });
-      setNotes((current) => [note, ...current.filter((item) => item.id !== id)]);
-      setSelectedId(note.id);
-      setBody(note.body_md);
+      const latest = drafts.current.get(id) ?? note.body_md;
+      if (latest !== note.body_md) drafts.current.set(note.id, latest);
+      notesRef.current = [note, ...notesRef.current.filter((item) => item.id !== id)];
+      setNotes(notesRef.current);
+      if (selectedRef.current === id) {
+        setSelectedId(note.id);
+        setBody(latest);
+      }
       setError(t("errors.notFoundRecovered"), "recovered");
+      return note;
     },
     [client, setError, t],
   );
-  const pending = useRef(new Map<string, string>());
-  const save = useCallback(
-    (id: string, value: string) => {
-      const known = notesRef.current.find((note) => note.id === id);
-      // Los cuerpos privados solo se guardan desde la bóveda, después de get.
-      if (known?.private || (known && known.body_md === value)) return;
-      if (pending.current.get(id) === value) return;
-      pending.current.set(id, value);
-      void client.backend
-        .invoke<Note>("update", { id, body_md: value })
-        .finally(() => {
-          if (pending.current.get(id) === value) pending.current.delete(id);
-        })
-        .then((updated) => {
-          if (drafts.current.get(id) === value) drafts.current.delete(id);
-          setNotes((current) =>
-            current.map((note) =>
-              note.id === id
-                ? { ...note, body_md: updated.body_md, updated_at: updated.updated_at }
-                : note,
-            ),
-          );
-          setError("");
-        })
-        .catch((reason: unknown) =>
-          (errorCode(reason) === "E_NOT_FOUND" ? recover(id, value) : fail(reason)).catch(
-            (next: unknown) => fail(next),
-          ),
-        );
+  const saves = usePublicSaves(client, notesRef, drafts, setNotes, recover);
+  const editBody = useCallback(
+    (value: string) => {
+      if (selectedRef.current) {
+        saves.edit(selectedRef.current);
+        drafts.current.set(selectedRef.current, value);
+      }
+      setBody(value);
     },
-    [client, fail, recover, setError],
+    [saves.edit],
   );
+  const save = saves.save;
   const create = async (content = "", title = "") => {
     try {
       const note = await client.backend.invoke<Note>("create", { body_md: content, title });
@@ -176,6 +163,11 @@ export function useNotes(client: Client) {
     query,
     rename,
     save,
+    settlePublic: saves.settle,
+    savePhase: selectedId ? (saves.states[selectedId] ?? "idle") : "idle",
+    retrySave: () => {
+      if (selectedId && !selected?.private) void save(selectedId, body, true);
+    },
     selected,
     selectedId,
     setBody: editBody,

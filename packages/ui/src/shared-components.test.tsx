@@ -318,3 +318,29 @@ it("ListItem admite resaltado visible con nombre accesible estable", () => {
   expect(button.querySelectorAll("mark")).toHaveLength(2);
   expect(button).toHaveAccessibleName("Ideas para el sprint");
 });
+
+it("una tarjeta deshabilitada conserva su selección y su acción independiente", () => {
+  const select = vi.fn();
+  const action = vi.fn();
+  render(
+    <ListItem
+      variant="card"
+      title="Tarjeta deshabilitada"
+      selected
+      disabled
+      onClick={select}
+      actions={
+        <button type="button" onClick={action}>
+          Acción independiente
+        </button>
+      }
+    />,
+  );
+  const card = screen.getByRole("button", { name: "Tarjeta deshabilitada" });
+  expect(card).toBeDisabled();
+  expect(card).toHaveAttribute("aria-current", "true");
+  fireEvent.click(card);
+  expect(select).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Acción independiente" }));
+  expect(action).toHaveBeenCalledOnce();
+});

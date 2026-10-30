@@ -3,6 +3,10 @@ import type { ReactNode } from "react";
 import { cn } from "./cn.ts";
 import { contextMenuContentClass, menuItemClass, menuShortcutClass } from "./menu-styles.ts";
 
+const contextItemClass = cn(menuItemClass, "h-auto min-h-8 flex-wrap gap-y-0 py-1.5");
+const submenuSizingClass =
+  "min-w-0 w-max max-w-[var(--radix-context-menu-content-available-width)]";
+
 export type ContextMenuEntry =
   | { separator: true }
   | {
@@ -38,7 +42,7 @@ export function ContextMenuItems({ items }: { items: ContextMenuEntry[] }) {
             {item.icon}
           </span>
         )}
-        <span>{item.label}</span>
+        <span className="min-w-0 flex-auto break-words">{item.label}</span>
         {item.shortcut && <kbd className={cn(menuShortcutClass, "font-sans")}>{item.shortcut}</kbd>}
         {!item.shortcut && item.note && (
           <span className={cn(menuShortcutClass, "text-[11px]")}>{item.note}</span>
@@ -52,13 +56,14 @@ export function ContextMenuItems({ items }: { items: ContextMenuEntry[] }) {
     );
     return item.items ? (
       <Primitive.Sub key={item.label}>
-        <Primitive.SubTrigger className={menuItemClass} disabled={item.disabled}>
+        <Primitive.SubTrigger className={contextItemClass} disabled={item.disabled}>
           {content}
         </Primitive.SubTrigger>
         <Primitive.Portal>
           <Primitive.SubContent
             aria-label={item.label}
-            className={cn(contextMenuContentClass, item.contentClassName)}
+            className={cn(contextMenuContentClass, item.contentClassName, submenuSizingClass)}
+            collisionPadding={8}
             sideOffset={-8}
             alignOffset={-7}
           >
@@ -71,7 +76,7 @@ export function ContextMenuItems({ items }: { items: ContextMenuEntry[] }) {
         aria-label={item.label}
         aria-description={item.note}
         key={item.label}
-        className={menuItemClass}
+        className={contextItemClass}
         disabled={item.disabled}
         onSelect={item.onSelect}
       >

@@ -1,4 +1,5 @@
 import { Archive, ArchiveRestore, IconButton, ListItem, Lock, Star, Trash2 } from "@lensdesk/ui";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Highlighted } from "./Highlighted.tsx";
 import { noteSummary } from "./note-summary.ts";
@@ -42,6 +43,7 @@ export function NoteList({
   onPin: (note: Note) => void;
 }) {
   const { t } = useTranslation();
+  const descriptionId = useId();
   return (
     <nav aria-label={t("notesList")} className="min-h-0 overflow-auto">
       {notes.map((note) => (
@@ -51,19 +53,33 @@ export function NoteList({
           containerClassName={`note-card rounded-ld-md ${selectedId === note.id ? "bg-accent-soft border-accent" : "bg-bg border-transparent"}`}
           className={note.private ? "private-note-card" : undefined}
           aria-label={note.title || t("untitled")}
+          aria-describedby={
+            note.private || note.orphaned ? `${descriptionId}-${note.id}` : undefined
+          }
           title={
             <>
               {(note.private || note.orphaned) && (
                 <Lock
                   size={15}
                   className={`note-card-lock ${selectedId === note.id ? "text-accent-soft-fg" : "text-muted"}`}
-                  aria-label={t("vault.private")}
+                  aria-hidden="true"
                 />
               )}
               {query.trim() ? (
                 <Highlighted text={note.title || t("untitled")} query={query} />
               ) : (
                 note.title || t("untitled")
+              )}
+              {(note.private || note.orphaned) && (
+                <span id={`${descriptionId}-${note.id}`} className="sr-only">
+                  {t(
+                    note.orphaned
+                      ? "vault.listOrphanedDescription"
+                      : vaultUnlocked
+                        ? "vault.listUnlockedDescription"
+                        : "vault.listLockedDescription",
+                  )}
+                </span>
               )}
             </>
           }

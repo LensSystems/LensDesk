@@ -62,7 +62,10 @@ export function EditorMenu({
           initial={editing.content ? parseCredential(editing.content) : emptyCredential()}
           onClose={() => {
             setEditing(null);
-            view.current?.focus();
+          }}
+          onReturnFocus={() => {
+            const editor = view.current;
+            if (editor?.dom.isConnected && !editor.state.readOnly) editor.focus();
           }}
           onSave={(value) => {
             const editor = view.current;
@@ -79,7 +82,6 @@ export function EditorMenu({
               if (change) editor.dispatch({ changes: change });
             }
             setEditing(null);
-            editor?.focus();
           }}
         />
       )}

@@ -19,6 +19,7 @@ import { formatCommand, formatKeymap } from "./editor-commands.ts";
 import { markdownHighlighting } from "./markdown-highlight.ts";
 import type { Note } from "./NoteList.tsx";
 import { NotePreview } from "./NotePreview.tsx";
+import type { SavePhase } from "./use-save-status.ts";
 export function Editor({
   spellcheck = false,
   client,
@@ -36,6 +37,8 @@ export function Editor({
   locked = false,
   readOnly = false,
   children,
+  savePhase,
+  onRetrySave,
 }: {
   spellcheck?: boolean;
   client?: ReturnType<typeof createToolClient>;
@@ -44,6 +47,8 @@ export function Editor({
   locked?: boolean;
   readOnly?: boolean;
   children?: ReactNode;
+  savePhase?: SavePhase;
+  onRetrySave?: () => void;
   note: Note;
   preview: boolean;
   onMode: (preview: boolean) => void;
@@ -56,6 +61,7 @@ export function Editor({
 }) {
   const { t } = useTranslation();
   const headerActions = { onPrivate, onLock, onMode, onBlur, onCopy, onExport, onRename };
+  const saveActions = { savePhase, onRetrySave };
   const host = useRef<HTMLDivElement>(null);
   const editorLabel = useRef(t("edit"));
   const editable = useRef(new Compartment());
@@ -136,7 +142,7 @@ export function Editor({
   }, [note.body_md]);
   return (
     <section className="editor-panel">
-      <EditorHeader {...{ note, preview, locked }} {...headerActions} />
+      <EditorHeader {...{ note, preview, locked }} {...headerActions} {...saveActions} />
       {locked ? (
         children
       ) : (

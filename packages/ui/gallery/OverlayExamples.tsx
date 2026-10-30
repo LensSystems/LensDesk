@@ -35,6 +35,37 @@ export function OverlayExamples() {
           </ui.Dialog>
         ))}
       </Example>
+      <Example names={["DialogContent · contenido largo"]}>
+        <ui.Dialog>
+          <ui.DialogTrigger asChild>
+            <ui.Button>Abrir diálogo con contenido largo</ui.Button>
+          </ui.DialogTrigger>
+          <ui.DialogContent>
+            <ui.DialogTitle>Revisión de un documento extenso</ui.DialogTitle>
+            <ui.DialogDescription>
+              El título, el contenido y las acciones se recorren con teclado y desplazamiento.
+            </ui.DialogDescription>
+            {[
+              "Origen",
+              "Formato",
+              "Permisos",
+              "Destinos",
+              "Resultados",
+              "Compatibilidad",
+              "Verificación",
+              "Recuperación",
+              "Cierre",
+            ].map((section) => (
+              <p key={section} className="text-sm text-muted">
+                {section}: revisa el contenido antes de confirmar los cambios.
+              </p>
+            ))}
+            <ui.DialogClose asChild>
+              <ui.Button>Terminar revisión</ui.Button>
+            </ui.DialogClose>
+          </ui.DialogContent>
+        </ui.Dialog>
+      </Example>
       <Example
         names={[
           "DropdownMenu",

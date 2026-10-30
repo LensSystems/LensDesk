@@ -125,7 +125,6 @@ export function SharedExamples() {
           <ListItem
             variant="card"
             footer="Detalle de la tarjeta"
-            containerClassName="border-danger"
             title="Tarjeta"
             secondaryText="Resumen"
             selected
@@ -153,10 +152,17 @@ export function SharedExamples() {
           />
           <ListItem title="Normal" />
           <ListItem title="Deshabilitado" disabled />
+          <ListItem
+            variant="card"
+            title="Tarjeta deshabilitada"
+            disabled
+            actions={<Button>Acción independiente</Button>}
+          />
         </nav>
       </Example>
       <Example names={["MarkdownView"]}>
         <MarkdownView
+          variant="reading"
           html={
             '<h1>Título</h1><h2>Subtítulo</h2><p>Párrafo con <a href="#">enlace</a> y <code>código</code>.</p><ul><li>Viñeta</li></ul><ol><li>Ordenada</li></ol><pre><code>const valor = 1;</code></pre><blockquote>Cita</blockquote><table><thead><tr><th>Columna</th></tr></thead><tbody><tr><td>Dato</td></tr></tbody></table><hr>'
           }

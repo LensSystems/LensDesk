@@ -45,7 +45,7 @@ export function NotesSidebar(props: ComponentProps<typeof NotesSidebarContent>) 
         <DialogContent
           ref={panel}
           // Las clases sustituyen el centrado del diálogo base (tailwind-merge).
-          className="sidebar-overlay translate-x-0 translate-y-0"
+          className="sidebar-overlay max-h-none overflow-hidden translate-x-0 translate-y-0"
           closeLabel={t("close")}
           aria-describedby={undefined}
           closeClassName="right-4 top-3"

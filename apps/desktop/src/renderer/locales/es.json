@@ -97,7 +97,15 @@
     "aboutTitle": "Acerca de",
     "byline": "de LensSystems",
     "appVersion": "Versión {{version}}",
-    "aboutDescription": "Escritorio de herramientas para desarrolladores. 100 % local. Licencia MIT."
+    "aboutDescription": "Escritorio de herramientas para desarrolladores. 100 % local. Licencia MIT.",
+    "savingSetting": "Guardando {{setting}}…",
+    "loadingInfo": "Cargando información de la aplicación…",
+    "openingFolder": "Abriendo la carpeta de datos…",
+    "settingError": "No se pudo guardar {{setting}}. Se conserva el valor confirmado. Vuelve a intentarlo.",
+    "infoError": "No se pudo cargar la información de la aplicación. Vuelve a intentarlo.",
+    "openFolderError": "No se pudo abrir la carpeta de datos. Vuelve a intentarlo.",
+    "retryAction": "Reintentar",
+    "versionUnavailable": "No disponible"
   },
   "ui": {
     "loading": "Cargando",

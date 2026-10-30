@@ -10,6 +10,7 @@ export function useVaultActions(
   visible: { current: boolean },
   refresh: (allowUnlock?: boolean) => Promise<VaultStatus | undefined>,
   reload: () => Promise<boolean>,
+  settlePublic?: (id: string) => Promise<void>,
 ) {
   const { t } = useTranslation();
   const [dialog, updateDialog] = useState<
@@ -69,6 +70,7 @@ export function useVaultActions(
   };
   // Lee el cuerpo justo al escribir, después de las esperas; nunca el del clic.
   const write = async (id: string) => {
+    await settlePublic?.(id);
     await document.settle(id);
     const snapshot = document.current.current;
     if (!visible.current || snapshot.note?.id !== id) return false;

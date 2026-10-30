@@ -120,12 +120,54 @@ it("muestra Bloqueada y mantiene el candado sin revelar contenido al desbloquear
   };
   const { rerender } = render(<NoteList {...props} />, { wrapper: TooltipProvider });
   expect(screen.getByRole("button", { name: "Activa" })).toHaveTextContent("Bloqueada");
-  expect(screen.getByLabelText("Nota privada")).toHaveClass(
+  expect(screen.getByRole("button", { name: "Activa" }).querySelector("svg")).toHaveClass(
     "note-card-lock",
     "text-accent-soft-fg",
   );
   rerender(<NoteList {...props} vaultUnlocked />);
   expect(screen.queryByText("Bloqueada")).toBeNull();
   expect(screen.queryByText("No revelar")).toBeNull();
-  expect(screen.getByLabelText("Nota privada")).toHaveClass("note-card-lock");
+  expect(screen.getByRole("button", { name: "Activa" }).querySelector("svg")).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+});
+
+it("describe privacidad y bloqueo sin cambiar el título accesible ni revelar el cuerpo", () => {
+  render(
+    <NoteList
+      notes={[{ ...base, private: true, body_md: "secreto-sintetico" }]}
+      selectedId="a"
+      trashed={false}
+      onSelect={vi.fn()}
+      onTrash={vi.fn()}
+      onPin={vi.fn()}
+    />,
+    { wrapper: TooltipProvider },
+  );
+  const note = screen.getByRole("button", { name: "Activa" });
+  expect(note).toHaveAccessibleDescription("Nota privada. Bloqueada.");
+  expect(note).toHaveAttribute("aria-current", "true");
+  expect(note).not.toHaveAccessibleDescription(/secreto-sintetico/);
+});
+
+it("distingue privada desbloqueada, huérfana y pública sin descripciones duplicadas", () => {
+  const props = {
+    notes: [{ ...base, private: true, body_md: "secreto-sintetico" }],
+    selectedId: null,
+    trashed: false,
+    onSelect: vi.fn(),
+    onTrash: vi.fn(),
+    onPin: vi.fn(),
+  };
+  const { rerender } = render(<NoteList {...props} vaultUnlocked />, { wrapper: TooltipProvider });
+  expect(screen.getByRole("button", { name: "Activa" })).toHaveAccessibleDescription(
+    "Nota privada. Desbloqueada.",
+  );
+  rerender(<NoteList {...props} notes={[{ ...base, orphaned: true }]} vaultUnlocked />);
+  expect(screen.getByRole("button", { name: "Activa" })).toHaveAccessibleDescription(
+    "Nota privada. No se puede abrir.",
+  );
+  rerender(<NoteList {...props} notes={[base]} />);
+  expect(screen.getByRole("button", { name: "Activa" })).not.toHaveAttribute("aria-describedby");
 });

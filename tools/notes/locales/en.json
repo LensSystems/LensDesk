@@ -166,7 +166,10 @@
     "orphanedHelp": "It was encrypted with a password that no longer exists. It can't be restored; it can only be deleted.",
     "deleteTitle": "Delete forever?",
     "deleteHelp": "This note will be deleted and can't be recovered.",
-    "delete": "Delete"
+    "delete": "Delete",
+    "listLockedDescription": "Private note. Locked.",
+    "listUnlockedDescription": "Private note. Unlocked.",
+    "listOrphanedDescription": "Private note. Cannot be opened."
   },
   "credential": {
     "title": "Credential",
@@ -241,5 +244,17 @@
     "quote": "❝",
     "codeBlock": "{ }",
     "separator": "—"
-  }
+  },
+  "copyError": "Could not copy. Press the copy button again to retry.",
+  "saveState": {
+    "idle": "No changes",
+    "pending": "Pending",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "error": "Changes could not be saved.",
+    "errorShort": "Saving failed"
+  },
+  "retrySave": "Retry saving",
+  "retryLoad": "Retry loading",
+  "retrySaveShort": "Retry"
 }

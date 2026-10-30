@@ -17,10 +17,19 @@ test("Notas pasa a Ver al ocultarse y al cambiar de nota, y guarda lo escrito", 
     await shell.getByRole("button", { name: "Abrir Notas", exact: true }).click();
     const notes = await toolPage(app, "notes");
     await notes.getByRole("button", { name: "Nueva nota" }).first().click();
+    const title = notes.getByRole("textbox", { name: "Título de la nota", exact: true });
+    await expect(title).toBeVisible();
+    await title.fill("Nota escrita antes de salir");
+    await title.press("Enter");
+    await expect(title).toHaveCount(0);
+    await expect(
+      notes.getByRole("heading", { name: "Nota escrita antes de salir", exact: true }),
+    ).toBeVisible();
     const edit = notes.getByRole("radio", { name: "Editar", exact: true });
     const view = notes.getByRole("radio", { name: "Ver", exact: true });
     await expect(edit).toBeChecked();
     await notes.locator(".cm-content").fill("Texto escrito antes de salir");
+    await expect(notes.locator(".cm-content")).toHaveText("Texto escrito antes de salir");
     // Ir a Ajustes oculta la vista de la herramienta.
     await shell.getByRole("button", { name: "Ajustes", exact: true }).click();
     await shell.getByRole("tab", { name: "Notas" }).click();
@@ -28,6 +37,13 @@ test("Notas pasa a Ver al ocultarse y al cambiar de nota, y guarda lo escrito", 
     await expect(notes.locator(".ld-markdown-view")).toContainText("Texto escrito antes de salir");
     // Una nota nueva abre en Editar; volver a la anterior la muestra en Ver.
     await notes.getByRole("button", { name: "Nueva nota" }).first().click();
+    await expect(title).toBeVisible();
+    await title.fill("Otra nota de la prueba");
+    await title.press("Enter");
+    await expect(title).toHaveCount(0);
+    await expect(
+      notes.getByRole("heading", { name: "Otra nota de la prueba", exact: true }),
+    ).toBeVisible();
     await expect(edit).toBeChecked();
     await notes
       .getByRole("navigation", { name: "Lista de notas" })

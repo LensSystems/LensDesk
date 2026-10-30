@@ -69,6 +69,7 @@ export function ContextMenu({
       <Primitive.Portal>
         <Primitive.Content
           className={cn(contextMenuContentClass, contentClassName)}
+          collisionPadding={8}
           aria-label={label}
           onCloseAutoFocus={(event) => {
             event.preventDefault();

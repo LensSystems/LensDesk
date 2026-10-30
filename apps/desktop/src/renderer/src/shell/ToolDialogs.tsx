@@ -1,5 +1,4 @@
 import {
-  ArrowDown,
   Badge,
   Button,
   Checkbox,
@@ -9,14 +8,15 @@ import {
   DialogTitle,
   TriangleAlert,
 } from "@lensdesk/ui";
-import { useEffect, useState } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { HostBridge, PendingDowngrade, ToolSummary } from "../../../shared/host-channels.ts";
+import { ToolDowngradeDialog } from "./ToolDowngradeDialog.tsx";
 import { ToolUpdateActions } from "./ToolUpdateActions.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 export type ToolDialogState =
-  | { kind: "details" | "remove"; tool: ToolSummary }
+  | { kind: "details" | "remove"; tool: ToolSummary; returnFocus?: HTMLElement }
   | { kind: "error"; code: string; install: boolean }
   | null;
 export function ToolDialogs({
@@ -39,6 +39,8 @@ export function ToolDialogs({
   const { t, i18n } = useTranslation();
   const [deleteData, setDeleteData] = useState(false);
   const [downgradeOpen, setDowngradeOpen] = useState(false);
+  const returnFocus = useRef<HTMLElement | undefined>(undefined);
+  if (state) returnFocus.current = "tool" in state ? state.returnFocus : undefined;
   useEffect(() => {
     setDowngradeOpen(Boolean(pending));
   }, [pending]);
@@ -70,7 +72,15 @@ export function ToolDialogs({
           if (!open) onClose();
         }}
       >
-        <DialogContent {...(state?.kind === "details" ? { "aria-describedby": undefined } : {})}>
+        <DialogContent
+          {...(state?.kind === "details" ? { "aria-describedby": undefined } : {})}
+          onCloseAutoFocus={(event) => {
+            if (returnFocus.current?.isConnected) {
+              event.preventDefault();
+              returnFocus.current.focus();
+            }
+          }}
+        >
           {state?.kind === "details" && tool && (
             <>
               <div className="flex items-center gap-3 pr-4">
@@ -164,37 +174,12 @@ export function ToolDialogs({
           )}
         </DialogContent>
       </Dialog>
-      <Dialog open={downgradeOpen} onOpenChange={setDowngradeOpen}>
-        <DialogContent>
-          <div className="flex items-center gap-3 pr-4">
-            <div className="grid size-10 shrink-0 place-items-center rounded-ld-md bg-warning-soft text-warning-soft-fg">
-              <ArrowDown aria-hidden size={20} />
-            </div>
-            <DialogTitle>{t("toolsPage.downgradeTitle")}</DialogTitle>
-          </div>
-          <DialogDescription className="text-muted">
-            {pending && (
-              <Trans
-                i18nKey="toolsPage.downgradeDescription"
-                values={{ installed: pending.installedVersion, incoming: pending.version }}
-                components={{ version: <strong className="font-mono font-bold text-text" /> }}
-              />
-            )}
-          </DialogDescription>
-          <div className="flex justify-end gap-2">
-            <Button size="lg" onClick={() => setDowngradeOpen(false)}>
-              {t("toolsPage.cancel")}
-            </Button>
-            <Button
-              size="lg"
-              variant="primary"
-              onClick={() => pending && void confirmDowngrade(pending)}
-            >
-              {t("toolsPage.confirm")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ToolDowngradeDialog
+        open={downgradeOpen}
+        onOpenChange={setDowngradeOpen}
+        pending={pending}
+        onConfirm={confirmDowngrade}
+      />
     </>
   );
 }

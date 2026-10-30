@@ -6,6 +6,7 @@ import {
   DialogTitle,
   Trash2,
 } from "@lensdesk/ui";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 export function WipeVaultDialog({
   privateCount,
@@ -21,6 +22,7 @@ export function WipeVaultDialog({
   onConfirm: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const returnFocus = useRef(document.activeElement as HTMLElement | null);
   return (
     <Dialog
       open
@@ -28,7 +30,23 @@ export function WipeVaultDialog({
         if (!open && !busy) onClose();
       }}
     >
-      <DialogContent closeLabel={t("close")} closeClassName="hidden" aria-busy={busy}>
+      <DialogContent
+        closeLabel={t("close")}
+        closeClassName="hidden"
+        aria-busy={busy}
+        onCloseAutoFocus={(event) => {
+          if (document.querySelector('[role="dialog"], [role="alertdialog"]')) {
+            event.preventDefault();
+            return;
+          }
+          const target = returnFocus.current?.isConnected
+            ? returnFocus.current
+            : document.querySelector<HTMLElement>("[data-vault-trigger]");
+          if (!target) return;
+          event.preventDefault();
+          target.focus();
+        }}
+      >
         <DialogTitle>{t("vault.wipeTitle")}</DialogTitle>
         <DialogDescription className="text-[13px] leading-[18.85px] text-muted">
           {t("vault.wipeHelp")}

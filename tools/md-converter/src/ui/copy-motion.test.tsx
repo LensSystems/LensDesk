@@ -97,3 +97,65 @@ it("cambia al instante cuando se reduce el movimiento", async () => {
   expect(copied.style.width).toBe("");
   expect(copied.dataset.copyMotion).toBeUndefined();
 });
+
+it("vence la confirmación anterior aunque una segunda copia siga pendiente", async () => {
+  let finish!: () => void;
+  const copyText = vi
+    .fn<() => Promise<void>>()
+    .mockResolvedValueOnce(undefined)
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+  render(
+    <Preview
+      client={{ ui: { copyText } } as never}
+      item={
+        {
+          id: "one",
+          status: "done",
+          markdown: "# Uno",
+          warnings: [],
+          file: { name: "uno.html" },
+        } as never
+      }
+      results={[]}
+      onSaved={() => {}}
+    />,
+    { wrapper: TooltipProvider },
+  );
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Copiar" })));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Copiado" })));
+  act(() => vi.advanceTimersByTime(2000));
+  expect(screen.queryByRole("button", { name: "Copiado" })).toBeNull();
+  await act(async () => finish());
+  expect(screen.getByRole("button", { name: "Copiado" })).toBeTruthy();
+});
+
+it("limpia el movimiento de Copiado al cambiar de resultado conservando el botón", async () => {
+  const props = {
+    client: { ui: { copyText: async () => {} } } as never,
+    results: [],
+    onSaved: () => {},
+  };
+  const result = {
+    id: "one",
+    status: "done",
+    markdown: "# Uno",
+    warnings: [],
+    file: { name: "uno.html" },
+  };
+  const { rerender } = render(<Preview {...props} item={result as never} />, {
+    wrapper: TooltipProvider,
+  });
+  const button = screen.getByRole("button", { name: "Copiar" });
+  await act(async () => fireEvent.click(button));
+  expect(button.style.width).toBe("96px");
+  rerender(<Preview {...props} item={{ ...result, id: "two" } as never} />);
+  expect(screen.getByRole("button", { name: "Copiar" })).toBe(button);
+  expect(button.style.width).toBe("");
+  expect(button.dataset.copyMotion).toBeUndefined();
+  expect(button.querySelector(".copia-saliente")).toBeNull();
+});

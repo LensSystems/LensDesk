@@ -119,7 +119,7 @@ it("aplica estilos completos a títulos, vallas, citas y marcas de tareas", () =
   ).toEqual(["- [x]", "- [ ]"]);
 });
 
-it("mantiene las medidas y colores del editor y de la vista con tokens", () => {
+it("mantiene las medidas del editor y separa código de los estados de éxito", () => {
   expect(styles).toMatch(
     /\.code-editor \.cm-lineNumbers \.cm-gutterElement\s*\{[^}]*text-align: center;[^}]*width: 40px;[^}]*padding-right: 0;[^}]*padding-left: 0;/s,
   );
@@ -131,11 +131,9 @@ it("mantiene las medidas y colores del editor y de la vista con tokens", () => {
   expect(styles).toMatch(
     /\.cm-md-heading span\s*\{\s*color: var\(--ld-accent\);\s*font-weight: 500/,
   );
-  expect(styles).toMatch(/\.cm-md-code span\s*\{\s*color: var\(--ld-success\);\s*font-weight: 400/);
+  expect(styles).toMatch(/\.cm-md-code span\s*\{\s*color: var\(--ld-code\);\s*font-weight: 400/);
   expect(styles).toMatch(
     /\.cm-md-list-mark span\s*\{\s*color: var\(--ld-text\);\s*text-decoration: none/,
   );
-  expect(styles).toMatch(
-    /pre code\s*\{\s*color: var\(--ld-success\);\s*font-size: 13px;\s*line-height: 18.85px/,
-  );
+  // La tipografía compartida de lectura se verifica con estilos calculados en markdown-reading.spec.ts.
 });

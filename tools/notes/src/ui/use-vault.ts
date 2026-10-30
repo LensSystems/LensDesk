@@ -17,6 +17,7 @@ export function useVault(
   note: Note | null,
   reload: () => Promise<boolean>,
   publicBody = "",
+  settlePublic?: (id: string) => Promise<void>,
 ) {
   const [status, setStatus] = useState<VaultStatus>({
     configured: false,
@@ -50,7 +51,7 @@ export function useVault(
     },
     [client, clear, current],
   );
-  const actions = useVaultActions(client, document, visible, refresh, reload);
+  const actions = useVaultActions(client, document, visible, refresh, reload, settlePublic);
   const { setDialog } = actions;
   useEffect(() => {
     void refresh().catch(() => undefined);
@@ -95,6 +96,8 @@ export function useVault(
     body: document.body,
     setBody: document.setBody,
     save: document.save,
+    savePhase: document.savePhase,
+    retrySave: document.retrySave,
     ready: note?.orphaned || !note?.private || (status.unlocked && document.loaded?.id === note.id),
     status,
     message: document.message,

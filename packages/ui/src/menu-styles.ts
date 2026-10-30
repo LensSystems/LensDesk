@@ -6,4 +6,4 @@ const menuContentClass =
 export const menuShortcutClass = "ml-auto text-xs leading-[17.4px] font-normal text-muted";
 
 export const dropdownMenuContentClass = `${menuContentClass} origin-[var(--radix-dropdown-menu-content-transform-origin)]`;
-export const contextMenuContentClass = `${menuContentClass} origin-[var(--radix-context-menu-content-transform-origin)]`;
+export const contextMenuContentClass = `${menuContentClass} max-h-[var(--radix-context-menu-content-available-height)] overflow-auto scroll-p-1 overscroll-contain origin-[var(--radix-context-menu-content-transform-origin)]`;

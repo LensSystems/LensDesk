@@ -17,7 +17,7 @@ type Client = ReturnType<typeof createToolClient>;
 export function App({ client }: { client: Client }) {
   const { t } = useTranslation();
   const state = useNotes(client);
-  const vault = useVault(client, state.selected, state.load, state.body);
+  const vault = useVault(client, state.selected, state.load, state.body, state.settlePublic);
   // Para notas privadas: vale mientras no se bloquee la bóveda ni se cambie de nota.
   const stillUnlocked = () => {
     if (!state.selected?.private) return () => true;
@@ -67,7 +67,7 @@ export function App({ client }: { client: Client }) {
               title={state.error}
               action={
                 state.errorKind === "error"
-                  ? { label: t("retry"), onClick: () => void state.load() }
+                  ? { label: t("retryLoad"), onClick: () => void state.load() }
                   : { label: t("close"), onClick: () => state.setError("") }
               }
             />
@@ -118,6 +118,7 @@ export function App({ client }: { client: Client }) {
               {state.selected ? (
                 state.trashed && vault.ready ? (
                   <TrashView
+                    key={state.selected.id}
                     onCopyCode={(code) => client.ui.copyText(code)}
                     note={{ ...state.selected, body_md: body }}
                     onRestore={() => void state.restore(state.selected?.id ?? "")}
@@ -132,6 +133,8 @@ export function App({ client }: { client: Client }) {
                   />
                 ) : (
                   <Editor
+                    savePhase={privateNote ? vault.savePhase : state.savePhase}
+                    onRetrySave={privateNote ? vault.retrySave : state.retrySave}
                     spellcheck={state.context?.spellcheck === true}
                     client={client}
                     key={`${state.selected.id}:${vault.ready}`}

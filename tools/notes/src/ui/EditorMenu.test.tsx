@@ -54,16 +54,7 @@ it("ordena el menú principal y los grupos de Insertar", () => {
   expect(screen.getAllByRole("separator")).toHaveLength(1);
   expect(screen.getByRole("menu")).toHaveClass("min-w-[264px]");
   const menu = insert();
-  expect(menu).toHaveClass("min-w-[294px]");
-  expect(
-    within(menu)
-      .getAllByRole("menuitem")
-      .map(
-        (item) =>
-          item.querySelector("span:nth-child(2)")?.textContent +
-          (item.getAttribute("aria-description") ?? ""),
-      ),
-  ).toEqual([
+  const labels = [
     "Encabezado 1",
     "Encabezado 2",
     "Encabezado 3",
@@ -75,8 +66,22 @@ it("ordena el menú principal y los grupos de Insertar", () => {
     "Tabla",
     "Separador",
     "Enlace…",
-    "Contraseña…solo privadas",
-  ]);
+    "Contraseña…",
+  ];
+  expect(
+    within(menu)
+      .getAllByRole("menuitem")
+      .map((item) => item.getAttribute("aria-label")),
+  ).toEqual(labels);
+  for (const label of labels) {
+    expect(within(menu).getByRole("menuitem", { name: label })).toHaveTextContent(label);
+  }
+  expect(within(menu).getByRole("menuitem", { name: "Contraseña…" })).toHaveAccessibleDescription(
+    "solo privadas",
+  );
+  expect(within(menu).getByRole("menuitem", { name: "Contraseña…" })).toHaveTextContent(
+    "solo privadas",
+  );
   expect(within(menu).getAllByRole("separator")).toHaveLength(3);
   expect(within(menu).getByRole("menuitem", { name: "Contraseña…" })).toHaveAttribute(
     "aria-disabled",
@@ -119,8 +124,15 @@ it("comparte las acciones de formato y permite deshacer y rehacer", () => {
     key: "ArrowRight",
   });
   const menu = screen.getByRole("menu", { name: "Formato" });
-  expect(menu).toHaveClass("min-w-[294px]");
-  expect(within(menu).getAllByRole("menuitem")).toHaveLength(6);
+  const labels = ["Negrita", "Cursiva", "Subrayado", "Tachado", "Código en línea", "Enlace…"];
+  expect(
+    within(menu)
+      .getAllByRole("menuitem")
+      .map((item) => item.getAttribute("aria-label")),
+  ).toEqual(labels);
+  for (const label of labels) {
+    expect(within(menu).getByRole("menuitem", { name: label })).toHaveTextContent(label);
+  }
   expect(within(menu).getByText("B")).toHaveClass("font-extrabold");
   expect(within(menu).getByText("</>")).toHaveClass("font-mono");
   fireEvent.click(within(menu).getByRole("menuitem", { name: /^Negrita/ }));

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { useState } from "react";
+import { type FocusEvent, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./Dialog.tsx";
 import {
@@ -34,6 +34,38 @@ describe("componentes superpuestos", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(trigger).toBe(document.activeElement);
   });
+
+  it.each([true, false])(
+    "respeta la gestión del foco del consumidor (preventDefault=%s)",
+    async (preventDefault) => {
+      const onFocusCapture = vi.fn((event: FocusEvent) => {
+        if (preventDefault) event.preventDefault();
+      });
+      render(
+        <Dialog defaultOpen>
+          <DialogContent onFocusCapture={onFocusCapture} aria-describedby={undefined}>
+            <DialogTitle>Diálogo</DialogTitle>
+            <button type="button">Primera acción</button>
+            <button type="button">Segunda acción</button>
+          </DialogContent>
+        </Dialog>,
+      );
+      const dialog = await screen.findByRole("dialog");
+      const second = screen.getByRole("button", { name: "Segunda acción" });
+      vi.spyOn(dialog, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 200, 100));
+      vi.spyOn(second, "getBoundingClientRect").mockReturnValue(new DOMRect(20, 140, 80, 24));
+      vi.mocked(Element.prototype.scrollIntoView).mockClear();
+      second.focus();
+      expect(onFocusCapture).toHaveBeenCalled();
+      expect(second).toBe(document.activeElement);
+      if (preventDefault) expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+      else
+        expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+          block: "nearest",
+          inline: "nearest",
+        });
+    },
+  );
 
   it("navega DropdownMenu con flechas reales y cierra con Escape", async () => {
     render(
