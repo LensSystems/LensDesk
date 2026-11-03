@@ -5,6 +5,7 @@ import { expect, test } from "@playwright/test";
 import { enableDeveloperMode, launchApp, lenspkgPath, stubDialog, toolPage } from "./helpers.ts";
 
 type Registro = { nombre: string; duracion: string; tarjeta: boolean; contador: boolean };
+type ConversionGate = { held: boolean; release: () => void; restore: () => void };
 for (const reducedMotion of ["no-preference", "reduce"] as const) {
   for (const compact of [false, true]) {
     test(`el Convertidor respeta movimiento ${reducedMotion} y tamaño compacto ${compact}`, async () => {
@@ -34,6 +35,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         await stubDialog(app, "open", { canceled: false, filePaths: [archivo] });
         await tool.getByRole("button", { name: "Elegir archivos…" }).click();
         await expect(tool.locator(".queue-result-status")).toHaveCount(1);
+        await expect(tool.locator(".queue-result-status")).toHaveText("Listo");
         await expect(tool.locator(".estado-saliente")).toHaveCount(0);
         await tool.evaluate(() => {
           const registros: Registro[] = [];
@@ -60,16 +62,76 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
               anchos.push(card.getBoundingClientRect().width);
           }).observe(document.body, { childList: true, subtree: true });
         });
-        // Un archivo grande tarda lo bastante para ver «Convirtiendo» antes de «Listo».
-        const grande = join(userDataDir, "grande.html");
+        // Retener esta petición permite observar «Convirtiendo» antes de ejecutar la conversión real.
+        const segundo = join(userDataDir, "movimiento.html");
         await writeFile(
-          grande,
-          `<html><body>${"<p>Texto de prueba con <b>formato</b> y un <a href='#'>enlace</a>.</p>".repeat(40000)}</body></html>`,
+          segundo,
+          "<html><body><p>Texto de prueba con <b>formato</b> y un <a href='#'>enlace</a>.</p></body></html>",
         );
-        await stubDialog(app, "open", { canceled: false, filePaths: [grande] });
+        await app.evaluate(({ ipcMain }) => {
+          const original = (
+            ipcMain as unknown as {
+              _invokeHandlers: Map<string, (...args: unknown[]) => Promise<unknown>>;
+            }
+          )._invokeHandlers.get("lensdesk:tool-invoke");
+          if (!original) throw new Error("Falta el receptor de herramientas");
+          let release = () => {};
+          const gate = new Promise<void>((resolve) => {
+            release = resolve;
+          });
+          const scope = globalThis as typeof globalThis & { motionConversion?: ConversionGate };
+          scope.motionConversion = {
+            held: false,
+            release,
+            restore: () => {
+              release();
+              ipcMain.removeHandler("lensdesk:tool-invoke");
+              ipcMain.handle("lensdesk:tool-invoke", original);
+              delete scope.motionConversion;
+            },
+          };
+          ipcMain.removeHandler("lensdesk:tool-invoke");
+          ipcMain.handle("lensdesk:tool-invoke", async (event, channel, payload) => {
+            if (
+              channel === "backend.invoke" &&
+              payload.method === "convert" &&
+              payload.params?.name === "movimiento.html"
+            ) {
+              if (scope.motionConversion) scope.motionConversion.held = true;
+              await gate;
+            }
+            return original(event, channel, payload);
+          });
+        });
+        await stubDialog(app, "open", { canceled: false, filePaths: [segundo] });
         await tool.getByRole("button", { name: "Elegir archivos…" }).click();
+        await expect
+          .poll(() =>
+            app.evaluate(() =>
+              Boolean(
+                (globalThis as typeof globalThis & { motionConversion?: ConversionGate })
+                  .motionConversion?.held,
+              ),
+            ),
+          )
+          .toBe(true);
         await expect(tool.locator(".queue-status")).toHaveCount(1);
+        await expect(tool.locator(".fila-conversion").nth(1)).toHaveAccessibleName(
+          "movimiento.html, Convirtiendo…",
+        );
+        await tool.evaluate(
+          () =>
+            new Promise<void>((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+            ),
+        );
+        await app.evaluate(() =>
+          (
+            globalThis as typeof globalThis & { motionConversion?: ConversionGate }
+          ).motionConversion?.release(),
+        );
         await expect(tool.locator(".queue-result-status")).toHaveCount(2, { timeout: 30000 });
+        await expect(tool.locator(".queue-result-status")).toHaveText(["Listo", "Listo"]);
         const registros = () =>
           tool.evaluate(() => (window as Window & { registros?: Registro[] }).registros ?? []);
         if (reducedMotion === "reduce") {
@@ -145,8 +207,16 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         await expect(zona).toHaveAttribute("data-dragging", "false");
         await data.dispose();
       } finally {
-        await app.close().catch(() => undefined);
-        await rm(userDataDir, { recursive: true, force: true });
+        try {
+          await app.evaluate(() =>
+            (
+              globalThis as typeof globalThis & { motionConversion?: ConversionGate }
+            ).motionConversion?.restore(),
+          );
+        } finally {
+          await app.close().catch(() => undefined);
+          await rm(userDataDir, { recursive: true, force: true });
+        }
       }
     });
   }

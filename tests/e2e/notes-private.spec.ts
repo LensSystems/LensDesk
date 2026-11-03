@@ -244,11 +244,23 @@ for (const privateNote of [false, true]) {
             if (!original) throw new Error("Falta el receptor de herramientas");
             const scope = globalThis as typeof globalThis & {
               saveStateRelease?: () => void;
+              saveStateRestore?: () => void;
               saveStateReject: boolean;
               saveStateRequests: number;
+              saveStateFailedResponses: number;
+              saveStateNoteId?: string;
             };
+            const errorGate = new Promise<void>((resolve) => {
+              scope.saveStateRelease = resolve;
+            });
             scope.saveStateReject = true;
             scope.saveStateRequests = 0;
+            scope.saveStateFailedResponses = 0;
+            scope.saveStateRestore = () => {
+              scope.saveStateRelease?.();
+              ipcMain.removeHandler("lensdesk:tool-invoke");
+              ipcMain.handle("lensdesk:tool-invoke", original);
+            };
             ipcMain.removeHandler("lensdesk:tool-invoke");
             ipcMain.handle(
               "lensdesk:tool-invoke",
@@ -257,15 +269,17 @@ for (const privateNote of [false, true]) {
                   channel === "backend.invoke" &&
                   (payload as { method?: string }).method === "update"
                 ) {
+                  const reject = scope.saveStateReject;
                   scope.saveStateRequests++;
-                  await new Promise<void>((resolve) => {
-                    scope.saveStateRelease = resolve;
-                  });
-                  if (scope.saveStateReject)
+                  scope.saveStateNoteId = (payload as { params: { id: string } }).params.id;
+                  if (reject) {
+                    await errorGate;
+                    scope.saveStateFailedResponses++;
                     return {
                       ok: false,
                       error: { code: "E_INTERNAL", message: "Synthetic save failure" },
                     };
+                  }
                 }
                 return original(event, channel, payload);
               },
@@ -293,11 +307,36 @@ for (const privateNote of [false, true]) {
             animations: "disabled",
             path: test.info().outputPath("guardado-en-curso-compacto.png"),
           });
+          // Una pérdida de foco puede encolar otro guardado privado del mismo borrador.
+          if (privateNote) await editor.evaluate((element) => (element as HTMLElement).blur());
           await app.evaluate(() =>
             (
               globalThis as typeof globalThis & { saveStateRelease?: () => void }
             ).saveStateRelease?.(),
           );
+          await expect
+            .poll(() =>
+              app.evaluate(
+                () =>
+                  (
+                    globalThis as typeof globalThis & {
+                      saveStateFailedResponses: number;
+                    }
+                  ).saveStateFailedResponses,
+              ),
+            )
+            .toBeGreaterThanOrEqual(privateNote ? 2 : 1);
+          await expect
+            .poll(() =>
+              app.evaluate(() => {
+                const scope = globalThis as typeof globalThis & {
+                  saveStateRequests: number;
+                  saveStateFailedResponses: number;
+                };
+                return scope.saveStateRequests === scope.saveStateFailedResponses;
+              }),
+            )
+            .toBe(true);
           const error = tool.getByRole("alert").filter({ hasText: "No se guardaron los cambios." });
           await expect(error).toBeVisible();
           await expect(editor).toHaveText("Borrador sintético para la prueba de guardado");
@@ -316,6 +355,15 @@ for (const privateNote of [false, true]) {
             path: test.info().outputPath("guardado-error-amplio.png"),
           });
           const retry = tool.getByRole("button", { name: "Reintentar guardado", exact: true });
+          const beforeRetry = await app.evaluate(() => {
+            const scope = globalThis as typeof globalThis & {
+              saveStateReject: boolean;
+              saveStateRequests: number;
+            };
+            scope.saveStateReject = false;
+            return scope.saveStateRequests;
+          });
+          if (!privateNote) expect(beforeRetry).toBe(1);
           await retry.focus();
           await retry.press("Enter");
           await expect
@@ -326,24 +374,46 @@ for (const privateNote of [false, true]) {
                     .saveStateRequests,
               ),
             )
-            .toBe(2);
-          await app.evaluate(() => {
-            const scope = globalThis as typeof globalThis & {
-              saveStateReject: boolean;
-              saveStateRelease?: () => void;
-            };
-            scope.saveStateReject = false;
-            scope.saveStateRelease?.();
-          });
+            .toBe(beforeRetry + 1);
           await expect(error).toHaveCount(0);
           await expect(tool.getByText("Guardado", { exact: true })).toBeVisible();
+          const savedId = await app.evaluate(
+            () =>
+              (
+                globalThis as typeof globalThis & {
+                  saveStateNoteId?: string;
+                }
+              ).saveStateNoteId,
+          );
+          if (!savedId) throw new Error("Falta la nota guardada");
+          const persisted = await tool.evaluate(async (id) => {
+            const result = await globalThis.window.lensdesk.backend.invoke(
+              crypto.randomUUID(),
+              "get",
+              { id },
+            );
+            if (!result.ok) throw new Error(result.error.code);
+            return result.data as { body_md: string; private?: boolean };
+          }, savedId);
+          expect(persisted.body_md).toBe("Borrador sintético para la prueba de guardado");
+          expect(Boolean(persisted.private)).toBe(privateNote);
           await tool.screenshot({
             animations: "disabled",
             path: test.info().outputPath("guardado-confirmado.png"),
           });
         } finally {
-          await app.close().catch(() => undefined);
-          await rm(profile, { recursive: true, force: true });
+          try {
+            await app.evaluate(() =>
+              (
+                globalThis as typeof globalThis & {
+                  saveStateRestore?: () => void;
+                }
+              ).saveStateRestore?.(),
+            );
+          } finally {
+            await app.close().catch(() => undefined);
+            await rm(profile, { recursive: true, force: true });
+          }
         }
       });
     }
