@@ -7,6 +7,44 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Sin publicar]
 
+## [0.4.0] - 2026-11-03
+
+Mejoras de accesibilidad, lectura y respuesta de la interfaz en Ajustes, Notas y el Convertidor.
+
+### Para actualizar
+
+- Reinstala **Notas** y el **Convertidor** con los `.lenspkg` de esta versión para recibir las
+  mejoras de las herramientas. Tus notas y ajustes se mantienen.
+
+### Añadido
+
+- Ajustes: estados de carga y guardado, mensajes de error junto a la acción y opción para
+  reintentar sin bloquear los demás controles.
+- Notas: indicador de autoguardado del cuerpo de cada nota, con estados pendiente, guardando,
+  guardado y error, y reintento del borrador conservado cuando falla la escritura.
+- Convertidor: resumen de los archivos guardados al completar, cancelar o fallar «Guardar
+  todos».
+
+### Cambiado
+
+- Nombres, descripciones y anuncios para lectores de pantalla en los controles de Ajustes,
+  las notas privadas, los campos de credenciales y los estados del Convertidor.
+- Lectura de Markdown, colores de código, foco y estados de las tarjetas con estilos
+  compartidos; adaptación de diálogos y nombres largos en ventanas estrechas.
+- Pruebas de interfaz ampliadas para los estados de error, reintento, privacidad, movimiento
+  reducido y ventanas compactas en macOS y Windows.
+
+### Corregido
+
+- Notas: los fallos de copia se comunican y permiten reintentar; los errores de autoguardado
+  conservan el borrador para recuperarlo.
+- Notas: al convertir una nota en privada se esperan las escrituras públicas pendientes y se
+  descartan sus respuestas obsoletas para evitar sobrescribir el contenido más reciente.
+- Convertidor: cancelar un diálogo de «Guardar todos» detiene el lote, conserva los archivos
+  ya escritos e informa cuántos se guardaron; un error de escritura también detiene el lote.
+- Pruebas de interfaz: obtención del nombre de archivo compatible con Windows y sincronización
+  con los estados y las transiciones observables de la aplicación.
+
 ## [0.3.0] - 2026-10-26
 
 Mejoras visuales y de funcionamiento: pestañas, ventana, actualizaciones y Notas.
@@ -129,7 +167,8 @@ Primera versión pública.
 - Instaladores `.dmg`, `.zip` y `.exe` publicados por la CI con `SHA256SUMS.txt` y las
   herramientas firmadas.
 
-[Sin publicar]: https://github.com/LensSystems/LensDesk/compare/v0.3.0...HEAD
+[Sin publicar]: https://github.com/LensSystems/LensDesk/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/LensSystems/LensDesk/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/LensSystems/LensDesk/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/LensSystems/LensDesk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/LensSystems/LensDesk/releases/tag/v0.1.0
