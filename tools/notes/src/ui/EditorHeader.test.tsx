@@ -1,13 +1,38 @@
 import { TooltipProvider } from "@lensdesk/ui";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { beforeAll, expect, it, vi } from "vitest";
 import es from "../../locales/es.json";
 import { EditorHeader } from "./EditorHeader.tsx";
+import { SaveStatus } from "./SaveStatus.tsx";
 
 beforeAll(async () => {
   await i18n.use(initReactI18next).init({ lng: "es", resources: { es: { translation: es } } });
+});
+
+it("anuncia guardando y guardado con cortesía sin anunciar cada borrador pendiente", async () => {
+  const { rerender } = render(<SaveStatus phase="idle" />);
+  const live = screen.getByRole("status");
+  expect(live).toHaveAttribute("aria-live", "polite");
+  expect(live).toHaveAttribute("aria-atomic", "true");
+  const changed = vi.fn();
+  const observer = new MutationObserver(changed);
+  observer.observe(live, { childList: true, characterData: true, subtree: true });
+  try {
+    rerender(<SaveStatus phase="pending" />);
+    rerender(<SaveStatus phase="pending" />);
+    await act(async () => {});
+    expect(live).toBeEmptyDOMElement();
+    expect(changed).not.toHaveBeenCalled();
+    rerender(<SaveStatus phase="saving" />);
+    expect(live).toHaveTextContent("Guardando…");
+    rerender(<SaveStatus phase="saved" />);
+    expect(live).toHaveTextContent("Guardado");
+    expect(screen.getByRole("status")).toBe(live);
+  } finally {
+    observer.disconnect();
+  }
 });
 
 it.each([false, true])(

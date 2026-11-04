@@ -33,13 +33,22 @@
     "E_PDF_NO_TEXT": "The PDF has no selectable text.",
     "E_TOO_LARGE": "The file is larger than the 50 MB limit.",
     "E_CANCELLED": "Conversion cancelled.",
-    "generic": "The action could not be completed ({{code}})."
+    "generic": "The action could not be completed ({{code}}).",
+    "copyFailed": "Could not copy the Markdown. Press Copy again to retry.",
+    "saveFailed": "Could not save the Markdown file. Press Save .md again to retry.",
+    "saveAllFailed": "Could not save all Markdown files. Review the results and try again."
   },
   "dropMore": "Drag more documents to this area",
-  "historyHeading": "Converted files · {{count}}",
+  "historyHeading": "Files · {{count}}",
   "clearHistory": "Clear history",
   "clearHistoryTitle": "Clear history?",
   "clearHistoryDescription": "The {{count}} files are removed from this list. The .md files you already saved are not deleted.",
   "fileSaved": "File saved",
-  "dropHintCompact": "Drop HTML, DOCX, CSV, PDF or XLSX here"
+  "dropHintCompact": "Drop HTML, DOCX, CSV, PDF or XLSX here",
+  "saveAllResult": {
+    "stopped": "Saving stopped. Saved {{saved}} of {{total}} files.",
+    "failed": "Could not save all Markdown files. Saved {{saved}} of {{total}} files. You can save the remaining files individually.",
+    "completed": "Saved {{saved}} of {{total}} files."
+  },
+  "savingAll": "Saving files…"
 }

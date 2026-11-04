@@ -7,6 +7,7 @@ type SettingsRowProps = {
   children: ReactNode;
   status?: ReactNode;
   controlsClassName?: string;
+  controlsState?: Pick<ComponentProps<"div">, "aria-disabled" | "aria-busy">;
 } & ComponentProps<"div">;
 
 export function SettingsRow({
@@ -16,6 +17,7 @@ export function SettingsRow({
   children,
   status,
   controlsClassName = "",
+  controlsState,
   className = "",
   ...props
 }: SettingsRowProps) {
@@ -33,9 +35,13 @@ export function SettingsRow({
         )}
         {status}
       </div>
-      <div className={`flex shrink-0 flex-wrap items-center gap-2 ${controlsClassName}`}>
+      <fieldset
+        {...controlsState}
+        aria-label={label}
+        className={`flex shrink-0 flex-wrap items-center gap-2 ${controlsClassName}`}
+      >
         {children}
-      </div>
+      </fieldset>
     </div>
   );
 }

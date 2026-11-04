@@ -1,34 +1,42 @@
 export type SearchSpan = { text: string; match: boolean };
 
+const combiningMarks = /\p{M}/gu;
+const asciiText = /^\p{ASCII}*$/u;
+
 function fold(text: string): string {
-  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  return text.normalize("NFD").replace(combiningMarks, "").toLowerCase();
 }
 
 export function searchHighlight(text: string, query: string): SearchSpan[] {
   // Como el tokenizador de la búsqueda: los signos separan términos y no cuentan.
   const terms = fold(query).match(/[\p{L}\p{N}]+/gu) ?? [];
   if (!terms.length) return [{ text, match: false }];
-  let normalized = "";
+  const directOffsets = asciiText.test(text);
+  let normalized = directOffsets ? text.toLowerCase() : "";
   const starts: number[] = [];
   const ends: number[] = [];
   let offset = 0;
-  for (const character of text) {
-    const value = fold(character);
-    if (!value && ends.length) ends[ends.length - 1] = offset + character.length;
-    for (let i = 0; i < value.length; i++) {
-      starts.push(offset);
-      ends.push(offset + character.length);
+  if (!directOffsets) {
+    for (const character of text) {
+      const value = character.charCodeAt(0) <= 0x7f ? character.toLowerCase() : fold(character);
+      if (!value && ends.length) ends[ends.length - 1] = offset + character.length;
+      for (let i = 0; i < value.length; i++) {
+        starts.push(offset);
+        ends.push(offset + character.length);
+      }
+      normalized += value;
+      offset += character.length;
     }
-    normalized += value;
-    offset += character.length;
   }
   const ranges: { start: number; end: number }[] = [];
   for (const word of normalized.matchAll(/[\p{L}\p{N}]+/gu)) {
     for (const term of terms) {
       if (!word[0].startsWith(term)) continue;
-      const start = starts[word.index];
+      const start = directOffsets ? word.index : starts[word.index];
       // Se marca la palabra entera: un prefijo marcado a medias parte la palabra a la vista.
-      const end = ends[word.index + word[0].length - 1];
+      const end = directOffsets
+        ? word.index + word[0].length
+        : ends[word.index + word[0].length - 1];
       if (start !== undefined && end !== undefined) ranges.push({ start, end });
     }
   }

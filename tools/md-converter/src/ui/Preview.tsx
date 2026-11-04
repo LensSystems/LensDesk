@@ -3,7 +3,6 @@ import {
   Button,
   Check,
   Copy,
-  changeCopyState,
   copiedText,
   EmptyState,
   Eye,
@@ -19,15 +18,16 @@ import {
   TabsTrigger,
   Tooltip,
 } from "@lensdesk/ui";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { flushSync } from "react-dom";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { renderMarkdown } from "./render-markdown.ts";
 
 export { renderMarkdown } from "./render-markdown.ts";
 
 import { SaveAllStack } from "./SaveAllStack.tsx";
-import { errorCode, type QueueItem } from "./use-queue.ts";
+import { usePreviewActions } from "./use-preview-actions.ts";
+import type { QueueItem } from "./use-queue.ts";
+import { useSaveAll } from "./use-save-all.ts";
 
 type Client = ReturnType<typeof createToolClient>;
 
@@ -42,17 +42,10 @@ export function Preview({
   results: QueueItem[];
   onSaved: (id: string) => void;
 }) {
-  const { t } = useTranslation();
-  const copyButton = useRef<HTMLButtonElement>(null);
-  const updateCopied = (value: boolean) => {
-    if (!copyButton.current) return setCopied(value);
-    changeCopyState(copyButton.current, () => flushSync(() => setCopied(value)));
-  };
-  const [copied, setCopied] = useState(false);
-  const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(copyTimer.current), []);
+  const { t, i18n } = useTranslation();
+  const { copyButton, copied, copy, attempt, notice } = usePreviewActions(client, item);
+  const batch = useSaveAll();
   const [tab, setTab] = useState("rendered");
-  const [notice, setNotice] = useState("");
   // El HTML saneado solo se recalcula cuando cambia el Markdown, no con cada aviso de progreso.
   const source = item?.markdown ?? "";
   const html = useMemo(() => renderMarkdown(source), [source]);
@@ -65,15 +58,6 @@ export function Preview({
     await client.files.writeText(file.token, result.markdown);
     onSaved(result.id);
     return true;
-  };
-
-  const attempt = async (action: () => Promise<unknown>) => {
-    try {
-      setNotice("");
-      await action();
-    } catch (reason) {
-      setNotice(t("errors.generic", { code: errorCode(reason) }));
-    }
   };
 
   return (
@@ -111,19 +95,7 @@ export function Preview({
             className={copied ? "copy-confirmation" : "size-8 p-0 text-muted"}
             aria-label={t(copied ? "copied" : "copy")}
             disabled={item?.status !== "done"}
-            onClick={() =>
-              item &&
-              void (async () => {
-                try {
-                  await client.ui.copyText(item.markdown);
-                  clearTimeout(copyTimer.current);
-                  updateCopied(true);
-                  copyTimer.current = setTimeout(() => updateCopied(false), 2000);
-                } catch (reason) {
-                  setNotice(t("errors.generic", { code: errorCode(reason) }));
-                }
-              })()
-            }
+            onClick={() => void copy()}
           >
             {copied ? (
               <Check size={16} aria-hidden="true" />
@@ -138,8 +110,11 @@ export function Preview({
             type="button"
             className="save-action"
             aria-label={t("save")}
+            aria-disabled={batch.busy}
             disabled={item?.status !== "done"}
-            onClick={() => item && void attempt(() => saveOne(item))}
+            onClick={() =>
+              !batch.isRunning() && item && void attempt("saveFailed", () => saveOne(item))
+            }
           >
             <SaveMarkdown chip className="compact-icon" aria-hidden="true" />
             <span className="normal-label">{t("save")}</span>
@@ -150,12 +125,13 @@ export function Preview({
             type="button"
             className="save-action bg-surface"
             aria-label={t("saveAll")}
+            aria-disabled={batch.busy}
+            aria-busy={batch.busy}
             disabled={results.length === 0}
-            onClick={() =>
-              void attempt(async () => {
-                for (const result of results) await saveOne(result);
-              })
-            }
+            onClick={() => {
+              if (!batch.isRunning() && results.length > 0)
+                void attempt("saveAllFailed", () => batch.saveAll(results, saveOne));
+            }}
           >
             <SaveAllStack className="compact-icon" />
             <span className="normal-label">{t("saveAll")}</span>
@@ -165,7 +141,18 @@ export function Preview({
       {item && item.warnings.length > 0 && (
         <Notice className="result-notice" tone="info" title={t("imagesOmitted")} />
       )}
-      {notice && <Notice className="result-notice" tone="info" title={notice} />}
+      {notice && <Notice className="result-notice" tone="danger" title={t(`errors.${notice}`)} />}
+      {batch.busy && <Notice className="result-notice" tone="info" title={t("savingAll")} />}
+      {batch.outcome && (
+        <Notice
+          className="result-notice"
+          tone={batch.outcome.kind === "failed" ? "danger" : "info"}
+          title={t(`saveAllResult.${batch.outcome.kind}`, {
+            saved: new Intl.NumberFormat(i18n.language).format(batch.outcome.saved),
+            total: new Intl.NumberFormat(i18n.language).format(batch.outcome.total),
+          })}
+        />
+      )}
       {(["rendered", "raw"] as const).map((name) => (
         <TabsContent key={name} value={name} className="preview-body">
           <Skeleton
@@ -183,7 +170,7 @@ export function Preview({
                 <code>{item.markdown}</code>
               </pre>
             ) : (
-              <MarkdownView className="result-column" html={html} />
+              <MarkdownView variant="reading" html={html} />
             )}
           </Skeleton>
         </TabsContent>

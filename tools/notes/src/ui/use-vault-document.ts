@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Note } from "./NoteList.tsx";
 import { errorCode } from "./use-failure.ts";
+import { useSaveStatus } from "./use-save-status.ts";
 
 type Client = ReturnType<typeof createToolClient>;
 export function useVaultDocument(
@@ -13,6 +14,7 @@ export function useVaultDocument(
   onLock: () => void,
 ) {
   const { t } = useTranslation();
+  const { states, edit, resetAll, mark, version, phase } = useSaveStatus();
   const [loaded, setLoaded] = useState<{ id: string; body: string } | null>(null);
   const [body, updateBody] = useState("");
   const [message, setMessage] = useState("");
@@ -32,16 +34,23 @@ export function useVaultDocument(
       epoch.current++;
     };
   }, []);
-  const setBody = useCallback((value: string) => {
-    const snapshot = current.current;
-    if (snapshot.loaded) drafts.current.set(snapshot.loaded.id, value);
-    snapshot.body = value;
-    updateBody(value);
-  }, []);
+  const setBody = useCallback(
+    (value: string) => {
+      const snapshot = current.current;
+      if (snapshot.loaded) {
+        edit(snapshot.loaded.id);
+        drafts.current.set(snapshot.loaded.id, value);
+      }
+      snapshot.body = value;
+      updateBody(value);
+    },
+    [edit],
+  );
   const clear = useCallback(() => {
     const snapshot = current.current;
     if (snapshot.loaded && snapshot.loaded.body !== snapshot.body)
       drafts.current.set(snapshot.loaded.id, snapshot.body);
+    resetAll();
     epoch.current++;
     snapshot.loaded = null;
     snapshot.body = "";
@@ -49,29 +58,33 @@ export function useVaultDocument(
     updateBody("");
     setMessage("");
     onLock();
-  }, [onLock]);
+  }, [onLock, resetAll]);
   const persist = useCallback(
     (id: string, value: string): Promise<void> => {
       if (!alive.current) return Promise.resolve();
       const request = epoch.current;
+      const at = version(id);
       if (!drafts.current.has(id)) drafts.current.set(id, value);
       // Serializa por nota para que una respuesta lenta no invierta los guardados.
       const operation = (writes.current.get(id) ?? Promise.resolve())
         .catch(() => undefined)
         .then(async () => {
           if (!alive.current) return;
+          mark(id, at, "saving");
           try {
             const updated = await client.backend.invoke<Note>("update", { id, body_md: value });
             if (!alive.current) return;
-            if (drafts.current.get(id) === value) drafts.current.delete(id);
+            if (version(id) === at && drafts.current.get(id) === value) drafts.current.delete(id);
+            mark(id, at, "saved");
             if (request === epoch.current && current.current.loaded?.id === id) {
               current.current.loaded = { id, body: updated.body_md };
               setLoaded(current.current.loaded);
+              setMessage("");
             }
           } catch (reason) {
+            if (alive.current && errorCode(reason) !== "E_PERMISSION_DENIED") mark(id, at, "error");
             if (alive.current && request === epoch.current && current.current.loaded?.id === id) {
               if (errorCode(reason) === "E_PERMISSION_DENIED") clear();
-              else setMessage(t("vault.saveFailed"));
             }
             throw reason;
           }
@@ -84,27 +97,37 @@ export function useVaultDocument(
         .catch(() => undefined);
       return operation;
     },
-    [client, clear, t],
+    [client, clear, mark, version],
   );
   const settle = useCallback(
     (id: string) => (writes.current.get(id) ?? Promise.resolve()).catch(() => undefined),
     [],
   );
   const save = useCallback(
-    (id: string, value: string) => {
+    (id: string, value: string, retry = false) => {
       const snapshot = current.current;
-      if (snapshot.note?.id !== id || snapshot.loaded?.id !== id || snapshot.loaded.body === value)
+      if (
+        snapshot.note?.id !== id ||
+        snapshot.loaded?.id !== id ||
+        (!retry && phase(id) === "error")
+      )
         return;
+      if (!retry && snapshot.loaded.body === value && !writes.current.has(id)) {
+        if (phase(id) === "pending") mark(id, version(id), "idle");
+        return;
+      }
       void persist(id, value).catch(() => undefined);
     },
-    [persist],
+    [persist, phase, mark, version],
   );
   const id = note?.id;
   const privateNote = note?.private && !note.orphaned;
   useEffect(() => {
     const request = ++epoch.current;
-    setLoaded(null);
-    updateBody("");
+    if (current.current.loaded?.id !== id || !privateNote || !unlocked) {
+      setLoaded(null);
+      updateBody("");
+    }
     setMessage("");
     if (!privateNote || !unlocked || !id) return;
     void client.backend
@@ -114,6 +137,7 @@ export function useVaultDocument(
         const draft = drafts.current.get(id);
         setLoaded({ id, body: value.body_md });
         updateBody(draft ?? value.body_md);
+        if (draft !== undefined && draft !== value.body_md && phase(id) === "idle") edit(id);
         if (draft !== undefined && draft !== value.body_md) setMessage(t("vault.draftRestored"));
       })
       .catch(() => {
@@ -122,10 +146,28 @@ export function useVaultDocument(
     return () => {
       epoch.current++;
     };
-  }, [client, id, privateNote, unlocked, clear, t]);
+  }, [client, id, privateNote, unlocked, clear, t, edit, phase]);
   const discard = () => {
     clear();
     drafts.current.clear();
   };
-  return { body, setBody, loaded, clear, discard, save, persist, settle, current, epoch, message };
+  return {
+    body,
+    setBody,
+    loaded,
+    clear,
+    discard,
+    save,
+    persist,
+    settle,
+    current,
+    epoch,
+    message,
+    savePhase: id ? (states[id] ?? "idle") : "idle",
+    retrySave: () => {
+      const snapshot = current.current;
+      if (snapshot.loaded && snapshot.note?.id === snapshot.loaded.id)
+        save(snapshot.loaded.id, snapshot.body, true);
+    },
+  };
 }

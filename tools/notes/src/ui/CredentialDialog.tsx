@@ -9,10 +9,12 @@ export function CredentialDialog({
   initial,
   onSave,
   onClose,
+  onReturnFocus,
 }: {
   initial: Credential;
   onSave: (value: Credential) => void;
   onClose: () => void;
+  onReturnFocus?: () => void;
 }) {
   const { t } = useTranslation();
   const [value, setValue] = useState(initial);
@@ -28,16 +30,21 @@ export function CredentialDialog({
       }}
     >
       <DialogContent
+        onCloseAutoFocus={(event) => {
+          if (!onReturnFocus) return;
+          event.preventDefault();
+          if (!document.querySelector('[role="dialog"], [role="alertdialog"]')) onReturnFocus();
+        }}
         closeLabel={t("close")}
         closeClassName="hidden"
         aria-describedby={undefined}
-        className="credential-dialog max-h-[90vh] w-[520px] gap-3 overflow-auto p-5"
+        className="credential-dialog grid-cols-[minmax(0,1fr)] max-h-[90vh] w-[520px] gap-3 overflow-auto p-5"
       >
         <DialogTitle className="text-[17px] leading-[24.65px]">
           {t("credential.addTitle")}
         </DialogTitle>
         <form
-          className="flex flex-col gap-3"
+          className="flex min-w-0 flex-col gap-3"
           onSubmit={(event) => {
             event.preventDefault();
             onSave(value);
@@ -66,7 +73,7 @@ export function CredentialDialog({
             />
           </label>
           {value.fields.length > 0 && (
-            <div className="grid gap-2">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2 [&>div]:min-w-0 [&>div]:grid-cols-[minmax(0,1fr)]">
               {value.fields.map((field, index) => (
                 <CredentialFieldRow
                   key={ids[index]}

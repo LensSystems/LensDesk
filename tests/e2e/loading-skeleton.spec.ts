@@ -53,9 +53,13 @@ for (const reduce of [false, true]) {
       await expect(blocks).toHaveCSS("animation-duration", reduce ? "0s" : "1.2s");
       await expect(blocks).toHaveCSS("animation-iteration-count", reduce ? "1" : "infinite");
       await expect(blocks).toHaveCount(0);
-      await expect(tool.locator(".result-column")).toBeVisible();
+      const result = tool.getByRole("article");
+      await expect(result).toBeVisible();
+      await expect(
+        result.getByRole("heading", { name: "Documento de prueba", exact: true }),
+      ).toBeVisible();
       if (reduce) {
-        await expect(tool.locator(".result-column")).toHaveCSS("animation-name", "none");
+        await expect(result).toHaveCSS("animation-name", "none");
         expect(await tool.locator("body").getAttribute("data-duracion-carga")).toBeNull();
       } else {
         await expect(tool.locator("body")).toHaveAttribute("data-duracion-carga", "0.16s");

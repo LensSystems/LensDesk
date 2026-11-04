@@ -18,6 +18,8 @@ import { useTranslation } from "react-i18next";
 import { editorHeaderBase, editorHeaderResponsive } from "./editor-header-classes.ts";
 import type { Note } from "./NoteList.tsx";
 import { NoteTitle } from "./NoteTitle.tsx";
+import { SaveStatus } from "./SaveStatus.tsx";
+import type { SavePhase } from "./use-save-status.ts";
 export function EditorHeader({
   note,
   preview,
@@ -29,6 +31,8 @@ export function EditorHeader({
   onCopy,
   onExport,
   onRename,
+  savePhase,
+  onRetrySave,
 }: {
   note: Note;
   preview: boolean;
@@ -40,6 +44,8 @@ export function EditorHeader({
   onCopy: () => Promise<boolean>;
   onExport: () => void;
   onRename: (title: string) => Promise<void>;
+  savePhase?: SavePhase;
+  onRetrySave?: () => void;
 }) {
   const { t } = useTranslation();
   const copyButton = useRef<HTMLButtonElement>(null);
@@ -75,7 +81,10 @@ export function EditorHeader({
               <Lock size={15} aria-hidden="true" />
             </Button>
           )}
-          <NoteTitle title={note.title} onRename={onRename} />
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <NoteTitle title={note.title} onRename={onRename} />
+            <SaveStatus phase={savePhase} onRetry={onRetrySave} />
+          </div>
           <Tooltip label={t(note.private ? "vault.remove" : "vault.makePrivate")}>
             <Button
               variant="ghost"

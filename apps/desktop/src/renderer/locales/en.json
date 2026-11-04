@@ -97,7 +97,15 @@
     "aboutTitle": "About",
     "byline": "by LensSystems",
     "appVersion": "Version {{version}}",
-    "aboutDescription": "A desktop of tools for developers. 100% local. MIT license."
+    "aboutDescription": "A desktop of tools for developers. 100% local. MIT license.",
+    "savingSetting": "Saving {{setting}}…",
+    "loadingInfo": "Loading application information…",
+    "openingFolder": "Opening the data folder…",
+    "settingError": "Could not save {{setting}}. The confirmed value is kept. Try again.",
+    "infoError": "Could not load application information. Try again.",
+    "openFolderError": "Could not open the data folder. Try again.",
+    "retryAction": "Retry",
+    "versionUnavailable": "Unavailable"
   },
   "ui": {
     "loading": "Loading",

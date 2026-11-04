@@ -1,7 +1,7 @@
 import { Button, EmptyState, Plus, Puzzle } from "@lensdesk/ui";
 import { type DragEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { HostBridge } from "../../../shared/host-channels.ts";
+import type { HostBridge, ToolSummary } from "../../../shared/host-channels.ts";
 import { useShellStore } from "../state/store.ts";
 import { PageFrame } from "./PageFrame.tsx";
 import { ToolCard } from "./ToolCard.tsx";
@@ -14,6 +14,12 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
   const updates = useShellStore((state) => state.toolUpdates);
   const pending = useShellStore((state) => state.pendingDowngrade);
   const [dialog, setDialog] = useState<ToolDialogState>(null);
+  const showToolDialog = (kind: "details" | "remove", tool: ToolSummary) => {
+    const menu = document.activeElement?.closest('[role="menu"]');
+    const trigger = document.getElementById(menu?.getAttribute("aria-labelledby") ?? "");
+    const returnFocus = trigger ?? document.querySelector<HTMLElement>("main h1");
+    setDialog({ kind, tool, returnFocus: returnFocus ?? undefined });
+  };
   const install = async (
     channel: "tools.pickAndInstall" | "tools.installFromPath",
     payload: { path?: string } = {},
@@ -103,8 +109,8 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
                       enabled: !tool.enabled,
                     }),
                   ),
-                details: () => setDialog({ kind: "details", tool }),
-                remove: () => setDialog({ kind: "remove", tool }),
+                details: () => showToolDialog("details", tool),
+                remove: () => showToolDialog("remove", tool),
               }}
             />
           ))}

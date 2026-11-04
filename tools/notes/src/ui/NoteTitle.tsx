@@ -1,5 +1,5 @@
 import { IconButton, Pencil } from "@lensdesk/ui";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export function NoteTitle({
@@ -13,6 +13,9 @@ export function NoteTitle({
   const [editing, setEditing] = useState(!title);
   const [draft, setDraft] = useState(title);
   const active = useRef(!title);
+  const focusInput = useCallback((input: HTMLInputElement | null) => {
+    input?.focus();
+  }, []);
   // Mientras se guarda, el campo no admite cambios que luego se perderían al cerrarse.
   const [saving, setSaving] = useState(false);
   const begin = () => {
@@ -41,7 +44,7 @@ export function NoteTitle({
     <div className="note-title flex min-w-0 flex-1 items-center gap-1">
       {editing ? (
         <input
-          ref={(input) => input?.focus()}
+          ref={focusInput}
           aria-label={t("noteTitle")}
           className="h-7 min-w-0 w-full px-2 rounded-ld-sm border border-border-control bg-surface text-text"
           value={draft}

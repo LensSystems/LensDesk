@@ -72,9 +72,27 @@ test("Notas permite elegir notas sin desbordes a 760 × 520", async () => {
     await expect(toggle).toBeFocused();
     await toggle.click();
     await expect(dialog).toBeVisible();
+    await expect
+      .poll(() =>
+        tool.evaluate(() =>
+          document.getAnimations().every((animation) => animation.playState !== "running"),
+        ),
+      )
+      .toBe(true);
+    const overlay = tool.locator('.ld-fade[data-state="open"]');
+    await expect(overlay).toHaveCount(1);
     const bounds = await dialog.boundingBox();
     if (!bounds) throw new Error("El menú no tiene dimensiones");
-    await tool.mouse.click(bounds.x + bounds.width + 24, bounds.y + 40);
+    const backdrop = await overlay.boundingBox();
+    if (!backdrop) throw new Error("El fondo del menú no tiene dimensiones");
+    const point = { x: bounds.x + bounds.width + 24, y: bounds.y + 40 };
+    expect(point.x).toBeGreaterThan(bounds.x + bounds.width);
+    const position = { x: point.x - backdrop.x, y: point.y - backdrop.y };
+    expect(position.x).toBeGreaterThanOrEqual(0);
+    expect(position.x).toBeLessThan(backdrop.width);
+    expect(position.y).toBeGreaterThanOrEqual(0);
+    expect(position.y).toBeLessThan(backdrop.height);
+    await overlay.click({ position });
     await expect(dialog).toBeHidden();
     await expect(toggle).toBeFocused();
     await toggle.click();

@@ -164,7 +164,7 @@ body {
 }
 .code-editor .cm-md-code,
 .code-editor .cm-md-code span {
-  color: var(--ld-success);
+  color: var(--ld-code);
   font-weight: 400;
 }
 .code-editor .cm-md-quote,
@@ -470,12 +470,6 @@ body {
   outline-offset: 2px;
 }
 
-.ld-markdown-view .ld-code-block pre code {
-  color: var(--ld-success);
-  font-size: 13px;
-  line-height: 18.85px;
-}
-
 /* Campos compartidos de privacidad y credenciales. */
 .secret-field-control {
   height: 38px;
@@ -573,4 +567,16 @@ body {
       opacity: 1;
     }
   }
+}
+
+.note-save-status {
+  width: 128px;
+  min-width: 128px;
+  font-size: 11px;
+  line-height: 13px;
+}
+.note-save-status > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }

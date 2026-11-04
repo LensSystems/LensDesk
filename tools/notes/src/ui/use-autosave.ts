@@ -6,8 +6,10 @@ export function useAutosave(
   save: (id: string, body: string) => void,
 ) {
   const latest = useRef({ id, body, save });
+  const timer = useRef<number | undefined>(undefined);
   latest.current = { id, body, save };
   const flush = useCallback(() => {
+    window.clearTimeout(timer.current);
     const current = latest.current;
     if (current.id) current.save(current.id, current.body);
   }, []);
@@ -16,10 +18,10 @@ export function useAutosave(
   // biome-ignore lint/correctness/useExhaustiveDependencies: El cambio del cuerpo reinicia el debounce.
   useEffect(() => {
     if (!id) return;
-    const timer = window.setTimeout(flush, 800);
+    timer.current = window.setTimeout(flush, 800);
     window.addEventListener("beforeunload", flush);
     return () => {
-      window.clearTimeout(timer);
+      window.clearTimeout(timer.current);
       window.removeEventListener("beforeunload", flush);
     };
   }, [id, body, flush]);

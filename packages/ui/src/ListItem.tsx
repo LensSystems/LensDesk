@@ -35,7 +35,10 @@ export function ListItem({
           type="button"
           aria-label={props["aria-label"] ?? (typeof title === "string" ? title : undefined)}
           aria-current={selected ? "true" : undefined}
-          className={cn("col-start-1 row-start-1 min-w-0 text-left text-text", className)}
+          className={cn(
+            "ld-list-item col-start-1 row-start-1 min-w-0 rounded-ld-sm text-left text-text",
+            className,
+          )}
         >
           <span className="block truncate font-bold leading-7">{title}</span>
           {secondaryText && (
@@ -57,7 +60,7 @@ export function ListItem({
         type="button"
         aria-current={selected ? "true" : undefined}
         className={cn(
-          "min-h-7 min-w-0 flex-1 rounded-ld-lg border border-border bg-surface-raised px-3.5 py-3 text-left text-text transition-colors duration-150 ease-out hover:bg-surface disabled:opacity-60 motion-reduce:transition-none",
+          "ld-list-item min-h-7 min-w-0 flex-1 rounded-ld-lg border border-border bg-surface-raised px-3.5 py-3 text-left text-text transition-colors duration-150 ease-out motion-reduce:transition-none",
           selected && "border-accent",
           className,
         )}

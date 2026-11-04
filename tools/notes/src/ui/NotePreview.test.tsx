@@ -154,3 +154,133 @@ it("la fila Notas no tiene controles de copiar ni mostrar", () => {
   expect(screen.queryByRole("button", { name: "Mostrar Notas" })).toBeNull();
   expect(screen.getByRole("button", { name: "Copiar Usuario" })).toBeInTheDocument();
 });
+
+it("anuncia el rechazo sin revelar código y permite reintentar desde el mismo botón", async () => {
+  const copy = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("secreto-sintetico"))
+    .mockResolvedValue(undefined);
+  const { container } = render(
+    <NotePreview
+      privateNote
+      body={"```credential\npassword: secreto-sintetico\n```"}
+      onCopyCode={copy}
+    />,
+  );
+  const button = screen.getByRole("button", { name: "Copiar Contraseña" });
+  act(() => button.focus());
+  await act(async () => fireEvent.click(button));
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "No se pudo copiar. Vuelve a pulsar el botón de copiar para intentarlo de nuevo.",
+  );
+  expect(container.innerHTML).not.toContain("secreto-sintetico");
+  expect(button).toHaveFocus();
+  expect(screen.queryByRole("button", { name: "Copiado" })).toBeNull();
+  await act(async () => fireEvent.click(button));
+  expect(button).toHaveAccessibleName("Copiado");
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+it.each([false, true])(
+  "retira Copiado al rechazar una nueva copia; credencial=%s",
+  async (privateNote) => {
+    const copy = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("private"));
+    render(
+      <NotePreview
+        privateNote={privateNote}
+        body={
+          privateNote
+            ? "```credential\npassword: dato-sintetico\n```"
+            : "```\ncodigo-sintetico\n```"
+        }
+        onCopyCode={copy}
+      />,
+    );
+    const button = screen.getByRole("button", {
+      name: privateNote ? "Copiar Contraseña" : "Copiar código",
+    });
+    await act(async () => fireEvent.click(button));
+    expect(button).toHaveAccessibleName("Copiado");
+    await act(async () => fireEvent.click(button));
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Copiado" })).toBeNull();
+  },
+);
+
+it.each([false, true])(
+  "ignora respuesta tardía en una credencial nueva con el mismo HTML; rechazo=%s",
+  async (reject) => {
+    let finish!: () => void;
+    const copy = vi.fn(
+      () =>
+        new Promise<void>((resolve, fail) => {
+          finish = () => (reject ? fail(new Error("anterior-sintetico")) : resolve());
+        }),
+    );
+    const { rerender, container } = render(
+      <NotePreview
+        privateNote
+        body={"```credential\npassword: anterior-sintetico\n```"}
+        onCopyCode={copy}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Copiar Contraseña" });
+    fireEvent.click(button);
+    rerender(
+      <NotePreview
+        privateNote
+        body={"```credential\npassword: siguiente-sintetico\n```"}
+        onCopyCode={copy}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Copiar Contraseña" })).toBe(button);
+    await act(async () => finish());
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Copiado" })).toBeNull();
+    expect(container.innerHTML).not.toContain("anterior-sintetico");
+    expect(container.innerHTML).not.toContain("siguiente-sintetico");
+  },
+);
+
+it("ignora la copia pendiente al desmontar una nota antes de mostrar otra", async () => {
+  let finish!: () => void;
+  const copy = () =>
+    new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+  const { rerender } = render(
+    <NotePreview key="anterior" body={"```\nanterior\n```"} onCopyCode={copy} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Copiar código" }));
+  rerender(<NotePreview key="siguiente-bloqueada" body="Nota bloqueada" onCopyCode={copy} />);
+  await act(async () => finish());
+  expect(screen.getByText("Nota bloqueada")).toBeTruthy();
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Copiado" })).toBeNull();
+});
+
+it("una copia anterior tardía no oculta el fallo de la última acción en otro botón", async () => {
+  let finishFirst!: () => void;
+  const copy = vi
+    .fn()
+    .mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishFirst = resolve;
+        }),
+    )
+    .mockRejectedValueOnce(new Error("private"));
+  render(<NotePreview body={"```\nprimero\n```\n\n```\nsegundo\n```"} onCopyCode={copy} />);
+  const [first, second] = screen.getAllByRole("button", { name: "Copiar código" });
+  if (!first || !second) throw new Error("Botones ausentes");
+  fireEvent.click(first);
+  await act(async () => fireEvent.click(second));
+  expect(screen.getByRole("alert")).toBeTruthy();
+  await act(async () => finishFirst());
+  expect(first).toHaveAccessibleName("Copiado");
+  expect(second).toHaveAccessibleName("Copiar código");
+  expect(screen.getByRole("alert")).toBeTruthy();
+});

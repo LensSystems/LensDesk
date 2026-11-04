@@ -16,6 +16,7 @@ import { markdownHighlightStyle } from "./markdown-highlight.ts";
 import { type Note, NoteList } from "./NoteList.tsx";
 import { renderPreview } from "./preview.ts";
 import { useAutosave } from "./use-autosave.ts";
+import { vaultTestClient } from "./vault-test-client.ts";
 
 const note = (id: string, body_md = "") => ({
   id,
@@ -172,6 +173,97 @@ beforeEach(async () => {
 });
 
 describe("interfaz de Notas", () => {
+  it("un fallo en la escritura final impide privatizar y permite reintentar el mismo borrador", async () => {
+    const fake = vaultTestClient(false);
+    render(<App client={fake.client as never} />);
+    await waitFor(() =>
+      expect(document.querySelector(".cm-content")).toHaveTextContent("Original"),
+    );
+    act(() => {
+      const view = EditorView.findFromDOM(
+        document.querySelector(".cm-content") as HTMLElement,
+      ) as EditorView;
+      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: "Último borrador" } });
+    });
+    fake.fail("E_INTERNAL");
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Hacer privada" })));
+    expect(fake.invoke).toHaveBeenCalledWith("update", { id: "one", body_md: "Último borrador" });
+    expect(fake.invoke).not.toHaveBeenCalledWith("setPrivate", expect.anything());
+    expect(fake.row().private).toBe(false);
+    expect(document.querySelector(".cm-content")).toHaveTextContent("Último borrador");
+    fake.fail(null);
+    fireEvent.click(screen.getByRole("button", { name: "Hacer privada" }));
+    await waitFor(() => expect(fake.row().private).toBe(true));
+    expect(fake.row().body_md).toBe("Último borrador");
+  });
+
+  it.each([false, true])(
+    "espera la cola pública antes de privatizar; configuración inicial=%s",
+    async (setup) => {
+      const fake = vaultTestClient(false, !setup);
+      const original = fake.invoke.getMockImplementation();
+      if (!original) throw new Error("Falta el backend de prueba");
+      let release = () => {};
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      fake.invoke.mockImplementation(async (method, params) => {
+        const result = await original(method, params);
+        if (method === "update" && params.body_md === "PUBLIC_A") await gate;
+        return result;
+      });
+      render(<App client={fake.client as never} />);
+      await waitFor(() =>
+        expect(document.querySelector(".cm-content")).toHaveTextContent("Original"),
+      );
+      const edit = (body: string) => {
+        const content = document.querySelector(".cm-content") as HTMLElement;
+        act(() => {
+          const view = EditorView.findFromDOM(content) as EditorView;
+          view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: body } });
+        });
+        fireEvent.blur(content);
+      };
+      try {
+        edit("PUBLIC_A");
+        await waitFor(() => expect(fake.row().body_md).toBe("PUBLIC_A"));
+        edit("PUBLIC_B");
+        fireEvent.click(screen.getByRole("button", { name: "Hacer privada" }));
+        if (setup) {
+          fireEvent.click(await screen.findByRole("button", { name: "Crear contraseña" }));
+          for (const [label, value] of [
+            ["Contraseña", "Abcd1!"],
+            ["Confirmar contraseña", "Abcd1!"],
+            ["Respuesta 1", "Lima"],
+            ["Respuesta 2", "Gato"],
+          ])
+            fireEvent.change(screen.getByLabelText(label as string), { target: { value } });
+          fireEvent.click(screen.getByRole("button", { name: "Guardar y bloquear" }));
+        }
+        await act(async () => {});
+        expect(fake.invoke).not.toHaveBeenCalledWith("setPrivate", expect.anything());
+        expect(document.querySelector(".cm-content")).toHaveAttribute("contenteditable", "false");
+        await act(async () => release());
+        await waitFor(() => expect(fake.row().private).toBe(true));
+        expect(fake.row().body_md).toBe("PUBLIC_B");
+        if (setup) {
+          fireEvent.change(await screen.findByLabelText("Contraseña"), {
+            target: { value: "Abcd1!" },
+          });
+          fireEvent.click(screen.getByRole("button", { name: "Desbloquear" }));
+        }
+        await waitFor(() =>
+          expect(document.querySelector(".cm-content")).toHaveTextContent("PUBLIC_B"),
+        );
+        edit("PRIVATE_D");
+        await waitFor(() => expect(fake.row().body_md).toBe("PRIVATE_D"));
+        expect(fake.row().private).toBe(true);
+      } finally {
+        await act(async () => release());
+      }
+    },
+  );
+
   it("copia el código de la vista previa mediante el cliente", async () => {
     const fake = fakeClient();
     await fake.invoke("create", { title: "Código", body_md: "```ts\nconst x = 1;\n```\n*Pie*" });
@@ -303,6 +395,152 @@ describe("interfaz de Notas", () => {
     await act(async () => finish?.());
     expect(screen.getByRole("heading", { name: "Renombrado" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Renombrado" })).toBeInTheDocument();
+  });
+
+  it("serializa guardados públicos de la misma nota antes de enviar la edición siguiente", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Orden", body_md: "Inicial" });
+    const original = fake.invoke.getMockImplementation();
+    const waiting: (() => Promise<void>)[] = [];
+    fake.invoke.mockImplementation((method, params) =>
+      method === "update"
+        ? new Promise((resolve) => {
+            waiting.push(async () => resolve(await original?.(method, params)));
+          })
+        : (original?.(method, params) as ReturnType<typeof fake.invoke>),
+    );
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Orden" });
+    const editor = document.querySelector(".cm-content") as HTMLElement;
+    const edit = (value: string) =>
+      act(() => {
+        const view = EditorView.findFromDOM(editor) as EditorView;
+        view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: value } });
+      });
+    edit("Primero");
+    fireEvent.blur(editor);
+    await waitFor(() => expect(waiting).toHaveLength(1));
+    edit("Segundo");
+    fireEvent.blur(editor);
+    try {
+      expect(waiting).toHaveLength(1);
+    } finally {
+      await act(async () => {
+        for (const finish of waiting) await finish();
+      });
+    }
+  });
+
+  it("Reintentar guardado reenvía el borrador fallido en lugar de recargar la lista", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Recuperación", body_md: "Inicial" });
+    const original = fake.invoke.getMockImplementation();
+    let attempts = 0;
+    fake.invoke.mockImplementation(async (method, params) => {
+      if (method === "update" && ++attempts === 1) throw new Error("synthetic failure");
+      return original?.(method, params);
+    });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Recuperación" });
+    vi.useFakeTimers();
+    try {
+      const editor = document.querySelector(".cm-content") as HTMLElement;
+      act(() => {
+        const view = EditorView.findFromDOM(editor) as EditorView;
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: "Borrador fallido" },
+        });
+      });
+      await act(async () => vi.advanceTimersByTime(800));
+      const alert = screen.getByRole("alert");
+      const retry =
+        screen.queryByRole("button", { name: "Reintentar guardado" }) ??
+        within(alert).getByRole("button", { name: "Reintentar" });
+      await act(async () => fireEvent.click(retry));
+      expect(attempts).toBe(2);
+      expect(fake.invoke).toHaveBeenLastCalledWith("update", {
+        id: "1",
+        body_md: "Borrador fallido",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("recupera una sola vez y transfiere la edición hecha durante create al nuevo id", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Recuperada", body_md: "Inicial" });
+    const original = fake.invoke.getMockImplementation();
+    let failUpdate!: () => void;
+    let createPending!: () => void;
+    fake.invoke.mockImplementation((method, params) => {
+      if (method === "update" && (params as { id: string }).id === "1")
+        return new Promise((_, reject) => {
+          failUpdate = () => reject(Object.assign(new Error("missing"), { code: "E_NOT_FOUND" }));
+        });
+      if (method === "create")
+        return new Promise((resolve) => {
+          createPending = () => {
+            void original?.(method, params).then(resolve);
+          };
+        });
+      return original?.(method, params) as ReturnType<typeof fake.invoke>;
+    });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Recuperada" });
+    const edit = (body: string) => {
+      const element = document.querySelector(".cm-content") as HTMLElement;
+      act(() => {
+        const view = EditorView.findFromDOM(element) as EditorView;
+        view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: body } });
+      });
+      fireEvent.blur(element);
+    };
+    edit("Primero");
+    edit("Segundo");
+    await act(async () => failUpdate());
+    expect(fake.invoke.mock.calls.filter(([method]) => method === "update")).toHaveLength(1);
+    edit("Tercero durante recuperación");
+    await act(async () => createPending());
+    await waitFor(() =>
+      expect(fake.invoke).toHaveBeenCalledWith("update", {
+        id: "2",
+        body_md: "Tercero durante recuperación",
+      }),
+    );
+    expect(fake.invoke.mock.calls.filter(([method]) => method === "create")).toHaveLength(2);
+    expect(document.querySelector(".cm-content")).toHaveTextContent("Tercero durante recuperación");
+  });
+
+  it("seleccionar y recargar una nota mantiene su borrador fallido y su estado de error", async () => {
+    const fake = fakeClient();
+    await fake.invoke("create", { title: "Persistente", body_md: "Original" });
+    await fake.invoke("create", { title: "Otra", body_md: "Otro cuerpo" });
+    const original = fake.invoke.getMockImplementation();
+    fake.invoke.mockImplementation(async (method, params) => {
+      if (method === "update") throw new Error("synthetic failure");
+      return original?.(method, params);
+    });
+    render(<App client={fake.client as never} />);
+    await screen.findByRole("heading", { name: "Persistente" });
+    const element = document.querySelector(".cm-content") as HTMLElement;
+    act(() => {
+      const view = EditorView.findFromDOM(element) as EditorView;
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: "Borrador persistente" },
+      });
+    });
+    fireEvent.blur(element);
+    await screen.findByRole("button", { name: "Reintentar guardado" });
+    fireEvent.click(screen.getByRole("button", { name: "Otra" }));
+    await screen.findByRole("heading", { name: "Otra" });
+    expect(screen.queryByRole("button", { name: "Reintentar guardado" })).toBeNull();
+    fireEvent.change(screen.getByRole("textbox", { name: "Buscar notas" }), {
+      target: { value: "Persistente" },
+    });
+    await screen.findByRole("heading", { name: "Persistente" });
+    expect(document.querySelector(".cm-content")).toHaveTextContent("Borrador persistente");
+    expect(screen.getByRole("button", { name: "Reintentar guardado" })).toBeTruthy();
   });
 
   it("actualiza el acento en vivo y acepta contexto sin acento", async () => {
@@ -509,6 +747,36 @@ describe("interfaz de Notas", () => {
     await waitFor(() => expect(fake.invoke).toHaveBeenCalledWith("restore", { id: "1" }));
   });
 
+  it.each([false, true])(
+    "ignora la copia de otra nota de papelera con el mismo cuerpo; rechazo=%s",
+    async (reject) => {
+      const fake = fakeClient();
+      const body = "```\ncodigo-sintetico\n```";
+      await fake.invoke("create", { title: "Papelera A", body_md: body });
+      await fake.invoke("create", { title: "Papelera B", body_md: body });
+      await fake.invoke("trash", { id: "1" });
+      await fake.invoke("trash", { id: "2" });
+      let finish!: () => void;
+      fake.client.ui.copyText.mockImplementationOnce(
+        () =>
+          new Promise<undefined>((resolve, fail) => {
+            finish = () => (reject ? fail(new Error("copy rejected")) : resolve(undefined));
+          }),
+      );
+      render(<App client={fake.client as never} />);
+      fireEvent.click(await screen.findByRole("radio", { name: "Papelera" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Papelera A" }));
+      await screen.findByRole("heading", { name: "Papelera A" });
+      fireEvent.click(screen.getByRole("button", { name: "Copiar código" }));
+      fireEvent.click(screen.getByRole("button", { name: "Papelera B" }));
+      await screen.findByRole("heading", { name: "Papelera B" });
+      await act(async () => finish());
+      expect(screen.getByRole("button", { name: "Copiar código" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Copiado" })).toBeNull();
+      expect(screen.queryByRole("alert")).toBeNull();
+    },
+  );
+
   it("una carga lenta anterior no borra la nota recién creada", async () => {
     const fake = fakeClient();
     const original = fake.invoke.getMockImplementation();
@@ -689,7 +957,7 @@ describe("interfaz de Notas", () => {
     fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
     const alert = await screen.findByRole("alert");
     expect(alert).not.toHaveTextContent("ya no existe");
-    expect(within(alert).getByRole("button", { name: "Reintentar" })).toBeInTheDocument();
+    expect(within(alert).getByRole("button", { name: "Reintentar carga" })).toBeInTheDocument();
   });
 
   it("conserva el texto como nota nueva si el autoguardado recibe E_NOT_FOUND", async () => {
@@ -715,6 +983,7 @@ describe("interfaz de Notas", () => {
       title: "Original",
       body_md: "# Original\ntexto valioso",
     });
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Guardado"));
     await waitFor(() =>
       expect(document.querySelector(".cm-content")?.textContent).toContain("texto valioso"),
     );

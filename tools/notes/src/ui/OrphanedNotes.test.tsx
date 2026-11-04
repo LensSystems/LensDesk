@@ -34,8 +34,12 @@ it("la tarjeta huérfana tiene candado, aviso y ninguna acción de fijar ni arch
       onArchive={vi.fn()}
     />,
   );
-  expect(screen.getByRole("button", { name: "Huérfana" })).toHaveTextContent("No se puede abrir");
-  expect(screen.getByLabelText("Nota privada")).toHaveAttribute("width", "15");
+  const button = screen.getByRole("button", { name: "Huérfana" });
+  expect(button).toHaveTextContent("No se puede abrir");
+  expect(button).toHaveAccessibleDescription("Nota privada. No se puede abrir.");
+  const lock = button.querySelector("svg");
+  expect(lock).toHaveAttribute("width", "15");
+  expect(lock).toHaveAttribute("aria-hidden", "true");
   expect(screen.queryByRole("button", { name: /Fijar|Desfijar|Archivar/ })).toBeNull();
   expect(screen.queryByText("Secreto")).toBeNull();
 });

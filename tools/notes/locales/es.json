@@ -166,7 +166,10 @@
     "orphanedHelp": "Se cifró con una contraseña que ya no existe. No se puede restaurar; solo eliminar.",
     "deleteTitle": "¿Eliminar para siempre?",
     "deleteHelp": "Esta nota se borrará y no se podrá recuperar.",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "listLockedDescription": "Nota privada. Bloqueada.",
+    "listUnlockedDescription": "Nota privada. Desbloqueada.",
+    "listOrphanedDescription": "Nota privada. No se puede abrir."
   },
   "credential": {
     "title": "Credencial",
@@ -241,5 +244,17 @@
     "quote": "❝",
     "codeBlock": "{ }",
     "separator": "—"
-  }
+  },
+  "copyError": "No se pudo copiar. Vuelve a pulsar el botón de copiar para intentarlo de nuevo.",
+  "saveState": {
+    "idle": "Sin cambios",
+    "pending": "Pendiente",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "error": "No se guardaron los cambios.",
+    "errorShort": "Error al guardar"
+  },
+  "retrySave": "Reintentar guardado",
+  "retryLoad": "Reintentar carga",
+  "retrySaveShort": "Reintentar"
 }
