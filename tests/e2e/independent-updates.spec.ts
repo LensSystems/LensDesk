@@ -10,6 +10,13 @@ type FixtureScope = typeof globalThis & {
   };
 };
 
+type ToolsEventScope = typeof window & {
+  toolsUpdateEvents?: {
+    events: { tools: { id: string }[]; status?: string }[];
+    unsubscribe(): void;
+  };
+};
+
 test("host consulta dos fuentes locales, comparte búsquedas y reconcilia sin GET", async () => {
   const app = await launchApp({ updatesCheckedRecently: true });
   try {
@@ -121,24 +128,36 @@ test("host consulta dos fuentes locales, comparte búsquedas y reconcilia sin GE
       },
     });
     const count = (await calls()).length;
-    const toolsEvents = await page.evaluate(async () => {
+    await page.evaluate(() => {
       const events: { tools: { id: string }[]; status?: string }[] = [];
       const unsubscribe = window.lensdeskHost.on("tools.updatesAvailable", (payload) =>
         events.push(payload),
       );
-      try {
-        const result = await window.lensdeskHost.invoke("tools.remove", {
+      (window as ToolsEventScope).toolsUpdateEvents = { events, unsubscribe };
+    });
+    try {
+      const result = await page.evaluate(() =>
+        window.lensdeskHost.invoke("tools.remove", {
           toolId: "notes",
           deleteData: false,
-        });
-        if (!result.ok) throw Error(result.error.message);
-        return events;
-      } finally {
-        unsubscribe();
-      }
-    });
-    expect(toolsEvents.length).toBeGreaterThan(0);
-    expect(toolsEvents.at(-1)).toMatchObject({ tools: [], status: "error" });
+        }),
+      );
+      expect(result.ok).toBe(true);
+      const events = () =>
+        page.evaluate(() => (window as ToolsEventScope).toolsUpdateEvents?.events ?? []);
+      await expect
+        .poll(async () => (await events()).at(-1))
+        .toMatchObject({ tools: [], status: "error" });
+      const toolsEvents = await events();
+      expect(toolsEvents.length).toBeGreaterThan(0);
+      expect(toolsEvents.at(-1)).toMatchObject({ tools: [], status: "error" });
+    } finally {
+      await page.evaluate(() => {
+        const scope = window as ToolsEventScope;
+        scope.toolsUpdateEvents?.unsubscribe();
+        delete scope.toolsUpdateEvents;
+      });
+    }
     expect((await calls()).length).toBe(count);
     expect(rendererRequests).toEqual([]);
   } finally {

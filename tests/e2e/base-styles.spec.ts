@@ -66,7 +66,15 @@ test("el título no se selecciona y la vista previa de Notas sí", async () => {
     const notes = await toolPage(app, "notes");
     await captureNoteInput(notes);
     await notes.getByRole("button", { name: "Nueva nota" }).first().click();
-    await notes.locator(".cm-content").fill("# Texto seleccionable\nContenido para copiar");
+    await expect(
+      notes.getByRole("textbox", { name: "Título de la nota", exact: true }),
+    ).toBeFocused();
+    const body = notes.locator(".cm-content");
+    await body.fill("# Texto seleccionable\nContenido para copiar");
+    await expect(body.locator(".cm-line")).toHaveText([
+      "# Texto seleccionable",
+      "Contenido para copiar",
+    ]);
     await writeFile(
       test.info().outputPath("fill-focus.json"),
       JSON.stringify(
