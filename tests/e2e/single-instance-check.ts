@@ -3,9 +3,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron as electron, expect } from "@playwright/test";
+import { prepareRecentUpdateProfile } from "./profile.ts";
 
 export async function checkSingleInstance(executablePath: string, args: string[]): Promise<void> {
   const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-single-instance-"));
+  await prepareRecentUpdateProfile(userDataDir);
   const env: Record<string, string> = { LENSDESK_USER_DATA: userDataDir };
   for (const [key, value] of Object.entries(process.env))
     if (value !== undefined && key !== "ELECTRON_RUN_AS_NODE" && key !== "LENSDESK_USER_DATA")

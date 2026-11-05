@@ -12,7 +12,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
   test(`apila avisos y permite desplegarlos con movimiento ${reducedMotion}`, async () => {
     test.setTimeout(120_000);
     const directory = await mkdtemp(join(tmpdir(), "lensdesk-notices-"));
-    const app = await launchApp();
+    const app = await launchApp({ updatesCheckedRecently: true });
     try {
       const shell = await shellPage(app);
       await shell.emulateMedia({ reducedMotion });

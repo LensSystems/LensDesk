@@ -135,6 +135,7 @@ const tabsStore = () =>
     shellContents?.send("tabs.changed", { tabs });
     setNativeMenu(settingsHandlers["app.getContext"]().locale);
   }));
+let reconcileToolUpdates: (() => void) | undefined;
 toolWiring = createToolWiring({
   app,
   database: () => database,
@@ -146,7 +147,10 @@ toolWiring = createToolWiring({
   onShowActiveTool: (callback) => {
     showActiveTool = callback;
   },
-  onCatalogChanged: () => setNativeMenu(settingsHandlers["app.getContext"]().locale),
+  onCatalogChanged: () => {
+    setNativeMenu(settingsHandlers["app.getContext"]().locale);
+    reconcileToolUpdates?.();
+  },
   logger,
 });
 logRendererCrashes(app as never, {
@@ -176,6 +180,7 @@ const { updates, appActions } = wireAppServices({
   arch: process.arch,
   installedTools: () => toolWiring.registry?.list() ?? [],
   emitTools: (payload) => shellContents?.send("tools.updatesAvailable", payload),
+  emitChecked: (payload) => shellContents?.send("updates.checked", payload),
   emitUpdate: (payload) => shellContents?.send("update.available", payload),
   showSaveDialog: (options) => {
     const window = BrowserWindow.getFocusedWindow();
@@ -184,6 +189,9 @@ const { updates, appActions } = wireAppServices({
   openPath: (path) => shell.openPath(path),
   openExternal: (url) => shell.openExternal(url),
 });
+reconcileToolUpdates = () => {
+  updates.reconcile();
+};
 const tabHandlers = createTabHandlers({
   tabsStore,
   notifyClosed: (toolId, openedToolId) =>
@@ -260,7 +268,8 @@ void app.whenReady().then(async () => {
     resolve(import.meta.dirname, "../renderer/index.html"),
   );
 
-  void updates.run().catch((error: unknown) => logger.warn("update.check", String(error)));
+  if (!smoke)
+    void updates.run().catch((error: unknown) => logger.warn("update.check", String(error)));
 
   if (smoke) {
     await runSmoke(

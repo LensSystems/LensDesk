@@ -3,7 +3,7 @@ import { launchApp, shellPage } from "./helpers.ts";
 
 for (const width of [1280, 760]) {
   test(`el aviso lleva a Ajustes en una columna a ${width}px`, async () => {
-    const app = await launchApp();
+    const app = await launchApp({ updatesCheckedRecently: true });
     try {
       const shell = await shellPage(app);
       const rendererRequests: string[] = [];
@@ -40,7 +40,7 @@ for (const width of [1280, 760]) {
         await expect(row).toBeInViewport();
         await expect(row).toHaveAttribute("data-highlighted", "true");
         const link = shell.getByRole("link", {
-          name: `Versión ${version} disponible`,
+          name: `Versión ${version} de LensDesk disponible`,
           exact: true,
         });
         await expect(link).toBeFocused();
@@ -85,16 +85,12 @@ for (const width of [1280, 760]) {
         await shell.screenshot({ path: test.info().outputPath(`ajustes-${width}-${index}.png`) });
       }
       expect(rendererRequests).toEqual([]);
-      // Solo se admite la consulta diaria de versiones que la app ya hace al arrancar.
+      // El perfil ya tiene una consulta reciente: navegar no inicia ninguna petición.
       const mainRequests = await app.evaluate(
         () =>
           (globalThis as typeof globalThis & { updateTestRequests: string[] }).updateTestRequests,
       );
-      expect(
-        mainRequests.filter(
-          (url) => !/^https:\/\/api\.github\.com\/repos\/[^/]+\/[^/]+\/releases\/latest$/.test(url),
-        ),
-      ).toEqual([]);
+      expect(mainRequests).toEqual([]);
     } finally {
       await app.close();
     }
@@ -102,7 +98,7 @@ for (const width of [1280, 760]) {
 }
 
 test("el tema desliza la píldora solo con puntero y movimiento permitido", async () => {
-  const app = await launchApp();
+  const app = await launchApp({ updatesCheckedRecently: true });
   try {
     const page = await shellPage(app);
     await page.emulateMedia({ reducedMotion: "no-preference" });

@@ -5,6 +5,7 @@ import { ipcSchemas } from "../../../main/ipc/schemas.ts";
 import type { HostBridge, HostChannel, UpdateCheckResult } from "../../../shared/host-channels.ts";
 import { rendererI18n } from "../i18n.ts";
 import { useShellStore } from "../state/store.ts";
+import { initialUpdateState } from "../state/update-state.ts";
 import { SettingsPage } from "./SettingsPage.tsx";
 
 function renderSettings(
@@ -50,6 +51,7 @@ describe("Ajustes", () => {
   beforeEach(async () => {
     await rendererI18n.changeLanguage("es");
     useShellStore.setState({
+      ...initialUpdateState(),
       update: null,
       updateSettingsRequest: 0,
       context: { locale: "es", theme: "dark", accent: "blue" },
@@ -98,7 +100,9 @@ describe("Ajustes", () => {
     renderSettings();
     expect(
       screen.getByRole("switch", { name: "Buscar actualizaciones" }),
-    ).toHaveAccessibleDescription("LensDesk comprueba una vez al día si existe una versión nueva.");
+    ).toHaveAccessibleDescription(
+      "Comprueba si hay versiones nuevas de LensDesk y tus herramientas.",
+    );
     expect(screen.getByRole("switch", { name: "Modo desarrollador" })).toHaveAccessibleDescription(
       "Permite instalar herramientas sin firmar.",
     );
@@ -341,7 +345,7 @@ describe("Ajustes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Buscar ahora" }));
     expect(invoke.mock.calls.filter(([channel]) => channel === "updates.checkNow")).toHaveLength(1);
     await act(async () => finish({ kind: "none" }));
-    expect(screen.getByRole("status")).toHaveTextContent("LensDesk está actualizado (0.1.0)");
+    expect(screen.getByRole("status")).toHaveTextContent("LensDesk 0.1.0 está actualizado.");
   });
 
   it("abre la versión nueva con la misma acción del aviso", async () => {
@@ -350,7 +354,9 @@ describe("Ajustes", () => {
       check: async () => ({ kind: "available", version: "1.0.0", url }),
     });
     fireEvent.click(await screen.findByRole("button", { name: "Buscar ahora" }));
-    fireEvent.click(await screen.findByRole("link", { name: "Versión 1.0.0 disponible" }));
+    fireEvent.click(
+      await screen.findByRole("link", { name: "Versión 1.0.0 de LensDesk disponible" }),
+    );
     expect(invoke).toHaveBeenCalledWith("app.openExternal", { url });
   });
 
@@ -361,10 +367,10 @@ describe("Ajustes", () => {
       .mockResolvedValue({ kind: "none" });
     const invoke = renderSettings({ check, failure: failure === "ipc" });
     fireEvent.click(await screen.findByRole("button", { name: "Buscar ahora" }));
-    await screen.findByText("No se pudo comprobar. Revisa la conexión.");
+    await screen.findByText("No se pudo comprobar LensDesk. Vuelve a buscar.");
     const retry = screen.getByRole("button", { name: "Buscar ahora" });
     expect(screen.getByRole("status")).toHaveTextContent(
-      "No se pudo comprobar. Revisa la conexión.",
+      "No se pudo comprobar LensDesk. Vuelve a buscar.",
     );
     fireEvent.click(retry);
     await waitFor(() =>
@@ -373,14 +379,14 @@ describe("Ajustes", () => {
       ),
     );
     if (failure === "error")
-      expect(await screen.findByText("LensDesk está actualizado (0.1.0)")).toBeTruthy();
+      expect(await screen.findByText("LensDesk 0.1.0 está actualizado.")).toBeTruthy();
   });
 
   it("no presenta skipped como una comprobación al día", async () => {
     renderSettings({ check: async () => ({ kind: "skipped" }) });
     fireEvent.click(await screen.findByRole("button", { name: "Buscar ahora" }));
     await screen.findByRole("button", { name: "Buscar ahora" });
-    expect(screen.queryByText("LensDesk está actualizado (0.1.0)")).toBeNull();
+    expect(screen.queryByText("LensDesk 0.1.0 está actualizado.")).toBeNull();
   });
 
   it.each(["empty", "disabled"] as const)("oculta la acción sin consultar: %s", async (reason) => {

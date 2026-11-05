@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+      - "!*-v*"
 
 permissions:
   contents: write
@@ -22,6 +23,9 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
+      - name: Verify app release version
+        run: node scripts/check-app-release.ts
+        shell: bash
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         shell: bash
@@ -43,16 +47,6 @@ jobs:
       - name: Build installers
         run: pnpm dist
         shell: bash
-      - name: Sign published tools
-        if: runner.os == 'macOS'
-        env:
-          LENSPKG_SIGNING_KEY: ${{ secrets.LENSPKG_SIGNING_KEY }}
-        run: |
-          printf '%s' "$LENSPKG_SIGNING_KEY" > "$RUNNER_TEMP/release.pem"
-          mkdir -p release-tools
-          node packages/lenspkg/src/cli.ts pack tools/notes/dist --out release-tools/ --key "$RUNNER_TEMP/release.pem" --key-id release
-          node packages/lenspkg/src/cli.ts pack tools/md-converter/dist --out release-tools/ --key "$RUNNER_TEMP/release.pem" --key-id release
-        shell: bash
       - name: Upload release files
         uses: actions/upload-artifact@v7.0.2
         with:
@@ -61,18 +55,35 @@ jobs:
             apps/desktop/release/*.dmg
             apps/desktop/release/*.zip
             apps/desktop/release/*.exe
-            release-tools/*.lenspkg
           if-no-files-found: error
 
   publish:
     needs: build
     runs-on: macos-latest
     steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        shell: bash
       - uses: actions/download-artifact@v7.0.0
         with:
           pattern: release-*
           path: release-assets
           merge-multiple: true
+      - name: Copy verified legacy snapshots
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node packages/lenspkg/src/tools-catalog-cli.ts snapshots
+        shell: bash
       # Las sumas se calculan aquí, con los archivos de los dos sistemas ya reunidos. Cada línea
       # lleva solo el nombre del archivo, como se publica, para que `shasum -c` funcione al descargar.
       - name: Generate checksums
@@ -87,3 +98,11 @@ jobs:
       - uses: softprops/action-gh-release@v3.0.3
         with:
           files: release-assets/**
+
+  catalog:
+    needs: publish
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/tools-catalog.yml

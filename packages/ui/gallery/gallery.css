@@ -50,3 +50,7 @@ h4 {
   background: var(--ld-surface);
   color: var(--ld-text);
 }
+
+.ld-select-trigger[data-gallery-state="Hover simulado"] {
+  border-color: var(--ld-text-muted);
+}

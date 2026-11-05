@@ -1,8 +1,11 @@
 import * as ui from "@lensdesk/ui";
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import * as icons from "lucide-react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Gallery } from "./Gallery.tsx";
+import { SelectionExamples } from "./SelectionExamples.tsx";
+
+Element.prototype.scrollIntoView = vi.fn();
 
 describe("galería", () => {
   it("incluye cada componente público en ambos temas", () => {
@@ -27,4 +30,29 @@ describe("galería", () => {
       }
     }
   });
+});
+
+it("consumidor genérico usa el default en normal/hover/foco/disabled/error/valor largo", async () => {
+  render(<SelectionExamples />);
+  const triggers = screen.getAllByRole("combobox");
+  expect(triggers).toHaveLength(6);
+  for (const trigger of triggers)
+    expect(trigger.querySelector(".ld-select-chevron")).toHaveAttribute("focusable", "false");
+  expect(screen.getByRole("combobox", { name: "Modo Deshabilitado" })).toBeDisabled();
+  expect(screen.getByRole("combobox", { name: "Modo Error" })).toHaveAccessibleDescription(
+    "Elige un modo disponible.",
+  );
+  expect(screen.getByRole("combobox", { name: "Modo Valor largo" })).toHaveTextContent(
+    "Modo de lectura con un nombre de proyecto deliberadamente largo",
+  );
+  const trigger = screen.getByRole("combobox", { name: "Modo Normal" });
+  trigger.focus();
+  fireEvent.keyDown(trigger, { key: "ArrowDown" });
+  const list = await screen.findByRole("listbox");
+  expect(within(list).getByRole("option", { name: "Opción no disponible" })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  fireEvent.keyDown(within(list).getByRole("option", { name: "Lectura" }), { key: "Escape" });
+  await waitFor(() => expect(trigger).toHaveFocus());
 });

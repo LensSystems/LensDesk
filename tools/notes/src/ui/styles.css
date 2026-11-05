@@ -507,11 +507,6 @@ body {
   gap: 8px;
 }
 
-.question-select > span:last-child {
-  color: var(--ld-text-muted);
-  font-size: 15px;
-}
-
 .private-note-card {
   position: relative;
   padding-left: 23px;

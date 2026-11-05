@@ -481,3 +481,19 @@
     }
   }
 }
+
+/* Public SelectTrigger default: custom icons keep their own orientation. */
+.ld-select-chevron {
+  transition: transform var(--ld-motion-fast) var(--ld-ease-out);
+}
+.ld-select-trigger[data-state="open"] .ld-select-chevron {
+  transform: rotate(180deg);
+}
+.ld-select-trigger:hover:not(:disabled):not([aria-invalid="true"]) {
+  border-color: var(--ld-text-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-select-chevron {
+    transition: none;
+  }
+}

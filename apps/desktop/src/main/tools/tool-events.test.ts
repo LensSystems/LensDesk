@@ -8,6 +8,6 @@ describe("tool removal events", () => {
     const emit = vi.fn();
     publishTabsChanged(readTabs, emit);
     expect(readTabs).toHaveBeenCalledOnce();
-    expect(emit).toHaveBeenCalledWith(tabs);
+    expect(emit).toHaveBeenCalledWith({ tabs, reason: "tool-removed" });
   });
 });

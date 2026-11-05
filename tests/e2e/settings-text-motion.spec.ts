@@ -1,56 +1,19 @@
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { setSetting } from "../../apps/desktop/src/main/db/settings-repo.ts";
 import { launchApp, shellPage } from "./helpers.ts";
+import { prepareRecentUpdateProfile } from "./profile.ts";
 
 type UpdateFixtureScope = typeof globalThis & {
   updateCheckFixture?: { calls: number; release(): void; restore(): void };
 };
 
-async function prepareProfile(profile: string): Promise<void> {
-  const database = new DatabaseSync(join(profile, "lensdesk.db"));
-  try {
-    database.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
-    database.exec(
-      "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL)",
-    );
-    const directory = resolve(import.meta.dirname, "../../apps/desktop/src/main/db/migrations");
-    const migrations = (await readdir(directory))
-      .flatMap((file) => {
-        const match = /^(\d+)_(.+)\.sql$/.exec(file);
-        const name = match?.[2];
-        return match && name ? [{ file, version: Number(match[1]), name }] : [];
-      })
-      .sort((left, right) => left.version - right.version);
-    for (const migration of migrations) {
-      const sql = await readFile(join(directory, migration.file), "utf8");
-      database.exec("BEGIN");
-      try {
-        database.exec(sql);
-        database
-          .prepare("INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)")
-          .run(migration.version, migration.name, new Date().toISOString());
-        database.exec("COMMIT");
-      } catch (error) {
-        database.exec("ROLLBACK");
-        throw error;
-      }
-    }
-    setSetting(database, "updates.check", true);
-    setSetting(database, "updates.lastCheckedAt", new Date().toISOString());
-  } finally {
-    database.close();
-  }
-}
-
 for (const reducedMotion of ["no-preference", "reduce"] as const) {
   test(`el texto de actualizaciones y los enlaces respetan movimiento ${reducedMotion}`, async () => {
     const profile = await mkdtemp(join(tmpdir(), "lensdesk-update-motion-"));
     try {
-      await prepareProfile(profile);
+      await prepareRecentUpdateProfile(profile);
       const app = await launchApp({ userDataDir: profile });
       try {
         const page = await shellPage(app);
@@ -74,9 +37,16 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
             },
           };
           scope.updateCheckFixture = fixture;
-          globalThis.fetch = async () => {
+          globalThis.fetch = async (input) => {
             fixture.calls++;
             await pending;
+            if (String(input) === "https://lenssystems.github.io/LensDesk/tools-catalog-v1.json")
+              return Response.json({
+                schemaVersion: 1,
+                repository: "LensSystems/LensDesk",
+                generatedAt: "2026-11-04T12:00:00.000Z",
+                releases: [],
+              });
             return new Response(
               JSON.stringify({
                 tag_name: "v0.0.1",
@@ -106,15 +76,15 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         });
         expect(await calls()).toBe(0);
         await page.getByRole("button", { name: "Buscar ahora", exact: true }).click();
-        await expect.poll(calls).toBe(1);
-        await expect(row).toContainText("Buscando…");
+        await expect.poll(calls).toBe(2);
+        await expect(row).toContainText("Buscando actualizaciones de LensDesk y herramientas…");
         await app.evaluate(() => (globalThis as UpdateFixtureScope).updateCheckFixture?.release());
         const version = await app.evaluate(({ app }) => app.getVersion());
-        const final = `LensDesk está actualizado (${version})`;
+        const final = `LensDesk ${version} está actualizado.`;
         await expect(
           row.locator("[data-swap-new]").getByText(final, { exact: true }),
         ).toBeVisible();
-        expect(await calls()).toBe(1);
+        expect(await calls()).toBe(2);
         const entries = () =>
           row.evaluate((element) => (element as HTMLElement & { entradas?: string[] }).entradas);
         if (reducedMotion === "reduce") expect(await entries()).toEqual([]);
@@ -123,7 +93,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
             .poll(entries)
             .toEqual([
               expect.stringMatching(
-                /^ld-text-in 0\.15s ease-out (LensDesk está actualizado|No se pudo comprobar)/,
+                /^ld-text-in 0\.15s ease-out (LensDesk .* está actualizado\.|No se pudo comprobar)/,
               ),
             ]);
         await app.evaluate(({ BrowserWindow }) => {

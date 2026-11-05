@@ -4,13 +4,16 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createHostBridge } from "../../../shared/host-channels.ts";
 import { rendererI18n } from "../i18n.ts";
 import { useShellStore } from "../state/store.ts";
+import { initialUpdateState } from "../state/update-state.ts";
 import { HeaderNotices } from "./HeaderNotices.tsx";
 import { SettingsPage } from "./SettingsPage.tsx";
+import { SettingsUpdateCheck } from "./SettingsUpdateCheck.tsx";
 
 const url = "https://github.com/o/r/releases/tag/v1.2.0";
 beforeEach(async () => {
   await rendererI18n.changeLanguage("es");
   useShellStore.setState({
+    ...initialUpdateState(),
     page: "tools",
     update: null,
     dismissedVersion: null,
@@ -61,7 +64,9 @@ it.each(["tools", "settings"] as const)(
     await waitFor(() => expect(row).toHaveAttribute("data-highlighted", "true"));
     expect(useShellStore.getState().page).toBe("settings");
     expect(scroll).toHaveBeenCalledWith({ block: "nearest" });
-    expect(screen.getByRole("link", { name: "Versión 1.2.0 disponible" })).toHaveFocus();
+    expect(
+      screen.getByRole("link", { name: "Versión 1.2.0 de LensDesk disponible" }),
+    ).toHaveFocus();
     expect(screen.queryByRole("button", { name: "Ir a Ajustes" })).toBeNull();
     expect(invoke).toHaveBeenCalledWith("settings.set", {
       key: "updates.dismissedVersion",
@@ -71,7 +76,9 @@ it.each(["tools", "settings"] as const)(
       timeout: 2000,
     });
     expect(row).toHaveClass("duration-160", "ease-out", "motion-reduce:transition-none");
-    expect(screen.getByRole("link", { name: "Versión 1.2.0 disponible" })).toHaveFocus();
+    expect(
+      screen.getByRole("link", { name: "Versión 1.2.0 de LensDesk disponible" }),
+    ).toHaveFocus();
     expect(useShellStore.getState().update?.version).toBe("1.2.0");
     unsubscribe();
   },
@@ -110,10 +117,39 @@ it("enfoca el enlace vigente aunque el texto anterior siga saliendo", async () =
       html_url: "https://github.com/o/r/releases/tag/v1.3.0",
     }),
   );
-  expect(document.querySelector(".ld-swap-old")).toHaveTextContent("Versión 1.2.0 disponible");
+  expect(document.querySelector(".ld-swap-old")).toHaveTextContent(
+    "Versión 1.2.0 de LensDesk disponible",
+  );
   fireEvent.click(screen.getByRole("button", { name: "Ir a Ajustes" }));
   await waitFor(() =>
-    expect(screen.getByRole("link", { name: "Versión 1.3.0 disponible" })).toHaveFocus(),
+    expect(
+      screen.getByRole("link", { name: "Versión 1.3.0 de LensDesk disponible" }),
+    ).toHaveFocus(),
   );
   unsubscribe();
+});
+
+it("espera la información de app para enfocar el control vigente sin robar foco al cambiar ajustes", async () => {
+  const bridge = createHostBridge(vi.fn(), () => () => {});
+  useShellStore.setState({ ...initialUpdateState(), updateSettingsRequest: 7 });
+  const view = render(
+    <TooltipProvider>
+      <SettingsUpdateCheck bridge={bridge} version="" enabled={false} ready={false} />
+    </TooltipProvider>,
+  );
+  expect(screen.getByRole("switch", { name: "Buscar actualizaciones" })).not.toHaveFocus();
+  view.rerender(
+    <TooltipProvider>
+      <SettingsUpdateCheck bridge={bridge} version="0.5.0" enabled ready />
+    </TooltipProvider>,
+  );
+  await waitFor(() => expect(screen.getByRole("button", { name: "Buscar ahora" })).toHaveFocus());
+  const toggle = screen.getByRole("switch", { name: "Buscar actualizaciones" });
+  toggle.focus();
+  view.rerender(
+    <TooltipProvider>
+      <SettingsUpdateCheck bridge={bridge} version="0.5.0" enabled={false} ready />
+    </TooltipProvider>,
+  );
+  expect(toggle).toHaveFocus();
 });

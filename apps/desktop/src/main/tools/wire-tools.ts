@@ -134,7 +134,7 @@ export function createToolWiring(options: {
           views?.close(id);
           publishTabsChanged(
             () => createTabsStore(db, () => undefined).list(),
-            (tabs) => options.shellContents()?.send("tabs.changed", { tabs }),
+            (payload) => options.shellContents()?.send("tabs.changed", payload),
           );
           options.onCatalogChanged?.();
           showActive();

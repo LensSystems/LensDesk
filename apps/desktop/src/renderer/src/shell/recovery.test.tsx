@@ -91,7 +91,7 @@ describe("recuperación del shell", () => {
       }),
     );
     fireEvent.click(await screen.findByRole("button", { name: "Ir a Ajustes" }));
-    const link = await screen.findByRole("link", { name: "Versión 2.0.0 disponible" });
+    const link = await screen.findByRole("link", { name: "Versión 2.0.0 de LensDesk disponible" });
     expect(useShellStore.getState().page).toBe("settings");
     expect(link).toHaveFocus();
     expect(screen.queryByRole("button", { name: "Descartar" })).toBeNull();

@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { extractPackage, generateKeyPair, packTool, verifyPackage } from "@lensdesk/lenspkg";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { openHostDatabase } from "../db/driver.ts";
+import { createTabsStore } from "../shell/tabs-store.ts";
 import { createToolInstaller } from "./installer.ts";
+import { publishTabsChanged } from "./tool-events.ts";
 
 const roots: string[] = [];
 async function temp() {
@@ -173,7 +175,10 @@ describe("tool installer", () => {
   it("remove conserva o elimina tool_kv e tool-data; FK borra open_tabs en cascada", async () => {
     const root = await temp();
     const { database, pair } = setup(root, true);
-    const onToolRemoved = vi.fn();
+    const emitTabs = vi.fn();
+    const onToolRemoved = vi.fn(() =>
+      publishTabsChanged(() => createTabsStore(database, () => {}).list(), emitTabs),
+    );
     const installer = createToolInstaller({
       database,
       userData: root,
@@ -192,6 +197,7 @@ describe("tool installer", () => {
     await mkdir(join(root, "tool-data/sample-tool"), { recursive: true });
     await installer.remove("sample-tool", false);
     expect(onToolRemoved).toHaveBeenCalledWith("sample-tool");
+    expect(emitTabs).toHaveBeenLastCalledWith({ tabs: [], reason: "tool-removed" });
     expect(database.prepare("SELECT tool_id FROM open_tabs").all()).toEqual([]);
     expect(database.prepare("SELECT tool_id FROM tool_kv").all()).toHaveLength(1);
     expect(await readdir(join(root, "tool-data/sample-tool"))).toEqual([]);

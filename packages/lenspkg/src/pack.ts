@@ -25,7 +25,11 @@ export async function zipDirectory(dir: string, outFile: string): Promise<void> 
 
 export async function packTool(
   toolDir: string,
-  options: { outFile: string; signing: { privateKeyPem: string; keyId: string } | null },
+  options: {
+    outFile: string;
+    signing: { privateKeyPem: string; keyId: string } | null;
+    reproducible?: boolean;
+  },
 ): Promise<void> {
   const paths: string[] = [];
   const walk = async (rel = ""): Promise<void> => {
@@ -52,7 +56,12 @@ export async function packTool(
   );
   files.sort((a, b) => compareCodeUnits(a.path, b.path));
   const zip = new yazl.ZipFile();
-  for (const file of files) zip.addFile(path.join(toolDir, file.path), file.path);
+  // La fecha DOS se construye en hora local y se omite el campo UTC para fijar los bytes
+  // también entre zonas horarias. Solo las publicaciones que lo solicitan fijan metadatos.
+  const metadata = options.reproducible
+    ? { mtime: new Date(2000, 0, 1), mode: 0o100644, forceDosTimestamp: true }
+    : undefined;
+  for (const file of files) zip.addFile(path.join(toolDir, file.path), file.path, metadata);
   if (options.signing) {
     const signature = {
       algorithm: "ed25519",
@@ -60,7 +69,7 @@ export async function packTool(
       files,
       signature: signFiles(options.signing.keyId, files, options.signing.privateKeyPem),
     };
-    zip.addBuffer(Buffer.from(JSON.stringify(signature), "utf8"), "signature.json");
+    zip.addBuffer(Buffer.from(JSON.stringify(signature), "utf8"), "signature.json", metadata);
   }
   await fs.mkdir(path.dirname(path.resolve(options.outFile)), { recursive: true });
   await new Promise<void>((resolve, reject) => {

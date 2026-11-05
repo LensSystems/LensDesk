@@ -3,11 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { enableDeveloperMode, installTool, launchApp, lenspkgPath, shellPage } from "./helpers.ts";
+import { prepareRecentUpdateProfile } from "./profile.ts";
 
 for (const width of [1280, 760]) {
   for (const theme of ["dark", "light"]) {
     test(`tarjetas y actualización a ${width}px en ${theme}`, async () => {
       const userDataDir = await mkdtemp(join(tmpdir(), "lensdesk-cards-"));
+      await prepareRecentUpdateProfile(userDataDir);
       const app = await launchApp({ userDataDir });
       try {
         const shell = await shellPage(app);
@@ -25,7 +27,7 @@ for (const width of [1280, 760]) {
         await installTool(app, shell, lenspkgPath("notes"), "Notas");
         await installTool(app, shell, lenspkgPath("md-converter"), "Convertidor");
         await expect(
-          shell.getByRole("region", { name: "Cómo funciona la actualización de herramientas" }),
+          shell.getByRole("region", { name: "Cómo actualizar tus herramientas" }),
         ).toHaveCount(0);
         await app.evaluate(({ BrowserWindow }) => {
           for (const window of BrowserWindow.getAllWindows()) {
@@ -33,14 +35,14 @@ for (const width of [1280, 760]) {
               tools: [
                 {
                   id: "md-converter",
-                  version: "0.3.0",
+                  version: "9.0.0",
                   url: "https://example.com/converter.lenspkg",
                 },
               ],
             });
           }
         });
-        await expect(shell.getByText("Versión 0.3.0 disponible", { exact: true })).toBeVisible();
+        await expect(shell.getByText("Versión 9.0.0 disponible", { exact: true })).toBeVisible();
         await expect(shell.getByRole("button", { name: "Descargar", exact: true })).toBeVisible();
         await expect(
           shell.getByRole("button", { name: "Instalar archivo…", exact: true }),

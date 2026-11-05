@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { type ElectronApplication, _electron as electron, type Page } from "@playwright/test";
 
+import { prepareRecentUpdateProfile } from "./profile.ts";
+
 const require = createRequire(import.meta.url);
 const desktopPath = resolve(import.meta.dirname, "../../apps/desktop");
 const toolsPath = resolve(import.meta.dirname, "../../tools");
@@ -18,9 +20,11 @@ export function lenspkgPath(toolDir: string): string {
 }
 
 export async function launchApp(
-  options: { userDataDir?: string } = {},
+  options: { userDataDir?: string; updatesCheckedRecently?: boolean } = {},
 ): Promise<ElectronApplication> {
   const userDataDir = options.userDataDir ?? (await mkdtemp(join(tmpdir(), "lensdesk-e2e-")));
+  // Fresh profiles skip the native startup check; explicit startup tests can opt out.
+  if (options.updatesCheckedRecently !== false) await prepareRecentUpdateProfile(userDataDir);
   return electron.launch({
     executablePath: require("electron") as string,
     args: [desktopPath],

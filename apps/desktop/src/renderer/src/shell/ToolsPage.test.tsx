@@ -35,9 +35,7 @@ it("muestra la guía y las acciones únicamente para actualizaciones instaladas"
       <ToolsPage bridge={bridge} />
     </TooltipProvider>,
   );
-  expect(
-    screen.queryByRole("heading", { name: "Cómo funciona la actualización de herramientas" }),
-  ).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Cómo actualizar tus herramientas" })).toBeNull();
   useShellStore.setState({
     toolUpdates: [
       { id: "template", version: "0.3.0", url: "https://example.com/template.lenspkg" },
@@ -49,10 +47,10 @@ it("muestra la guía y las acciones únicamente para actualizaciones instaladas"
     </TooltipProvider>,
   );
   const guide = screen.getByRole("region", {
-    name: "Cómo funciona la actualización de herramientas",
+    name: "Cómo actualizar tus herramientas",
   });
   expect(within(guide).getAllByRole("listitem")).toHaveLength(4);
-  expect(guide).toHaveTextContent("Una vez instalada, ya puedes abrirla desde su tarjeta.");
+  expect(guide).toHaveTextContent("Confirma la actualización de la herramienta.");
   expect(screen.queryByRole("button", { name: /Actualiza/ })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Descargar" }));
   expect(invoke).toHaveBeenCalledWith("app.openExternal", {
@@ -68,7 +66,5 @@ it("muestra la guía y las acciones únicamente para actualizaciones instaladas"
       <ToolsPage bridge={bridge} />
     </TooltipProvider>,
   );
-  expect(
-    screen.queryByRole("region", { name: "Cómo funciona la actualización de herramientas" }),
-  ).toBeNull();
+  expect(screen.queryByRole("region", { name: "Cómo actualizar tus herramientas" })).toBeNull();
 });

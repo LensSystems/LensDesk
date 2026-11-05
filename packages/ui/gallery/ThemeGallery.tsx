@@ -1,4 +1,11 @@
-import { TooltipProvider } from "@lensdesk/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  TooltipProvider,
+} from "@lensdesk/ui";
 import { useState } from "react";
 import { ControlExamples } from "./ControlExamples.tsx";
 import { OverlayExamples } from "./OverlayExamples.tsx";
@@ -20,16 +27,21 @@ export function ThemeGallery({ theme }: { theme: "light" | "dark" }) {
       onFocusCapture={activate}
     >
       <h2>Tema {theme === "light" ? "claro" : "oscuro"}</h2>
-      <label>
-        Acento
-        <select
+      <div className="mb-4 flex items-center gap-2">
+        <span>Acento</span>
+        <Select
           value={accent}
-          onChange={(event) => setAccent(event.target.value as "blue" | "green")}
+          onValueChange={(value) => setAccent(value === "green" ? "green" : "blue")}
         >
-          <option value="blue">Azul</option>
-          <option value="green">Verde</option>
-        </select>
-      </label>
+          <SelectTrigger aria-label={`Acento del tema ${theme}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="blue">Azul</SelectItem>
+            <SelectItem value="green">Verde</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <TooltipProvider>
         <ControlExamples />
         <SelectionExamples />

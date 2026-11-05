@@ -1,7 +1,6 @@
 import {
   Badge,
   Button,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -10,51 +9,70 @@ import {
 } from "@lensdesk/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { HostBridge, PendingDowngrade, ToolSummary } from "../../../shared/host-channels.ts";
+import type {
+  HostBridge,
+  IncompatibleToolUpdate,
+  PendingDowngrade,
+  ToolSummary,
+  UpdateSourceStatus,
+} from "../../../shared/host-channels.ts";
 import { ToolDowngradeDialog } from "./ToolDowngradeDialog.tsx";
+import { ToolRemoveForm } from "./ToolRemoveForm.tsx";
 import { ToolUpdateActions } from "./ToolUpdateActions.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
 export type ToolDialogState =
   | { kind: "details" | "remove"; tool: ToolSummary; returnFocus?: HTMLElement }
-  | { kind: "error"; code: string; install: boolean }
+  | { kind: "error"; code: string; install: boolean; returnFocus?: HTMLElement }
   | null;
 export function ToolDialogs({
   state,
   update,
+  incompatible,
+  status,
   onInstall,
   pending,
   bridge,
   onClose,
   onError,
+  onRemoved,
 }: {
   update?: import("../../../shared/host-channels.ts").ToolUpdate;
+  incompatible?: IncompatibleToolUpdate;
+  status?: UpdateSourceStatus;
   onInstall?: () => void;
   state: ToolDialogState;
   pending: PendingDowngrade | null;
   bridge: HostBridge;
   onClose: () => void;
-  onError: (code: string, install: boolean) => void;
+  onError: (code: string, install: boolean, returnFocus?: HTMLElement) => void;
+  onRemoved?: (id: string) => void;
 }) {
   const { t, i18n } = useTranslation();
-  const [deleteData, setDeleteData] = useState(false);
   const [downgradeOpen, setDowngradeOpen] = useState(false);
   const returnFocus = useRef<HTMLElement | undefined>(undefined);
-  if (state) returnFocus.current = "tool" in state ? state.returnFocus : undefined;
+  const closingKind = useRef(state?.kind);
+  if (state) {
+    returnFocus.current = state.returnFocus;
+    closingKind.current = state.kind;
+  }
   useEffect(() => {
     setDowngradeOpen(Boolean(pending));
   }, [pending]);
-  useEffect(() => {
-    if (state?.kind === "remove") setDeleteData(false);
-  }, [state]);
   const tool = state && "tool" in state ? state.tool : undefined;
   const name = tool ? toolText(tool, i18n.resolvedLanguage).name : "";
   const ToolIcon = toolIcon((tool?.manifest as { icon?: unknown } | undefined)?.icon);
   const permissions = (tool?.manifest as { permissions?: string[] } | undefined)?.permissions ?? [];
-  const remove = async (toolId: string) => {
+  const remove = async (toolId: string, deleteData: boolean) => {
+    const focus = returnFocus.current;
     onClose();
-    const result = await bridge.invoke("tools.remove", { toolId, deleteData });
-    if (!result.ok) onError(result.error.code, false);
+    try {
+      const result = await bridge.invoke("tools.remove", { toolId, deleteData });
+      if (!result.ok) onError(result.error.code, false, focus);
+      else onRemoved?.(toolId);
+    } catch {
+      onError("E_INTERNAL", false, focus);
+    }
   };
   const confirmDowngrade = async (target: PendingDowngrade) => {
     setDowngradeOpen(false);
@@ -75,9 +93,14 @@ export function ToolDialogs({
         <DialogContent
           {...(state?.kind === "details" ? { "aria-describedby": undefined } : {})}
           onCloseAutoFocus={(event) => {
-            if (returnFocus.current?.isConnected) {
+            const target = returnFocus.current?.isConnected
+              ? returnFocus.current
+              : closingKind.current !== "details"
+                ? document.querySelector<HTMLElement>("main h1")
+                : null;
+            if (target) {
               event.preventDefault();
-              returnFocus.current.focus();
+              target.focus();
             }
           }}
         >
@@ -109,7 +132,7 @@ export function ToolDialogs({
                     : t("toolsPage.noPermissions")}
                 </dd>
               </dl>
-              <ToolUpdateActions update={update} bridge={bridge} onInstall={onInstall} />
+              <ToolUpdateActions {...{ update, incompatible, status, bridge, onInstall }} />
               <div className="flex justify-end gap-2">
                 <Button size="lg" onClick={onClose}>
                   {t("ui.close")}
@@ -123,25 +146,11 @@ export function ToolDialogs({
               <DialogDescription className="text-muted">
                 {t("toolsPage.removeDescription")}
               </DialogDescription>
-              <label
-                htmlFor="delete-tool-data"
-                className="flex cursor-pointer items-center gap-3 rounded-ld-md border border-border bg-surface p-3 font-semibold"
-              >
-                <Checkbox
-                  id="delete-tool-data"
-                  checked={deleteData}
-                  onCheckedChange={setDeleteData}
-                />
-                {t("toolsPage.deleteData")}
-              </label>
-              <div className="flex justify-end gap-2">
-                <Button size="lg" onClick={onClose}>
-                  {t("toolsPage.cancel")}
-                </Button>
-                <Button size="lg" variant="danger" onClick={() => void remove(tool.id)}>
-                  {t("toolsPage.remove")}
-                </Button>
-              </div>
+              <ToolRemoveForm
+                key={tool.id}
+                onCancel={onClose}
+                onConfirm={(deleteData) => void remove(tool.id, deleteData)}
+              />
             </>
           )}
           {state?.kind === "error" && (

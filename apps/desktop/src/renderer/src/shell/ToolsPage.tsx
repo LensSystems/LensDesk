@@ -3,17 +3,25 @@ import { type DragEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { HostBridge, ToolSummary } from "../../../shared/host-channels.ts";
 import { useShellStore } from "../state/store.ts";
+import { installedUpdates } from "../state/update-state.ts";
 import { PageFrame } from "./PageFrame.tsx";
 import { ToolCard } from "./ToolCard.tsx";
 import { type ToolDialogState, ToolDialogs } from "./ToolDialogs.tsx";
 import { ToolUpdateGuide } from "./ToolUpdateGuide.tsx";
+import { ToolUpdateSourceNotice } from "./ToolUpdateSourceNotice.tsx";
+import { useRemovedToolFocus } from "./use-removed-tool-focus.ts";
 
 export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridge } = {}) {
   const { t } = useTranslation();
   const tools = useShellStore((state) => state.tools);
-  const updates = useShellStore((state) => state.toolUpdates);
+  const announced = useShellStore((state) => state.toolUpdates);
+  const blocked = useShellStore((state) => state.toolIncompatible);
+  const status = useShellStore((state) => state.updateSources?.tools.status);
+  const updates = installedUpdates(announced, tools);
+  const incompatible = installedUpdates(blocked, tools);
   const pending = useShellStore((state) => state.pendingDowngrade);
   const [dialog, setDialog] = useState<ToolDialogState>(null);
+  const onRemoved = useRemovedToolFocus(tools);
   const showToolDialog = (kind: "details" | "remove", tool: ToolSummary) => {
     const menu = document.activeElement?.closest('[role="menu"]');
     const trigger = document.getElementById(menu?.getAttribute("aria-labelledby") ?? "");
@@ -31,8 +39,8 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
     if (!result.ok && result.error.code === "E_DOWNGRADE_CONFIRM") return;
     if (!result.ok) setDialog({ kind: "error", code: result.error.code, install: true });
   };
-  const showError = (code: string, installing: boolean) =>
-    setDialog({ kind: "error", code, install: installing });
+  const showError = (code: string, installing: boolean, returnFocus?: HTMLElement) =>
+    setDialog({ kind: "error", code, install: installing, returnFocus });
   const act = async (call: () => ReturnType<HostBridge["invoke"]>) => {
     const result = await call();
     if (!result.ok) showError(result.error.code, false);
@@ -69,6 +77,10 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
           </Button>
         )}
       </div>
+      <ToolUpdateSourceNotice
+        status={status}
+        previous={updates.length > 0 || incompatible.length > 0}
+      />
       {tools.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
           <Puzzle aria-hidden size={44} className="text-muted" />
@@ -100,6 +112,8 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
               bridge={bridge}
               onInstall={() => void install("tools.pickAndInstall")}
               update={updates.find((update) => update.id === tool.id)}
+              incompatible={incompatible.find((update) => update.id === tool.id)}
+              status={status}
               onOpen={() => void act(() => bridge.invoke("tabs.open", { toolId: tool.id }))}
               actions={{
                 enabled: () =>
@@ -122,6 +136,10 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
         update={updates.find(
           (update) => dialog && "tool" in dialog && update.id === dialog.tool.id,
         )}
+        incompatible={incompatible.find(
+          (update) => dialog && "tool" in dialog && update.id === dialog.tool.id,
+        )}
+        status={status}
         onInstall={() => {
           setDialog(null);
           void install("tools.pickAndInstall");
@@ -130,6 +148,7 @@ export function ToolsPage({ bridge = window.lensdeskHost }: { bridge?: HostBridg
         bridge={bridge}
         onClose={() => setDialog(null)}
         onError={showError}
+        onRemoved={onRemoved}
       />
     </PageFrame>
   );

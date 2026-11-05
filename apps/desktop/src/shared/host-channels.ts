@@ -1,4 +1,10 @@
 import type { LensErrorCode, Result } from "@lensdesk/sdk/errors";
+import type {
+  IncompatibleToolUpdate,
+  ToolUpdate,
+  UpdateCheckResult,
+  UpdateSources,
+} from "./update-types.ts";
 
 export const HOST_CHANNELS = [
   "app.getInfo",
@@ -32,6 +38,7 @@ export const HOST_EVENTS = [
   "tools.toast",
   "update.available",
   "tools.updatesAvailable",
+  "updates.checked",
   "tool.crashed",
   "app.error",
   "window.fullScreenChanged",
@@ -102,18 +109,14 @@ export type HostResponses = {
   "app.openExternal": Record<string, never>;
   "updates.checkNow": UpdateCheckResult;
 };
-export type ToolUpdate = { id: string; version: string; url: string };
-export type UpdateCheckResult =
-  | { kind: "skipped" }
-  | { kind: "none"; tools?: ToolUpdate[] }
-  | { kind: "error" }
-  | {
-      kind: "available";
-      version: string;
-      url: string;
-      installerUrl?: string;
-      tools?: ToolUpdate[];
-    };
+export type {
+  AppUpdateInfo,
+  IncompatibleToolUpdate,
+  ToolUpdate,
+  UpdateCheckResult,
+  UpdateSourceStatus,
+  UpdateSources,
+} from "./update-types.ts";
 export type PendingDowngrade = {
   toolId: string;
   installedVersion: string;
@@ -139,7 +142,7 @@ export type HostEventPayloads = {
   "window.fullScreenChanged": { fullScreen: boolean };
   "settings.changed": { key: HostSettingKey; value: HostSettingValue };
   "context.changed": { locale: "es" | "en"; theme: "dark" | "light"; accent: "blue" | "green" };
-  "tabs.changed": { tabs: ShellTab[] };
+  "tabs.changed": { tabs: ShellTab[]; reason?: "tool-removed" };
   "tabs.closedForLimit": { toolId: string; openedToolId?: string };
   "tools.changed": ToolState;
   "tools.toast": { toolId: string; kind: string; message: string };
@@ -150,7 +153,12 @@ export type HostEventPayloads = {
     tools?: ToolUpdate[];
   };
   // Se emite también con la app al día; una lista vacía limpia avisos anteriores.
-  "tools.updatesAvailable": { tools: ToolUpdate[] };
+  "tools.updatesAvailable": {
+    tools: ToolUpdate[];
+    status?: UpdateSources["tools"]["status"];
+    incompatible?: IncompatibleToolUpdate[];
+  };
+  "updates.checked": { sources: UpdateSources };
   "tool.crashed": { toolId: string };
   "app.error": { kind: "uncaught" | "rejection" };
 };
