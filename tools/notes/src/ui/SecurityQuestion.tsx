@@ -1,11 +1,4 @@
-import {
-  ChevronDown,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lensdesk/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@lensdesk/ui";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { SecretField } from "./SecretField.tsx";
@@ -40,11 +33,7 @@ export function SecurityQuestion({
           {t("vault.question", { number: index + 1 })}
         </label>
         <Select value={question} onValueChange={onQuestion}>
-          <SelectTrigger
-            id={id}
-            className="question-select h-[38px] w-full gap-1.5 bg-bg pr-2.5 text-[13px]"
-            icon={<ChevronDown size={15} className="text-muted" />}
-          >
+          <SelectTrigger id={id} className="h-[38px] w-full gap-1.5 bg-bg pr-2.5 text-[13px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

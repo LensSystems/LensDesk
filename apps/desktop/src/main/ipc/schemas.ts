@@ -2,14 +2,11 @@ import { z } from "zod";
 import type { HostChannel } from "../../shared/host-channels.ts";
 import { isHttpsUrl } from "../app-actions.ts";
 import { type SettingKey, settingSchemas } from "../db/settings-repo.ts";
+import { updateCheckResultSchema } from "./update-schemas.ts";
 
 export const closedForLimitSchema = z
   .object({ toolId: z.string().min(1), openedToolId: z.string().min(1).optional() })
   .strict();
-
-const toolUpdatesSchema = z.array(
-  z.object({ id: z.string(), version: z.string(), url: z.string().refine(isHttpsUrl) }).strict(),
-);
 
 const settingKeySchema = z.enum(Object.keys(settingSchemas) as [SettingKey, ...SettingKey[]]);
 
@@ -145,19 +142,6 @@ export const ipcSchemas = {
   },
   "updates.checkNow": {
     request: z.object({}).strict(),
-    response: z.discriminatedUnion("kind", [
-      z.object({ kind: z.literal("skipped") }).strict(),
-      z.object({ kind: z.literal("none"), tools: toolUpdatesSchema.optional() }).strict(),
-      z.object({ kind: z.literal("error") }).strict(),
-      z
-        .object({
-          kind: z.literal("available"),
-          version: z.string(),
-          url: z.string().refine(isHttpsUrl),
-          installerUrl: z.string().refine(isHttpsUrl).optional(),
-          tools: toolUpdatesSchema.optional(),
-        })
-        .strict(),
-    ]),
+    response: updateCheckResultSchema,
   },
 } satisfies Record<HostChannel, { request: z.ZodType; response: z.ZodType }>;

@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { _electron as electron, expect, test } from "@playwright/test";
 
+import { prepareRecentUpdateProfile } from "./profile.ts";
 import { checkSingleInstance } from "./single-instance-check.ts";
 
 const root = resolve(import.meta.dirname, "../..");
@@ -72,6 +73,7 @@ test("la app instalada permite configurar el inicio de sesión", async () => {
         )
       : resolve(root, "apps/desktop/release/win-unpacked/LensDesk.exe");
   const userData = await mkdtemp(resolve(tmpdir(), "lensdesk-login-"));
+  await prepareRecentUpdateProfile(userData);
   const app = await electron.launch({
     executablePath,
     env: { ...process.env, LENSDESK_USER_DATA: userData },

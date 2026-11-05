@@ -1,0 +1,152 @@
+name: Release tool
+
+on:
+  push:
+    tags:
+      - "*-v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tool-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.repository == 'LensSystems/LensDesk' && github.ref_type == 'tag'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require integrated source
+        run: git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main
+        shell: bash
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        shell: bash
+      - name: Resolve tool
+        id: tool
+        run: node packages/lenspkg/src/tool-release-cli.ts resolve
+        shell: bash
+      - name: Lint
+        run: pnpm lint
+        shell: bash
+      - name: Typecheck
+        run: pnpm typecheck
+        shell: bash
+      - name: Unit tests
+        run: pnpm test
+        shell: bash
+      - name: Build selected tool
+        env:
+          TOOL_DIRECTORY: ${{ steps.tool.outputs.directory }}
+        run: pnpm --dir "$TOOL_DIRECTORY" build
+        shell: bash
+      - name: Verify signed fixture without release secrets
+        run: node packages/lenspkg/src/tool-release-cli.ts dry-run
+        shell: bash
+
+  sign:
+    needs: verify
+    runs-on: macos-latest
+    environment: tool-releases
+    outputs:
+      artifact: ${{ steps.artifact.outputs.name }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require integrated source
+        run: git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main
+        shell: bash
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        shell: bash
+      - name: Resolve tool
+        id: tool
+        run: node packages/lenspkg/src/tool-release-cli.ts resolve
+        shell: bash
+      - name: Build selected tool
+        env:
+          TOOL_DIRECTORY: ${{ steps.tool.outputs.directory }}
+        run: pnpm --dir "$TOOL_DIRECTORY" build
+        shell: bash
+      - name: Sign and verify selected tool
+        env:
+          LENSPKG_SIGNING_KEY: ${{ secrets.LENSPKG_SIGNING_KEY }}
+        run: node packages/lenspkg/src/tool-release-cli.ts prepare
+        shell: bash
+      - name: Name verified artifact
+        id: artifact
+        run: echo "name=tool-release-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+        shell: bash
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: release-tool/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: sign
+    runs-on: macos-latest
+    environment: tool-releases
+    permissions:
+      contents: write
+    outputs:
+      published: ${{ steps.publish.outputs.published }}
+      catalog_release_tag: ${{ steps.publish.outputs.catalog_release_tag }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require integrated source
+        run: git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main
+        shell: bash
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        shell: bash
+      - uses: actions/download-artifact@v7.0.0
+        with:
+          name: ${{ needs.sign.outputs.artifact }}
+          path: release-tool
+      - name: Publish verified release
+        id: publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node packages/lenspkg/src/tool-release-cli.ts publish
+        shell: bash
+
+  catalog:
+    needs: publish
+    if: needs.publish.outputs.published == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/tools-catalog.yml

@@ -63,7 +63,7 @@ for (const width of [1280, 760]) {
   test(`centra las pestañas y protege los laterales a ${width}px incluso durante el arrastre`, async () => {
     test.setTimeout(90_000);
     const directory = await mkdtemp(join(tmpdir(), "lensdesk-tabs-center-"));
-    const app = await launchApp();
+    const app = await launchApp({ updatesCheckedRecently: true });
     try {
       const shell = await shellPage(app);
       const window = await app.browserWindow(shell);

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { UpdateFetch } from "./check.ts";
+import type { UpdateHttpFetch } from "./network.ts";
 import { createUpdateService } from "./update-service.ts";
 
 const now = () => new Date("2026-10-15T12:00:00.000Z");
@@ -7,18 +7,19 @@ function setup(options: {
   repo?: string;
   enabled?: boolean;
   lastCheckedAt?: string | null;
-  fetch?: UpdateFetch;
+  fetch?: UpdateHttpFetch;
 }) {
   const fetch =
     options.fetch ??
-    vi.fn<UpdateFetch>(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        tag_name: "v1.0.0",
-        html_url: "https://github.com/o/r/releases/v1.0.0",
-      }),
-    }));
+    vi.fn<UpdateHttpFetch>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            tag_name: "v1.0.0",
+            html_url: "https://github.com/o/r/releases/tag/v1.0.0",
+          }),
+        ),
+    );
   const setLastCheckedAt = vi.fn();
   const emit = vi.fn();
   const log = vi.fn();
@@ -41,7 +42,7 @@ function setup(options: {
 describe("servicio de actualizaciones", () => {
   it("con el repositorio de la app (vacío) no hace red ni guarda nada", async () => {
     const { service, fetch, setLastCheckedAt, emit } = setup({ repo: __RELEASES_REPO__ });
-    await expect(service.run(true)).resolves.toEqual({ kind: "skipped" });
+    await expect(service.run(true)).resolves.toMatchObject({ kind: "skipped" });
     expect(fetch).not.toHaveBeenCalled();
     expect(setLastCheckedAt).not.toHaveBeenCalled();
     expect(emit).not.toHaveBeenCalled();
@@ -49,7 +50,7 @@ describe("servicio de actualizaciones", () => {
 
   it("forzar no salta el ajuste desactivado", async () => {
     const { service, fetch } = setup({ enabled: false });
-    await expect(service.run(true)).resolves.toEqual({ kind: "skipped" });
+    await expect(service.run(true)).resolves.toMatchObject({ kind: "skipped" });
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -58,7 +59,7 @@ describe("servicio de actualizaciones", () => {
     await service.run();
     expect(emit).toHaveBeenCalledWith({
       version: "1.0.0",
-      html_url: "https://github.com/o/r/releases/v1.0.0",
+      html_url: "https://github.com/o/r/releases/tag/v1.0.0",
     });
     expect(setLastCheckedAt).toHaveBeenCalledWith("2026-10-15T12:00:00.000Z");
   });
@@ -77,9 +78,12 @@ describe("servicio de actualizaciones", () => {
         throw new Error("sin red");
       }),
     });
-    await expect(service.run()).resolves.toEqual({ kind: "error" });
+    await expect(service.run()).resolves.toMatchObject({
+      kind: "error",
+      sources: { app: { status: "error" } },
+    });
     expect(emit).not.toHaveBeenCalled();
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("sin red"));
+    expect(log).toHaveBeenCalledWith("App update source failed");
   });
 
   it("dos búsquedas a la vez comparten una sola consulta y la siguiente vuelve a consultar", async () => {

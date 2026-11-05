@@ -7,6 +7,45 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Sin publicar]
 
+## [0.5.0] - 2026-11-04
+
+Preparación de la publicación: LensDesk y sus herramientas pueden actualizarse por separado.
+
+### Para actualizar
+
+- Instala LensDesk 0.5.0 y, por separado, los paquetes nuevos de Notas y Convertidor 0.4.1 para
+  recibir sus componentes de interfaz actualizados. Actualizar solo LensDesk no modifica las
+  herramientas instaladas. Los datos se conservan.
+
+### Añadido
+
+- Consulta independiente de la release de LensDesk y del catálogo oficial de herramientas, con
+  resultados por fuente, conservación de resultados anteriores cuando falla una consulta y
+  reconciliación local al instalar o quitar herramientas sin repetir peticiones.
+- Selección de la mayor versión compatible para cada herramienta instalada, con aviso separado
+  si existe una posterior incompatible. Navegación desde el recuento a Herramientas con foco y
+  resultados conservados al volver a Ajustes.
+- Publicación genérica por tags de herramienta, validación de paquetes y metadatos antes de
+  publicar, reanudación idempotente y catálogo completo con despliegue protegido mediante Pages.
+  Requiere configuración inicial del mantenedor; esta preparación no implica despliegue.
+
+### Cambiado
+
+- Las releases de app adjuntan copias de paquetes oficiales firmados compatibles con host 0.4.0
+  y API 1 para clientes antiguos; no vuelven a construir ni firmar herramientas.
+- Indicador vectorial compartido en los selectores de LensDesk y Notas: orientación visible al
+  abrir/cerrar, teclado, foco y movimiento reducido. Disponible por defecto para herramientas
+  que reutilicen `@lensdesk/ui`.
+- Versiones independientes: app y empaquetador 0.5.0, UI y herramientas recompiladas 0.4.1;
+  SDK 0.4.0/API 1 sin cambios y plantilla inicial 0.1.0.
+
+### Corregido
+
+- Quitar una herramienta desde Herramientas conserva esa página, sus tarjetas o estado vacío y
+  un foco válido, incluso si hay otras pestañas activas o la herramienta quitada no tenía pestaña.
+- Los fallos parciales de actualización no se presentan como éxito ni eliminan resultados
+  válidos de la otra fuente; una comprobación autoritativa sin novedades limpia avisos anteriores.
+
 ## [0.4.0] - 2026-11-03
 
 Mejoras de accesibilidad, lectura y respuesta de la interfaz en Ajustes, Notas y el Convertidor.
@@ -167,7 +206,8 @@ Primera versión pública.
 - Instaladores `.dmg`, `.zip` y `.exe` publicados por la CI con `SHA256SUMS.txt` y las
   herramientas firmadas.
 
-[Sin publicar]: https://github.com/LensSystems/LensDesk/compare/v0.4.0...HEAD
+[Sin publicar]: https://github.com/LensSystems/LensDesk/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/LensSystems/LensDesk/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/LensSystems/LensDesk/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/LensSystems/LensDesk/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/LensSystems/LensDesk/compare/v0.1.0...v0.2.0

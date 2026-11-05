@@ -5,7 +5,7 @@ const release = "https://github.com/LensSystems/LensDesk/releases";
 
 for (const width of [1100, 760]) {
   test(`el aviso de versión cabe en la cabecera a ${width}px`, async () => {
-    const app = await launchApp();
+    const app = await launchApp({ updatesCheckedRecently: true });
     try {
       const shell = await shellPage(app);
       const window = await app.browserWindow(shell);

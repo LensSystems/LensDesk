@@ -8,6 +8,8 @@ import type {
   ToolSummary,
 } from "../../../shared/host-channels.ts";
 import { rendererI18n } from "../i18n.ts";
+import { createUpdateSlice, type UpdateSlice } from "./update-slice.ts";
+import { isOlderVersion, reconcileUpdateTools } from "./update-state.ts";
 
 type SettingValues = {
   locale: "es" | "en";
@@ -28,17 +30,15 @@ export type ShellToast = {
 const maxToasts = 3;
 const toastKinds = ["success", "error", "info"] as const;
 let nextToastId = 1;
-type State = {
+type State = UpdateSlice & {
   fullScreen: boolean;
   tabs: ShellTab[];
   tools: ToolSummary[];
-  toolUpdates: HostEventPayloads["tools.updatesAvailable"]["tools"];
   pendingDowngrade: PendingDowngrade | null;
   settings: SettingValues;
   context: HostEventPayloads["context.changed"];
   page: "tools" | "settings" | "tab";
   toasts: ShellToast[];
-  update: HostEventPayloads["update.available"] | null;
   dismissedVersion: string | null;
   updateSettingsRequest: number;
   showUpdateSettings: (bridge: HostBridge) => Promise<void>;
@@ -61,29 +61,16 @@ const defaults: SettingValues = {
 // Cuenta los eventos recibidos por campo: si uno llega mientras hydrate espera, su dato es más
 // reciente que la respuesta de hydrate y no se pisa.
 const eventCounts = { tabs: 0, settings: 0, context: 0, fullScreen: 0 };
-// Compara x.y.z (sin preversiones; la anunciada siempre es x.y.z).
-function isOlderVersion(installed: string, announced: string): boolean {
-  const parse = (value: string) => value.split(/[-+]/)[0]?.split(".").map(Number) ?? [];
-  const [a, b] = [parse(installed), parse(announced)];
-  for (let index = 0; index < 3; index++) {
-    const left = a[index] ?? 0;
-    const right = b[index] ?? 0;
-    if (left !== right) return left < right;
-  }
-  return false;
-}
-
 export const useShellStore = create<State>((set, get) => ({
+  ...createUpdateSlice(set, get),
   fullScreen: false,
   tabs: [],
   tools: [],
-  toolUpdates: [],
   pendingDowngrade: null,
   settings: defaults,
   context: { locale: "es", theme: "dark", accent: "blue" },
   page: "tools",
   toasts: [],
-  update: null,
   dismissedVersion: null,
   updateSettingsRequest: 0,
   crashedToolId: null,
@@ -196,7 +183,7 @@ export const useShellStore = create<State>((set, get) => ({
         eventCounts.fullScreen += 1;
         set({ fullScreen });
       }),
-      bridge.on("tabs.changed", ({ tabs }) => {
+      bridge.on("tabs.changed", ({ tabs, reason }) => {
         eventCounts.tabs += 1;
         const { tabs: before, page } = get();
         // Solo reordenar (mismas pestañas y activa, otro orden) no saca de Herramientas ni de
@@ -205,7 +192,7 @@ export const useShellStore = create<State>((set, get) => ({
         const reordered =
           entries(before).join() !== entries(tabs).join() &&
           entries(before).sort().join() === entries(tabs).sort().join();
-        if (page !== "tab" && reordered) set({ tabs });
+        if (page !== "tab" && (reordered || reason === "tool-removed")) set({ tabs });
         else
           set({
             tabs,
@@ -215,6 +202,7 @@ export const useShellStore = create<State>((set, get) => ({
       }),
       bridge.on("settings.changed", ({ key, value }) => {
         eventCounts.settings += 1;
+        if (key === "updates.check" && value === false) get().markUpdatesUnchecked();
         if (key === "updates.dismissedVersion")
           set({ dismissedVersion: typeof value === "string" ? value : null });
         if (
@@ -253,15 +241,12 @@ export const useShellStore = create<State>((set, get) => ({
         set((state) => ({
           tools,
           pendingDowngrade,
-          // El aviso sigue mientras la versión instalada sea menor que la anunciada.
-          toolUpdates: state.toolUpdates.filter((update) => {
-            const tool = tools.find((tool) => tool.id === update.id);
-            return !!tool && isOlderVersion(tool.version, update.version);
-          }),
+          ...reconcileUpdateTools(state, tools),
         })),
       ),
-      bridge.on("tools.updatesAvailable", ({ tools }) => set({ toolUpdates: tools })),
-      bridge.on("update.available", (update) => set({ update })),
+      bridge.on("tools.updatesAvailable", (payload) => get().receiveToolUpdates(payload)),
+      bridge.on("update.available", (update) => get().receiveAppUpdate(update)),
+      bridge.on("updates.checked", ({ sources }) => get().receiveUpdateSources(sources)),
       bridge.on("tools.toast", ({ toolId, kind, message }) =>
         useShellStore
           .getState()

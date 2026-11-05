@@ -1,0 +1,67 @@
+name: Tools catalog
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      initialize_catalog:
+        description: "Confirmo que Pages está reservado a este catálogo y no aloja otro sitio"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+  pages: read
+
+concurrency:
+  group: lensdesk-tools-catalog
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'LensSystems/LensDesk'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        shell: bash
+      - name: Verify ownership and rebuild complete catalog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CATALOG_INITIALIZE: ${{ github.event_name == 'workflow_dispatch' && inputs.initialize_catalog }}
+        run: node packages/lenspkg/src/tools-catalog-cli.ts build-site
+        shell: bash
+      - uses: actions/configure-pages@v5.0.0
+        with:
+          enablement: false
+      - uses: actions/upload-pages-artifact@v4.0.0
+        with:
+          path: catalog-site
+
+  deploy:
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    # El ref/OIDC conserva el tag del caller. El usuario debe permitir main y los patrones
+    # de tags v[0-9]*.[0-9]*.[0-9]* y *-v[0-9]*.[0-9]*.[0-9]* con protección/revisión.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4.0.5
+        id: deployment

@@ -14,7 +14,13 @@ import {
   Trash2,
 } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
-import type { HostBridge, ToolSummary, ToolUpdate } from "../../../shared/host-channels.ts";
+import type {
+  HostBridge,
+  IncompatibleToolUpdate,
+  ToolSummary,
+  ToolUpdate,
+  UpdateSourceStatus,
+} from "../../../shared/host-channels.ts";
 import { ToolUpdateActions } from "./ToolUpdateActions.tsx";
 import { toolIcon } from "./tool-icons.ts";
 import { toolText } from "./tool-name.ts";
@@ -23,6 +29,8 @@ type Actions = { enabled: () => void; details: () => void; remove: () => void };
 export function ToolCard({
   tool,
   update,
+  incompatible,
+  status,
   onOpen,
   actions,
   bridge,
@@ -30,6 +38,8 @@ export function ToolCard({
 }: {
   tool: ToolSummary;
   update?: ToolUpdate;
+  incompatible?: IncompatibleToolUpdate;
+  status?: UpdateSourceStatus;
   onOpen: () => void;
   actions: Actions;
   bridge: HostBridge;
@@ -44,7 +54,7 @@ export function ToolCard({
       className={`flex min-w-0 flex-col overflow-hidden rounded-ld-lg border bg-surface ${tool.enabled ? "border-border" : "border-dashed border-border-control"}`}
     >
       <div
-        className={`flex flex-1 flex-col gap-3 min-[900px]:gap-4 px-5 pt-5 ${update ? "pb-3 min-[900px]:pb-4" : "pb-5"}`}
+        className={`flex flex-1 flex-col gap-3 min-[900px]:gap-4 px-5 pt-5 ${update || incompatible ? "pb-3 min-[900px]:pb-4" : "pb-5"}`}
       >
         <div className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-3 @min-[48rem]:grid-cols-[auto_1fr_auto]">
           <div
@@ -105,10 +115,16 @@ export function ToolCard({
           </Badge>
         </div>
       </div>
-      {update && (
+      {(update || incompatible) && (
         <div className="ld-tool-update mt-auto">
           <div>
-            <ToolUpdateActions update={update} bridge={bridge} onInstall={onInstall} />
+            <ToolUpdateActions
+              update={update}
+              incompatible={incompatible}
+              status={status}
+              bridge={bridge}
+              onInstall={onInstall}
+            />
           </div>
         </div>
       )}

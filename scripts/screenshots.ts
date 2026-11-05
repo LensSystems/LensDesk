@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { _electron as electron, expect } from "@playwright/test";
 import { enableDeveloperMode, stubDialog, toolPage } from "../tests/e2e/helpers.ts";
+import { prepareRecentUpdateProfile } from "../tests/e2e/profile.ts";
 import type { Bitmap } from "./screenshot-images.ts";
 import { composeBitmaps, differentPixels } from "./screenshot-images.ts";
 
@@ -200,6 +201,9 @@ async function run() {
     const temporary = await mkdtemp(join(tmpdir(), "lensdesk-screenshots-"));
     let app: ElectronApplication | undefined;
     try {
+      const profile = join(temporary, "profile");
+      await mkdir(profile);
+      await prepareRecentUpdateProfile(profile);
       app = await electron.launch({
         executablePath: require("electron") as string,
         // Dibujado por software y sin repintados parciales: los bordes suavizados no varían entre
@@ -212,7 +216,7 @@ async function run() {
         ],
         env: {
           ...process.env,
-          LENSDESK_USER_DATA: join(temporary, "profile"),
+          LENSDESK_USER_DATA: profile,
           LENSDESK_DEV_TOOLS_DIR: "",
           ELECTRON_RENDERER_URL: "",
         },

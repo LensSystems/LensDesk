@@ -1,82 +1,71 @@
-import { Check, CircleAlert, Download, ExternalLink, LoaderCircle, SwapText } from "@lensdesk/ui";
+import { LoaderCircle, SwapText } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import type {
   HostBridge,
   HostEventPayloads,
-  UpdateCheckResult,
+  UpdateSources,
 } from "../../../shared/host-channels.ts";
+import { SettingsAppUpdateStatus } from "./SettingsAppUpdateStatus.tsx";
+import { SettingsToolUpdateStatus } from "./SettingsToolUpdateStatus.tsx";
 
 type Props = {
   bridge: HostBridge;
   version: string;
   checking: boolean;
-  result: UpdateCheckResult | null;
+  sources: UpdateSources | null;
   update: HostEventPayloads["update.available"] | null;
+  enabled: boolean;
 };
-
-export function SettingsUpdateStatus({ bridge, version, checking, result, update }: Props) {
-  const { t } = useTranslation();
-  const linkClass =
-    "inline-flex items-center gap-2 rounded-ld-sm text-accent underline ld-update-link";
-  if (!checking && !update && result?.kind !== "none" && result?.kind !== "error") return null;
+export function SettingsUpdateStatus({
+  bridge,
+  version,
+  checking,
+  sources,
+  update,
+  enabled,
+}: Props) {
+  const { t, i18n } = useTranslation();
+  if (!checking && !sources && !update) return null;
+  const current = sources ?? {
+    app: { status: "success" as const, update },
+    tools: { status: "not-checked" as const, updates: [], incompatible: [] },
+  };
+  const state: UpdateSources = enabled
+    ? current
+    : {
+        app: { ...current.app, status: "not-checked" },
+        tools: { ...current.tools, status: "not-checked" },
+      };
   return (
     <div
       role="status"
-      className="ld-selectable mt-2 flex items-center gap-4 text-[13px] leading-5 font-semibold text-muted empty:hidden"
+      aria-live="polite"
+      aria-atomic="true"
+      className="ld-selectable mt-2 min-w-0 [overflow-wrap:anywhere] text-[13px] leading-5 font-semibold text-muted"
     >
       <SwapText
-        className="gap-4"
-        value={JSON.stringify([checking, result, update, version, t("settingsPage.checking")])}
+        className="w-full min-w-0"
+        value={
+          checking
+            ? `checking:${i18n.resolvedLanguage}`
+            : JSON.stringify([state, version, i18n.resolvedLanguage])
+        }
       >
-        {checking && (
-          <span className="inline-flex items-center gap-2">
+        {checking ? (
+          <span className="flex min-w-0 items-start gap-2">
             <LoaderCircle
               aria-hidden
               size={16}
-              className="animate-spin motion-reduce:animate-none"
+              className="mt-0.5 shrink-0 animate-spin motion-reduce:animate-none"
             />
-            {t("settingsPage.checking")}
+            <span>{t("settingsPage.checking")}</span>
+          </span>
+        ) : (
+          <span className="flex w-full min-w-0 flex-col gap-2">
+            <SettingsAppUpdateStatus bridge={bridge} version={version} source={state.app} />
+            {sources && <SettingsToolUpdateStatus bridge={bridge} source={state.tools} />}
           </span>
         )}
-        {update ? (
-          <>
-            <a
-              data-update-download
-              href={update.installerUrl ?? update.html_url}
-              className={linkClass}
-              onClick={(event) => {
-                event.preventDefault();
-                void bridge.invoke("app.openExternal", {
-                  url: update.installerUrl ?? update.html_url,
-                });
-              }}
-            >
-              <Download aria-hidden size={16} />
-              {t("settingsPage.updateAvailable", { version: update.version })}
-            </a>
-            <a
-              href={update.html_url}
-              className={linkClass}
-              onClick={(event) => {
-                event.preventDefault();
-                void bridge.invoke("app.openExternal", { url: update.html_url });
-              }}
-            >
-              <ExternalLink aria-hidden size={16} className="ld-update-arrow" />
-              {t("recovery.viewUpdate")}
-            </a>
-          </>
-        ) : !checking && result?.kind === "none" ? (
-          <span className="inline-flex items-center gap-2 text-success">
-            <Check aria-hidden size={16} />
-            {t("settingsPage.upToDate", { version })}
-          </span>
-        ) : !checking && result?.kind === "error" ? (
-          <span className="inline-flex items-center gap-2 text-danger">
-            <CircleAlert aria-hidden size={16} />
-            {t("settingsPage.updateError")}
-          </span>
-        ) : null}
       </SwapText>
     </div>
   );

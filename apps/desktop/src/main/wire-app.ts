@@ -34,6 +34,7 @@ export function wireAppServices(options: {
   arch?: string;
   installedTools?: Parameters<typeof createUpdateService>[0]["installedTools"];
   emitTools?: Parameters<typeof createUpdateService>[0]["emitTools"];
+  emitChecked?: Parameters<typeof createUpdateService>[0]["emitChecked"];
   emitUpdate: Parameters<typeof createUpdateService>[0]["emit"];
   showSaveDialog(options: {
     defaultPath: string;
@@ -49,6 +50,7 @@ export function wireAppServices(options: {
     arch: options.arch,
     installedTools: options.installedTools,
     emitTools: options.emitTools,
+    emitChecked: options.emitChecked,
     currentVersion: options.currentVersion,
     fetch: options.fetch,
     now: () => new Date(),

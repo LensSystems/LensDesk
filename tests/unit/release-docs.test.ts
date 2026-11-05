@@ -1,6 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { parseToolReleaseTag } from "../../packages/lenspkg/src/publishing/source.ts";
+import { toolManifestSchema } from "../../packages/sdk/src/manifest.ts";
 
 const root = resolve(import.meta.dirname, "../..");
 const ci = readFileSync(resolve(root, ".github/workflows/ci.yml"), "utf8");
@@ -29,12 +31,24 @@ describe("documentación de CI y publicación", () => {
     expect(workflows).toContain("actions/upload-artifact@v7.0.2");
   });
 
-  test("el workflow de publicación firma solo las herramientas publicadas", () => {
+  test("la app conserva snapshots firmados originales y el workflow independiente firma la selección", () => {
     expect(release).toMatch(/tags:\s*\n\s*-\s*["']?v\*\.\*\*?["']?/);
-    expect(release.match(/secrets\.LENSPKG_SIGNING_KEY/g)).toHaveLength(1);
-    expect(release).toContain("tools/notes/dist");
-    expect(release).toContain("tools/md-converter/dist");
+    const toolRelease = readFileSync(resolve(root, ".github/workflows/release-tool.yml"), "utf8");
+    expect(release).not.toContain("secrets.LENSPKG_SIGNING_KEY");
+    expect(release).not.toContain("cli.ts pack");
+    expect(release).toContain("tools-catalog-cli.ts snapshots");
+    expect(toolRelease.match(/secrets\.LENSPKG_SIGNING_KEY/g)).toHaveLength(1);
+    expect(toolRelease).toContain("tool-release-cli.ts prepare");
     expect(release).toContain("softprops/action-gh-release@v3.0.3");
+  });
+
+  test("el tag de app se valida antes de instalar y compilar, sin afectar tags de herramientas", () => {
+    const guard = release.indexOf("node scripts/check-app-release.ts");
+    expect(guard).toBeGreaterThan(release.indexOf("actions/setup-node@"));
+    expect(guard).toBeLessThan(release.indexOf("pnpm install"));
+    expect(guard).toBeLessThan(release.indexOf("pnpm dist"));
+    const toolRelease = readFileSync(resolve(root, ".github/workflows/release-tool.yml"), "utf8");
+    expect(toolRelease).not.toContain("check-app-release.ts");
   });
 
   test("las sumas de verificación usan solo el nombre de cada archivo publicado", () => {
@@ -67,11 +81,29 @@ describe("documentación de CI y publicación", () => {
       (JSON.parse(readFileSync(resolve(root, path), "utf8")) as { version: string }).version;
     const app = version("package.json");
     expect(version("apps/desktop/package.json")).toBe(app);
-    for (const tool of ["notes", "md-converter"]) {
-      expect(version(`tools/${tool}/lensdesk.tool.json`)).toBe(
-        version(`tools/${tool}/package.json`),
+    const toolVersions: string[] = [];
+    const ids = new Set<string>();
+    for (const tool of readdirSync(resolve(root, "tools"), { withFileTypes: true }).filter(
+      (entry) => entry.isDirectory(),
+    )) {
+      const manifest = toolManifestSchema.parse(
+        JSON.parse(readFileSync(resolve(root, `tools/${tool.name}/lensdesk.tool.json`), "utf8")),
       );
+      expect(manifest.version).toBe(version(`tools/${tool.name}/package.json`));
+      expect(parseToolReleaseTag(`component-v${manifest.version}`).version).toBe(manifest.version);
+      expect(ids.has(manifest.id)).toBe(false);
+      ids.add(manifest.id);
+      toolVersions.push(manifest.version);
     }
+    expect([...ids]).toEqual(expect.arrayContaining(["notes", "md-converter", "template"]));
+    const internalVersions = [
+      "packages/sdk/package.json",
+      "packages/ui/package.json",
+      "packages/lenspkg/package.json",
+    ].map(version);
+    for (const value of [app, ...toolVersions, ...internalVersions])
+      expect(parseToolReleaseTag(`component-v${value}`).version).toBe(value);
+    expect(new Set([app, ...toolVersions, ...internalVersions]).size).toBeGreaterThan(1);
     const changelog = readFileSync(resolve(root, "CHANGELOG.md"), "utf8");
     expect(changelog).toContain(`## [${app}] - `);
     expect(changelog).toContain(`[${app}]: https://github.com/LensSystems/LensDesk/`);

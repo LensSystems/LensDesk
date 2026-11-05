@@ -91,14 +91,14 @@ describe("assets de actualización", () => {
     });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
-  it("emite herramientas aunque la app esté al día", async () => {
+  it("no usa assets de Latest como fallback de herramientas de otro repositorio", async () => {
     const emit = vi.fn();
     const emitTools = vi.fn();
     const fetch = fetchRelease([asset("notes-0.2.0.lenspkg")]);
     const service = createUpdateService({
       repo: "o/r",
       currentVersion: "0.2.0",
-      fetch,
+      fetch: async () => new Response(JSON.stringify(await (await fetch()).json())),
       now: base.now,
       installedTools: () => [{ id: "notes", version: "0.1.0" }],
       settings: { enabled: () => true, lastCheckedAt: () => null, setLastCheckedAt: vi.fn() },
@@ -108,14 +108,11 @@ describe("assets de actualización", () => {
     });
     await expect(service.run()).resolves.toMatchObject({
       kind: "none",
-      tools: [{ id: "notes", version: "0.2.0" }],
+      tools: [],
+      sources: { tools: { status: "not-checked" } },
     });
     expect(emit).not.toHaveBeenCalled();
-    expect(emitTools).toHaveBeenCalledWith({
-      tools: [
-        { id: "notes", version: "0.2.0", url: asset("notes-0.2.0.lenspkg").browser_download_url },
-      ],
-    });
+    expect(emitTools).toHaveBeenCalledWith({ tools: [], incompatible: [], status: "not-checked" });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

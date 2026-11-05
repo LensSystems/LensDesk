@@ -1,56 +1,49 @@
 import { IconButton, RefreshCw, Switch } from "@lensdesk/ui";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { HostBridge, UpdateCheckResult } from "../../../shared/host-channels.ts";
+import type { HostBridge } from "../../../shared/host-channels.ts";
 import { useShellStore } from "../state/store.ts";
 import { SettingsRow } from "./SettingsRow.tsx";
 import { SettingsUpdateStatus } from "./SettingsUpdateStatus.tsx";
 
-type Props = { bridge: HostBridge; version: string; enabled: boolean };
+type Props = { bridge: HostBridge; version: string; enabled: boolean; ready?: boolean };
 
-export function SettingsUpdateCheck({ bridge, version, enabled }: Props) {
+export function SettingsUpdateCheck({ bridge, version, enabled, ready = true }: Props) {
   const { t } = useTranslation();
   const descriptionId = useId();
   const row = useRef<HTMLDivElement>(null);
   const update = useShellStore((state) => state.update);
   const request = useShellStore((state) => state.updateSettingsRequest);
   const updatesCheck = useShellStore((state) => state.settings.updatesCheck);
-  const [result, setResult] = useState<UpdateCheckResult | null>(null);
-  const [checking, setChecking] = useState(false);
+  const sources = useShellStore((state) => state.updateSources);
+  const checking = useShellStore((state) => state.updateChecking);
+  const checkUpdates = useShellStore((state) => state.checkUpdates);
   const [highlighted, setHighlighted] = useState(false);
+  const focusedRequest = useRef(0);
   useEffect(() => {
     if (!request) return;
     setHighlighted(true);
     row.current?.scrollIntoView?.({ block: "nearest" });
-    row.current
-      // La copia saliente del texto es inerte: el foco va al enlace vigente.
-      ?.querySelector<HTMLAnchorElement>("[data-update-download]:not([inert] *)")
-      ?.focus({ preventScroll: true });
     const timer = setTimeout(() => setHighlighted(false), 1200);
     return () => clearTimeout(timer);
   }, [request]);
-  const check = async () => {
-    if (checking) return;
-    setChecking(true);
-    setResult(null);
-    try {
-      const response = await bridge.invoke("updates.checkNow", {});
-      const next = response.ok ? response.data : { kind: "error" as const };
-      setResult(next);
-      if (next.kind === "available")
-        useShellStore.setState({
-          update: {
-            version: next.version,
-            html_url: next.url,
-            installerUrl: next.installerUrl,
-          },
-        });
-    } catch {
-      setResult({ kind: "error" });
-    } finally {
-      setChecking(false);
-    }
-  };
+  useEffect(() => {
+    // Wait for app info so the requested destination control exists on a fresh page.
+    // Later toggles/retries must not steal focus from the user's current control.
+    if (!request || focusedRequest.current === request) return;
+    // A known app link already exists before app.getInfo completes; preserve its focus.
+    const download = row.current?.querySelector<HTMLElement>(
+      "[data-update-download]:not([inert] *)",
+    );
+    if (!download && !ready) return;
+    focusedRequest.current = request;
+    const target =
+      download ??
+      row.current?.querySelector<HTMLElement>(
+        "[data-update-check]:not(:disabled), [data-update-toggle]",
+      );
+    target?.focus({ preventScroll: true });
+  }, [request, ready]);
   return (
     <SettingsRow
       controlsClassName="gap-3"
@@ -66,21 +59,24 @@ export function SettingsUpdateCheck({ bridge, version, enabled }: Props) {
           bridge={bridge}
           version={version}
           checking={checking}
-          result={result}
+          sources={sources}
+          enabled={enabled}
           update={update}
         />
       }
     >
       {enabled && (
         <IconButton
+          data-update-check
           label={t("settingsPage.checkNow")}
           disabled={checking}
-          onClick={() => void check()}
+          onClick={() => void checkUpdates(bridge)}
         >
           <RefreshCw aria-hidden size={16} />
         </IconButton>
       )}
       <Switch
+        data-update-toggle
         aria-label={t("settingsPage.checkUpdates")}
         aria-describedby={descriptionId}
         checked={updatesCheck}

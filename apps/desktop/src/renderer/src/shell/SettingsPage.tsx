@@ -126,6 +126,7 @@ export function SettingsPage({ bridge }: SettingsPageProps) {
           <SettingsUpdateCheck
             bridge={bridge}
             version={version ?? ""}
+            ready={info !== null || states.info?.error === true}
             enabled={!!info?.releasesRepo && settings.updatesCheck}
           />
           <SettingsLoginItem bridge={bridge} />
