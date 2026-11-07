@@ -1,0 +1,178 @@
+import { z } from "zod";
+
+export const money = z.number().int().min(0).max(9_000_000_000_000);
+export const quantity = z.number().int().min(0).max(1_000_000_000);
+const name = z.string().trim().min(1).max(120);
+const uuid = z.uuid();
+export const productSchema = z.strictObject({
+  id: uuid.optional(),
+  name,
+  category: name,
+  kind: z.enum(["simple", "material", "prepared"]),
+  unit: z.enum(["piece", "g"]),
+  price: money,
+  minStock: quantity,
+});
+export const recipeSchema = z.strictObject({
+  productId: uuid,
+  materialId: uuid,
+  grams: quantity.refine((n) => n > 0),
+  packagingId: uuid.nullable(),
+});
+export const settingsSchema = z.strictObject({
+  name: z.string().trim().max(120),
+  address: z.string().trim().max(300),
+  phone: z.string().trim().max(40),
+  thanks: z.string().trim().max(300),
+  banks: z
+    .array(
+      z.strictObject({
+        id: uuid,
+        bank: name,
+        holder: name,
+        clabe: z.string().regex(/^\d{18}$/),
+      }),
+    )
+    .max(20),
+});
+export const commandSchema = z.strictObject({
+  key: uuid,
+  revision: z.number().int().min(0),
+  action: z.discriminatedUnion("type", [
+    z.strictObject({ type: z.literal("saveProduct"), product: productSchema }),
+    z.strictObject({ type: z.literal("setActive"), id: uuid, active: z.boolean() }),
+    z.strictObject({ type: z.literal("saveRecipe"), recipe: recipeSchema }),
+    z.strictObject({
+      type: z.literal("receive"),
+      productId: uuid,
+      qty: quantity.refine((n) => n > 0),
+      cost: money,
+      method: z.enum(["cash", "transfer"]),
+      bankId: uuid.nullable(),
+    }),
+    z.strictObject({
+      type: z.literal("adjust"),
+      productId: uuid,
+      count: quantity,
+      reason: z.string().trim().min(1).max(500),
+      waste: z.boolean(),
+    }),
+    z.strictObject({
+      type: z.literal("prepare"),
+      productId: uuid,
+      qty: quantity.refine((n) => n > 0),
+    }),
+    z.strictObject({ type: z.literal("saveSettings"), settings: settingsSchema }),
+  ]),
+});
+export type Command = z.infer<typeof commandSchema>;
+export type Action = Command["action"];
+export type ProductInput = z.infer<typeof productSchema>;
+export type Settings = z.infer<typeof settingsSchema>;
+export type Product = Required<ProductInput> & {
+  stock: number;
+  value: number;
+  lastValue: number;
+  lastQty: number;
+  active: boolean;
+};
+export type Recipe = z.infer<typeof recipeSchema>;
+export type Movement = {
+  id: string;
+  productId: string;
+  qty: number;
+  value: number;
+  kind: "purchase" | "adjustment" | "waste" | "preparation";
+  referenceId: string;
+  reason: string;
+  at: string;
+  date: string;
+};
+export type Purchase = {
+  id: string;
+  productId: string;
+  qty: number;
+  cost: number;
+  method: "cash" | "transfer";
+  bankId: string | null;
+  at: string;
+  date: string;
+};
+export type Snapshot = {
+  revision: number;
+  settings: Settings;
+  products: Product[];
+  recipes: Recipe[];
+  movements: Movement[];
+  purchases: Purchase[];
+};
+export const issueSchema = z.strictObject({
+  code: z.enum([
+    "E_NOT_FOUND",
+    "E_PRODUCT_NAME",
+    "E_PREPARED_PURCHASE",
+    "E_INACTIVE",
+    "E_STOCK",
+    "E_RECIPE",
+    "E_KIND",
+    "E_COST",
+    "E_NO_CHANGE",
+    "E_REVISION",
+    "E_DUPLICATE",
+    "E_LIMIT",
+    "E_BANK",
+  ]),
+  productId: uuid.optional(),
+});
+export type VentasIssue = z.infer<typeof issueSchema>;
+export type VentasResult<T> = { kind: "ok"; value: T } | { kind: "rejected"; issue: VentasIssue };
+export const mutationResultSchema = z.discriminatedUnion("kind", [
+  z.strictObject({
+    kind: z.literal("ok"),
+    value: z.strictObject({ id: uuid, revision: z.number().int().min(0) }),
+  }),
+  z.strictObject({ kind: z.literal("rejected"), issue: issueSchema }),
+]);
+export type MutationResult = z.infer<typeof mutationResultSchema>;
+export const snapshotResultSchema = z.strictObject({
+  kind: z.literal("ok"),
+  value: z.strictObject({
+    revision: z.number().int().nonnegative(),
+    settings: settingsSchema,
+    products: z.array(
+      productSchema.required().extend({
+        stock: quantity,
+        value: money,
+        lastValue: money,
+        lastQty: quantity.refine((n) => n > 0),
+        active: z.boolean(),
+      }),
+    ),
+    recipes: z.array(recipeSchema),
+    movements: z.array(
+      z.strictObject({
+        id: uuid,
+        productId: uuid,
+        qty: z.number().int(),
+        value: z.number().int(),
+        kind: z.enum(["purchase", "adjustment", "waste", "preparation"]),
+        referenceId: uuid,
+        reason: z.string(),
+        at: z.iso.datetime(),
+        date: z.iso.date(),
+      }),
+    ),
+    purchases: z.array(
+      z.strictObject({
+        id: uuid,
+        productId: uuid,
+        qty: quantity,
+        cost: money,
+        method: z.enum(["cash", "transfer"]),
+        bankId: uuid.nullable(),
+        at: z.iso.datetime(),
+        date: z.iso.date(),
+      }),
+    ),
+  }),
+});

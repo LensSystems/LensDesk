@@ -1,0 +1,189 @@
+@import "tailwindcss";
+@import "@lensdesk/ui/styles.css";
+
+.ventas-app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ld-text);
+  background: var(--ld-surface-raised);
+  font-size: 13px;
+}
+.ventas-app :focus-visible {
+  outline: 2px solid var(--ld-accent);
+  outline-offset: 2px;
+}
+.ventas-app h1 {
+  font-size: 16px;
+  font-weight: 750;
+}
+.ventas-app h2 {
+  font-size: 14px;
+  font-weight: 700;
+}
+.ventas-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--ld-border);
+  flex-shrink: 0;
+}
+.ventas-nav nav {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 3px;
+  background: var(--ld-surface);
+  border-radius: var(--ld-radius-xl);
+}
+.ventas-sale {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+}
+.ventas-catalog {
+  min-width: 0;
+  overflow-y: auto;
+  padding: 20px;
+}
+.ventas-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  padding-top: 20px;
+}
+.ventas-product {
+  min-height: 140px;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-lg);
+  padding: 14px;
+  background: var(--ld-surface-raised);
+}
+.ventas-cart {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border-left: 1px solid var(--ld-border);
+  background: var(--ld-surface);
+  overflow-y: auto;
+}
+.ventas-cart-lines {
+  flex: 1;
+  border-block: 1px solid var(--ld-border);
+  padding-block: 16px;
+}
+.ventas-cart-lines h2 {
+  margin-bottom: 12px;
+}
+.ventas-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 240px;
+  padding: 32px;
+  text-align: center;
+}
+.ventas-empty p {
+  color: var(--ld-text-muted);
+  max-width: 48ch;
+}
+.ventas-inventory {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.ventas-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ventas-table-wrap {
+  flex-shrink: 0;
+  overflow-x: auto;
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-lg);
+}
+.ventas-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.ventas-table-wrap th,
+.ventas-table-wrap td {
+  padding: 12px;
+  border-bottom: 1px solid var(--ld-border);
+  vertical-align: top;
+}
+.ventas-table-wrap thead {
+  background: var(--ld-surface);
+}
+.ventas-table-wrap tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.ventas-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 220px;
+}
+.ventas-settings {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px;
+}
+.ventas-settings > h1,
+.ventas-settings > p,
+.ventas-settings > form {
+  width: min(100%, 640px);
+  margin-inline: auto;
+}
+.ventas-settings > p {
+  margin-block: 8px 24px;
+}
+@media (max-width: 800px) {
+  .ventas-nav {
+    padding: 8px;
+  }
+  .ventas-nav > span {
+    display: none;
+  }
+  .ventas-sale {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .ventas-catalog,
+  .ventas-cart,
+  .ventas-inventory {
+    padding: 12px;
+  }
+}
+@media (max-width: 600px) {
+  .ventas-sale {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .ventas-catalog,
+  .ventas-cart {
+    overflow: visible;
+  }
+  .ventas-cart {
+    border-left: 0;
+    border-top: 1px solid var(--ld-border);
+  }
+}
