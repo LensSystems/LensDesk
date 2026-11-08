@@ -312,7 +312,7 @@ describe("Ventas full backup and restoration", () => {
     expect(() => decode(new Uint8Array(MAX_BACKUP_BYTES + 1))).toThrow("E_BACKUP_LIMIT");
     expect(() => encode("é".repeat(MAX_BACKUP_BYTES))).toThrow("E_BACKUP_LIMIT");
     const source = readDataset(db);
-    expect(() => validateBackup({ ...source, modelVersion: 6 }, f.ctx.signal)).toThrow(
+    expect(() => validateBackup({ ...source, modelVersion: 7 }, f.ctx.signal)).toThrow(
       "E_BACKUP_FORMAT",
     );
   });

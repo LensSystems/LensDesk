@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@lensdesk/ui/styles.css";
+@import "./settings.css";
 
 .ventas-app {
   height: 100dvh;

@@ -30,6 +30,7 @@ describe("Ventas UI", () => {
     );
     expect(await screen.findByText(es.emptyInventory)).toBeInTheDocument();
     fireEvent.mouseDown(screen.getByRole("tab", { name: es.nav.settings }));
+    fireEvent.click(screen.getByRole("button", { name: es.editBusiness }));
     expect(screen.getByLabelText(es.businessName)).toHaveValue("");
   });
   it("submits a real product command with integer cents and refreshes the inventory", async () => {
@@ -92,9 +93,11 @@ describe("Ventas UI", () => {
   });
   it("recovers a saved operation by refreshing only, while blocking stale mutations", async () => {
     const f = fixture();
+    Object.assign(f.data.settings, { ownerName: "Propietaria", address: "Calle", phone: "123" });
     f.mount();
     await screen.findByText(es.emptyCatalog);
     fireEvent.mouseDown(screen.getByRole("tab", { name: es.nav.settings }));
+    fireEvent.click(screen.getByRole("button", { name: es.editBusiness }));
     fireEvent.change(screen.getByLabelText(es.businessName), { target: { value: "Tienda" } });
     const invoke = f.invoke.getMockImplementation();
     if (!invoke) throw new Error("Missing fixture implementation");
@@ -103,25 +106,33 @@ describe("Ventas UI", () => {
       f.invoke.mockRejectedValueOnce(new Error("snapshot unavailable"));
       return result;
     });
-    fireEvent.click(screen.getByRole("button", { name: es.saveSettings }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(es.errors.E_REFRESH_REQUIRED);
-    expect(screen.getByRole("button", { name: es.saveSettings })).toBeDisabled();
-    const form = screen.getByRole("button", { name: es.saveSettings }).closest("form");
+    fireEvent.click(screen.getByRole("button", { name: es.saveBusinessData }));
+    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent(
+      es.errors.E_REFRESH_REQUIRED,
+    );
+    expect(screen.getByRole("button", { name: es.saveBusinessData })).toBeDisabled();
+    const form = screen.getByRole("button", { name: es.saveBusinessData }).closest("form");
     if (!form) throw new Error("Missing settings form");
     fireEvent.submit(form);
     expect(f.invoke.mock.calls.filter(([method]) => method === "execute")).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: es.retry }));
-    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
-    expect(screen.getByRole("button", { name: es.saveSettings })).toBeEnabled();
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: es.retry }));
+    await waitFor(() => expect(screen.queryAllByRole("alert")).toHaveLength(0));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: es.editBusiness })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: es.editBusiness }));
+    expect(screen.getByRole("button", { name: es.saveBusinessData })).toBeEnabled();
     expect(screen.getByLabelText(es.businessName)).toHaveValue("Tienda");
     expect(f.invoke.mock.calls.filter(([method]) => method === "execute")).toHaveLength(1);
     expect(f.invoke.mock.calls.filter(([method]) => method === "snapshot")).toHaveLength(3);
   });
   it("retains the original uncertain command and key when a different form is submitted", async () => {
     const f = fixture();
+    Object.assign(f.data.settings, { ownerName: "Propietaria", address: "Calle", phone: "123" });
     f.mount();
     await screen.findByText(es.emptyCatalog);
     fireEvent.mouseDown(screen.getByRole("tab", { name: es.nav.settings }));
+    fireEvent.click(screen.getByRole("button", { name: es.editBusiness }));
     fireEvent.change(screen.getByLabelText(es.businessName), { target: { value: "Original" } });
     const invoke = f.invoke.getMockImplementation();
     if (!invoke) throw new Error("Missing fixture implementation");
@@ -132,16 +143,20 @@ describe("Ventas UI", () => {
         throw new Error("response lost after commit");
       })
       .mockImplementationOnce(async () => saved);
-    fireEvent.click(screen.getByRole("button", { name: es.saveSettings }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(es.errors.E_OPERATION_PENDING);
+    fireEvent.click(screen.getByRole("button", { name: es.saveBusinessData }));
+    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toHaveTextContent(
+      es.errors.E_OPERATION_PENDING,
+    );
     const original = f.invoke.mock.calls.find(([method]) => method === "execute")?.[1];
     fireEvent.change(screen.getByLabelText(es.businessName), {
       target: { value: "Changed draft" },
     });
-    fireEvent.click(screen.getByRole("button", { name: es.saveSettings }));
+    fireEvent.click(screen.getByRole("button", { name: es.saveBusinessData }));
     expect(f.invoke.mock.calls.filter(([method]) => method === "execute")).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: es.retryOperation }));
-    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: es.retryOperation }),
+    );
+    await waitFor(() => expect(screen.queryAllByRole("alert")).toHaveLength(0));
     const commands = f.invoke.mock.calls.filter(([method]) => method === "execute");
     expect(commands).toHaveLength(2);
     expect(commands[1]?.[1]).toEqual(original);
@@ -216,7 +231,7 @@ describe("Ventas UI", () => {
     expect(screen.queryByText(es.loading)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: es.retry }));
     expect(await screen.findByText(es.emptyCatalog)).toBeInTheDocument();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryAllByRole("alert")).toHaveLength(0);
     expect(f.invoke.mock.calls.filter(([method]) => method === "snapshot")).toHaveLength(2);
   });
 });

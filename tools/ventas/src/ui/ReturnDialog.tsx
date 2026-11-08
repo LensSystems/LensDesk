@@ -2,6 +2,7 @@ import { Input, Notice } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { SaleDetail } from "../shared/history-contracts.ts";
+import { bankLabel, defaultBank } from "../shared/values.ts";
 import { Choice } from "./Choice.tsx";
 import { moneyText, saleFolio } from "./format.ts";
 import { OperationModal } from "./OperationModal.tsx";
@@ -24,7 +25,7 @@ export function ReturnDialog({
     ),
     [restock, setRestock] = useState("yes"),
     [method, setMethod] = useState("cash"),
-    [bank, setBank] = useState(props.data.settings.banks[0]?.id ?? "none"),
+    [bank, setBank] = useState(defaultBank(props.data.settings) ?? "none"),
     [reference, setReference] = useState("");
   let amount = 0n;
   for (const l of available) {
@@ -119,7 +120,7 @@ export function ReturnDialog({
                   }}
                   options={[
                     { value: "none", label: t("selectBank") },
-                    ...props.data.settings.banks.map((b) => ({ value: b.id, label: b.bank })),
+                    ...props.data.settings.banks.map((b) => ({ value: b.id, label: bankLabel(b) })),
                   ]}
                 />
               ) : !props.data.cash ? (

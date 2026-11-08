@@ -1,6 +1,7 @@
 import { Button, Notice } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { defaultBank } from "../shared/values.ts";
 import { ConfirmSaleDialog } from "./ConfirmSaleDialog.tsx";
 import { DraftTicket } from "./DraftTicket.tsx";
 import { moneyText } from "./format.ts";
@@ -13,7 +14,7 @@ export function CheckoutPage({
   ...props
 }: ScreenProps & { total: number; onBack: () => void }) {
   const { t, i18n } = useTranslation(),
-    [value, setValue] = useState(() => newPayment(total)),
+    [value, setValue] = useState(() => newPayment(total, defaultBank(props.data.settings))),
     [confirm, setConfirm] = useState(false);
   const payment = paymentValue(value, true),
     client = props.data.clients.find((c) => c.id === props.data.draft.clientId);

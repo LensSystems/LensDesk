@@ -2,7 +2,14 @@ import { z } from "zod";
 import { correctionActionSchemas } from "./corrections-contracts.ts";
 import { tradingActionSchemas, tradingSnapshotShape } from "./trading-contracts.ts";
 import type { Settings } from "./values.ts";
-import { money, entityName as name, quantity, settingsSchema, uuid } from "./values.ts";
+import {
+  money,
+  entityName as name,
+  quantity,
+  settingsInputSchema,
+  settingsSchema,
+  uuid,
+} from "./values.ts";
 
 export type { Settings } from "./values.ts";
 export { money, quantity, settingsSchema } from "./values.ts";
@@ -49,7 +56,7 @@ export const commandSchema = z.strictObject({
       productId: uuid,
       qty: quantity.refine((n) => n > 0),
     }),
-    z.strictObject({ type: z.literal("saveSettings"), settings: settingsSchema }),
+    z.strictObject({ type: z.literal("saveSettings"), settings: settingsInputSchema }),
     ...tradingActionSchemas,
     ...correctionActionSchemas,
   ]),

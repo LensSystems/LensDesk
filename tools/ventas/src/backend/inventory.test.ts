@@ -78,7 +78,7 @@ describe("Ventas inventory", () => {
     db.close();
     db = openVentasDatabase(dir);
     expect(product(id)).toMatchObject({ stock: 4, value: 333 });
-    expect(db.all("SELECT * FROM schema_migrations")).toHaveLength(5);
+    expect(db.all("SELECT * FROM schema_migrations")).toHaveLength(6);
     expect(db.get<{ foreign_keys: number }>("PRAGMA foreign_keys")?.foreign_keys).toBe(1);
   });
   it("rejects duplicate product names on create and edit, including inactive names", () => {

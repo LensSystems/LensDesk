@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { statementSchema } from "../shared/history-contracts.ts";
+import { bankLabel, defaultBank } from "../shared/values.ts";
 import { Choice } from "./Choice.tsx";
 import { Pager } from "./Pager.tsx";
 import { QueryNotice } from "./QueryNotice.tsx";
@@ -10,7 +11,7 @@ import { useOffset } from "./use-offset.ts";
 import { useQuery } from "./use-query.ts";
 export function StatementView({ clientId, ...props }: ScreenProps & { clientId: string }) {
   const { t } = useTranslation(),
-    [bank, setBank] = useState(props.data.settings.banks[0]?.id ?? "none");
+    [bank, setBank] = useState(defaultBank(props.data.settings) ?? "none");
   const key = JSON.stringify([clientId, bank, props.data.revision]);
   const [salesOffset, setSalesOffset] = useOffset(key),
     [paymentOffset, setPaymentOffset] = useOffset(key),
@@ -36,7 +37,7 @@ export function StatementView({ clientId, ...props }: ScreenProps & { clientId: 
         onChange={setBank}
         options={[
           { value: "none", label: t("noBankSelected") },
-          ...props.data.settings.banks.map((b) => ({ value: b.id, label: b.bank })),
+          ...props.data.settings.banks.map((b) => ({ value: b.id, label: bankLabel(b) })),
         ]}
       />
       <QueryNotice

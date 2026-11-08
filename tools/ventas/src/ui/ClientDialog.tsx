@@ -14,6 +14,7 @@ export function ClientDialog({
   ...props
 }: ScreenProps & { client?: ClientRecord; close: () => void; onSaved?: (id: string) => void }) {
   const { t } = useTranslation();
+  const [term] = useState(() => client?.term ?? props.data.settings.defaultTerm ?? 15);
   const [limit, setLimit] = useState(
     client?.limit === null || !client ? "" : (client.limit / 100).toFixed(2),
   );
@@ -51,7 +52,7 @@ export function ClientDialog({
         min={1}
         max={30}
         required
-        defaultValue={client?.term ?? 15}
+        defaultValue={term}
       />
       <MoneyInput label={t("creditLimit")} value={limit} onChange={setLimit} required={false} />
     </OperationModal>

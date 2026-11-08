@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { entityName, money, quantity, settingsSchema, uuid } from "./values.ts";
+import {
+  entityName,
+  money,
+  quantity,
+  settingsInputSchema,
+  settingsSchema,
+  uuid,
+} from "./values.ts";
 
 export const clientInputSchema = z.strictObject({
   id: uuid.optional(),
@@ -70,7 +77,7 @@ export const saleSchema = z.strictObject({
   folio: z.number().int().positive(),
   clientId: uuid.nullable(),
   clientSnapshot: clientSchema.nullable(),
-  business: settingsSchema,
+  business: settingsInputSchema,
   lines: z.array(saleLineSchema).max(1000),
   total: money,
   term: z.number().int().min(0).max(30),

@@ -35,7 +35,7 @@ export type Dataset = z.infer<typeof datasetSchema>;
 export const nativeBackupSchema = z.strictObject({
   format: z.literal("lensdesk-ventas-native-backup"),
   version: z.literal(1),
-  modelVersion: z.literal(5),
+  modelVersion: z.union([z.literal(5), z.literal(6)]),
   createdAt: z.iso.datetime(),
   toolVersion: z.literal("0.1.0"),
   revision: z.number().int().nonnegative().safe(),

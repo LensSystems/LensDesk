@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { beforeAll, beforeEach, expect, it } from "vitest";
@@ -37,6 +37,7 @@ async function open(f: ReturnType<typeof fixture>) {
   fireEvent.mouseDown(
     within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.settings }),
   );
+  fireEvent.mouseDown(screen.getByRole("tab", { name: es.settingsCategory.backups }));
   fireEvent.click(screen.getByRole("button", { name: es.chooseBackup }));
   await screen.findByText("web.json");
   const trigger = screen.getByRole("button", { name: es.restoreBackup });
@@ -78,10 +79,17 @@ it("projects strict restoration parameters and only reloads after confirmed rest
   expect(await screen.findByRole("alert")).toHaveTextContent(es.errors.E_REFRESH_REQUIRED);
   await waitFor(() => expect(trigger).toHaveFocus());
   fireEvent.click(screen.getByRole("button", { name: es.retry }));
+  fireEvent.mouseDown(screen.getByRole("tab", { name: es.settingsCategory.business }));
+  await waitFor(() => expect(screen.getByRole("button", { name: es.editBusiness })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: es.editBusiness }));
   await waitFor(() =>
     expect(screen.getByLabelText(es.businessName)).toHaveValue("Negocio recuperado"),
   );
   expect(confirmCount).toBe(1);
+  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: es.close }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  fireEvent.mouseDown(screen.getByRole("tab", { name: es.settingsCategory.backups }));
+  expect(trigger).toBeInTheDocument();
   fireEvent.click(trigger);
   expect(
     within(screen.getByRole("dialog")).getByRole("button", { name: es.confirmRestore }),
@@ -203,4 +211,38 @@ it("releases a terminal source-read failure, invalidates the old preview, and al
   expect(
     within(screen.getByRole("dialog")).getByRole("button", { name: es.confirmRestore }),
   ).toBeEnabled();
+});
+
+it("keeps preparation state across categories without focusing hidden controls or preparing twice", async () => {
+  const f = fixture(),
+    base = f.invoke.getMockImplementation();
+  if (!base) throw Error("Missing fixture");
+  let finish!: (value: unknown) => void;
+  f.invoke.mockImplementation(async (method, params) =>
+    method === "backupPrepare"
+      ? await new Promise((resolve) => {
+          finish = resolve;
+        })
+      : await base(method, params),
+  );
+  f.files.pickOpen.mockResolvedValue([{ token: "opaque", name: "web.json", size: 1 }]);
+  f.mount();
+  await screen.findByText(es.emptyCatalog);
+  fireEvent.mouseDown(screen.getByRole("tab", { name: es.nav.settings }));
+  fireEvent.mouseDown(screen.getByRole("tab", { name: es.settingsCategory.backups }));
+  fireEvent.click(screen.getByRole("button", { name: es.chooseBackup }));
+  await waitFor(() =>
+    expect(f.invoke.mock.calls.filter(([method]) => method === "backupPrepare")).toHaveLength(1),
+  );
+  const business = screen.getByRole("tab", { name: es.settingsCategory.business });
+  act(() => business.focus());
+  fireEvent.mouseDown(business);
+  await act(async () => finish({ kind: "ok", value: preview }));
+  expect(business).toHaveFocus();
+  expect(screen.queryByRole("button", { name: es.restoreBackup })).not.toBeInTheDocument();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: es.settingsCategory.backups }));
+  expect(await screen.findByText("web.json")).toBeInTheDocument();
+  expect(f.invoke.mock.calls.filter(([method]) => method === "backupPrepare")).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { name: es.restoreBackup }));
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
 });

@@ -15,6 +15,11 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
             : s.business.name || t("unconfiguredBusiness")}
         </h3>
         <p>{s.business.address}</p>
+        {s.business.rfc ? (
+          <p>
+            {t("rfc")}: {s.business.rfc}
+          </p>
+        ) : null}
         <p>{s.business.phone}</p>
         <h2>{t(s.opening ? "openingBalance" : "saleTicket")}</h2>
       </header>
@@ -92,6 +97,11 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
       {(s.received > 0 || s.historyMissing?.includes("initialPayment")) &&
       !detail.initialPayment ? (
         <p>{t("historicalPaymentUnavailable")}</p>
+      ) : null}
+      {s.business.cashier ? (
+        <p>
+          {t("servedBy")}: {s.business.cashier}
+        </p>
       ) : null}
       <footer>{s.business.thanks || t("historicalThanksUnavailable")}</footer>
       <small>{t("ticketOriginalPreserved")}</small>

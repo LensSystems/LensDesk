@@ -1,6 +1,7 @@
 import { Input } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { defaultBank } from "../shared/values.ts";
 import { OperationModal } from "./OperationModal.tsx";
 import { newPayment, PaymentFields, paymentValue } from "./PaymentFields.tsx";
 import type { ScreenProps } from "./types.ts";
@@ -10,7 +11,7 @@ export function OutflowDialog({
   ...props
 }: ScreenProps & { kind: "expense" | "withdrawal"; close: () => void }) {
   const { t } = useTranslation();
-  const [value, setValue] = useState(() => newPayment());
+  const [value, setValue] = useState(() => newPayment(0, defaultBank(props.data.settings)));
   return (
     <OperationModal
       {...props}

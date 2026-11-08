@@ -2,6 +2,7 @@ import { Input } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import type { Settings } from "../shared/contracts.ts";
 import type { PaymentInput } from "../shared/trading-contracts.ts";
+import { bankLabel } from "../shared/values.ts";
 import { Choice } from "./Choice.tsx";
 import { parseMoney } from "./format.ts";
 import { MoneyInput } from "./MoneyInput.tsx";
@@ -13,11 +14,11 @@ export type PaymentForm = {
   bankId: string;
   reference: string;
 };
-export const newPayment = (amount = 0): PaymentForm => ({
+export const newPayment = (amount = 0, bankId: string | null = null): PaymentForm => ({
   amount: (amount / 100).toFixed(2),
   received: (amount / 100).toFixed(2),
   method: "cash",
-  bankId: "none",
+  bankId: bankId ?? "none",
   reference: "",
 });
 export function paymentValue(form: PaymentForm, received = false): PaymentInput {
@@ -81,7 +82,7 @@ export function PaymentFields({
           disabled={disabled}
           options={[
             { value: "none", label: t("selectBank") },
-            ...banks.map((b) => ({ value: b.id, label: `${b.bank} · ${b.holder}` })),
+            ...banks.map((b) => ({ value: b.id, label: bankLabel(b) })),
           ]}
         />
       ) : null}

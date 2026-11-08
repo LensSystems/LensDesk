@@ -32,11 +32,11 @@ describe("Ventas navigation", () => {
         expect(screen.getByRole("heading", { name, level: 1 })).toHaveClass("ventas-page-title");
       }
       const tab = screen.getByRole("tab", { name });
-      const panel = screen.getByRole("tabpanel");
+      const panel = screen.getByRole("tabpanel", { name });
       expect(tab).toHaveAttribute("aria-selected", "true");
       expect(tab.getAttribute("aria-controls")).toBe(panel.id);
       expect(panel).toHaveAttribute("aria-labelledby", tab.id);
-      expect(screen.getAllByRole("tabpanel", { hidden: true })).toHaveLength(1);
+      expect(document.querySelectorAll(".ventas-content[role=tabpanel]")).toHaveLength(1);
     }
     select(es.nav.accounts);
     expect(screen.getByRole("heading", { name: es.nav.accounts, level: 2 })).toHaveClass(

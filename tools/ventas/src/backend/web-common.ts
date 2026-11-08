@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { Dataset } from "../shared/backup-contracts.ts";
-import { settingsSchema } from "../shared/values.ts";
+import { normalizeSettings, settingsSchema } from "../shared/values.ts";
 import { readDataset } from "./backup-dataset.ts";
 import { memoryDatabase } from "./db/driver.ts";
 import { DomainFault } from "./domain.ts";
@@ -179,14 +179,38 @@ export function bank(c: WebContext, v: unknown, reference: unknown): unknown {
     clabe: text(b.clabe, 18),
   };
 }
-export function business(c: WebContext, v: unknown) {
+export function business(c: WebContext, v: unknown, current = false) {
   const b = object(v);
-  return settingsSchema.parse({
+  const historical = settingsSchema.parse({
     name: text(b.storeName ?? b.name),
     address: text(b.address, 300),
     phone: text(b.phone, 40),
     thanks: text(b.footer ?? b.thanks, 300),
-    banks: v === c.business ? c.collections.banks?.map((a) => bank(c, a, a.id)) : [],
+    banks: current
+      ? c.collections.banks?.map((a) => ({
+          ...object(bank(c, a, a.id)),
+          alias: text(a.name ?? "", 120),
+        }))
+      : [],
+    ...(b.ownerName !== undefined ? { ownerName: text(b.ownerName, 120) } : {}),
+    ...(b.rfc !== undefined ? { rfc: text(b.rfc, 40) } : {}),
+    ...(b.cashier !== undefined ? { cashier: text(b.cashier, 120) } : {}),
+  });
+  if (!current) return historical;
+  const term =
+    b.defaultTerm === undefined
+      ? 15
+      : typeof b.defaultTerm === "number"
+        ? b.defaultTerm
+        : /^(?:[1-9]|[12]\d|30) días?$/.test(String(b.defaultTerm))
+          ? Number(String(b.defaultTerm).split(" ")[0])
+          : NaN;
+  return normalizeSettings({
+    ...historical,
+    defaultTerm: term,
+    ...(b.defaultAccount !== undefined
+      ? { defaultBankId: b.defaultAccount === null ? null : c.ref("banks", b.defaultAccount) }
+      : {}),
   });
 }
 export const method = (v: unknown) =>

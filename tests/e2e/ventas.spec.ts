@@ -98,6 +98,7 @@ test("Ventas exporta y restaura archivos reales, copia previa y recibos tras rei
       .getByRole("navigation")
       .getByRole("tab", { name: "Ajustes de Ventas", exact: true })
       .click();
+    await tool.getByRole("tab", { name: "Respaldos", exact: true }).click();
     await stubDialog(app, "save", { canceled: true });
     await tool.getByRole("button", { name: "Guardar respaldo", exact: true }).click();
     await expect(tool.getByRole("button", { name: "Guardar respaldo", exact: true })).toBeEnabled();
@@ -105,6 +106,7 @@ test("Ventas exporta y restaura archivos reales, copia previa y recibos tras rei
     await tool.getByRole("button", { name: "Guardar respaldo", exact: true }).click();
     await expect(tool.getByText("Respaldo guardado.", { exact: true })).toBeVisible();
     const exported = JSON.parse(await readFile(path, "utf8")) as NativeBackup;
+    expect(exported.modelVersion).toBe(6);
     expect(exported.data.sales).toHaveLength(1);
     expect(exported.data.operations.length).toBeGreaterThan(0);
     await execute(tool, {
@@ -127,6 +129,7 @@ test("Ventas exporta y restaura archivos reales, copia previa y recibos tras rei
       .getByRole("navigation")
       .getByRole("tab", { name: "Ajustes de Ventas", exact: true })
       .click();
+    await tool.getByRole("tab", { name: "Respaldos", exact: true }).click();
     await restoreFile(app, tool, path);
     expect(await state(tool)).toMatchObject({
       settings: { name: "Antes" },
@@ -134,13 +137,28 @@ test("Ventas exporta y restaura archivos reales, copia previa y recibos tras rei
       draft: { lines: [] },
       accounts: [{ balance: 100 }],
     });
+    await tool.getByRole("tab", { name: "Mi negocio", exact: true }).click();
+    await tool.getByRole("button", { name: "Editar datos", exact: true }).click();
     await expect(tool.getByLabel("Nombre del negocio", { exact: true })).toHaveValue("Antes");
+    await tool.getByRole("dialog").getByRole("button", { name: "Cancelar", exact: true }).click();
+    await tool.getByRole("tab", { name: "Respaldos", exact: true }).click();
     await stubDialog(app, "save", { canceled: false, filePath: prior });
     await tool.getByRole("button", { name: "Descargar copia previa", exact: true }).click();
     await expect(tool.getByText("Respaldo guardado.", { exact: true })).toBeVisible();
     await expect
-      .poll(async () => JSON.parse(await readFile(prior, "utf8")).data.settings[0].data)
-      .toBe(JSON.stringify({ name: "Después", address: "Otra", phone: "", thanks: "", banks: [] }));
+      .poll(async () => JSON.parse(JSON.parse(await readFile(prior, "utf8")).data.settings[0].data))
+      .toEqual({
+        name: "Después",
+        address: "Otra",
+        phone: "",
+        thanks: "",
+        banks: [],
+        ownerName: "",
+        rfc: "",
+        cashier: "",
+        defaultTerm: 15,
+        defaultBankId: null,
+      });
     const previous = JSON.parse(await readFile(prior, "utf8")) as NativeBackup;
     expect(previous.data.outflows).toHaveLength(1);
     expect(previous.data.draft_lines).toHaveLength(1);
@@ -197,6 +215,7 @@ test("Ventas importa Web1 real con folios históricos y limitaciones explícitas
       .getByRole("navigation")
       .getByRole("tab", { name: "Ajustes de Ventas", exact: true })
       .click();
+    await tool.getByRole("tab", { name: "Respaldos", exact: true }).click();
     await restoreFile(app, tool, path);
     expect(await state(tool)).toMatchObject({
       settings: { name: "Tienda web" },

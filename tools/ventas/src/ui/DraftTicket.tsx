@@ -17,6 +17,11 @@ export function DraftTicket({
       <header>
         <h3>{business.name || t("unconfiguredBusiness")}</h3>
         <p>{business.address}</p>
+        {business.rfc ? (
+          <p>
+            {t("rfc")}: {business.rfc}
+          </p>
+        ) : null}
         <h2>{t("draftTicket")}</h2>
       </header>
       <p>
@@ -53,6 +58,11 @@ export function DraftTicket({
       </p>
       {payment.method === "transfer" ? (
         <BankDetails bank={data.settings.banks.find((b) => b.id === payment.bankId) ?? null} />
+      ) : null}
+      {business.cashier ? (
+        <p>
+          {t("servedBy")}: {business.cashier}
+        </p>
       ) : null}
       <footer>{business.thanks || t("historicalThanksUnavailable")}</footer>
       <p>{t("draftNotConfirmed")}</p>

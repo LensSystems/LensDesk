@@ -13,6 +13,11 @@ export function StatementTicket({ statement: s, read }: { statement: Statement; 
       <header>
         <h3>{s.business.name || t("unconfiguredBusiness")}</h3>
         <p>{s.business.address}</p>
+        {s.business.rfc ? (
+          <p>
+            {t("rfc")}: {s.business.rfc}
+          </p>
+        ) : null}
         <p>{s.business.phone}</p>
         <h2>{t("statement")}</h2>
       </header>
@@ -77,6 +82,11 @@ export function StatementTicket({ statement: s, read }: { statement: Statement; 
         </div>
       </dl>
       <BankDetails bank={s.bankSnapshot} />
+      {s.business.cashier ? (
+        <p>
+          {t("servedBy")}: {s.business.cashier}
+        </p>
+      ) : null}
       <footer>{s.business.thanks || t("historicalThanksUnavailable")}</footer>
     </article>
   );

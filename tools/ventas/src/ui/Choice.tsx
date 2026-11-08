@@ -3,12 +3,14 @@ import { useId } from "react";
 
 export function Choice({
   label,
+  visibleLabel,
   value,
   options,
   onChange,
   disabled = false,
 }: {
   label: string;
+  visibleLabel?: string;
   value: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
@@ -17,9 +19,9 @@ export function Choice({
   const id = useId();
   return (
     <div className="grid gap-1">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>{visibleLabel ?? label}</label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger id={id} className="w-full">
+        <SelectTrigger id={id} aria-label={visibleLabel ? label : undefined} className="w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

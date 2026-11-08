@@ -2,6 +2,7 @@ import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, Input } 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Product } from "../shared/contracts.ts";
+import { bankLabel, defaultBank } from "../shared/values.ts";
 import { Choice } from "./Choice.tsx";
 import { DialogFeedback } from "./DialogFeedback.tsx";
 import { moneyText, parseMoney } from "./format.ts";
@@ -21,7 +22,7 @@ export function StockDialog({
   const formOperation = useDialogOperation(run, operation, close);
   const [qty, setQty] = useState(mode === "adjust" ? product.stock : 1);
   const [method, setMethod] = useState("cash");
-  const [bank, setBank] = useState(data.settings.banks[0]?.id ?? "none");
+  const [bank, setBank] = useState(defaultBank(data.settings) ?? "none");
   const [waste, setWaste] = useState("adjustment");
   const recipe = data.recipes.find((r) => r.productId === product.id);
   const material = data.products.find((p) => p.id === recipe?.materialId);
@@ -112,7 +113,7 @@ export function StockDialog({
                   }}
                   options={
                     data.settings.banks.length
-                      ? data.settings.banks.map((b) => ({ value: b.id, label: b.bank }))
+                      ? data.settings.banks.map((b) => ({ value: b.id, label: bankLabel(b) }))
                       : [{ value: "none", label: t("noBanks") }]
                   }
                 />

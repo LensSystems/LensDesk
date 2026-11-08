@@ -10,6 +10,7 @@ import {
 import { mutationResultSchema, snapshotResultSchema } from "../shared/contracts.ts";
 import { returnSchema, reversalSchema } from "../shared/corrections-contracts.ts";
 import { paymentSchema, saleSchema } from "../shared/trading-contracts.ts";
+import { currentSettingsSchema, normalizeSettings } from "../shared/values.ts";
 import { accountSummaries } from "./accounts-repo.ts";
 import { cooperate, drain } from "./backup-cooperation.ts";
 import { replaceDataset } from "./backup-dataset.ts";
@@ -21,6 +22,7 @@ import { clients } from "./clients-repo.ts";
 import { payment, returnRecord, reversal, sale } from "./correction-records.ts";
 import { type Db, memoryDatabase } from "./db/driver.ts";
 import { checkCancelled, DomainFault, proportional } from "./domain.ts";
+import { normalizeLegacySettings } from "./legacy-settings.ts";
 import { snapshot } from "./service.ts";
 export function validateBackup(raw: unknown, signal: AbortSignal): NativeBackup {
   return drain(backupSteps(raw, signal));
@@ -65,6 +67,17 @@ function* backupSteps(
   const backup: NativeBackup = { ...parsed.data, data: normalized },
     db = memoryDatabase();
   try {
+    if (normalized.settings.length !== 1) throw new DomainFault("E_BACKUP_REFS");
+    const row = normalized.settings[0];
+    if (!row) throw new DomainFault("E_BACKUP_REFS");
+    const preferences = JSON.parse(String(row.data));
+    if (parsed.data.modelVersion === 6) currentSettingsSchema.parse(preferences);
+    row.data = JSON.stringify(
+      parsed.data.modelVersion === 5
+        ? normalizeLegacySettings(preferences)
+        : normalizeSettings(preferences),
+    );
+    backup.modelVersion = 6;
     yield* stageSteps(db, normalized);
     yield* rowSteps(db, normalized, signal);
     yield* financialSteps(db, signal, false);

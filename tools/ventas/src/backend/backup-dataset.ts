@@ -14,7 +14,7 @@ export function readDataset(db: Db): NativeBackup {
     return {
       format: "lensdesk-ventas-native-backup",
       version: 1,
-      modelVersion: 5,
+      modelVersion: 6,
       createdAt: new Date().toISOString(),
       toolVersion: "0.1.0",
       revision: meta[0].revision,

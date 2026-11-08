@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { AccountSummary, ClientRecord } from "../shared/trading-contracts.ts";
+import { defaultBank } from "../shared/values.ts";
 import { moneyText } from "./format.ts";
 import { OperationModal } from "./OperationModal.tsx";
 import { newPayment, PaymentFields, paymentValue } from "./PaymentFields.tsx";
@@ -18,7 +19,9 @@ export function AccountPaymentDialog({
   close: () => void;
 }) {
   const { t, i18n } = useTranslation();
-  const [value, setValue] = useState(() => newPayment(full ? account.balance : 0));
+  const [value, setValue] = useState(() =>
+    newPayment(full ? account.balance : 0, defaultBank(props.data.settings)),
+  );
   return (
     <OperationModal
       {...props}

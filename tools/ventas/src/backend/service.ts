@@ -6,6 +6,7 @@ import {
   mutationResultSchema,
   type Snapshot,
 } from "../shared/contracts.ts";
+import { normalizeSettings, settingsSchema } from "../shared/values.ts";
 import { accountSummaries } from "./accounts-repo.ts";
 import { validateAggregates } from "./aggregate-invariants.ts";
 import { cash, closeCash, closings, openCash } from "./cash-repo.ts";
@@ -130,7 +131,12 @@ export function execute(db: Db, params: unknown, signal: AbortSignal): MutationR
           id = outflow(db, action, time);
           break;
         case "saveSettings":
-          db.run("UPDATE settings SET data=? WHERE id=1", JSON.stringify(action.settings));
+          if (!settingsSchema.safeParse(action.settings).success)
+            throw new LensError("E_INVALID_PARAMS", "Invalid settings references");
+          db.run(
+            "UPDATE settings SET data=? WHERE id=1",
+            JSON.stringify(normalizeSettings(action.settings)),
+          );
           id = randomUUID();
           break;
       }

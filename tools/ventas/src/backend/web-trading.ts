@@ -18,7 +18,7 @@ import {
   type WebContext,
 } from "./web-common.ts";
 export function* mapClientsSales(c: WebContext) {
-  c.data.settings = [{ id: 1, data: JSON.stringify(business(c, c.business)) }];
+  c.data.settings = [{ id: 1, data: JSON.stringify(business(c, c.business, true)) }];
   for (const r of c.collections.clients ?? []) {
     yield;
     const id = c.ref("clients", r.id);
@@ -75,6 +75,9 @@ export function* mapClientsSales(c: WebContext) {
     let historical: unknown = { name: "", address: "", phone: "", thanks: "", banks: [] };
     if (s.business) historical = business(c, s.business);
     else missing.push("business");
+    // The sale records its cashier independently from the business snapshot.
+    if (s.cashier !== undefined)
+      historical = { ...object(historical), cashier: text(s.cashier, 120) };
     const received = s.received === undefined ? 0 : number(s.received),
       change = s.change === undefined ? 0 : number(s.change);
     if (!opening && s.received === undefined) missing.push("received");
