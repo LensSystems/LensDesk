@@ -1,5 +1,5 @@
 import { Button, Input } from "@lensdesk/ui";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { historyPageSchema } from "../shared/history-contracts.ts";
 import { Choice } from "./Choice.tsx";
@@ -12,14 +12,27 @@ import { StatementView } from "./StatementView.tsx";
 import type { ScreenProps } from "./types.ts";
 import { useOffset } from "./use-offset.ts";
 import { useQuery } from "./use-query.ts";
-export function TicketsPage(props: ScreenProps) {
+export function TicketsPage(
+  props: ScreenProps & {
+    initialClientId?: string;
+    focusRequested?: boolean;
+    onFocused?: () => void;
+  },
+) {
   const { t, i18n } = useTranslation(),
     [period, setPeriod] = useState<Period>("all"),
     [search, setSearch] = useState(""),
     [selected, setSelected] = useState<string | null>(null),
     [clientId, setClientId] = useState(
-      props.data.draft.clientId ?? props.data.clients[0]?.id ?? "none",
+      props.initialClientId ?? props.data.draft.clientId ?? props.data.clients[0]?.id ?? "none",
     );
+  const statementHeading = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    if (props.focusRequested) {
+      statementHeading.current?.focus();
+      props.onFocused?.();
+    }
+  }, [props.focusRequested, props.onFocused]);
   const [offset, setOffset] = useOffset(JSON.stringify([props.data.revision, props.data.today]));
   const query = useQuery(
     props.read,
@@ -104,7 +117,9 @@ export function TicketsPage(props: ScreenProps) {
           {saleId ? <SaleDetailView {...props} saleId={saleId} /> : <p>{t("noConfirmedSales")}</p>}
         </section>
         <section>
-          <h2>{t("statement")}</h2>
+          <h2 ref={statementHeading} tabIndex={-1}>
+            {t("statement")}
+          </h2>
           <Choice
             label={t("statementClient")}
             value={clientId}

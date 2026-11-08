@@ -10,10 +10,12 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AccountsPage } from "./AccountsPage.tsx";
+import type { AccountsState } from "./account-status.ts";
 import { CashDialog } from "./CashDialog.tsx";
 import { ExpensesPage } from "./ExpensesPage.tsx";
 import { Inventory } from "./Inventory.tsx";
 import { Navigation } from "./Navigation.tsx";
+import type { Period } from "./PeriodControls.tsx";
 import { Sale } from "./Sale.tsx";
 import { SettingsPage } from "./SettingsPage.tsx";
 import { SummaryPage } from "./SummaryPage.tsx";
@@ -27,7 +29,29 @@ export function App({ client }: { client: Client }) {
   language.current = i18n;
   const [screen, setScreen] = useState<Screen>("sale");
   const sales = useSales(client);
+  const [accountsState, setAccountsState] = useState<AccountsState>({
+    selected: null,
+    query: "",
+    filter: "all",
+  });
+  const [summaryPeriod, setSummaryPeriod] = useState<Period>("today");
+  const [accountFocus, setAccountFocus] = useState(false);
+  const [statementFocus, setStatementFocus] = useState(false);
+  const [statementClient, setStatementClient] = useState<string | undefined>();
+  const openAccount = (selected: string | null) => {
+    setAccountFocus(true);
+    setAccountsState((state) => ({ ...state, selected }));
+    setScreen("accounts");
+  };
   const [cashOpen, setCashOpen] = useState(false);
+  const restoreSeen = useRef<string | null>(null);
+  useEffect(() => {
+    if (!sales.restoredId || restoreSeen.current === sales.restoredId) return;
+    restoreSeen.current = sales.restoredId;
+    const first = sales.data?.clients[0]?.id;
+    setAccountsState((state) => ({ ...state, selected: first ?? null }));
+    setStatementClient(first);
+  }, [sales.restoredId, sales.data?.clients]);
   useEffect(() => {
     let alive = true;
     let receivedEvent = false;
@@ -102,13 +126,35 @@ export function App({ client }: { client: Client }) {
                 ) : screen === "inventory" ? (
                   <Inventory {...props} />
                 ) : screen === "accounts" ? (
-                  <AccountsPage {...props} onSale={() => setScreen("sale")} />
+                  <AccountsPage
+                    {...props}
+                    focusRequested={accountFocus}
+                    onFocused={() => setAccountFocus(false)}
+                    state={accountsState}
+                    onState={setAccountsState}
+                    onSale={() => setScreen("sale")}
+                    onStatement={(id) => {
+                      setStatementClient(id);
+                      setStatementFocus(true);
+                      setScreen("tickets");
+                    }}
+                  />
                 ) : screen === "expenses" ? (
                   <ExpensesPage {...props} />
                 ) : screen === "tickets" ? (
-                  <TicketsPage {...props} />
+                  <TicketsPage
+                    {...props}
+                    initialClientId={statementClient}
+                    focusRequested={statementFocus}
+                    onFocused={() => setStatementFocus(false)}
+                  />
                 ) : screen === "summary" ? (
-                  <SummaryPage {...props} />
+                  <SummaryPage
+                    {...props}
+                    period={summaryPeriod}
+                    onPeriod={setSummaryPeriod}
+                    onAccount={openAccount}
+                  />
                 ) : screen === "settings" ? (
                   <SettingsPage
                     {...props}
@@ -120,7 +166,7 @@ export function App({ client }: { client: Client }) {
                   <Sale
                     {...props}
                     onInventory={() => setScreen("inventory")}
-                    onAccounts={() => setScreen("accounts")}
+                    onAccounts={() => openAccount(props.data.draft.clientId)}
                   />
                 ) : null}
               </TabsContent>

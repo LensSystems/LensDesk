@@ -42,9 +42,7 @@ describe("Ventas navigation", () => {
     expect(screen.getByRole("heading", { name: es.nav.accounts, level: 2 })).toHaveClass(
       "ventas-section-heading",
     );
-    expect(screen.getByRole("heading", { name: es.emptyClients, level: 1 })).not.toHaveClass(
-      "ventas-page-title",
-    );
+    expect(screen.getByText(es.startClients)).not.toHaveClass("ventas-page-title");
     select(es.nav.sale);
     expect(screen.getByRole("heading", { name: es.emptyCatalog, level: 1 })).not.toHaveClass(
       "ventas-page-title",

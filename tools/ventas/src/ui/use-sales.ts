@@ -57,11 +57,14 @@ export function useSales(client: Client) {
           }
           reconciliation.current = false;
           setUnresolved(false);
+          setLoading(false);
         }
       })
       .catch(() => {
-        if (request === loadingRequest.current)
+        if (request === loadingRequest.current) {
           setIssue(reconciliation.current ? "E_RELOAD_REQUIRED" : "E_INTERNAL");
+          setLoading(false);
+        }
       })
       .finally(() => {
         if (request === loadingRequest.current) setLoading(false);

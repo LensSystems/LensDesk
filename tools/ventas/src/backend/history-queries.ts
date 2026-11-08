@@ -4,6 +4,7 @@ import { reversal } from "./correction-records.ts";
 import type { Db } from "./db/driver.ts";
 import { DomainFault } from "./domain.ts";
 import { historical } from "./historical-metadata.ts";
+import { paymentAllocationPage } from "./payment-allocation-read.ts";
 
 export function revision(db: Db, expected?: number): number {
   const current =
@@ -154,6 +155,7 @@ function rows(
             opening: Boolean(p.opening),
             bankSnapshot: JSON.parse(p.bankSnapshot),
             reversal: p.reversalId ? reversal(db, p.reversalId) : null,
+            allocationPage: paymentAllocationPage(db, p.id, params.allocationOffset),
             applied: params.saleId
               ? (db.get<{ amount: number }>(
                   "SELECT amount FROM payment_allocations WHERE paymentId=? AND saleId=?",
@@ -211,6 +213,11 @@ export function historyData(db: Db, params: HistoryParams): HistoryPage {
     where = [spec.where],
     args: (string | number | null)[] = [];
   if (params.from && params.to && params.from > params.to) throw new DomainFault("E_PERIOD");
+  if (params.paymentId || params.allocationOffset !== undefined) {
+    if (params.kind !== "payments" || !params.paymentId) throw new DomainFault("E_PERIOD");
+    where.push("p.id=?");
+    args.push(params.paymentId);
+  }
   if (params.clientId) {
     if (!spec.client) throw new DomainFault("E_PERIOD");
     where.push(`${spec.client}=?`);

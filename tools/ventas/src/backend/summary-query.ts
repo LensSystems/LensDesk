@@ -23,7 +23,7 @@ export function summaryData(
     withdrawals = 0n;
   const sold = new Map<string, { name: string; qty: bigint }>();
   const sales = db.all<{ total: number; lines: string }>(
-    "SELECT total,lines FROM sales WHERE opening=0 AND date>=? AND date<=? ORDER BY date,at,folio",
+    "SELECT total,lines FROM sales WHERE opening=0 AND date>=? AND date<=? ORDER BY rowid",
     from,
     to,
   );
@@ -104,9 +104,7 @@ export function summaryData(
   checkCancelled(signal);
   const top = [...sold]
     .filter(([, p]) => p.qty > 0n)
-    .sort((a, b) =>
-      a[1].qty === b[1].qty ? a[0].localeCompare(b[0]) : a[1].qty > b[1].qty ? -1 : 1,
-    )
+    .sort((a, b) => (a[1].qty === b[1].qty ? 0 : a[1].qty > b[1].qty ? -1 : 1))
     .slice(0, 6)
     .map(([productId, p]) => ({ productId, name: p.name, qty: bounded(p.qty) }));
   return {

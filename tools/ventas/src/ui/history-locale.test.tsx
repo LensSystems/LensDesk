@@ -93,11 +93,11 @@ describe("Ventas history dates and stale cart", () => {
       within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.accounts }),
     );
     expect(screen.getByText("01/12/2026")).toBeInTheDocument();
-    expect(await screen.findByText(/Vencimiento: 01\/12\/2026/)).toBeInTheDocument();
+    expect(await screen.findByRole("cell", { name: "01/12/2026" })).toBeInTheDocument();
     expect(screen.queryByText("2026-12-01")).not.toBeInTheDocument();
     await english(f);
-    await waitFor(() => expect(screen.getByText("12/01/2026")).toBeInTheDocument());
-    expect(await screen.findByText(/Due date: 12\/01\/2026/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByText("12/01/2026").length).toBeGreaterThan(0));
+    expect(await screen.findByRole("cell", { name: "12/01/2026" })).toBeInTheDocument();
     expect(screen.getAllByText("11/07/2026").length).toBeGreaterThan(0);
   });
   it("shows persisted expense reference and locale-specific operational dates", async () => {

@@ -33,7 +33,7 @@ function props(): ScreenProps {
     },
   };
 }
-it("advances Summary presets with today and preserves a custom range", async () => {
+it("advances Summary presets with today without unapproved custom controls", async () => {
   const p = props(),
     view = render(<SummaryPage {...p} />);
   await waitFor(() =>
@@ -44,12 +44,13 @@ it("advances Summary presets with today and preserves a custom range", async () 
   await waitFor(() =>
     expect(p.read).toHaveBeenLastCalledWith("summary", { from: "2026-12-01", to: "2026-12-01" }),
   );
-  fireEvent.click(screen.getByRole("button", { name: es.periods.month }));
-  fireEvent.change(screen.getByLabelText(es.fromDate), { target: { value: "2026-11-20" } });
+  fireEvent.click(screen.getByRole("radio", { name: es.periods.month }));
+  expect(screen.queryByLabelText(es.fromDate)).not.toBeInTheDocument();
+  expect(screen.queryByLabelText(es.toDate)).not.toBeInTheDocument();
   p.data = { ...p.data, today: "2026-12-02", revision: 2 };
   view.rerender(<SummaryPage {...p} />);
   await waitFor(() =>
-    expect(p.read).toHaveBeenLastCalledWith("summary", { from: "2026-11-20", to: "2026-12-01" }),
+    expect(p.read).toHaveBeenLastCalledWith("summary", { from: "2026-12-01", to: "2026-12-02" }),
   );
 });
 for (const View of [TicketsPage, HistoryPanel])

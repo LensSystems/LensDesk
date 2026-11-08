@@ -22,6 +22,8 @@ export const historyParamsSchema = z.strictObject({
   clientId: uuid.optional(),
   excludeOpening: z.boolean().optional(),
   saleId: uuid.optional(),
+  paymentId: uuid.optional(),
+  allocationOffset: z.number().int().min(0).max(10_000_000).optional(),
   query: z.string().trim().max(120).default(""),
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
@@ -41,9 +43,28 @@ export const saleSummarySchema = z.strictObject({
   opening: z.boolean(),
   note: z.string(),
 });
-export const paymentSummarySchema = paymentSchema
-  .omit({ allocations: true })
-  .extend({ reversal: reversalSchema.nullable(), applied: money.nullable() });
+export const paymentSummarySchema = paymentSchema.omit({ allocations: true }).extend({
+  reversal: reversalSchema.nullable(),
+  applied: money.nullable(),
+  allocationPage: z
+    .strictObject({
+      total: z.number().int().nonnegative(),
+      nextOffset: z.number().int().nonnegative().nullable(),
+      rows: z
+        .array(
+          z.strictObject({
+            saleId: uuid,
+            folio: z.number().int().positive(),
+            opening: z.boolean(),
+            historyMissing: z.array(z.string()).optional(),
+            legacyFolio: z.string().max(200).optional(),
+            amount: money,
+          }),
+        )
+        .max(50),
+    })
+    .optional(),
+});
 export const returnSummarySchema = returnSchema.omit({ lines: true });
 export const historyRowSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("sale"), data: saleSummarySchema }),

@@ -1,0 +1,285 @@
+.ventas-accounts-workspace {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ventas-account-sidebar,
+.ventas-account-content,
+.ventas-summary-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 18px 20px;
+}
+.ventas-account-sidebar {
+  border-right: 1px solid var(--ld-border);
+}
+.ventas-account-content,
+.ventas-account-scroll,
+.ventas-summary-workspace {
+  overflow: auto;
+}
+.ventas-account-content,
+.ventas-account-scroll {
+  flex: 1;
+}
+.ventas-account-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+.ventas-account-heading,
+.ventas-summary-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.ventas-account-heading > div,
+.ventas-summary-heading > div {
+  min-width: 0;
+}
+.ventas-accounts-workspace .ventas-account-heading h2,
+.ventas-accounts-workspace .ventas-account-panel h2,
+.ventas-summary-workspace .ventas-summary-panel h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+.ventas-account-heading p,
+.ventas-account-balance p,
+.ventas-account-heading > span,
+.ventas-account-credit-limit,
+.ventas-summary-heading p,
+.ventas-summary-panel p {
+  color: var(--ld-text-muted);
+  font-size: 12px;
+}
+.ventas-account-filters {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.ventas-account-filters button {
+  padding: 0 12px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--ld-text-muted);
+}
+.ventas-account-filters button[aria-pressed="true"] {
+  color: var(--ld-text);
+  background: var(--ld-surface);
+  border-color: var(--ld-border);
+}
+.ventas-client-row {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--ld-border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ld-text);
+  text-align: left;
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+  flex: none;
+}
+.ventas-client-row[aria-current="true"] {
+  background: var(--ld-accent-soft);
+  border-color: var(--ld-accent);
+}
+.ventas-client-row > span,
+.ventas-account-balance,
+.ventas-summary-product {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ventas-client-row b {
+  overflow-wrap: anywhere;
+}
+.ventas-client-row small {
+  font-size: smaller;
+}
+.ventas-account-empty {
+  color: var(--ld-text-muted);
+  padding: 30px;
+  text-align: center;
+}
+.ventas-account-balance > div > strong {
+  font-size: 34px;
+  font-weight: 800;
+}
+.ventas-account-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.ventas-account-badge[data-tone="danger"] {
+  color: var(--ld-danger);
+  background: var(--ld-danger-soft);
+}
+.ventas-account-badge[data-tone="warning"] {
+  color: var(--ld-warning-soft-fg);
+  background: var(--ld-warning-soft);
+}
+.ventas-account-badge[data-tone="success"] {
+  color: var(--ld-success);
+  background: var(--ld-success-soft);
+}
+.ventas-account-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.ventas-account-panel,
+.ventas-account-metrics > div,
+.ventas-summary-panel {
+  padding: 18px;
+  border: 1px solid var(--ld-border);
+  border-radius: 14px;
+  background: var(--ld-surface);
+  min-width: 0;
+  flex-shrink: 0;
+}
+.ventas-account-metrics > div,
+.ventas-summary-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ventas-account-metrics span,
+.ventas-summary-metric > span {
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-account-metrics b,
+.ventas-summary-metric > b {
+  font-size: 23px;
+  font-weight: 800;
+}
+.ventas-account-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ventas-account-panel,
+.ventas-summary-panel:not(.ventas-summary-metric) {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ventas-account-table-wrap {
+  overflow: auto;
+  max-height: 400px;
+}
+.ventas-account-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 13px;
+}
+.ventas-account-table th {
+  position: sticky;
+  top: 0;
+  background: var(--ld-surface);
+  padding: 11px 12px;
+  color: var(--ld-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--ld-border);
+}
+.ventas-account-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--ld-border);
+}
+.ventas-account-table td:first-child {
+  min-width: 150px;
+  white-space: normal;
+}
+.ventas-summary-workspace {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ventas-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.ventas-summary-metric small {
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-summary-product small {
+  font-size: smaller;
+  color: var(--ld-text-muted);
+}
+.ventas-summary-top,
+.ventas-summary-bottom {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+}
+.ventas-summary-bottom {
+  grid-template-columns: 1fr 1fr;
+}
+.ventas-summary-event {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ld-border);
+}
+.ventas-summary-event small {
+  display: block;
+  color: var(--ld-text-muted);
+  font-size: 11px;
+}
+.ventas-summary-bar {
+  height: 7px;
+  background: var(--ld-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.ventas-summary-bar > span {
+  height: 100%;
+  display: block;
+  background: var(--ld-accent);
+  border-radius: 99px;
+}
+@media (max-width: 1100px) {
+  .ventas-accounts-workspace {
+    grid-template-columns: 310px minmax(0, 1fr);
+  }
+  .ventas-summary-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.ventas-account-event {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ld-border);
+}
+.ventas-account-event small {
+  display: block;
+  color: var(--ld-text-muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.ventas-account-sidebar > .grid > label {
+  display: none;
+}

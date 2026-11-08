@@ -8,7 +8,7 @@ import { draft } from "./trade-records.ts";
 export function clients(db: Db): ClientRecord[] {
   return db
     .all<Omit<ClientRecord, "active"> & { active: number }>(
-      "SELECT id,name,phone,term,creditLimit AS 'limit',active FROM clients ORDER BY name,id",
+      "SELECT id,name,phone,term,creditLimit AS 'limit',active FROM clients ORDER BY rowid",
     )
     .map((c) => ({ ...c, active: Boolean(c.active) }));
 }
