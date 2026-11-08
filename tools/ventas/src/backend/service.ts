@@ -69,6 +69,7 @@ export function execute(db: Db, params: unknown, signal: AbortSignal): MutationR
       const revision =
         db.get<{ revision: number }>("SELECT revision FROM meta WHERE id=1")?.revision ?? 0;
       if (revision !== command.revision) throw new DomainFault("E_REVISION");
+      if (!Number.isSafeInteger(revision + 1)) throw new DomainFault("E_LIMIT");
       const action = command.action;
       const time = clock();
       let id: string;

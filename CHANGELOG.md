@@ -7,6 +7,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Sin publicar]
 
+### Añadido
+
+- Ventas 0.1.0 como herramienta independiente: inventario, crédito, caja, devoluciones, tickets y
+  respaldos nativos/Web 1 con copia previa y reemplazo transaccional. [Guía es/en](tools/ventas/README.md).
+
 ### Corregido
 
 - Notas 0.4.2: la confirmación de copia vuelve a su estado inicial aunque una actualización de

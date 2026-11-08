@@ -61,6 +61,10 @@ export const saleLineSchema = z.strictObject({
   cost: money,
 });
 export const saleSchema = z.strictObject({
+  legacyFolio: z.string().max(200).optional(),
+  historyMissing: z
+    .array(z.enum(["business", "client", "clientDetails", "received", "change", "initialPayment"]))
+    .optional(),
   initialPaymentId: uuid.nullable(),
   id: uuid,
   folio: z.number().int().positive(),
@@ -80,6 +84,7 @@ export const saleSchema = z.strictObject({
   date: z.iso.date(),
 });
 export const paymentSchema = z.strictObject({
+  legacyFolio: z.string().max(200).optional(),
   opening: z.boolean().default(false),
   reversalId: uuid.nullable(),
   id: uuid,

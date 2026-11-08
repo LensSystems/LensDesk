@@ -9,7 +9,11 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
   return (
     <article className="ventas-paper" aria-label={t("saleTicket")}>
       <header>
-        <h3>{s.business.name || t("unconfiguredBusiness")}</h3>
+        <h3>
+          {s.historyMissing?.includes("business")
+            ? t("historicalUnavailable")
+            : s.business.name || t("unconfiguredBusiness")}
+        </h3>
         <p>{s.business.address}</p>
         <p>{s.business.phone}</p>
         <h2>{t(s.opening ? "openingBalance" : "saleTicket")}</h2>
@@ -68,7 +72,9 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
         </div>
         <div>
           <dt>{t("changeAtSale")}</dt>
-          <dd>{money(s.change)}</dd>
+          <dd>
+            {s.historyMissing?.includes("change") ? t("historicalUnavailable") : money(s.change)}
+          </dd>
         </div>
         <div>
           <dt>{t("dueDate")}</dt>
@@ -83,7 +89,10 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
       {detail.initialPayment?.method === "transfer" ? (
         <BankDetails bank={detail.initialPayment.bankSnapshot} />
       ) : null}
-      {s.received > 0 && !detail.initialPayment ? <p>{t("historicalPaymentUnavailable")}</p> : null}
+      {(s.received > 0 || s.historyMissing?.includes("initialPayment")) &&
+      !detail.initialPayment ? (
+        <p>{t("historicalPaymentUnavailable")}</p>
+      ) : null}
       <footer>{s.business.thanks || t("historicalThanksUnavailable")}</footer>
       <small>{t("ticketOriginalPreserved")}</small>
     </article>

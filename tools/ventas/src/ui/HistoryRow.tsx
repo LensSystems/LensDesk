@@ -30,12 +30,12 @@ export function HistoryRow({
       amount = row.data.net;
       break;
     case "payment":
-      title = t("paymentFolio", { folio: row.data.folio });
+      title = row.data.legacyFolio ?? t("paymentFolio", { folio: row.data.folio });
       detail = `${t(row.data.method)} · ${row.data.reference}${row.data.reversal ? ` · ${t("reversedPayment")} (${dateText(row.data.reversal.date, i18n.language)}) · ${row.data.reversal.reason}` : ""}`;
       amount = row.data.applied ?? row.data.amount;
       break;
     case "return":
-      title = t("returnFolio", { folio: row.data.folio });
+      title = row.data.legacyFolio ?? t("returnFolio", { folio: row.data.folio });
       detail = `${row.data.reason} · ${t(row.data.restock ? "returnedToStock" : "returnedAsLoss")} · ${t("refund")}: ${money(row.data.refund)}`;
       amount = -row.data.amount;
       break;

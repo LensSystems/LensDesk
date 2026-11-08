@@ -4,11 +4,14 @@ import tradingMigration from "./migrations/002_sales_accounts_cash.sql?raw";
 import outflowReferenceMigration from "./migrations/003_outflow_reference.sql?raw";
 import correctionsMigration from "./migrations/004_returns_reversals.sql?raw";
 
+import backupMigration from "./migrations/005_backup.sql?raw";
+
 const sources = {
   "./migrations/001_inventory.sql": inventoryMigration,
   "./migrations/002_sales_accounts_cash.sql": tradingMigration,
   "./migrations/003_outflow_reference.sql": outflowReferenceMigration,
   "./migrations/004_returns_reversals.sql": correctionsMigration,
+  "./migrations/005_backup.sql": backupMigration,
 };
 export function migrate(db: Db): void {
   db.exec(

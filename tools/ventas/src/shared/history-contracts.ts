@@ -27,6 +27,7 @@ export const historyParamsSchema = z.strictObject({
   to: z.iso.date().optional(),
 });
 export const saleSummarySchema = z.strictObject({
+  legacyFolio: z.string().max(200).optional(),
   id: uuid,
   folio: z.number().int().positive(),
   clientId: uuid.nullable(),
@@ -96,6 +97,7 @@ export const returnDetailSchema = z.strictObject({
   revision: z.number().int().nonnegative(),
   record: returnSummarySchema,
   saleFolio: z.number().int().positive(),
+  saleLegacyFolio: z.string().max(200).optional(),
   lines: z.strictObject({
     total: z.number().int().nonnegative(),
     nextOffset: z.number().int().nonnegative().nullable(),

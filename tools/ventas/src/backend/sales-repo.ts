@@ -110,7 +110,7 @@ export function openingBalance(
   insertSale(db, {
     initialPaymentId: null,
     id,
-    folio: nextFolio(db, "sale"),
+    folio: nextFolio(db, "sale", true),
     clientId: c.id,
     clientSnapshot: c,
     business: settings(db),

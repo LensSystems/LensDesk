@@ -2,6 +2,7 @@ import type { z } from "zod";
 import type { ReturnDetail, returnDetailParamsSchema } from "../shared/history-contracts.ts";
 import type { Db } from "./db/driver.ts";
 import { DomainFault } from "./domain.ts";
+import { historical } from "./historical-metadata.ts";
 import { revision } from "./history-queries.ts";
 export function returnDetailData(
   db: Db,
@@ -34,8 +35,16 @@ export function returnDetailData(
   );
   return {
     revision: current,
-    record: { ...record, restock: Boolean(restock), bankSnapshot: JSON.parse(bankSnapshot) },
+    record: {
+      ...record,
+      ...historical(db, "returns", p.returnId),
+      restock: Boolean(restock),
+      bankSnapshot: JSON.parse(bankSnapshot),
+    },
     saleFolio,
+    ...(historical(db, "sales", record.saleId).legacyFolio
+      ? { saleLegacyFolio: historical(db, "sales", record.saleId).legacyFolio }
+      : {}),
     lines: { total, rows, nextOffset: p.offset + p.limit < total ? p.offset + p.limit : null },
   };
 }

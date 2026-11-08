@@ -26,6 +26,12 @@ export function fixture() {
   const rows: HistoryRow[] = [];
   const details: Record<string, SaleDetail> = {};
   const statements: Record<string, Statement> = {};
+  const files = {
+    pickOpen: vi.fn(async (): Promise<{ token: string; name: string; size: number }[]> => []),
+    pickSave: vi.fn(
+      async (): Promise<{ token: string; name: string; size: number } | null> => null,
+    ),
+  };
   let listener: ((context: Context) => void) | undefined;
   let current: Context = {
     theme: "light",
@@ -36,6 +42,8 @@ export function fixture() {
   };
   const getContext = vi.fn(async (): Promise<Context> => ({ ...current }));
   const invoke = vi.fn(async (method: string, params?: unknown): Promise<unknown> => {
+    if (method === "backupInfo")
+      return { kind: "ok", value: { previous: false, lastRestore: null } };
     if (method === "snapshot") return { kind: "ok", value: structuredClone(data) };
     if (method === "history") {
       const p = params as {
@@ -132,9 +140,12 @@ export function fixture() {
       },
     },
     backend: { invoke },
+    files,
   } as unknown as ReturnType<typeof createToolClient>;
   return {
     data,
+    files,
+    client,
     rows,
     details,
     statements,

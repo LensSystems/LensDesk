@@ -41,8 +41,8 @@ export function ReturnDetailDialog({
       {d ? (
         <>
           <h3>
-            {t("returnFolio", { folio: d.record.folio })} ·{" "}
-            {saleFolio({ folio: d.saleFolio, opening: false })}
+            {d.record.legacyFolio ?? t("returnFolio", { folio: d.record.folio })} ·{" "}
+            {saleFolio({ folio: d.saleFolio, opening: false, legacyFolio: d.saleLegacyFolio })}
           </h3>
           <p>
             {dateText(d.record.date, i18n.language)} · {d.record.reason}

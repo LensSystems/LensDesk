@@ -1,0 +1,24 @@
+# Cambios / Changes
+
+## [0.1.0] - 2026-11-07
+
+Primera versión independiente de Ventas para LensDesk 0.5.0/API 1.
+First independent Sales release for LensDesk 0.5.0/API 1.
+
+- Inventario transaccional, recetas, preparación y costos racionales.
+  Transactional inventory, recipes, preparation and rational costs.
+- Carrito persistente, contado/crédito/parcial, vencimientos por compra y abonos FIFO.
+  Persistent cart, cash/credit/partial sales, per-purchase due dates and FIFO payments.
+- Caja por sesión, compras, gastos y retiros separados; cierres inmutables.
+  Cash sessions, separate purchases/expenses/withdrawals and immutable closings.
+- Devoluciones y reversas seguras, tickets históricos, estados de cuenta paginados y resumen.
+  Safe returns/reversals, historical tickets, paginated statements and summaries.
+- Respaldos completos nativos 1/modelo 5 y adaptación Web 1: validación, preview, confirmación,
+  copia previa y reemplazo transaccional. Límite 20 MiB; sin pérdida silenciosa.
+  Complete native 1/model 5 backups and Web 1 adaptation: validation, preview, confirmation,
+  previous copy and transactional replacement. Maximum 20 MiB; no silent data loss.
+- es-MX/en-US, tema/acento heredados y flujos de teclado accesibles.
+  es-MX/en-US, inherited theme/accent and accessible keyboard flows.
+
+Vistas de tickets; impresión/PDF y publicación firmada no forman parte de esta implementación.
+Ticket views; printing/PDF and signed publication are outside this implementation.

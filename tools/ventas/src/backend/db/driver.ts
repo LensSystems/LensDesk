@@ -13,13 +13,21 @@ export type Db = {
 };
 export function openVentasDatabase(dataDir: string): Db {
   mkdirSync(dataDir, { recursive: true });
-  const database = new DatabaseSync(join(dataDir, "ventas.db"));
+  return createDatabase(join(dataDir, "ventas.db"));
+}
+export function memoryDatabase(): Db {
+  return createDatabase(":memory:");
+}
+function createDatabase(path: string): Db {
+  const database = new DatabaseSync(path);
   database.function("ventas_fold", { deterministic: true }, (value) =>
     String(value ?? "")
       .normalize("NFKC")
       .toLowerCase(),
   );
-  database.exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=3000;");
+  database.exec(
+    "PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=3000; PRAGMA temp_store=MEMORY;",
+  );
   const db: Db = {
     exec: (sql) => database.exec(sql),
     run: (sql, ...values) => {

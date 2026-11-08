@@ -1,15 +1,47 @@
 import type { Draft, Outflow, PaymentRecord, SaleRecord } from "../shared/trading-contracts.ts";
 import type { Settings } from "../shared/values.ts";
 import type { Db } from "./db/driver.ts";
+import { DomainFault } from "./domain.ts";
 
 export function settings(db: Db): Settings {
   return JSON.parse(db.get<{ data: string }>("SELECT data FROM settings WHERE id=1")?.data ?? "{}");
 }
-export function nextFolio(db: Db, name: "sale" | "payment" | "return" | "reversal"): number {
-  db.run("UPDATE sequences SET value=value+1 WHERE name=?", name);
-  const value = db.get<{ value: number }>("SELECT value FROM sequences WHERE name=?", name)?.value;
-  if (!value || !Number.isSafeInteger(value)) throw new Error("Invalid folio sequence");
-  return value;
+export function nextFolio(
+  db: Db,
+  name: "sale" | "payment" | "return" | "reversal",
+  opening = false,
+): number {
+  for (;;) {
+    db.run("UPDATE sequences SET value=value+1 WHERE name=?", name);
+    const value = db.get<{ value: number }>(
+      "SELECT value FROM sequences WHERE name=?",
+      name,
+    )?.value;
+    if (!value || !Number.isSafeInteger(value)) throw new DomainFault("E_LIMIT");
+    const labels =
+      name === "sale"
+        ? [`${opening ? "SI" : "V"}-${String(value).padStart(6, "0")}`]
+        : name === "payment"
+          ? [`AB-${value}`, `PAY-${value}`]
+          : name === "return"
+            ? [`DEV-${value}`, `RET-${value}`]
+            : [];
+    const entity = {
+      sale: "sales",
+      payment: "payments",
+      return: "returns",
+      reversal: "payment_reversals",
+    }[name];
+    if (
+      !labels.length ||
+      !db.get(
+        `SELECT 1 FROM origins WHERE entity=? AND legacyFolio IN (${labels.map(() => "?").join(",")}) LIMIT 1`,
+        entity,
+        ...labels,
+      )
+    )
+      return value;
+  }
 }
 export function draft(db: Db): Draft {
   return {

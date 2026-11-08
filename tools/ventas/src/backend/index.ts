@@ -1,6 +1,7 @@
 import { type BackendMethod, defineBackend } from "@lensdesk/sdk/backend";
 import { LensError } from "@lensdesk/sdk/errors";
 import { z } from "zod";
+import { backupMethod } from "./backup-service.ts";
 import type { Db } from "./db/driver.ts";
 import { openVentasDatabase } from "./db/driver.ts";
 import { checkCancelled } from "./domain.ts";
@@ -28,6 +29,11 @@ export const methods = {
   saleDetail: (params, ctx) => query(database(ctx.dataDir), "saleDetail", params, ctx.signal),
   statement: (params, ctx) => query(database(ctx.dataDir), "statement", params, ctx.signal),
   summary: (params, ctx) => query(database(ctx.dataDir), "summary", params, ctx.signal),
+  backupInfo: (params, ctx) => backupMethod(database(ctx.dataDir), "backupInfo", params, ctx),
+  backupExport: (params, ctx) => backupMethod(database(ctx.dataDir), "backupExport", params, ctx),
+  backupPrepare: (params, ctx) => backupMethod(database(ctx.dataDir), "backupPrepare", params, ctx),
+  confirmRestore: (params, ctx) =>
+    backupMethod(database(ctx.dataDir), "confirmRestore", params, ctx),
   execute: (params, ctx) => execute(database(ctx.dataDir), params, ctx.signal),
 } satisfies Record<string, BackendMethod>;
 

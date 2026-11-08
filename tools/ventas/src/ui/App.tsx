@@ -118,7 +118,12 @@ export function App({ client }: { client: Client }) {
           ) : screen === "summary" ? (
             <SummaryPage {...props} />
           ) : screen === "settings" ? (
-            <SettingsPage {...props} />
+            <SettingsPage
+              {...props}
+              client={client}
+              restore={sales.restore}
+              restoredId={sales.restoredId}
+            />
           ) : screen === "sale" ? (
             <Sale
               {...props}

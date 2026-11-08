@@ -34,6 +34,7 @@ export const returnLineSchema = z.strictObject({
   cost: money,
 });
 export const returnSchema = z.strictObject({
+  legacyFolio: z.string().max(200).optional(),
   id: uuid,
   folio: z.number().int().positive(),
   saleId: uuid,
@@ -52,6 +53,7 @@ export const returnSchema = z.strictObject({
   lines: z.array(returnLineSchema),
 });
 export const reversalSchema = z.strictObject({
+  legacyFolio: z.string().max(200).optional(),
   id: uuid,
   folio: z.number().int().positive(),
   paymentId: uuid,

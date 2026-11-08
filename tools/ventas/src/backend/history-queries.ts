@@ -3,6 +3,7 @@ import type { Outflow, PaymentRecord } from "../shared/trading-contracts.ts";
 import { reversal } from "./correction-records.ts";
 import type { Db } from "./db/driver.ts";
 import { DomainFault } from "./domain.ts";
+import { historical } from "./historical-metadata.ts";
 
 export function revision(db: Db, expected?: number): number {
   const current =
@@ -20,7 +21,12 @@ function source(kind: HistoryParams["kind"]) {
         where: "1=1",
         client: "s.clientId",
         sale: "s.id",
-        search: ["json_extract(s.clientSnapshot,'$.name')", "CAST(s.folio AS TEXT)", "s.note"],
+        search: [
+          "json_extract(s.clientSnapshot,'$.name')",
+          "CAST(s.folio AS TEXT)",
+          "s.note",
+          "(SELECT legacyFolio FROM origins WHERE entity='sales' AND id=s.id)",
+        ],
       };
     case "payments":
       return {
@@ -30,7 +36,11 @@ function source(kind: HistoryParams["kind"]) {
         where: "1=1",
         client: "p.clientId",
         sale: "",
-        search: ["p.reference", "CAST(p.folio AS TEXT)"],
+        search: [
+          "p.reference",
+          "CAST(p.folio AS TEXT)",
+          "(SELECT legacyFolio FROM origins WHERE entity='payments' AND id=p.id)",
+        ],
       };
     case "returns":
       return {
@@ -40,7 +50,12 @@ function source(kind: HistoryParams["kind"]) {
         where: "1=1",
         client: "s.clientId",
         sale: "r.saleId",
-        search: ["r.reason", "CAST(r.folio AS TEXT)", "json_extract(s.clientSnapshot,'$.name')"],
+        search: [
+          "r.reason",
+          "CAST(r.folio AS TEXT)",
+          "json_extract(s.clientSnapshot,'$.name')",
+          "(SELECT legacyFolio FROM origins WHERE entity='returns' AND id=r.id)",
+        ],
       };
     case "inventory":
       return {
@@ -110,9 +125,19 @@ function rows(
 ): HistoryRow[] {
   switch (params.kind) {
     case "sales":
-      return db
-        .all<Record<string, unknown>>(sql, ...args)
-        .map((s) => ({ kind: "sale", data: { ...s, opening: Boolean(s.opening) } }) as HistoryRow);
+      return db.all<Record<string, unknown>>(sql, ...args).map(
+        (s) =>
+          ({
+            kind: "sale",
+            data: {
+              ...s,
+              ...(historical(db, "sales", String(s.id)).legacyFolio
+                ? { legacyFolio: historical(db, "sales", String(s.id)).legacyFolio }
+                : {}),
+              opening: Boolean(s.opening),
+            },
+          }) as HistoryRow,
+      );
     case "payments":
       return db
         .all<
@@ -125,6 +150,7 @@ function rows(
           kind: "payment",
           data: {
             ...p,
+            ...historical(db, "payments", p.id),
             opening: Boolean(p.opening),
             bankSnapshot: JSON.parse(p.bankSnapshot),
             reversal: p.reversalId ? reversal(db, p.reversalId) : null,
@@ -144,6 +170,7 @@ function rows(
             kind: "return",
             data: {
               ...r,
+              ...historical(db, "returns", String(r.id)),
               restock: Boolean(r.restock),
               bankSnapshot: JSON.parse(String(r.bankSnapshot)),
             },

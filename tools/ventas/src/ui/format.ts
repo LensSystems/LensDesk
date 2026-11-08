@@ -22,7 +22,8 @@ export function inputMoney(raw: string): string | null {
   const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return grouped + (fraction === undefined ? "" : `.${fraction}`);
 }
-export function saleFolio(sale: { folio: number; opening: boolean }): string {
+export function saleFolio(sale: { folio: number; opening: boolean; legacyFolio?: string }): string {
+  if (sale.legacyFolio) return sale.legacyFolio;
   return `${sale.opening ? "SI" : "V"}-${String(sale.folio).padStart(6, "0")}`;
 }
 
