@@ -7,6 +7,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Sin publicar]
 
+### Corregido
+
+- Notas 0.4.2: la confirmación de copia vuelve a su estado inicial aunque una actualización de
+  la vista previa quede suspendida; las copias siguen usando el contenido visible.
+
 ## [0.5.0] - 2026-11-04
 
 Preparación de la publicación: LensDesk y sus herramientas pueden actualizarse por separado.
