@@ -53,7 +53,6 @@ function store() {
     overdue: 0,
     nextDue: null,
     totalPaid: 0,
-    purchases: [],
   });
   f.data.cash = {
     id: "9d44e2be-d3d6-4d73-ad57-65011a4a12d5",
@@ -63,6 +62,8 @@ function store() {
     expenses: 0,
     withdrawals: 0,
     outs: 0,
+    refunds: 0,
+    reversals: 0,
     expected: 0,
     at: "2026-11-07T18:00:00Z",
     date: "2026-11-07",

@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Action, MutationResult, ProductInput } from "../shared/contracts.ts";
 import { type Db, openVentasDatabase } from "./db/driver.ts";
 import { proportional } from "./domain.ts";
-import { execute, snapshot } from "./service.ts";
+import { execute } from "./service.ts";
+import { testState as snapshot } from "./test-state.ts";
 
 let dir: string;
 let db: Db;
@@ -77,7 +78,7 @@ describe("Ventas inventory", () => {
     db.close();
     db = openVentasDatabase(dir);
     expect(product(id)).toMatchObject({ stock: 4, value: 333 });
-    expect(db.all("SELECT * FROM schema_migrations")).toHaveLength(3);
+    expect(db.all("SELECT * FROM schema_migrations")).toHaveLength(4);
     expect(db.get<{ foreign_keys: number }>("PRAGMA foreign_keys")?.foreign_keys).toBe(1);
   });
   it("rejects duplicate product names on create and edit, including inactive names", () => {

@@ -523,13 +523,13 @@
   align-items: center;
   gap: 16px;
 }
-.ventas-total-row > div:last-child:not(:first-child) {
+.ventas-total-projection {
   display: grid;
   gap: 4px;
   text-align: right;
   font-size: 12px;
 }
-.ventas-total-row > div:last-child:not(:first-child) span {
+.ventas-total-projection span {
   color: var(--ld-text-muted);
 }
 .ventas-cart-item > div:first-child {
@@ -538,4 +538,233 @@
 }
 .ventas-cart-item > strong {
   font-size: 12px;
+}
+.ventas-tickets {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+.ventas-ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-right: 1px solid var(--ld-border);
+  overflow-y: auto;
+}
+.ventas-ticket-list .ventas-category-list {
+  flex-wrap: wrap;
+}
+.ventas-ticket-choice {
+  display: flex;
+  height: auto;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px;
+  text-align: left;
+}
+.ventas-ticket-choice[aria-current="true"] {
+  border-color: var(--ld-accent);
+  background: var(--ld-accent-soft);
+}
+.ventas-ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  padding: 24px;
+  overflow-y: auto;
+  align-items: start;
+}
+.ventas-ticket-grid > section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.ventas-paper {
+  width: min(100%, 340px);
+  margin-inline: auto;
+  padding: 24px 16px;
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-md);
+  background: var(--ld-surface-raised);
+  color: var(--ld-text);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.ventas-paper > header {
+  text-align: center;
+  border-bottom: 1px solid var(--ld-border);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+.ventas-paper h2,
+.ventas-paper h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-block: 8px;
+}
+.ventas-paper table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: 16px;
+  text-align: left;
+}
+.ventas-paper th,
+.ventas-paper td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--ld-border);
+  vertical-align: top;
+}
+.ventas-paper td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ventas-paper footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ld-border);
+  text-align: center;
+}
+.ventas-paper small {
+  display: block;
+  color: var(--ld-text-muted);
+  margin-top: 12px;
+}
+.ventas-bank-details {
+  border-top: 1px solid var(--ld-border);
+  margin-top: 20px;
+  padding-top: 12px;
+}
+.ventas-paper-event {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block: 8px;
+}
+.ventas-detail-view,
+.ventas-statement-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.ventas-detail-dialog {
+  max-width: 760px;
+}
+.ventas-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block: 12px;
+}
+.ventas-pager > span {
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-history-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.ventas-history-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-block: 16px;
+  border-bottom: 1px solid var(--ld-border);
+}
+.ventas-history-row > div {
+  flex: 1;
+  min-width: 150px;
+}
+.ventas-history-row small {
+  display: block;
+  margin-block: 4px;
+  color: var(--ld-text-muted);
+}
+.ventas-summary {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.ventas-date-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.ventas-summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.ventas-summary-metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--ld-border);
+  padding: 20px;
+  border-radius: var(--ld-radius-lg);
+}
+.ventas-summary-metrics span {
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-summary-metrics strong {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.ventas-summary-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.ventas-checkout-review {
+  align-items: start;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .ventas-ticket-grid,
+  .ventas-checkout-review {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ventas-summary-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .ventas-tickets {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .ventas-ticket-list {
+    max-height: 300px;
+    flex-shrink: 0;
+    border-right: 0;
+  }
+  .ventas-ticket-grid {
+    overflow: visible;
+    padding: 16px;
+  }
+  .ventas-summary-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ventas-pager {
+    flex-wrap: wrap;
+  }
+}
+.ventas-return-lines th:not(:first-child),
+.ventas-return-lines td:not(:first-child) {
+  white-space: nowrap;
 }

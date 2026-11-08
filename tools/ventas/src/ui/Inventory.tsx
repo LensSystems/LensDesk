@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Product } from "../shared/contracts.ts";
 import { moneyText, numberText } from "./format.ts";
+import { HistoryPanel } from "./HistoryPanel.tsx";
 import { ProductDialog } from "./ProductDialog.tsx";
 import { RecipeDialog } from "./RecipeDialog.tsx";
 import { StockDialog } from "./StockDialog.tsx";
@@ -14,6 +15,7 @@ type Edit =
 export function Inventory(props: ScreenProps) {
   const { data, run, busy } = props;
   const { t, i18n } = useTranslation();
+  const [history, setHistory] = useState(false);
   const [query, setQuery] = useState("");
   const [edit, setEdit] = useState<Edit | null>(null);
   const list = data.products.filter((p) =>
@@ -160,6 +162,8 @@ export function Inventory(props: ScreenProps) {
       ) : (
         <p className="text-muted">{t("emptyMovements")}</p>
       )}
+      <Button onClick={() => setHistory((h) => !h)}>{t("inventoryHistory")}</Button>
+      {history ? <HistoryPanel {...props} kind="inventory" /> : null}
       {edit?.type === "product" ? (
         <ProductDialog {...props} product={edit.product} close={() => setEdit(null)} />
       ) : edit?.type === "recipe" ? (

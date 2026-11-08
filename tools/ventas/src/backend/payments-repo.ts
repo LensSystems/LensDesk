@@ -21,7 +21,7 @@ export function recordPayment(
   const context = paymentContext(db, input.method, input.bankId),
     id = randomUUID();
   db.run(
-    "INSERT INTO payments VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO payments(id,folio,clientId,amount,method,bankId,bankSnapshot,reference,cashId,at,date) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
     id,
     nextFolio(db, "payment"),
     clientId,

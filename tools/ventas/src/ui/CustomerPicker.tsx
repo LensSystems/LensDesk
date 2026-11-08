@@ -1,7 +1,7 @@
 import { Button, ChevronDown, Input } from "@lensdesk/ui";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Account, ClientRecord } from "../shared/trading-contracts.ts";
+import type { AccountSummary, ClientRecord } from "../shared/trading-contracts.ts";
 import { moneyText } from "./format.ts";
 
 export function CustomerPicker({
@@ -13,7 +13,7 @@ export function CustomerPicker({
   disabled,
 }: {
   clients: ClientRecord[];
-  accounts: Account[];
+  accounts: AccountSummary[];
   value: string | null;
   onChange: (value: string | null) => void;
   onCreate: () => void;

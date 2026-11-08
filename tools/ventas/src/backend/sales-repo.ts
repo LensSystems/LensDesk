@@ -15,7 +15,7 @@ import { draft, nextFolio, settings } from "./trade-records.ts";
 type Time = { at: string; date: string };
 function insertSale(db: Db, s: SaleRecord): void {
   db.run(
-    "INSERT INTO sales VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO sales(id,folio,clientId,clientSnapshot,business,lines,total,term,due,exception,opening,note,received,change,at,date) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     s.id,
     s.folio,
     s.clientId,
@@ -68,6 +68,7 @@ export function sell(db: Db, input: Extract<Action, { type: "sell" }>, time: Tim
     cost: consume(db, l.productId, l.qty, "sale", id, time),
   }));
   const sale: SaleRecord = {
+    initialPaymentId: null,
     id,
     folio: nextFolio(db, "sale"),
     clientId: cart.clientId,
@@ -85,7 +86,16 @@ export function sell(db: Db, input: Extract<Action, { type: "sell" }>, time: Tim
     ...time,
   };
   insertSale(db, sale);
-  if (paid) recordPayment(db, cart.clientId, input.payment, [{ saleId: id, amount: paid }], time);
+  if (paid) {
+    const paymentId = recordPayment(
+      db,
+      cart.clientId,
+      input.payment,
+      [{ saleId: id, amount: paid }],
+      time,
+    );
+    db.run("UPDATE sales SET initialPaymentId=? WHERE id=?", paymentId, id);
+  }
   db.run("DELETE FROM draft_lines");
   return id;
 }
@@ -98,6 +108,7 @@ export function openingBalance(
     id = randomUUID();
   total([account(db, c.id, time.date).balance, input.amount]);
   insertSale(db, {
+    initialPaymentId: null,
     id,
     folio: nextFolio(db, "sale"),
     clientId: c.id,

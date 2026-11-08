@@ -2,12 +2,17 @@ import { Button } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CashDialog } from "./CashDialog.tsx";
+import { Choice } from "./Choice.tsx";
 import { dateText, moneyText } from "./format.ts";
+import { HistoryPanel } from "./HistoryPanel.tsx";
 import { OutflowDialog } from "./OutflowDialog.tsx";
 import type { ScreenProps } from "./types.ts";
 export function ExpensesPage(props: ScreenProps) {
   const { data } = props,
     { t, i18n } = useTranslation();
+  const [history, setHistory] = useState<
+    "outflows" | "purchases" | "closings" | "returns" | "none"
+  >("none");
   const [dialog, setDialog] = useState<"cash" | "expense" | "withdrawal" | null>(null);
   return (
     <section className="ventas-inventory">
@@ -27,14 +32,23 @@ export function ExpensesPage(props: ScreenProps) {
         </div>
         {data.cash ? (
           <div className="ventas-metrics">
-            {(["initial", "ins", "purchases", "expenses", "withdrawals", "expected"] as const).map(
-              (key) => (
-                <div key={key}>
-                  <span>{t(`cashMetrics.${key}`)}</span>
-                  <strong>{moneyText(data.cash?.[key] ?? 0, i18n.language)}</strong>
-                </div>
-              ),
-            )}
+            {(
+              [
+                "initial",
+                "ins",
+                "purchases",
+                "expenses",
+                "withdrawals",
+                "refunds",
+                "reversals",
+                "expected",
+              ] as const
+            ).map((key) => (
+              <div key={key}>
+                <span>{t(`cashMetrics.${key}`)}</span>
+                <strong>{moneyText(data.cash?.[key] ?? 0, i18n.language)}</strong>
+              </div>
+            ))}
           </div>
         ) : (
           <p>{t("openCashIntro")}</p>
@@ -95,6 +109,19 @@ export function ExpensesPage(props: ScreenProps) {
           </span>
         </div>
       ))}
+      <Choice
+        label={t("fullHistory")}
+        value={history}
+        onChange={(v) => setHistory(v as typeof history)}
+        options={[
+          { value: "none", label: t("hideHistory") },
+          ...(["outflows", "purchases", "closings", "returns"] as const).map((value) => ({
+            value,
+            label: t(`historyKinds.${value}`),
+          })),
+        ]}
+      />
+      {history !== "none" ? <HistoryPanel {...props} kind={history} /> : null}
       {dialog === "cash" ? <CashDialog {...props} close={() => setDialog(null)} /> : null}
       {dialog === "expense" || dialog === "withdrawal" ? (
         <OutflowDialog {...props} kind={dialog} close={() => setDialog(null)} />

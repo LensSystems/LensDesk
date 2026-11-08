@@ -17,6 +17,24 @@ export function validateAggregates(db: Db, action: Action, id: string, today: st
       clientId = action.clientId;
       changedCash = action.payment.method === "cash";
       break;
+    case "returnSale":
+      clientId =
+        db.get<{ clientId: string | null }>("SELECT clientId FROM sales WHERE id=?", action.saleId)
+          ?.clientId ?? null;
+      changedCash = Boolean(
+        db.get("SELECT 1 FROM returns WHERE id=? AND method='cash' AND refund>0", id),
+      );
+      break;
+    case "reversePayment":
+      clientId =
+        db.get<{ clientId: string | null }>(
+          "SELECT clientId FROM payments WHERE id=?",
+          action.paymentId,
+        )?.clientId ?? null;
+      changedCash = Boolean(
+        db.get("SELECT 1 FROM payment_reversals WHERE id=? AND method='cash'", id),
+      );
+      break;
     case "openingBalance":
       clientId = action.clientId;
       break;

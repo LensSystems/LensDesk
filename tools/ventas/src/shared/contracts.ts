@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { correctionActionSchemas } from "./corrections-contracts.ts";
 import { tradingActionSchemas, tradingSnapshotShape } from "./trading-contracts.ts";
 import type { Settings } from "./values.ts";
 import { money, entityName as name, quantity, settingsSchema, uuid } from "./values.ts";
@@ -50,6 +51,7 @@ export const commandSchema = z.strictObject({
     }),
     z.strictObject({ type: z.literal("saveSettings"), settings: settingsSchema }),
     ...tradingActionSchemas,
+    ...correctionActionSchemas,
   ]),
 });
 export type Command = z.infer<typeof commandSchema>;
@@ -68,7 +70,7 @@ export type Movement = {
   productId: string;
   qty: number;
   value: number;
-  kind: "purchase" | "adjustment" | "waste" | "preparation" | "sale";
+  kind: "purchase" | "adjustment" | "waste" | "preparation" | "sale" | "return";
   referenceId: string;
   reason: string;
   at: string;
@@ -119,6 +121,10 @@ export const issueSchema = z.strictObject({
     "E_CART",
     "E_TOTAL",
     "E_BALANCE",
+    "E_RETURN",
+    "E_REVERSE",
+    "E_REFUNDED_PAYMENT",
+    "E_PERIOD",
   ]),
   productId: uuid.optional(),
 });
@@ -153,7 +159,7 @@ export const snapshotResultSchema = z.strictObject({
         productId: uuid,
         qty: z.number().int(),
         value: z.number().int(),
-        kind: z.enum(["purchase", "adjustment", "waste", "preparation", "sale"]),
+        kind: z.enum(["purchase", "adjustment", "waste", "preparation", "sale", "return"]),
         referenceId: uuid,
         reason: z.string(),
         at: z.iso.datetime(),

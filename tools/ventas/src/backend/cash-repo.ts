@@ -14,15 +14,17 @@ export function cash(db: Db): Cash | null {
   const amounts = (table: string, extra = "") =>
     db
       .all<{ amount: number }>(
-        `SELECT ${table === "purchases" ? "cost" : "amount"} AS amount FROM ${table} WHERE cashId=? AND method='cash' ${extra}`,
+        `SELECT ${table === "purchases" ? "cost" : table === "returns" ? "refund" : "amount"} AS amount FROM ${table} WHERE cashId=? AND method='cash' ${extra}`,
         current.id,
       )
       .map((x) => x.amount);
-  const ins = total(amounts("payments")),
+  const ins = total(amounts("payments", "AND opening=0")),
     purchases = total(amounts("purchases"));
   const expenses = total(amounts("outflows", "AND kind='expense'")),
     withdrawals = total(amounts("outflows", "AND kind='withdrawal'"));
-  const outs = total([purchases, expenses, withdrawals]);
+  const refunds = total(amounts("returns")),
+    reversals = total(amounts("payment_reversals"));
+  const outs = total([purchases, expenses, withdrawals, refunds, reversals]);
   return {
     ...current,
     ins,
@@ -30,6 +32,8 @@ export function cash(db: Db): Cash | null {
     expenses,
     withdrawals,
     outs,
+    refunds,
+    reversals,
     expected: total([current.initial, ins, -outs], true),
   };
 }
@@ -77,7 +81,7 @@ export function closeCash(db: Db, counted: number, reason: string, time: Time): 
 export function closings(db: Db): Closing[] {
   return db
     .all<{ closing: string }>(
-      "SELECT closing FROM cash_sessions WHERE closing IS NOT NULL ORDER BY at DESC,rowid DESC LIMIT 1000",
+      "SELECT closing FROM cash_sessions WHERE closing IS NOT NULL ORDER BY at DESC,rowid DESC LIMIT 20",
     )
-    .map((c) => JSON.parse(c.closing));
+    .map((c) => ({ refunds: 0, reversals: 0, ...JSON.parse(c.closing) }));
 }

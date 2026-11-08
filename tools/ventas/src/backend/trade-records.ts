@@ -5,7 +5,7 @@ import type { Db } from "./db/driver.ts";
 export function settings(db: Db): Settings {
   return JSON.parse(db.get<{ data: string }>("SELECT data FROM settings WHERE id=1")?.data ?? "{}");
 }
-export function nextFolio(db: Db, name: "sale" | "payment"): number {
+export function nextFolio(db: Db, name: "sale" | "payment" | "return" | "reversal"): number {
   db.run("UPDATE sequences SET value=value+1 WHERE name=?", name);
   const value = db.get<{ value: number }>("SELECT value FROM sequences WHERE name=?", name)?.value;
   if (!value || !Number.isSafeInteger(value)) throw new Error("Invalid folio sequence");
@@ -19,28 +19,33 @@ export function draft(db: Db): Draft {
     lines: db.all("SELECT productId,qty FROM draft_lines ORDER BY rowid"),
   };
 }
-type SaleRow = Omit<SaleRecord, "clientSnapshot" | "business" | "lines" | "opening"> & {
+export type SaleRow = Omit<SaleRecord, "clientSnapshot" | "business" | "lines" | "opening"> & {
   clientSnapshot: string;
   business: string;
   lines: string;
   opening: number;
 };
-export function sales(db: Db): SaleRecord[] {
-  return db.all<SaleRow>("SELECT * FROM sales ORDER BY date,at,folio").map((s) => ({
+export function readSale(s: SaleRow): SaleRecord {
+  return {
     ...s,
     clientSnapshot: JSON.parse(s.clientSnapshot),
     business: JSON.parse(s.business),
     lines: JSON.parse(s.lines),
     opening: Boolean(s.opening),
-  }));
+  };
 }
+export function sales(db: Db): SaleRecord[] {
+  return db.all<SaleRow>("SELECT * FROM sales ORDER BY date,at,folio").map(readSale);
+}
+
 export function payments(db: Db): PaymentRecord[] {
   return db
     .all<Omit<PaymentRecord, "allocations" | "bankSnapshot"> & { bankSnapshot: string }>(
-      "SELECT * FROM payments ORDER BY date,at,folio",
+      "SELECT p.*,r.id AS reversalId FROM payments p LEFT JOIN payment_reversals r ON r.paymentId=p.id ORDER BY p.date,p.at,p.folio",
     )
     .map((p) => ({
       ...p,
+      opening: Boolean(p.opening),
       bankSnapshot: JSON.parse(p.bankSnapshot),
       allocations: db.all(
         "SELECT saleId,amount FROM payment_allocations WHERE paymentId=? ORDER BY rowid",
@@ -48,10 +53,11 @@ export function payments(db: Db): PaymentRecord[] {
       ),
     }));
 }
-export function outflows(db: Db): Outflow[] {
+export function outflows(db: Db, limit = 50): Outflow[] {
   return db
     .all<Omit<Outflow, "bankSnapshot"> & { bankSnapshot: string }>(
-      "SELECT * FROM outflows ORDER BY at DESC,rowid DESC LIMIT 1000",
+      "SELECT * FROM outflows ORDER BY at DESC,rowid DESC LIMIT ?",
+      limit,
     )
     .map((p) => ({ ...p, bankSnapshot: JSON.parse(p.bankSnapshot) }));
 }

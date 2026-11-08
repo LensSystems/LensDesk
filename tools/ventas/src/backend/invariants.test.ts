@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Action, snapshotResultSchema } from "../shared/contracts.ts";
 import type { PaymentInput } from "../shared/trading-contracts.ts";
 import { type Db, openVentasDatabase } from "./db/driver.ts";
-import { execute, snapshot } from "./service.ts";
+import { snapshot as compactSnapshot, execute } from "./service.ts";
+import { testState as snapshot } from "./test-state.ts";
 
 const max = 9_000_000_000_000;
 let dir: string, db: Db;
@@ -63,7 +64,9 @@ function rejectAtomically(action: Action) {
   expect(snapshot(db)).toEqual(before);
   expect(db.all("SELECT * FROM sequences ORDER BY name")).toEqual(sequences);
   expect(db.get("SELECT * FROM operations WHERE key=?", key)).toBeUndefined();
-  expect(snapshotResultSchema.safeParse({ kind: "ok", value: snapshot(db) }).success).toBe(true);
+  expect(snapshotResultSchema.safeParse({ kind: "ok", value: compactSnapshot(db) }).success).toBe(
+    true,
+  );
 }
 function transferClient() {
   const bankId = randomUUID();
@@ -193,7 +196,9 @@ describe("Ventas aggregate invariants", () => {
       note: "Otro saldo",
     });
     ok({ type: "openCash", initial: max });
-    expect(snapshotResultSchema.safeParse({ kind: "ok", value: snapshot(db) }).success).toBe(true);
+    expect(snapshotResultSchema.safeParse({ kind: "ok", value: compactSnapshot(db) }).success).toBe(
+      true,
+    );
   });
   it("does not recalculate financial aggregates when saving the cart", () => {
     const pid = setup(),

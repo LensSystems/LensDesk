@@ -61,12 +61,13 @@ export const saleLineSchema = z.strictObject({
   cost: money,
 });
 export const saleSchema = z.strictObject({
+  initialPaymentId: uuid.nullable(),
   id: uuid,
   folio: z.number().int().positive(),
   clientId: uuid.nullable(),
   clientSnapshot: clientSchema.nullable(),
   business: settingsSchema,
-  lines: z.array(saleLineSchema),
+  lines: z.array(saleLineSchema).max(1000),
   total: money,
   term: z.number().int().min(0).max(30),
   due: z.iso.date(),
@@ -79,6 +80,8 @@ export const saleSchema = z.strictObject({
   date: z.iso.date(),
 });
 export const paymentSchema = z.strictObject({
+  opening: z.boolean().default(false),
+  reversalId: uuid.nullable(),
   id: uuid,
   folio: z.number().int().positive(),
   clientId: uuid.nullable(),
@@ -118,6 +121,8 @@ export const cashSchema = z.strictObject({
   expenses: money,
   withdrawals: money,
   outs: money,
+  refunds: money.default(0),
+  reversals: money.default(0),
   expected: signedMoney,
 });
 export const closingSchema = cashSchema.extend({
@@ -144,9 +149,7 @@ export const outflowSchema = z.strictObject({
 export const tradingSnapshotShape = {
   clients: z.array(clientSchema),
   draft: draftSchema,
-  sales: z.array(saleSchema),
-  payments: z.array(paymentSchema),
-  accounts: z.array(accountSchema),
+  accounts: z.array(accountSchema.omit({ purchases: true })),
   cash: cashSchema.nullable(),
   closings: z.array(closingSchema),
   outflows: z.array(outflowSchema),
@@ -160,6 +163,7 @@ export type SaleLine = z.infer<typeof saleLineSchema>;
 export type PaymentInput = z.infer<typeof paymentInputSchema>;
 export type PaymentRecord = z.infer<typeof paymentSchema>;
 export type Account = z.infer<typeof accountSchema>;
+export type AccountSummary = Omit<Account, "purchases">;
 export type BankSnapshot = z.infer<typeof settingsSchema>["banks"][number];
 export type Cash = z.infer<typeof cashSchema>;
 export type Closing = z.infer<typeof closingSchema>;

@@ -9,7 +9,8 @@ import type { Action, MutationResult } from "../shared/contracts.ts";
 import type { PaymentInput } from "../shared/trading-contracts.ts";
 import { type Db, openVentasDatabase } from "./db/driver.ts";
 import { bounded, operationalDate } from "./domain.ts";
-import { execute, snapshot } from "./service.ts";
+import { execute } from "./service.ts";
+import { testState as snapshot } from "./test-state.ts";
 
 let dir: string, db: Db;
 const signal = new AbortController().signal;
@@ -140,7 +141,7 @@ describe("Ventas trading", () => {
       expect(data.movements[0]?.id).toBe(moveId);
       expect(data.purchases[0]).toMatchObject({ id: purchaseId, cashId: null, bankSnapshot: null });
       expect(execute(migrated, { key, revision: 0, action }, signal)).toEqual(result);
-      expect(migrated.all("SELECT * FROM schema_migrations")).toHaveLength(3);
+      expect(migrated.all("SELECT * FROM schema_migrations")).toHaveLength(4);
       expect(data.cash).toBeNull();
     } finally {
       migrated.close();
@@ -494,7 +495,7 @@ describe("Ventas trading", () => {
     db.transaction(() => {
       for (let n = 2; n <= 1002; n++)
         db.run(
-          "INSERT INTO sales SELECT ?,?,clientId,clientSnapshot,business,lines,total,term,due,exception,opening,note,received,change,at,date FROM sales WHERE id=?",
+          "INSERT INTO sales(id,folio,clientId,clientSnapshot,business,lines,total,term,due,exception,opening,note,received,change,at,date) SELECT ?,?,clientId,clientSnapshot,business,lines,total,term,due,exception,opening,note,received,change,at,date FROM sales WHERE id=?",
           randomUUID(),
           n,
           original.id,

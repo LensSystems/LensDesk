@@ -152,7 +152,7 @@ export function CartPanel({
             </strong>
           </div>
           {client && account && total !== null ? (
-            <div>
+            <div className="ventas-total-projection">
               <span>{t("projectedFullBalance")}</span>
               <strong>{moneyText(account.balance + total, i18n.language)}</strong>
             </div>

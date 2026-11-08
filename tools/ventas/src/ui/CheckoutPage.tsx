@@ -2,8 +2,10 @@ import { Button, Notice } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmSaleDialog } from "./ConfirmSaleDialog.tsx";
+import { DraftTicket } from "./DraftTicket.tsx";
 import { moneyText } from "./format.ts";
 import { newPayment, PaymentFields, paymentValue } from "./PaymentFields.tsx";
+import { StatementView } from "./StatementView.tsx";
 import type { ScreenProps } from "./types.ts";
 export function CheckoutPage({
   total,
@@ -70,19 +72,8 @@ export function CheckoutPage({
         </div>
       </div>
       <div className="ventas-checkout-review">
-        <h2>{t("reviewProducts")}</h2>
-        {props.data.draft.lines.map((l) => {
-          const p = props.data.products.find((p) => p.id === l.productId);
-          return (
-            <div className="ventas-event" key={l.productId}>
-              <span>
-                {p?.name} × {l.qty}
-              </span>
-              <strong>{moneyText((p?.price ?? 0) * l.qty, i18n.language)}</strong>
-            </div>
-          );
-        })}
-        <p>{t("confirmSaleIntro")}</p>
+        <DraftTicket {...props} total={total} payment={payment} />
+        {client ? <StatementView {...props} clientId={client.id} /> : null}
       </div>
       {confirm ? (
         <ConfirmSaleDialog

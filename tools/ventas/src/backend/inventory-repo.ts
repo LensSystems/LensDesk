@@ -18,8 +18,9 @@ export function move(
   referenceId: string,
   reason: string,
   time: Clock,
+  allowInactive = false,
 ): void {
-  const p = product(db, productId);
+  const p = product(db, productId, !allowInactive);
   const stock = checked(p.stock + qty, 1_000_000_000);
   const total = checked(p.value + value);
   if (!stock && total) throw new DomainFault("E_COST");

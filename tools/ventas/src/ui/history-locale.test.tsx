@@ -69,18 +69,36 @@ describe("Ventas history dates and stale cart", () => {
       overdue: 0,
       nextDue: "2026-12-01",
       totalPaid: 0,
-      purchases: [{ saleId: pid, total: 100, paid: 0, pending: 100, due: "2026-12-01" }],
+    });
+    f.rows.push({
+      kind: "sale",
+      data: {
+        id: pid,
+        folio: 1,
+        clientId: cid,
+        clientName: "Tienda",
+        date: "2026-11-07",
+        due: "2026-12-01",
+        total: 100,
+        net: 100,
+        paid: 0,
+        pending: 100,
+        opening: false,
+        note: "",
+      },
     });
     f.mount();
     expect(await screen.findByText("07/11/2026")).toBeInTheDocument();
     fireEvent.click(
       within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.accounts }),
     );
-    expect(screen.getAllByText("01/12/2026")).toHaveLength(2);
+    expect(screen.getByText("01/12/2026")).toBeInTheDocument();
+    expect(await screen.findByText(/Vencimiento: 01\/12\/2026/)).toBeInTheDocument();
     expect(screen.queryByText("2026-12-01")).not.toBeInTheDocument();
     await english(f);
-    await waitFor(() => expect(screen.getAllByText("12/01/2026")).toHaveLength(2));
-    expect(screen.getByText("11/07/2026")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("12/01/2026")).toBeInTheDocument());
+    expect(await screen.findByText(/Due date: 12\/01\/2026/)).toBeInTheDocument();
+    expect(screen.getAllByText("11/07/2026").length).toBeGreaterThan(0);
   });
   it("shows persisted expense reference and locale-specific operational dates", async () => {
     const f = fixture();

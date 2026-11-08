@@ -6,7 +6,7 @@ import {
   mutationResultSchema,
   type Snapshot,
 } from "../shared/contracts.ts";
-import { accountsFrom } from "./accounts-repo.ts";
+import { accountSummaries } from "./accounts-repo.ts";
 import { validateAggregates } from "./aggregate-invariants.ts";
 import { cash, closeCash, closings, openCash } from "./cash-repo.ts";
 import { client, clients, saveClient, saveDraft } from "./clients-repo.ts";
@@ -15,14 +15,13 @@ import { checkCancelled, DomainFault } from "./domain.ts";
 import { adjust, clock, prepare, receive } from "./inventory-repo.ts";
 import { outflow, payAccount } from "./payments-repo.ts";
 import { product, products, saveProduct, saveRecipe } from "./products-repo.ts";
+import { returnSale, reversePayment } from "./returns-repo.ts";
 import { openingBalance, sell } from "./sales-repo.ts";
-import { draft, outflows, payments, sales } from "./trade-records.ts";
+import { draft, outflows } from "./trade-records.ts";
 
 export function snapshot(db: Db): Snapshot {
   return db.transaction(() => {
     const allClients = clients(db),
-      allSales = sales(db),
-      allPayments = payments(db),
       today = clock().date;
     return {
       revision: db.get<{ revision: number }>("SELECT revision FROM meta WHERE id=1")?.revision ?? 0,
@@ -31,20 +30,17 @@ export function snapshot(db: Db): Snapshot {
       ),
       products: products(db),
       recipes: db.all("SELECT * FROM recipes ORDER BY productId"),
-      movements: db.all("SELECT * FROM movements ORDER BY at DESC, rowid DESC LIMIT 1000"),
+      movements: db.all("SELECT * FROM movements ORDER BY at DESC, rowid DESC LIMIT 50"),
       purchases: db
         .all<Omit<Snapshot["purchases"][number], "bankSnapshot"> & { bankSnapshot: string | null }>(
-          "SELECT * FROM purchases ORDER BY at DESC, rowid DESC LIMIT 1000",
+          "SELECT * FROM purchases ORDER BY at DESC, rowid DESC LIMIT 50",
         )
         .map((p) => ({ ...p, bankSnapshot: p.bankSnapshot ? JSON.parse(p.bankSnapshot) : null })),
       clients: allClients,
-      sales: allSales,
-      payments: allPayments,
-      accounts: accountsFrom(
+      accounts: accountSummaries(
+        db,
         allClients.map((c) => c.id),
         today,
-        allSales,
-        allPayments,
       ),
       cash: cash(db),
       closings: closings(db),
@@ -113,6 +109,12 @@ export function execute(db: Db, params: unknown, signal: AbortSignal): MutationR
           break;
         case "payAccount":
           id = payAccount(db, action.clientId, action.payment, time);
+          break;
+        case "returnSale":
+          id = returnSale(db, action, time);
+          break;
+        case "reversePayment":
+          id = reversePayment(db, action, time);
           break;
         case "openingBalance":
           id = openingBalance(db, action, time);

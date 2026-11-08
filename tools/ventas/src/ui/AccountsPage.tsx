@@ -1,9 +1,10 @@
 import { Button, Input } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AccountHistory } from "./AccountHistory.tsx";
 import { AccountPaymentDialog } from "./AccountPaymentDialog.tsx";
 import { ClientDialog } from "./ClientDialog.tsx";
-import { dateText, moneyText, saleFolio } from "./format.ts";
+import { dateText, moneyText } from "./format.ts";
 import { OpeningBalanceDialog } from "./OpeningBalanceDialog.tsx";
 import type { ScreenProps } from "./types.ts";
 export function AccountsPage(props: ScreenProps & { onSale: () => void }) {
@@ -116,56 +117,7 @@ export function AccountsPage(props: ScreenProps & { onSale: () => void }) {
                 {t(client.active ? "deactivate" : "activate")}
               </Button>
             </div>
-            <h2>{t("purchasesAndDue")}</h2>
-            <div className="ventas-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    {["purchase", "dueDate", "amount", "paid", "pending"].map((k) => (
-                      <th key={k}>{t(k)}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {account.purchases
-                    .slice()
-                    .reverse()
-                    .map((p) => {
-                      const sale = data.sales.find((s) => s.id === p.saleId);
-                      return (
-                        <tr key={p.saleId}>
-                          <th scope="row">
-                            {sale ? saleFolio(sale) : p.saleId}
-                            {sale?.opening ? (
-                              <small className="block">
-                                {t("openingBalance")} · {sale.note}
-                              </small>
-                            ) : null}
-                          </th>
-                          <td>{dateText(p.due, i18n.language)}</td>
-                          <td>{moneyText(p.total, i18n.language)}</td>
-                          <td>{moneyText(p.paid, i18n.language)}</td>
-                          <td>{moneyText(p.pending, i18n.language)}</td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-            <h2>{t("payments")}</h2>
-            {data.payments
-              .filter((p) => p.clientId === client.id)
-              .slice()
-              .reverse()
-              .map((p) => (
-                <div className="ventas-event" key={p.id}>
-                  <span>
-                    {t("paymentFolio", { folio: p.folio })} · {dateText(p.date, i18n.language)} ·{" "}
-                    {t(p.method)}
-                  </span>
-                  <strong>{moneyText(p.amount, i18n.language)}</strong>
-                </div>
-              ))}
+            <AccountHistory {...props} clientId={client.id} />
           </>
         ) : (
           <div className="ventas-empty">

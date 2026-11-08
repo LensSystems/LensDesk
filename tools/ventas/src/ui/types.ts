@@ -12,7 +12,9 @@ export type OperationFeedback = {
   confirmedId: string | null;
   retry: () => void;
 };
+export type ReadQuery = (method: string, params?: unknown) => Promise<unknown>;
 export type ScreenProps = {
+  read: ReadQuery;
   data: Snapshot;
   run: RunAction;
   busy: boolean;

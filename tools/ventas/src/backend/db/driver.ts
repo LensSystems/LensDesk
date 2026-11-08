@@ -14,6 +14,11 @@ export type Db = {
 export function openVentasDatabase(dataDir: string): Db {
   mkdirSync(dataDir, { recursive: true });
   const database = new DatabaseSync(join(dataDir, "ventas.db"));
+  database.function("ventas_fold", { deterministic: true }, (value) =>
+    String(value ?? "")
+      .normalize("NFKC")
+      .toLowerCase(),
+  );
   database.exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=3000;");
   const db: Db = {
     exec: (sql) => database.exec(sql),

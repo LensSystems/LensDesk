@@ -14,6 +14,8 @@ import { dateText } from "./format.ts";
 import { Inventory } from "./Inventory.tsx";
 import { Sale } from "./Sale.tsx";
 import { SettingsPage } from "./SettingsPage.tsx";
+import { SummaryPage } from "./SummaryPage.tsx";
+import { TicketsPage } from "./TicketsPage.tsx";
 import { type Client, type Screen, screens } from "./types.ts";
 import { useSales } from "./use-sales.ts";
 
@@ -51,7 +53,13 @@ export function App({ client }: { client: Client }) {
     document.title = t("title");
   }, [t]);
   const props = sales.data
-    ? { data: sales.data, run: sales.run, busy: sales.busy, operation: sales }
+    ? {
+        data: sales.data,
+        run: sales.run,
+        busy: sales.busy,
+        operation: sales,
+        read: client.backend.invoke,
+      }
     : null;
   return (
     <UiLabelsProvider labels={{ close: t("close"), dismiss: t("close"), loading: t("loading") }}>
@@ -105,6 +113,10 @@ export function App({ client }: { client: Client }) {
             <AccountsPage {...props} onSale={() => setScreen("sale")} />
           ) : screen === "expenses" ? (
             <ExpensesPage {...props} />
+          ) : screen === "tickets" ? (
+            <TicketsPage {...props} />
+          ) : screen === "summary" ? (
+            <SummaryPage {...props} />
           ) : screen === "settings" ? (
             <SettingsPage {...props} />
           ) : screen === "sale" ? (
@@ -113,12 +125,7 @@ export function App({ client }: { client: Client }) {
               onInventory={() => setScreen("inventory")}
               onAccounts={() => setScreen("accounts")}
             />
-          ) : (
-            <section className="ventas-empty">
-              <h1>{t(`nav.${screen}`)}</h1>
-              <p>{t("emptyMovements")}</p>
-            </section>
-          )}
+          ) : null}
           {cashOpen && props ? <CashDialog {...props} close={() => setCashOpen(false)} /> : null}
         </main>
       </TooltipProvider>

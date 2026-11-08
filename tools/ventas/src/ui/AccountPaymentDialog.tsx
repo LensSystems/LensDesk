@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Account, ClientRecord } from "../shared/trading-contracts.ts";
+import type { AccountSummary, ClientRecord } from "../shared/trading-contracts.ts";
 import { moneyText } from "./format.ts";
 import { OperationModal } from "./OperationModal.tsx";
 import { newPayment, PaymentFields, paymentValue } from "./PaymentFields.tsx";
@@ -11,7 +11,12 @@ export function AccountPaymentDialog({
   full = false,
   close,
   ...props
-}: ScreenProps & { client: ClientRecord; account: Account; full?: boolean; close: () => void }) {
+}: ScreenProps & {
+  client: ClientRecord;
+  account: AccountSummary;
+  full?: boolean;
+  close: () => void;
+}) {
   const { t, i18n } = useTranslation();
   const [value, setValue] = useState(() => newPayment(full ? account.balance : 0));
   return (
