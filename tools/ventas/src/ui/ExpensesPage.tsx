@@ -17,7 +17,7 @@ export function ExpensesPage(props: ScreenProps) {
   return (
     <section className="ventas-inventory">
       <div className="ventas-section-title">
-        <h1>{t("nav.expenses")}</h1>
+        <h1 className="ventas-page-title">{t("nav.expenses")}</h1>
         <div className="ventas-row-actions">
           <Button onClick={() => setDialog("expense")}>{t("recordExpense")}</Button>
           <Button onClick={() => setDialog("withdrawal")}>{t("recordWithdrawal")}</Button>

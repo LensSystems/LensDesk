@@ -48,8 +48,8 @@ async function openDialog(kind: "product" | "recipe" | "stock") {
   );
   f.mount();
   await screen.findByText("Gomitas");
-  fireEvent.click(
-    within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.inventory }),
+  fireEvent.mouseDown(
+    within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.inventory }),
   );
   if (kind === "product") {
     fireEvent.click(screen.getByRole("button", { name: es.addProduct }));

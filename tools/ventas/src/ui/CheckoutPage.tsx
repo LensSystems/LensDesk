@@ -30,7 +30,7 @@ export function CheckoutPage({
   return (
     <section className="ventas-checkout">
       <div className="ventas-checkout-form">
-        <h1>{t("checkout")}</h1>
+        <h1 className="ventas-page-title">{t("checkout")}</h1>
         <p>{client?.name ?? t("counter")}</p>
         <strong className="ventas-sale-total">{moneyText(total, i18n.language)}</strong>
         <PaymentFields

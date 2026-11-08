@@ -22,21 +22,86 @@
   font-size: 14px;
   font-weight: 700;
 }
+.ventas-app .ventas-page-title {
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+.ventas-app .ventas-section-heading {
+  font-size: 16px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.ventas-cart-products-title {
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.ventas-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding-top: 0;
+}
 .ventas-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 20px;
+  gap: 8px;
+  min-height: 56px;
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 0 16px;
   border-bottom: 1px solid var(--ld-border);
   flex-shrink: 0;
 }
 .ventas-nav nav {
+  min-width: 0;
+  overflow-x: auto;
+}
+.ventas-nav-tabs {
   display: flex;
-  flex-wrap: wrap;
+  width: max-content;
+  gap: 4px;
   padding: 3px;
-  background: var(--ld-surface);
+}
+.ventas-nav-tab,
+.ventas-nav-settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 6px;
+  height: 32px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ventas-nav-tab[data-state="active"],
+.ventas-nav-settings[data-state="active"] {
+  font-weight: 700;
+}
+.ventas-nav-tab {
+  padding-inline: 11px;
+}
+.ventas-nav-settings {
+  width: 34px;
+  min-width: 34px;
+  margin-left: 4px;
+  padding: 0;
+}
+.ventas-nav-status > button {
+  height: 28px;
+  font-size: 12px;
+}
+.ventas-nav-count {
+  padding-inline: 7px;
   border-radius: var(--ld-radius-xl);
+  background: var(--ld-warning-soft);
+  color: var(--ld-warning-soft-fg);
+  font-size: 12px;
 }
 .ventas-sale {
   flex: 1;
@@ -54,6 +119,10 @@
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
   padding-top: 20px;
+}
+.ventas-product-name {
+  font-size: 13px;
+  line-height: 18px;
 }
 .ventas-product {
   min-height: 140px;
@@ -79,7 +148,7 @@
   border-block: 1px solid var(--ld-border);
   padding-block: 16px;
 }
-.ventas-cart-lines h2 {
+.ventas-cart-lines .ventas-cart-products-title {
   margin-bottom: 12px;
 }
 .ventas-empty {
@@ -190,7 +259,9 @@
 .ventas-nav-status {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 12px;
   color: var(--ld-text-muted);
 }

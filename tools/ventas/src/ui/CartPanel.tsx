@@ -33,7 +33,7 @@ export function CartPanel({
   return (
     <aside className="ventas-cart">
       <div className="ventas-section-title">
-        <h1>{t("currentSale")}</h1>
+        <h2 className="ventas-section-heading">{t("currentSale")}</h2>
         {client ? (
           <div className="ventas-client-actions">
             <Button variant="ghost" onClick={onViewAccount}>
@@ -83,7 +83,7 @@ export function CartPanel({
       )}
       <div className="ventas-cart-lines">
         <div className="ventas-section-title">
-          <h2>{t("products")}</h2>
+          <h3 className="ventas-cart-products-title">{t("products")}</h3>
           <Button variant="ghost" disabled={!data.draft.lines.length || busy} onClick={onClear}>
             <Trash2 size={14} aria-hidden="true" />
             {t("clearCart")}

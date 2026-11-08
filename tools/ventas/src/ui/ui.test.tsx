@@ -22,22 +22,22 @@ describe("Ventas UI", () => {
     fixture().mount();
     expect(await screen.findByText(es.emptyCatalog)).toBeInTheDocument();
     expect(
-      screen.getByRole("navigation", { name: es.navigation }).querySelectorAll("button"),
+      within(screen.getByRole("navigation", { name: es.navigation })).getAllByRole("tab"),
     ).toHaveLength(7);
     expect(screen.getByRole("combobox", { name: es.client })).toHaveValue(es.counter);
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.inventory }),
+    fireEvent.mouseDown(
+      within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.inventory }),
     );
     expect(await screen.findByText(es.emptyInventory)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: es.nav.settings }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: es.nav.settings }));
     expect(screen.getByLabelText(es.businessName)).toHaveValue("");
   });
   it("submits a real product command with integer cents and refreshes the inventory", async () => {
     const f = fixture();
     f.mount();
     await screen.findByText(es.emptyCatalog);
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.inventory }),
+    fireEvent.mouseDown(
+      within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.inventory }),
     );
     fireEvent.click(screen.getByRole("button", { name: es.addProduct }));
     const dialog = screen.getByRole("dialog");
@@ -70,8 +70,8 @@ describe("Ventas UI", () => {
     const f = fixture();
     f.mount();
     await screen.findByText(es.emptyCatalog);
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.inventory }),
+    fireEvent.mouseDown(
+      within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.inventory }),
     );
     fireEvent.click(screen.getByRole("button", { name: es.addProduct }));
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: es.close }));
@@ -94,7 +94,7 @@ describe("Ventas UI", () => {
     const f = fixture();
     f.mount();
     await screen.findByText(es.emptyCatalog);
-    fireEvent.click(screen.getByRole("button", { name: es.nav.settings }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: es.nav.settings }));
     fireEvent.change(screen.getByLabelText(es.businessName), { target: { value: "Tienda" } });
     const invoke = f.invoke.getMockImplementation();
     if (!invoke) throw new Error("Missing fixture implementation");
@@ -121,7 +121,7 @@ describe("Ventas UI", () => {
     const f = fixture();
     f.mount();
     await screen.findByText(es.emptyCatalog);
-    fireEvent.click(screen.getByRole("button", { name: es.nav.settings }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: es.nav.settings }));
     fireEvent.change(screen.getByLabelText(es.businessName), { target: { value: "Original" } });
     const invoke = f.invoke.getMockImplementation();
     if (!invoke) throw new Error("Missing fixture implementation");
@@ -166,8 +166,8 @@ describe("Ventas UI", () => {
     });
     f.mount();
     await screen.findByText("Bolsita");
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.inventory }),
+    fireEvent.mouseDown(
+      within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.inventory }),
     );
     expect(screen.queryByRole("button", { name: es.receive })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: es.prepare })).toBeInTheDocument();

@@ -22,7 +22,7 @@ export function SummaryPage(props: ScreenProps) {
     <section className="ventas-summary">
       <div className="ventas-section-title">
         <div>
-          <h1>{t("nav.summary")}</h1>
+          <h1 className="ventas-page-title">{t("nav.summary")}</h1>
           <p>
             {from && to ? `${dateText(from, i18n.language)} — ${dateText(to, i18n.language)}` : ""}
           </p>

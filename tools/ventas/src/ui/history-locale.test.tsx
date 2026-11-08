@@ -89,8 +89,8 @@ describe("Ventas history dates and stale cart", () => {
     });
     f.mount();
     expect(await screen.findByText("07/11/2026")).toBeInTheDocument();
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.accounts }),
+    fireEvent.mouseDown(
+      within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.accounts }),
     );
     expect(screen.getByText("01/12/2026")).toBeInTheDocument();
     expect(await screen.findByText(/Vencimiento: 01\/12\/2026/)).toBeInTheDocument();
@@ -118,8 +118,8 @@ describe("Ventas history dates and stale cart", () => {
     });
     f.mount();
     await screen.findByText(es.emptyCatalog);
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.expenses }),
+    fireEvent.mouseDown(
+      within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.expenses }),
     );
     expect(screen.getByText("31/12/2026")).toBeInTheDocument();
     expect(screen.getByText("Referencia: REF-GASTO-123")).toBeInTheDocument();

@@ -5,7 +5,14 @@ import { moneyText, parseMoney } from "./format.ts";
 import { MoneyInput } from "./MoneyInput.tsx";
 import { OperationModal } from "./OperationModal.tsx";
 import type { ScreenProps } from "./types.ts";
-export function CashDialog({ close, ...props }: ScreenProps & { close: () => void }) {
+export function CashDialog({
+  close,
+  managedDialog = false,
+  ...props
+}: ScreenProps & {
+  close: () => void;
+  managedDialog?: boolean;
+}) {
   const { t, i18n } = useTranslation(),
     current = props.data.cash;
   const [amount, setAmount] = useState(
@@ -14,6 +21,7 @@ export function CashDialog({ close, ...props }: ScreenProps & { close: () => voi
   return (
     <OperationModal
       {...props}
+      managedDialog={managedDialog}
       title={t(current ? "closeCash" : "openCash")}
       description={
         current

@@ -39,7 +39,7 @@ export function TicketsPage(props: ScreenProps) {
   return (
     <section className="ventas-tickets">
       <aside className="ventas-ticket-list">
-        <h1>{t("nav.tickets")}</h1>
+        <h1 className="ventas-page-title">{t("nav.tickets")}</h1>
         <Input
           label={t("searchHistory")}
           value={search}

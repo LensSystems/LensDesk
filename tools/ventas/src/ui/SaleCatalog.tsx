@@ -57,7 +57,7 @@ export function SaleCatalog({
                   <span>{p.category}</span>
                   {qty ? <strong className="ventas-qty-badge">{qty}</strong> : null}
                 </span>
-                <h2>{p.name}</h2>
+                <strong className="ventas-product-name">{p.name}</strong>
                 <span className="ventas-product-bottom">
                   <strong>{moneyText(p.price, i18n.language)}</strong>
                   <small>{t("stockCount", { stock: numberText(p.stock, i18n.language) })}</small>

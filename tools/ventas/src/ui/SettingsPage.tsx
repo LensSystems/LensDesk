@@ -11,7 +11,7 @@ export function SettingsPage({
   const { t } = useTranslation();
   return (
     <section className="ventas-settings">
-      <h1>{t("nav.settings")}</h1>
+      <h1 className="ventas-page-title">{t("nav.settings")}</h1>
       <p className="text-muted">{t("settingsIntro")}</p>
       <BusinessSettingsForm {...props} key={restoredId ?? "initial"} />
       <BackupPanel {...props} client={client} restore={restore} />

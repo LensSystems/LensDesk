@@ -2,6 +2,7 @@
   "title": "Sales",
   "close": "Close",
   "loading": "Loading…",
+  "overdueAccounts": "{{count}} overdue accounts",
   "navigation": "Sales sections",
   "local": "Local data",
   "emptyMovements": "No transactions recorded.",

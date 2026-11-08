@@ -96,7 +96,7 @@ test("Ventas exporta y restaura archivos reales, copia previa y recibos tras rei
     await tool.reload();
     await tool
       .getByRole("navigation")
-      .getByRole("button", { name: "Ajustes de Ventas", exact: true })
+      .getByRole("tab", { name: "Ajustes de Ventas", exact: true })
       .click();
     await stubDialog(app, "save", { canceled: true });
     await tool.getByRole("button", { name: "Guardar respaldo", exact: true }).click();
@@ -125,7 +125,7 @@ test("Ventas exporta y restaura archivos reales, copia previa y recibos tras rei
     await tool.reload();
     await tool
       .getByRole("navigation")
-      .getByRole("button", { name: "Ajustes de Ventas", exact: true })
+      .getByRole("tab", { name: "Ajustes de Ventas", exact: true })
       .click();
     await restoreFile(app, tool, path);
     expect(await state(tool)).toMatchObject({
@@ -195,7 +195,7 @@ test("Ventas importa Web1 real con folios históricos y limitaciones explícitas
     const tool = await toolPage(app, "ventas");
     await tool
       .getByRole("navigation")
-      .getByRole("button", { name: "Ajustes de Ventas", exact: true })
+      .getByRole("tab", { name: "Ajustes de Ventas", exact: true })
       .click();
     await restoreFile(app, tool, path);
     expect(await state(tool)).toMatchObject({
@@ -203,10 +203,7 @@ test("Ventas importa Web1 real con folios históricos y limitaciones explícitas
       cash: { expected: 900 },
       accounts: [{ balance: 800 }],
     });
-    await tool
-      .getByRole("navigation")
-      .getByRole("button", { name: "Tickets", exact: true })
-      .click();
+    await tool.getByRole("navigation").getByRole("tab", { name: "Tickets", exact: true }).click();
     await tool.getByRole("button", { name: /VENTA-arbitraria/ }).click();
     const ticket = tool.getByRole("article", { name: "Ticket de venta", exact: true });
     await expect(ticket.getByText("Gomitas históricas", { exact: true })).toBeVisible();

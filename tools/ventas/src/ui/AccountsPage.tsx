@@ -19,7 +19,7 @@ export function AccountsPage(props: ScreenProps & { onSale: () => void }) {
     <section className="ventas-accounts">
       <aside className="ventas-account-list">
         <div className="ventas-section-title">
-          <h1>{t("nav.accounts")}</h1>
+          <h2 className="ventas-section-heading">{t("nav.accounts")}</h2>
           <Button onClick={() => setDialog("new")}>{t("addClient")}</Button>
         </div>
         <Input label={t("searchClient")} value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -58,7 +58,7 @@ export function AccountsPage(props: ScreenProps & { onSale: () => void }) {
           <>
             <div className="ventas-section-title">
               <div>
-                <h1>{client.name}</h1>
+                <h1 className="ventas-page-title">{client.name}</h1>
                 <p>{client.phone}</p>
               </div>
               <Button onClick={() => setDialog("edit")}>{t("editClient")}</Button>

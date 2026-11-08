@@ -2,6 +2,7 @@
   "title": "Ventas",
   "close": "Cerrar",
   "loading": "Cargando…",
+  "overdueAccounts": "{{count}} cuentas vencidas",
   "navigation": "Secciones de Ventas",
   "local": "Datos locales",
   "emptyMovements": "No hay movimientos registrados.",

@@ -34,8 +34,8 @@ async function open(f: ReturnType<typeof fixture>) {
   f.files.pickOpen.mockResolvedValue([{ token: "opaque", name: "web.json", size: 1 }]);
   f.mount();
   await screen.findByText(es.emptyCatalog);
-  fireEvent.click(
-    within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.settings }),
+  fireEvent.mouseDown(
+    within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.settings }),
   );
   fireEvent.click(screen.getByRole("button", { name: es.chooseBackup }));
   await screen.findByText("web.json");

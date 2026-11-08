@@ -27,7 +27,7 @@ export function Inventory(props: ScreenProps) {
     <section className="ventas-inventory">
       <div className="ventas-section-title">
         <div>
-          <h1>{t("nav.inventory")}</h1>
+          <h1 className="ventas-page-title">{t("nav.inventory")}</h1>
           <p className="text-muted">{t("inventoryIntro")}</p>
         </div>
         <Button variant="primary" onClick={() => setEdit({ type: "product" })}>

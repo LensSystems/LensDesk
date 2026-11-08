@@ -129,8 +129,8 @@ function seeded() {
 async function tickets(f: ReturnType<typeof seeded>) {
   f.mount();
   await screen.findByText(es.emptyCatalog);
-  fireEvent.click(
-    within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.tickets }),
+  fireEvent.mouseDown(
+    within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.tickets }),
   );
   await screen.findByRole("article", { name: es.saleTicket });
 }
@@ -232,8 +232,8 @@ describe("Ventas tickets and summary", () => {
     });
     f.mount();
     await screen.findByText(es.emptyCatalog);
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.tickets }),
+    fireEvent.mouseDown(
+      within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.tickets }),
     );
     fireEvent.change(screen.getByLabelText(es.searchHistory), { target: { value: "No existe" } });
     expect(await screen.findByText(es.noConfirmedSales)).toBeInTheDocument();
@@ -275,8 +275,8 @@ describe("Ventas tickets and summary", () => {
     });
     f.mount();
     await screen.findByText(es.emptyCatalog);
-    fireEvent.click(
-      within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.summary }),
+    fireEvent.mouseDown(
+      within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.summary }),
     );
     expect(await screen.findByRole("alert")).toHaveTextContent(es.errors.E_LIMIT);
     fireEvent.click(screen.getByRole("button", { name: es.retry }));
