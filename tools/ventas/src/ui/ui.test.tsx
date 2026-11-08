@@ -24,7 +24,7 @@ describe("Ventas UI", () => {
     expect(
       screen.getByRole("navigation", { name: es.navigation }).querySelectorAll("button"),
     ).toHaveLength(7);
-    expect(screen.getByRole("combobox", { name: es.client })).toHaveTextContent(es.counter);
+    expect(screen.getByRole("combobox", { name: es.client })).toHaveValue(es.counter);
     fireEvent.click(
       within(screen.getByRole("navigation")).getByRole("button", { name: es.nav.inventory }),
     );

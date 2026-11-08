@@ -1,6 +1,16 @@
-import { applyDocumentContext, Button, Notice, UiLabelsProvider } from "@lensdesk/ui";
+import {
+  applyDocumentContext,
+  Button,
+  Notice,
+  TooltipProvider,
+  UiLabelsProvider,
+} from "@lensdesk/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AccountsPage } from "./AccountsPage.tsx";
+import { CashDialog } from "./CashDialog.tsx";
+import { ExpensesPage } from "./ExpensesPage.tsx";
+import { dateText } from "./format.ts";
 import { Inventory } from "./Inventory.tsx";
 import { Sale } from "./Sale.tsx";
 import { SettingsPage } from "./SettingsPage.tsx";
@@ -13,6 +23,7 @@ export function App({ client }: { client: Client }) {
   language.current = i18n;
   const [screen, setScreen] = useState<Screen>("sale");
   const sales = useSales(client);
+  const [cashOpen, setCashOpen] = useState(false);
   useEffect(() => {
     let alive = true;
     let receivedEvent = false;
@@ -44,57 +55,73 @@ export function App({ client }: { client: Client }) {
     : null;
   return (
     <UiLabelsProvider labels={{ close: t("close"), dismiss: t("close"), loading: t("loading") }}>
-      <main className="ventas-app">
-        <header className="ventas-nav">
-          <nav aria-label={t("navigation")}>
-            {screens.map((key) => (
-              <Button
-                key={key}
-                variant={screen === key ? "default" : "ghost"}
-                aria-current={screen === key ? "page" : undefined}
-                onClick={() => setScreen(key)}
-              >
-                {t(`nav.${key}`)}
+      <TooltipProvider>
+        <main className="ventas-app">
+          <header className="ventas-nav">
+            <nav aria-label={t("navigation")}>
+              {screens.map((key) => (
+                <Button
+                  key={key}
+                  variant={screen === key ? "default" : "ghost"}
+                  aria-current={screen === key ? "page" : undefined}
+                  onClick={() => setScreen(key)}
+                >
+                  {t(`nav.${key}`)}
+                </Button>
+              ))}
+            </nav>
+            <div className="ventas-nav-status">
+              <span>{sales.data ? dateText(sales.data.today, i18n.language) : ""}</span>
+              <Button disabled={sales.busy || !sales.data} onClick={() => setCashOpen(true)}>
+                {t(sales.data?.cash ? "cashOpen" : "openCash")}
               </Button>
-            ))}
-          </nav>
-          <span className="text-muted text-xs">{t("local")}</span>
-        </header>
-        {sales.issue ? (
-          <div className="p-3">
-            <Notice
-              tone="danger"
-              title={t(`errors.${sales.issue}`, { defaultValue: t("errors.E_INTERNAL") })}
-              action={
-                !sales.loading
-                  ? {
-                      label: t(sales.pendingConfirmation ? "retryOperation" : "retry"),
-                      onClick: sales.retry,
-                    }
-                  : undefined
-              }
+            </div>
+          </header>
+          {sales.issue ? (
+            <div className="p-3">
+              <Notice
+                tone="danger"
+                title={t(`errors.${sales.issue}`, { defaultValue: t("errors.E_INTERNAL") })}
+                action={
+                  !sales.loading
+                    ? {
+                        label: t(sales.pendingConfirmation ? "retryOperation" : "retry"),
+                        onClick: sales.retry,
+                      }
+                    : undefined
+                }
+              />
+            </div>
+          ) : null}
+          {!props ? (
+            sales.loading ? (
+              <p role="status" className="p-6">
+                {t("loading")}
+              </p>
+            ) : null
+          ) : screen === "inventory" ? (
+            <Inventory {...props} />
+          ) : screen === "accounts" ? (
+            <AccountsPage {...props} onSale={() => setScreen("sale")} />
+          ) : screen === "expenses" ? (
+            <ExpensesPage {...props} />
+          ) : screen === "settings" ? (
+            <SettingsPage {...props} />
+          ) : screen === "sale" ? (
+            <Sale
+              {...props}
+              onInventory={() => setScreen("inventory")}
+              onAccounts={() => setScreen("accounts")}
             />
-          </div>
-        ) : null}
-        {!props ? (
-          sales.loading ? (
-            <p role="status" className="p-6">
-              {t("loading")}
-            </p>
-          ) : null
-        ) : screen === "inventory" ? (
-          <Inventory {...props} />
-        ) : screen === "settings" ? (
-          <SettingsPage {...props} />
-        ) : screen === "sale" ? (
-          <Sale {...props} onInventory={() => setScreen("inventory")} />
-        ) : (
-          <section className="ventas-empty">
-            <h1>{t(`nav.${screen}`)}</h1>
-            <p>{t("emptyMovements")}</p>
-          </section>
-        )}
-      </main>
+          ) : (
+            <section className="ventas-empty">
+              <h1>{t(`nav.${screen}`)}</h1>
+              <p>{t("emptyMovements")}</p>
+            </section>
+          )}
+          {cashOpen && props ? <CashDialog {...props} close={() => setCashOpen(false)} /> : null}
+        </main>
+      </TooltipProvider>
     </UiLabelsProvider>
   );
 }

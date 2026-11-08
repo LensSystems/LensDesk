@@ -13,6 +13,7 @@ export function useSales(client: Client) {
   const loadingRequest = useRef(0);
   const [busy, setBusy] = useState(false);
   const [issue, setIssue] = useState<string | null>(null);
+  const [confirmedId, setConfirmedId] = useState<string | null>(null);
   const [confirmedOwner, setConfirmedOwner] = useState<string | null>(null);
   const running = useRef(false);
   const reconciliation = useRef(false);
@@ -91,6 +92,7 @@ export function useSales(client: Client) {
         return false;
       }
       confirmed = true;
+      setConfirmedId(result.value.id);
       setConfirmedOwner(request.owner ?? null);
       await refresh();
       return true;
@@ -121,6 +123,7 @@ export function useSales(client: Client) {
   return {
     pendingConfirmation: Boolean(pending.current),
     confirmedOwner,
+    confirmedId,
     writing: busy,
     data,
     busy: busy || unresolved || Boolean(pending.current) || (loading && Boolean(data)),

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { Action, Movement, Recipe, Settings } from "../shared/contracts.ts";
+import type { Action, Movement, Recipe } from "../shared/contracts.ts";
+import { paymentContext } from "./cash-repo.ts";
 import type { Db } from "./db/driver.ts";
 import { checked, DomainFault, operationalDate, proportional } from "./domain.ts";
 import { product } from "./products-repo.ts";
@@ -73,16 +74,11 @@ export function prepare(db: Db, input: Extract<Action, { type: "prepare" }>, tim
 export function receive(db: Db, input: Extract<Action, { type: "receive" }>, time: Clock): string {
   if (product(db, input.productId).kind === "prepared")
     throw new DomainFault("E_PREPARED_PURCHASE");
-  const settings = JSON.parse(
-    db.get<{ data: string }>("SELECT data FROM settings WHERE id=1")?.data ?? "{}",
-  ) as Settings;
-  if (input.method === "transfer" && !settings.banks.some((b) => b.id === input.bankId))
-    throw new DomainFault("E_BANK");
-  if (input.method === "cash" && input.bankId) throw new DomainFault("E_BANK");
+  const context = paymentContext(db, input.method, input.bankId);
   const id = randomUUID();
   move(db, input.productId, input.qty, input.cost, "purchase", id, "", time);
   db.run(
-    "INSERT INTO purchases VALUES(?,?,?,?,?,?,?,?)",
+    "INSERT INTO purchases(id,productId,qty,cost,method,bankId,at,date,cashId,bankSnapshot) VALUES(?,?,?,?,?,?,?,?,?,?)",
     id,
     input.productId,
     input.qty,
@@ -91,6 +87,8 @@ export function receive(db: Db, input: Extract<Action, { type: "receive" }>, tim
     input.bankId,
     time.at,
     time.date,
+    context.cashId,
+    JSON.stringify(context.bankSnapshot),
   );
   return id;
 }

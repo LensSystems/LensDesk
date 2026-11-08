@@ -1,10 +1,14 @@
 import type { Db } from "./driver.ts";
 
-const sources = import.meta.glob<string>("./migrations/*.sql", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
+import inventoryMigration from "./migrations/001_inventory.sql?raw";
+import tradingMigration from "./migrations/002_sales_accounts_cash.sql?raw";
+import outflowReferenceMigration from "./migrations/003_outflow_reference.sql?raw";
+
+const sources = {
+  "./migrations/001_inventory.sql": inventoryMigration,
+  "./migrations/002_sales_accounts_cash.sql": tradingMigration,
+  "./migrations/003_outflow_reference.sql": outflowReferenceMigration,
+};
 export function migrate(db: Db): void {
   db.exec(
     "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL)",

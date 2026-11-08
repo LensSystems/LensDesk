@@ -9,6 +9,15 @@ export const pid = "9d44e2be-d3d6-4d73-ad57-65011a4a12d0";
 export function fixture() {
   const data: Snapshot = {
     revision: 0,
+    clients: [],
+    sales: [],
+    payments: [],
+    accounts: [],
+    outflows: [],
+    closings: [],
+    cash: null,
+    draft: { clientId: null, lines: [] },
+    today: "2026-11-07",
     products: [],
     recipes: [],
     movements: [],
@@ -37,6 +46,10 @@ export function fixture() {
         lastQty: 1,
         active: true,
       });
+    if (command.action.type === "saveDraft") data.draft = structuredClone(command.action.draft);
+    if (command.action.type === "sell") data.draft.lines = [];
+    if (command.action.type === "saveSettings")
+      data.settings = structuredClone(command.action.settings);
     data.revision += 1;
     return { kind: "ok", value: { id: pid, revision: data.revision } };
   });

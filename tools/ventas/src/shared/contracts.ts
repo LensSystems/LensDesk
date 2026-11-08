@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { tradingActionSchemas, tradingSnapshotShape } from "./trading-contracts.ts";
+import type { Settings } from "./values.ts";
+import { money, entityName as name, quantity, settingsSchema, uuid } from "./values.ts";
 
-export const money = z.number().int().min(0).max(9_000_000_000_000);
-export const quantity = z.number().int().min(0).max(1_000_000_000);
-const name = z.string().trim().min(1).max(120);
-const uuid = z.uuid();
+export type { Settings } from "./values.ts";
+export { money, quantity, settingsSchema } from "./values.ts";
+
 export const productSchema = z.strictObject({
   id: uuid.optional(),
   name,
@@ -18,22 +20,6 @@ export const recipeSchema = z.strictObject({
   materialId: uuid,
   grams: quantity.refine((n) => n > 0),
   packagingId: uuid.nullable(),
-});
-export const settingsSchema = z.strictObject({
-  name: z.string().trim().max(120),
-  address: z.string().trim().max(300),
-  phone: z.string().trim().max(40),
-  thanks: z.string().trim().max(300),
-  banks: z
-    .array(
-      z.strictObject({
-        id: uuid,
-        bank: name,
-        holder: name,
-        clabe: z.string().regex(/^\d{18}$/),
-      }),
-    )
-    .max(20),
 });
 export const commandSchema = z.strictObject({
   key: uuid,
@@ -63,12 +49,12 @@ export const commandSchema = z.strictObject({
       qty: quantity.refine((n) => n > 0),
     }),
     z.strictObject({ type: z.literal("saveSettings"), settings: settingsSchema }),
+    ...tradingActionSchemas,
   ]),
 });
 export type Command = z.infer<typeof commandSchema>;
 export type Action = Command["action"];
 export type ProductInput = z.infer<typeof productSchema>;
-export type Settings = z.infer<typeof settingsSchema>;
 export type Product = Required<ProductInput> & {
   stock: number;
   value: number;
@@ -82,7 +68,7 @@ export type Movement = {
   productId: string;
   qty: number;
   value: number;
-  kind: "purchase" | "adjustment" | "waste" | "preparation";
+  kind: "purchase" | "adjustment" | "waste" | "preparation" | "sale";
   referenceId: string;
   reason: string;
   at: string;
@@ -95,6 +81,8 @@ export type Purchase = {
   cost: number;
   method: "cash" | "transfer";
   bankId: string | null;
+  cashId: string | null;
+  bankSnapshot: import("./trading-contracts.ts").BankSnapshot | null;
   at: string;
   date: string;
 };
@@ -105,7 +93,7 @@ export type Snapshot = {
   recipes: Recipe[];
   movements: Movement[];
   purchases: Purchase[];
-};
+} & import("./trading-contracts.ts").TradingSnapshot;
 export const issueSchema = z.strictObject({
   code: z.enum([
     "E_NOT_FOUND",
@@ -121,6 +109,16 @@ export const issueSchema = z.strictObject({
     "E_DUPLICATE",
     "E_LIMIT",
     "E_BANK",
+    "E_CLIENT",
+    "E_CLIENT_NAME",
+    "E_CREDIT",
+    "E_PAYMENT",
+    "E_CASH_CLOSED",
+    "E_CASH_OPEN",
+    "E_CASH_DIFFERENCE",
+    "E_CART",
+    "E_TOTAL",
+    "E_BALANCE",
   ]),
   productId: uuid.optional(),
 });
@@ -155,13 +153,14 @@ export const snapshotResultSchema = z.strictObject({
         productId: uuid,
         qty: z.number().int(),
         value: z.number().int(),
-        kind: z.enum(["purchase", "adjustment", "waste", "preparation"]),
+        kind: z.enum(["purchase", "adjustment", "waste", "preparation", "sale"]),
         referenceId: uuid,
         reason: z.string(),
         at: z.iso.datetime(),
         date: z.iso.date(),
       }),
     ),
+    ...tradingSnapshotShape,
     purchases: z.array(
       z.strictObject({
         id: uuid,
@@ -170,6 +169,8 @@ export const snapshotResultSchema = z.strictObject({
         cost: money,
         method: z.enum(["cash", "transfer"]),
         bankId: uuid.nullable(),
+        cashId: uuid.nullable(),
+        bankSnapshot: settingsSchema.shape.banks.element.nullable(),
         at: z.iso.datetime(),
         date: z.iso.date(),
       }),

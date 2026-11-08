@@ -9,6 +9,7 @@ export type OperationFeedback = {
   loading: boolean;
   pendingConfirmation: boolean;
   confirmedOwner: string | null;
+  confirmedId: string | null;
   retry: () => void;
 };
 export type ScreenProps = {

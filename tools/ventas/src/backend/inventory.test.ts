@@ -47,6 +47,8 @@ function add(input: Partial<ProductInput> = {}) {
   );
 }
 function receive(productId: string, qty: number, cost: number) {
+  if (!snapshot(db).cash && product(productId).kind !== "prepared")
+    idOf(run({ type: "openCash", initial: 0 }));
   return run({ type: "receive", productId, qty, cost, method: "cash", bankId: null });
 }
 function product(id: string) {
@@ -75,7 +77,7 @@ describe("Ventas inventory", () => {
     db.close();
     db = openVentasDatabase(dir);
     expect(product(id)).toMatchObject({ stock: 4, value: 333 });
-    expect(db.all("SELECT * FROM schema_migrations")).toHaveLength(1);
+    expect(db.all("SELECT * FROM schema_migrations")).toHaveLength(3);
     expect(db.get<{ foreign_keys: number }>("PRAGMA foreign_keys")?.foreign_keys).toBe(1);
   });
   it("rejects duplicate product names on create and edit, including inactive names", () => {
@@ -236,6 +238,7 @@ describe("Ventas inventory", () => {
   });
   it("persists idempotency across restart and refuses reusing a key for another action", () => {
     const id = add();
+    idOf(run({ type: "openCash", initial: 0 }));
     const request = command({
       type: "receive",
       productId: id,
@@ -255,6 +258,7 @@ describe("Ventas inventory", () => {
   });
   it("validates parameters, cancels before writes and preserves infrastructure errors", () => {
     const id = add();
+    idOf(run({ type: "openCash", initial: 0 }));
     const request = command({
       type: "receive",
       productId: id,

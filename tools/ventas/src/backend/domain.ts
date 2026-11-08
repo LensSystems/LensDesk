@@ -30,3 +30,15 @@ export function operationalDate(at: string): string {
     parts.find((p) => p.type === type)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
+
+export function bounded(value: bigint, signed = false): number {
+  const limit = 9_000_000_000_000n;
+  if (value > limit || value < (signed ? -limit : 0n)) throw new DomainFault("E_LIMIT");
+  return Number(value);
+}
+export function total(values: number[], signed = false): number {
+  return bounded(
+    values.reduce((sum, value) => sum + BigInt(value), 0n),
+    signed,
+  );
+}

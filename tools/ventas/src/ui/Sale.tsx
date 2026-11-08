@@ -1,65 +1,100 @@
-import { Button, Input } from "@lensdesk/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Choice } from "./Choice.tsx";
-import { moneyText, numberText } from "./format.ts";
+import { AccountPaymentDialog } from "./AccountPaymentDialog.tsx";
+import { CartPanel } from "./CartPanel.tsx";
+import { CheckoutPage } from "./CheckoutPage.tsx";
+import { ClientDialog } from "./ClientDialog.tsx";
+import { ConfirmSaleDialog } from "./ConfirmSaleDialog.tsx";
+import { cartTotal } from "./cart.ts";
+import { OperationModal } from "./OperationModal.tsx";
+import { SaleCatalog } from "./SaleCatalog.tsx";
 import type { ScreenProps } from "./types.ts";
-
-export function Sale({ data, onInventory }: ScreenProps & { onInventory: () => void }) {
-  const { t, i18n } = useTranslation();
-  const [query, setQuery] = useState("");
-  const products = data.products.filter(
-    (p) =>
-      p.active &&
-      p.kind !== "material" &&
-      p.name.toLocaleLowerCase(i18n.language).includes(query.toLocaleLowerCase(i18n.language)),
-  );
+export function Sale({
+  onInventory,
+  onAccounts,
+  ...props
+}: ScreenProps & { onInventory: () => void; onAccounts: () => void }) {
+  const { t } = useTranslation();
+  const [checkout, setCheckout] = useState(false),
+    [dialog, setDialog] = useState<"client" | "clear" | "credit" | "pay" | null>(null),
+    [newClient, setNewClient] = useState<string | null>(null);
+  const { data, run, busy } = props,
+    total = cartTotal(data);
+  useEffect(() => {
+    if (newClient && !busy && data.clients.some((c) => c.id === newClient)) {
+      setNewClient(null);
+      void run({ type: "saveDraft", draft: { ...data.draft, clientId: newClient } });
+    }
+  }, [newClient, busy, data, run]);
+  const quantity = (productId: string, delta: number) => {
+    const lines = data.draft.lines.map((l) => ({ ...l })),
+      line = lines.find((l) => l.productId === productId);
+    if (line) line.qty += delta;
+    else if (delta > 0) lines.push({ productId, qty: delta });
+    void run({
+      type: "saveDraft",
+      draft: { ...data.draft, lines: lines.filter((l) => l.qty > 0) },
+    });
+  };
+  if (checkout && data.draft.lines.length && total !== null)
+    return <CheckoutPage {...props} total={total} onBack={() => setCheckout(false)} />;
   return (
-    <section className="ventas-sale">
-      <div className="ventas-catalog">
-        <Input
-          label={t("searchProduct")}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+    <>
+      <section className="ventas-sale">
+        <SaleCatalog {...props} onAdd={(id) => quantity(id, 1)} onInventory={onInventory} />
+        <CartPanel
+          {...props}
+          total={total}
+          onClient={(clientId) =>
+            void run({ type: "saveDraft", draft: { ...data.draft, clientId } })
+          }
+          onCreate={() => setDialog("client")}
+          onQuantity={quantity}
+          onClear={() => setDialog("clear")}
+          onCredit={() => setDialog("credit")}
+          onCheckout={() => setCheckout(true)}
+          onViewAccount={onAccounts}
+          onPayment={() => setDialog("pay")}
         />
-        {products.length ? (
-          <div className="ventas-product-grid">
-            {products.map((p) => (
-              <article key={p.id} className="ventas-product">
-                <span className="text-muted text-xs">{p.category}</span>
-                <h2>{p.name}</h2>
-                <strong>{moneyText(p.price, i18n.language)}</strong>
-                <span className="text-muted text-xs">
-                  {t("stockCount", { count: p.stock, stock: numberText(p.stock, i18n.language) })}
-                </span>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="ventas-empty">
-            <h1>{t("emptyCatalog")}</h1>
-            <p>{t("startInventory")}</p>
-            <Button onClick={onInventory}>{t("nav.inventory")}</Button>
-          </div>
-        )}
-      </div>
-      <aside className="ventas-cart">
-        <h1>{t("currentSale")}</h1>
-        <Choice
-          label={t("client")}
-          value="counter"
-          onChange={() => undefined}
-          options={[{ value: "counter", label: t("counter") }]}
+      </section>
+      {dialog === "pay"
+        ? (() => {
+            const client = data.clients.find((c) => c.id === data.draft.clientId),
+              account = data.accounts.find((a) => a.clientId === client?.id);
+            return client && account ? (
+              <AccountPaymentDialog
+                {...props}
+                client={client}
+                account={account}
+                close={() => setDialog(null)}
+              />
+            ) : null;
+          })()
+        : null}
+      {dialog === "client" ? (
+        <ClientDialog {...props} close={() => setDialog(null)} onSaved={setNewClient} />
+      ) : null}
+      {dialog === "clear" ? (
+        <OperationModal
+          {...props}
+          title={t("clearCart")}
+          description={t("clearCartIntro")}
+          label={t("clearCart")}
+          close={() => setDialog(null)}
+          onSubmit={() => ({ type: "saveDraft", draft: { ...data.draft, lines: [] } })}
+        >
+          <p>{t("clearCartIntro")}</p>
+        </OperationModal>
+      ) : null}
+      {dialog === "credit" && total !== null ? (
+        <ConfirmSaleDialog
+          {...props}
+          total={total}
+          payment={{ amount: 0, received: 0, method: "cash", bankId: null, reference: "" }}
+          close={() => setDialog(null)}
+          onSaved={() => setCheckout(false)}
         />
-        <div className="ventas-cart-lines">
-          <h2>{t("products")}</h2>
-          <p className="text-muted">{t("emptyCart")}</p>
-        </div>
-        <div>
-          <p className="text-muted">{t("saleTotal")}</p>
-          <strong className="text-3xl">{moneyText(0, i18n.language)}</strong>
-        </div>
-      </aside>
-    </section>
+      ) : null}
+    </>
   );
 }
