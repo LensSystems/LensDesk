@@ -54,6 +54,7 @@ export function TicketWorkspaceView({
   }, [workspace, hasDraft, props.busy, props.data, onWorkspace, value]);
   useLayoutEffect(() => {
     if (focusRequested) {
+      pendingFocus.current = false;
       statementHeading.current?.focus();
       onFocused?.();
     }

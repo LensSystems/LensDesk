@@ -29,6 +29,9 @@
   overflow: auto;
   border-right: 1px solid var(--ld-border);
 }
+.ventas-ticket-list > * {
+  flex-shrink: 0;
+}
 .ventas-ticket-list .ventas-page-title {
   font-size: 22px;
   line-height: 30px;
