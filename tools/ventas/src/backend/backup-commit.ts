@@ -1,3 +1,4 @@
+import { setImmediate } from "node:timers/promises";
 import type { Dataset } from "../shared/backup-contracts.ts";
 import { tables } from "../shared/backup-contracts.ts";
 import { cooperate } from "./backup-cooperation.ts";
@@ -9,6 +10,25 @@ const columns = (db: Db, table: (typeof tables)[number]) =>
   db.all<{ name: string }>(`PRAGMA main.table_info(${table})`).map((c) => c.name);
 export function dropRestoreStage(db: Db): void {
   for (const table of [...tables].reverse()) db.run(`DROP TABLE IF EXISTS ${stage(table)}`);
+}
+export async function cleanRestoreStage(db: Db): Promise<void> {
+  for (const table of [...tables].reverse()) {
+    db.run(`DROP TABLE IF EXISTS ${stage(table)}`);
+    await setImmediate();
+  }
+}
+export function commitRestore<T>(db: Db, work: () => T): T {
+  const previous = db.get<{ cache_size: number }>("PRAGMA main.cache_size")?.cache_size;
+  if (previous === undefined) throw new DomainFault("E_BACKUP_REFS");
+  // The admitted payload can exceed SQLite's default 2 MiB cache. Reserve a
+  // bounded working set for bulk copying and index rebuilding, without changing
+  // durability, foreign keys or cache-spill behavior. This scope never yields.
+  db.exec("PRAGMA main.cache_size=-32768");
+  try {
+    return db.transaction(work);
+  } finally {
+    db.exec(`PRAGMA main.cache_size=${previous}`);
+  }
 }
 export async function stageRestore(db: Db, data: Dataset, signal: AbortSignal): Promise<void> {
   try {
@@ -63,6 +83,8 @@ export function installRestoreStage(db: Db): void {
   for (const index of indexes) db.run(index.sql);
   // These tables use ordinary rowids, without AUTOINCREMENT. Empty targets and the
   // ordered insert above preserve staging ordinals; compare every scalar and type.
+  // Equal counts and one complete rowid correspondence prove a bijection, so no
+  // second scalar/type scan in the opposite direction is needed.
   for (const table of tables) {
     const mismatch = columns(db, table)
       .map(
@@ -73,11 +95,8 @@ export function installRestoreStage(db: Db): void {
     const difference = db.get<{ different: number }>(`SELECT
    (SELECT COUNT(*) FROM main.${table}) != (SELECT COUNT(*) FROM ${stage(table)})
    OR EXISTS(SELECT 1 FROM main.${table} m LEFT JOIN ${stage(table)} s ON m.rowid=s.rowid
-     WHERE s.rowid IS NULL OR ${mismatch})
-   OR EXISTS(SELECT 1 FROM ${stage(table)} s LEFT JOIN main.${table} m ON m.rowid=s.rowid
-     WHERE m.rowid IS NULL OR ${mismatch}) AS different`);
+     WHERE s.rowid IS NULL OR ${mismatch}) AS different`);
     if (difference?.different !== 0) throw new DomainFault("E_BACKUP_REFS");
   }
   if (db.all("PRAGMA main.foreign_key_check").length) throw new DomainFault("E_BACKUP_REFS");
-  dropRestoreStage(db);
 }

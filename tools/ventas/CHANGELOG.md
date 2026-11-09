@@ -2,6 +2,14 @@
 
 ## [0.1.0] - 2026-11-07
 
+- Icono de lista con verificaciones en la tarjeta y pestaña, compatible con LensDesk 0.5.0.
+  Checklist icon in the tool card and tab, compatible with LensDesk 0.5.0.
+
+- Restauraciones grandes con validación cooperativa por intervalos, sentencias reutilizadas
+  y reemplazo atómico sin comprobaciones duplicadas; conserva límites, rollback y recibos.
+  Large restores use time-sliced validation, reused statements and an atomic replacement
+  without duplicate scans, preserving limits, rollback and receipts.
+
 - Documentos del cliente sin vencimientos, plazos ni desglose de vencidos; fechas de compra,
   emisión, importes y saldos conservados. Cobranza interna y respaldos mantienen esos datos.
   Customer documents omit due dates, credit terms and overdue breakdowns while preserving

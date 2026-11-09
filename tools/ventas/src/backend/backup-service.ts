@@ -11,7 +11,12 @@ import {
   restoreInputSchema,
 } from "../shared/backup-contracts.ts";
 import { mutationResultSchema } from "../shared/contracts.ts";
-import { dropRestoreStage, installRestoreStage, stageRestore } from "./backup-commit.ts";
+import {
+  cleanRestoreStage,
+  commitRestore,
+  installRestoreStage,
+  stageRestore,
+} from "./backup-commit.ts";
 import { readDataset } from "./backup-dataset.ts";
 import { copyPrevious, previousBytes } from "./backup-files.ts";
 import { decode, encode, hash } from "./backup-json.ts";
@@ -199,7 +204,7 @@ async function confirm(db: Db, p: RestoreInput, ctx: BackendContext) {
     await stageRestore(db, backup.data, ctx.signal);
     staged = true;
     await yieldWork(ctx, "committing", 0.95);
-    const result = db.transaction(() => {
+    const result = commitRestore(db, () => {
       revision(db, p.revision);
       installRestoreStage(db);
       checkCancelled(ctx.signal);
@@ -219,11 +224,10 @@ async function confirm(db: Db, p: RestoreInput, ctx: BackendContext) {
       );
       return response;
     });
-    staged = false;
     cache.delete(ctx.dataDir);
     return result;
   } finally {
-    if (staged) dropRestoreStage(db);
+    if (staged) await cleanRestoreStage(db);
   }
 }
 

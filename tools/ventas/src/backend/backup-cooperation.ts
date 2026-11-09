@@ -10,13 +10,17 @@ export async function cooperate<T>(
   steps: Generator<unknown, T, unknown>,
   signal: AbortSignal,
 ): Promise<T> {
+  let deadline = performance.now() + 8;
   try {
     for (;;) {
       checkCancelled(signal);
       const next = steps.next();
       if (next.done) return next.value;
-      await setImmediate();
-      checkCancelled(signal);
+      if (performance.now() >= deadline) {
+        await setImmediate();
+        checkCancelled(signal);
+        deadline = performance.now() + 8;
+      }
     }
   } finally {
     steps.return(undefined as T);

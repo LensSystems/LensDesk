@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type StatementSync } from "node:sqlite";
 import { migrate } from "./migrate.ts";
 
 export type Db = {
@@ -20,6 +20,18 @@ export function memoryDatabase(): Db {
 }
 function createDatabase(path: string): Db {
   const database = new DatabaseSync(path);
+  const statements = new Map<string, StatementSync>();
+  const prepare = (sql: string) => {
+    let statement = statements.get(sql);
+    if (statement) statements.delete(sql);
+    else statement = database.prepare(sql);
+    statements.set(sql, statement);
+    if (statements.size > 128) {
+      const first = statements.keys().next().value;
+      if (first !== undefined) statements.delete(first);
+    }
+    return statement;
+  };
   database.function("ventas_fold", { deterministic: true }, (value) =>
     String(value ?? "")
       .normalize("NFKC")
@@ -31,12 +43,12 @@ function createDatabase(path: string): Db {
   const db: Db = {
     exec: (sql) => database.exec(sql),
     run: (sql, ...values) => {
-      database.prepare(sql).run(...values);
+      prepare(sql).run(...values);
     },
     get: <T>(sql: string, ...values: (string | number | null)[]) =>
-      database.prepare(sql).get(...values) as T | undefined,
+      prepare(sql).get(...values) as T | undefined,
     all: <T>(sql: string, ...values: (string | number | null)[]) =>
-      database.prepare(sql).all(...values) as T[],
+      prepare(sql).all(...values) as T[],
     transaction: <T>(work: () => T) => {
       database.exec("BEGIN IMMEDIATE");
       try {
@@ -48,7 +60,10 @@ function createDatabase(path: string): Db {
         throw error;
       }
     },
-    close: () => database.close(),
+    close: () => {
+      statements.clear();
+      database.close();
+    },
   };
   try {
     migrate(db);

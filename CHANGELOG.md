@@ -14,6 +14,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ### Corregido
 
+- Restauraciones grandes de Ventas: menos trabajo repetido y turnos de validación acotados,
+  conservando cancelación, límites de archivos, comprobación de datos y reemplazo atómico.
 - Notas 0.4.2: la confirmación de copia vuelve a su estado inicial aunque una actualización de
   la vista previa quede suspendida; las copias siguen usando el contenido visible.
 
