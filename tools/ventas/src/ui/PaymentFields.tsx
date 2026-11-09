@@ -38,6 +38,7 @@ export function PaymentFields({
   received = false,
   disabled = false,
   changed = () => {},
+  variant = "default",
 }: {
   value: PaymentForm;
   onChange: (value: PaymentForm) => void;
@@ -45,30 +46,67 @@ export function PaymentFields({
   received?: boolean;
   disabled?: boolean;
   changed?: () => void;
+  variant?: "default" | "checkout" | "account";
 }) {
   const { t } = useTranslation();
   const set = <K extends keyof PaymentForm>(key: K, next: PaymentForm[K]) => {
     changed();
     onChange({ ...value, [key]: next });
   };
+  const amountLabel = t(
+    variant === "account"
+      ? "accountPaymentAmount"
+      : variant === "checkout"
+        ? "checkoutAppliedPayment"
+        : "appliedPayment",
+  );
+  const methodLabel = t(variant === "account" ? "confirmationMethod" : "paymentMethod");
   return (
     <>
-      <MoneyInput
-        label={t("appliedPayment")}
-        value={value.amount}
-        onChange={(v) => set("amount", v)}
-        disabled={disabled}
-      />
-      <Choice
-        label={t("paymentMethod")}
-        value={value.method}
-        disabled={disabled}
-        onChange={(v) => set("method", v as PaymentForm["method"])}
-        options={["cash", "transfer"].map((value) => ({ value, label: t(value) }))}
-      />
+      {variant !== "checkout" ? (
+        <>
+          <MoneyInput
+            label={amountLabel}
+            value={value.amount}
+            onChange={(v) => set("amount", v)}
+            disabled={disabled}
+          />
+          <Choice
+            label={methodLabel}
+            value={value.method}
+            disabled={disabled}
+            onChange={(v) => set("method", v as PaymentForm["method"])}
+            options={["cash", "transfer"].map((value) => ({ value, label: t(value) }))}
+          />
+        </>
+      ) : (
+        <>
+          <Choice
+            label={methodLabel}
+            value={value.method}
+            disabled={disabled}
+            onChange={(v) => set("method", v as PaymentForm["method"])}
+            options={["cash", "transfer"].map((value) => ({ value, label: t(value) }))}
+          />
+          <MoneyInput
+            label={amountLabel}
+            value={value.amount}
+            onChange={(v) => set("amount", v)}
+            disabled={disabled}
+          />
+        </>
+      )}
       {received ? (
         <MoneyInput
-          label={t(value.method === "cash" ? "receivedCash" : "receivedTransfer")}
+          label={t(
+            variant === "checkout"
+              ? value.method === "cash"
+                ? "checkoutReceivedCash"
+                : "checkoutReceivedTransfer"
+              : value.method === "cash"
+                ? "receivedCash"
+                : "receivedTransfer",
+          )}
           value={value.received}
           onChange={(v) => set("received", v)}
           disabled={disabled}
@@ -76,7 +114,13 @@ export function PaymentFields({
       ) : null}
       {value.method === "transfer" ? (
         <Choice
-          label={t("bank")}
+          label={t(
+            variant === "checkout"
+              ? "checkoutBank"
+              : variant === "account"
+                ? "accountPaymentBank"
+                : "bank",
+          )}
           value={value.bankId}
           onChange={(v) => set("bankId", v)}
           disabled={disabled}
@@ -86,13 +130,15 @@ export function PaymentFields({
           ]}
         />
       ) : null}
-      <Input
-        label={t("paymentReference")}
-        value={value.reference}
-        onChange={(e) => set("reference", e.target.value)}
-        maxLength={200}
-        disabled={disabled}
-      />
+      {variant !== "checkout" || value.method === "transfer" ? (
+        <Input
+          label={t("paymentReference")}
+          value={value.reference}
+          onChange={(e) => set("reference", e.target.value)}
+          maxLength={200}
+          disabled={disabled}
+        />
+      ) : null}
     </>
   );
 }

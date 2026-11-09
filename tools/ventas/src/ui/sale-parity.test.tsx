@@ -258,7 +258,7 @@ it("prefills the searched name and waits through client and draft refreshes befo
   fireEvent.keyDown(client, { key: "Enter" });
   const dialog = await screen.findByRole("dialog");
   expect(within(dialog).getByLabelText(es.clientName)).toHaveValue("Nuevo cliente");
-  fireEvent.click(within(dialog).getByRole("button", { name: es.save }));
+  fireEvent.click(within(dialog).getByRole("button", { name: es.addClient }));
   await waitFor(() => expect(releases).toHaveLength(1));
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   expect(client).toBeDisabled();
@@ -293,7 +293,7 @@ it("focuses one operational retry during failed reconciliation and completes the
   fireEvent.change(client, { target: { value: "Intento" } });
   fireEvent.keyDown(client, { key: "Enter" });
   const dialog = await screen.findByRole("dialog");
-  fireEvent.click(within(dialog).getByRole("button", { name: es.save }));
+  fireEvent.click(within(dialog).getByRole("button", { name: es.addClient }));
   await waitFor(() =>
     expect(within(dialog).getByRole("alert")).toHaveTextContent(es.errors.E_RELOAD_REQUIRED),
   );

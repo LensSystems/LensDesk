@@ -301,8 +301,11 @@ describe("focused settings and effective defaults", () => {
       },
     };
     const view = render(<ClientDialog {...props} close={vi.fn()} />);
-    expect(screen.getByLabelText(es.paymentDays)).toHaveValue(21);
-    fireEvent.change(screen.getByLabelText(es.paymentDays), { target: { value: "17" } });
+    expect(screen.getByRole("combobox", { name: es.clientPaymentDays })).toHaveTextContent(
+      "21 días",
+    );
+    fireEvent.click(screen.getByRole("combobox", { name: es.clientPaymentDays }));
+    fireEvent.click(screen.getByRole("option", { name: /^17 días$/ }));
     view.rerender(
       <ClientDialog
         {...props}
@@ -310,7 +313,9 @@ describe("focused settings and effective defaults", () => {
         close={vi.fn()}
       />,
     );
-    expect(screen.getByLabelText(es.paymentDays)).toHaveValue(17);
+    expect(screen.getByRole("combobox", { name: es.clientPaymentDays })).toHaveTextContent(
+      "17 días",
+    );
   });
   it("saves term preferences without mutating existing clients and inherits English labels", async () => {
     const f = fixture();

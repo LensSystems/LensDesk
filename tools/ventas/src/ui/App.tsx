@@ -22,6 +22,7 @@ import { SummaryPage } from "./SummaryPage.tsx";
 import { TicketsPage } from "./TicketsPage.tsx";
 import type { Client, Screen } from "./types.ts";
 import { useSales } from "./use-sales.ts";
+import { useTicketWorkspace } from "./use-ticket-workspace.ts";
 
 export function App({ client }: { client: Client }) {
   const { t, i18n } = useTranslation();
@@ -37,11 +38,20 @@ export function App({ client }: { client: Client }) {
   const [summaryPeriod, setSummaryPeriod] = useState<Period>("today");
   const [accountFocus, setAccountFocus] = useState(false);
   const [statementFocus, setStatementFocus] = useState(false);
-  const [statementClient, setStatementClient] = useState<string | undefined>();
+  const [workspace, setWorkspace] = useTicketWorkspace(sales.data, sales.restoredId);
+  const [saleFocus, setSaleFocus] = useState(false);
   const openAccount = (selected: string | null) => {
     setAccountFocus(true);
     setAccountsState((state) => ({ ...state, selected }));
     setScreen("accounts");
+  };
+  const openCheckout = (id?: string) => {
+    setWorkspace((state) => ({
+      ...state,
+      review: Boolean(id),
+      ...(id ? { selected: id, payment: null } : {}),
+    }));
+    setScreen("tickets");
   };
   const [cashOpen, setCashOpen] = useState(false);
   const restoreSeen = useRef<string | null>(null);
@@ -50,7 +60,6 @@ export function App({ client }: { client: Client }) {
     restoreSeen.current = sales.restoredId;
     const first = sales.data?.clients[0]?.id;
     setAccountsState((state) => ({ ...state, selected: first ?? null }));
-    setStatementClient(first);
   }, [sales.restoredId, sales.data?.clients]);
   useEffect(() => {
     let alive = true;
@@ -134,7 +143,7 @@ export function App({ client }: { client: Client }) {
                     onState={setAccountsState}
                     onSale={() => setScreen("sale")}
                     onStatement={(id) => {
-                      setStatementClient(id);
+                      setWorkspace((state) => ({ ...state, clientId: id }));
                       setStatementFocus(true);
                       setScreen("tickets");
                     }}
@@ -144,7 +153,12 @@ export function App({ client }: { client: Client }) {
                 ) : screen === "tickets" ? (
                   <TicketsPage
                     {...props}
-                    initialClientId={statementClient}
+                    workspace={workspace}
+                    onWorkspace={setWorkspace}
+                    onBack={() => {
+                      setSaleFocus(true);
+                      setScreen("sale");
+                    }}
                     focusRequested={statementFocus}
                     onFocused={() => setStatementFocus(false)}
                   />
@@ -166,6 +180,10 @@ export function App({ client }: { client: Client }) {
                   <Sale
                     {...props}
                     onInventory={() => setScreen("inventory")}
+                    focusRequested={saleFocus}
+                    onFocused={() => setSaleFocus(false)}
+                    onCheckout={() => openCheckout()}
+                    onSaved={openCheckout}
                     onAccounts={() => openAccount(props.data.draft.clientId)}
                   />
                 ) : null}

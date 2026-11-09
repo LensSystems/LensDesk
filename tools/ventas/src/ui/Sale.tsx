@@ -1,30 +1,43 @@
+import { Info } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AccountPaymentDialog } from "./AccountPaymentDialog.tsx";
 import { CartPanel } from "./CartPanel.tsx";
-import { CheckoutPage } from "./CheckoutPage.tsx";
 import { ClientDialog } from "./ClientDialog.tsx";
 import { ConfirmSaleDialog } from "./ConfirmSaleDialog.tsx";
 import { cartTotal } from "./cart.ts";
 import { OperationModal } from "./OperationModal.tsx";
 import { SaleCatalog } from "./SaleCatalog.tsx";
 import type { ScreenProps } from "./types.ts";
+import { useDialogReturnFocus } from "./use-dialog-return-focus.ts";
 import { useSaleClientFocus } from "./use-sale-client-focus.ts";
 import { useSaleShortcuts } from "./use-sale-shortcuts.ts";
 export function Sale({
   onInventory,
   onAccounts,
+  onCheckout,
+  onSaved,
+  focusRequested,
+  onFocused,
   ...props
-}: ScreenProps & { onInventory: () => void; onAccounts: () => void }) {
+}: ScreenProps & {
+  onInventory: () => void;
+  onAccounts: () => void;
+  onCheckout: () => void;
+  onSaved: (id: string) => void;
+  focusRequested?: boolean;
+  onFocused?: () => void;
+}) {
   const { t } = useTranslation();
   const root = useRef<HTMLElement>(null);
   const [catalog, setCatalog] = useState({ query: "", category: "" });
   const [clientQuery, setClientQuery] = useState("");
-  const [checkout, setCheckout] = useState(false),
-    [dialog, setDialog] = useState<"client" | "clear" | "credit" | "pay" | null>(null),
+  const [dialog, setDialog] = useState<"client" | "clear" | "credit" | "pay" | null>(null),
     [newClient, setNewClient] = useState<string | null>(null);
   const { data, run, busy } = props,
     total = cartTotal(data);
+  const creditSaved = useRef(false);
+  const returnFocus = useDialogReturnFocus(root, busy, props.operation);
   const clientFocus = useSaleClientFocus(
     root,
     busy,
@@ -39,7 +52,12 @@ export function Sale({
       void run({ type: "saveDraft", draft: { ...data.draft, clientId: newClient } });
     }
   }, [newClient, busy, data, run]);
-  useSaleShortcuts(root, busy || checkout || dialog !== null);
+  useSaleShortcuts(root, busy || dialog !== null);
+  useEffect(() => {
+    if (!focusRequested || busy) return;
+    root.current?.querySelector<HTMLInputElement>("[data-sale-product-search]")?.focus();
+    onFocused?.();
+  }, [focusRequested, busy, onFocused]);
   const quantity = (productId: string, delta: number) => {
     const lines = data.draft.lines.map((l) => ({ ...l })),
       line = lines.find((l) => l.productId === productId);
@@ -50,8 +68,6 @@ export function Sale({
       draft: { ...data.draft, lines: lines.filter((l) => l.qty > 0) },
     });
   };
-  if (checkout && data.draft.lines.length && total !== null)
-    return <CheckoutPage {...props} total={total} onBack={() => setCheckout(false)} />;
   return (
     <>
       <section className="ventas-sale" ref={root}>
@@ -75,8 +91,11 @@ export function Sale({
           }}
           onQuantity={quantity}
           onClear={() => setDialog("clear")}
-          onCredit={() => setDialog("credit")}
-          onCheckout={() => setCheckout(true)}
+          onCredit={() => {
+            creditSaved.current = false;
+            setDialog("credit");
+          }}
+          onCheckout={onCheckout}
           onViewAccount={onAccounts}
           onPayment={() => setDialog("pay")}
         />
@@ -91,6 +110,7 @@ export function Sale({
                 client={client}
                 account={account}
                 close={() => setDialog(null)}
+                onCloseAutoFocus={(event) => returnFocus(event, "[data-sale-client-search]")}
               />
             ) : null;
           })()
@@ -110,10 +130,14 @@ export function Sale({
       {dialog === "clear" ? (
         <OperationModal
           {...props}
+          presentationClass="ventas-p3-dialog"
+          icon={<Info size={21} aria-hidden="true" />}
+          cancelLabel={t("cancel")}
           title={t("clearCart")}
           description={t("clearCartIntro")}
           label={t("clearCart")}
           close={() => setDialog(null)}
+          onCloseAutoFocus={(event) => returnFocus(event, "[data-sale-product-search]")}
           onSubmit={() => ({ type: "saveDraft", draft: { ...data.draft, lines: [] } })}
         >
           <p>{t("clearCartIntro")}</p>
@@ -122,10 +146,18 @@ export function Sale({
       {dialog === "credit" && total !== null ? (
         <ConfirmSaleDialog
           {...props}
+          variant="credit"
           total={total}
           payment={{ amount: 0, received: 0, method: "cash", bankId: null, reference: "" }}
           close={() => setDialog(null)}
-          onSaved={() => setCheckout(false)}
+          onSaved={(id) => {
+            creditSaved.current = true;
+            onSaved(id);
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (!creditSaved.current) returnFocus(event, "[data-sale-credit]");
+          }}
         />
       ) : null}
     </>

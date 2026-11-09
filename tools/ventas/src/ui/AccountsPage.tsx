@@ -8,6 +8,7 @@ import type { AccountsState } from "./account-status.ts";
 import { ClientDialog } from "./ClientDialog.tsx";
 import { OpeningBalanceDialog } from "./OpeningBalanceDialog.tsx";
 import type { ScreenProps } from "./types.ts";
+import { useDialogReturnFocus } from "./use-dialog-return-focus.ts";
 export function AccountsPage({
   state,
   onState,
@@ -26,6 +27,9 @@ export function AccountsPage({
   const { data, run } = props,
     { t } = useTranslation();
   const [dialog, setDialog] = useState<"new" | "edit" | "pay" | "settle" | "opening" | null>(null);
+  const root = useRef<HTMLElement>(null);
+  const savedClient = useRef(false);
+  const returnFocus = useDialogReturnFocus(root, props.busy, props.operation);
   const destination = useRef<HTMLElement>(null);
   const [pendingSale, setPendingSale] = useState<{ id: string; confirmed: boolean } | null>(null);
   useEffect(() => {
@@ -48,13 +52,16 @@ export function AccountsPage({
     }
   }, [focusRequested, client, onFocused]);
   return (
-    <section className="ventas-accounts-workspace">
+    <section className="ventas-accounts-workspace" ref={root}>
       <AccountSidebar
         data={data}
         state={state}
         selected={client?.id}
         onChange={onState}
-        onNew={() => setDialog("new")}
+        onNew={() => {
+          savedClient.current = false;
+          setDialog("new");
+        }}
       />
       <section ref={destination} className="ventas-account-content" aria-label={t("accountDetail")}>
         {client && account ? (
@@ -88,7 +95,16 @@ export function AccountsPage({
           {...props}
           client={dialog === "edit" ? client : undefined}
           close={() => setDialog(null)}
-          onSaved={(selected) => onState({ ...state, selected })}
+          onSaved={(selected) => {
+            savedClient.current = true;
+            onState({ ...state, selected });
+          }}
+          onCloseAutoFocus={(event) =>
+            returnFocus(
+              event,
+              savedClient.current || client ? ".ventas-account-content h1" : "[data-account-new]",
+            )
+          }
         />
       ) : null}
       {(dialog === "pay" || dialog === "settle") && client && account ? (
@@ -97,6 +113,7 @@ export function AccountsPage({
           client={client}
           account={account}
           full={dialog === "settle"}
+          onCloseAutoFocus={(event) => returnFocus(event, ".ventas-account-content h1")}
           close={() => setDialog(null)}
         />
       ) : null}

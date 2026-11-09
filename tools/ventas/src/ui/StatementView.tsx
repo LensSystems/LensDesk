@@ -9,9 +9,19 @@ import { StatementTicket } from "./StatementTicket.tsx";
 import type { ScreenProps } from "./types.ts";
 import { useOffset } from "./use-offset.ts";
 import { useQuery } from "./use-query.ts";
-export function StatementView({ clientId, ...props }: ScreenProps & { clientId: string }) {
+export function StatementView({
+  clientId,
+  bankId,
+  onBank,
+  ...props
+}: ScreenProps & {
+  clientId: string;
+  bankId?: string | null;
+  onBank?: (id: string | null) => void;
+}) {
   const { t } = useTranslation(),
-    [bank, setBank] = useState(defaultBank(props.data.settings) ?? "none");
+    [localBank, setBank] = useState(defaultBank(props.data.settings) ?? "none");
+  const bank = bankId === undefined ? localBank : (bankId ?? "none");
   const key = JSON.stringify([clientId, bank, props.data.revision]);
   const [salesOffset, setSalesOffset] = useOffset(key),
     [paymentOffset, setPaymentOffset] = useOffset(key),
@@ -34,7 +44,10 @@ export function StatementView({ clientId, ...props }: ScreenProps & { clientId: 
       <Choice
         label={t("statementBank")}
         value={bank}
-        onChange={setBank}
+        onChange={(id) => {
+          if (onBank) onBank(id === "none" ? null : id);
+          else setBank(id);
+        }}
         options={[
           { value: "none", label: t("noBankSelected") },
           ...props.data.settings.banks.map((b) => ({ value: b.id, label: bankLabel(b) })),

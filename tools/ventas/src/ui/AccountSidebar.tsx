@@ -21,7 +21,9 @@ export function AccountSidebar({
     <aside className="ventas-account-sidebar">
       <div className="ventas-account-heading">
         <h2 className="ventas-section-heading">{t("nav.accounts")}</h2>
-        <Button onClick={onNew}>{t("accountsNewClient")}</Button>
+        <Button data-account-new onClick={onNew}>
+          {t("accountsNewClient")}
+        </Button>
       </div>
       <Input
         label={t("searchClient")}
@@ -72,7 +74,7 @@ export function AccountSidebar({
         {!clients.length ? (
           <>
             <p className="ventas-account-empty">{t("accountsNoMatches")}</p>
-            <Button variant="primary" onClick={onNew}>
+            <Button variant="primary" data-account-new onClick={onNew}>
               {t("addClient")}
             </Button>
           </>

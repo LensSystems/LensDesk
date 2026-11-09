@@ -163,7 +163,7 @@ describe("Ventas task 2 UI", () => {
     fireEvent.click(screen.getByRole("button", { name: es.chargeAccount }));
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText("Tienda Lupe")).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole("button", { name: es.confirmSale }));
+    fireEvent.click(within(dialog).getByRole("button", { name: es.confirmCreditSale }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     const command = f.invoke.mock.calls
       .filter(([method]) => method === "execute")
@@ -183,7 +183,7 @@ describe("Ventas task 2 UI", () => {
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(es.errors.E_STOCK);
     expect(f.data.draft.lines).toHaveLength(1);
     fireEvent.click(within(dialog).getByRole("button", { name: es.close }));
-    expect(screen.getByLabelText(es.appliedPayment)).toHaveValue("1,234.50");
+    expect(screen.getByLabelText(es.checkoutAppliedPayment)).toHaveValue("1,234.50");
     expect(screen.getByRole("button", { name: es.backToSale })).toBeInTheDocument();
   });
   it("retains an uncertain sale and retries identical key without duplicate confirmation or premature cart clearing", async () => {
@@ -224,13 +224,19 @@ describe("Ventas task 2 UI", () => {
     });
     fireEvent.click(within(dialog).getByRole("button", { name: es.confirmSale }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(await screen.findByRole("alert")).toHaveTextContent(es.errors.E_REFRESH_REQUIRED);
-    expect(screen.getByRole("button", { name: es.checkout })).toBeDisabled();
+    expect(await screen.findByText(es.errors.E_REFRESH_REQUIRED)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: es.confirmSale })).toBeDisabled();
     const count = f.invoke.mock.calls.filter(([method]) => method === "execute").length;
-    fireEvent.click(screen.getByRole("button", { name: es.checkout }));
+    fireEvent.click(screen.getByRole("button", { name: es.confirmSale }));
     expect(f.invoke.mock.calls.filter(([method]) => method === "execute")).toHaveLength(count);
-    fireEvent.click(screen.getByRole("button", { name: es.retry }));
-    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+    fireEvent.click(
+      within(
+        screen.getByText(es.errors.E_REFRESH_REQUIRED).closest("[role=alert]") as HTMLElement,
+      ).getByRole("button", { name: es.retry }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByText(es.errors.E_REFRESH_REQUIRED)).not.toBeInTheDocument(),
+    );
     expect(f.data.draft.lines).toEqual([]);
     expect(f.invoke.mock.calls.filter(([method]) => method === "execute")).toHaveLength(count);
   });

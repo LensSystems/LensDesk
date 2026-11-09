@@ -170,6 +170,7 @@ export function CartPanel({
               size="lg"
               variant="primary"
               disabled={!valid || !client.active}
+              data-sale-credit
               onClick={onCredit}
             >
               {t("chargeAccount")}
@@ -179,6 +180,7 @@ export function CartPanel({
             size="lg"
             variant={client ? "default" : "primary"}
             disabled={!valid || Boolean(client && !client.active)}
+            data-sale-checkout
             onClick={onCheckout}
           >
             {t("checkout")}

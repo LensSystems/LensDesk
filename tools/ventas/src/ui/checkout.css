@@ -1,0 +1,305 @@
+.ventas-p3-dialog label {
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 600;
+}
+
+.ventas-dialog-heading h2 {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 700;
+  margin: 0;
+}
+.ventas-tickets {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ventas-ticket-list {
+  width: 310px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  scroll-padding-block: 20px;
+  min-height: 0;
+  overflow: auto;
+  border-right: 1px solid var(--ld-border);
+}
+.ventas-ticket-list .ventas-page-title {
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  margin: 0;
+}
+.ventas-ticket-list h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+.ventas-ticket-list p {
+  margin: 0;
+}
+.ventas-checkout-note {
+  color: var(--ld-text-muted);
+  font-size: 12px;
+}
+.ventas-checkout-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ventas-checkout-total strong {
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.ventas-ticket-list input {
+  height: 36px;
+}
+.ventas-ticket-list label {
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 600;
+}
+.ventas-ticket-list .grid {
+  gap: 6px;
+}
+.ventas-p3-dialog form .grid {
+  gap: 6px;
+}
+.ventas-ticket-list .ventas-category-list,
+.ventas-ticket-list .ventas-pager {
+  flex-wrap: wrap;
+}
+.ventas-checkout-balance {
+  padding: 12px;
+  border: 1px solid var(--ld-border);
+  border-radius: 14px;
+  background: var(--ld-surface-raised);
+}
+.ventas-checkout-balance p {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ventas-checkout-balance strong {
+  font-size: 15px;
+}
+.ventas-checkout-actions {
+  display: grid;
+  gap: 8px;
+  flex: none;
+  width: 100%;
+}
+.ventas-checkout-actions button {
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+  font-size: 14px;
+  padding: 0 16px;
+}
+.ventas-checkout-divider {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--ld-border);
+  margin: 0;
+}
+.ventas-ticket-choices {
+  display: grid;
+  gap: 14px;
+}
+.ventas-ticket-choice {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: left;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+  white-space: normal;
+}
+.ventas-ticket-choice > span {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ventas-ticket-choice small {
+  font-size: 11px;
+  color: var(--ld-text-muted);
+}
+.ventas-ticket-choice[aria-current="true"] {
+  border-color: var(--ld-accent);
+  background: var(--ld-accent-soft);
+}
+.ventas-ticket-grid {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  padding: 20px 24px 32px;
+  overflow: auto;
+  align-items: start;
+  align-content: start;
+  scroll-padding-block: 20px;
+  background: var(--ld-bg);
+}
+.ventas-ticket-grid > section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  padding-bottom: 20px;
+}
+.ventas-ticket-grid > section > h2,
+.ventas-ticket-grid > section > label {
+  width: 100%;
+  max-width: 340px;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+.ventas-ticket-grid > section > label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ventas-ticket-grid .ventas-detail-view,
+.ventas-ticket-grid .ventas-statement-view {
+  width: 100%;
+}
+.ventas-p3-dialog {
+  width: 440px;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 1.45;
+  border-radius: 18px;
+  gap: 16px;
+}
+.ventas-p3-dialog > p {
+  line-height: 1.5;
+}
+.ventas-p3-dialog form {
+  gap: 14px;
+}
+.ventas-p3-confirmation form {
+  gap: 16px;
+}
+.ventas-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 20px;
+}
+.ventas-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--ld-accent-soft);
+  flex: none;
+}
+.ventas-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 2px;
+  margin-top: 2px;
+}
+.ventas-p3-fields .ventas-dialog-actions {
+  margin-top: 4px;
+}
+.ventas-dialog-actions button {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.ventas-sale-confirmation {
+  padding: 18px;
+  border: 1px solid var(--ld-border);
+  border-radius: 14px;
+  background: var(--ld-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ventas-confirm-label {
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-confirm-amount {
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+.ventas-sale-confirmation dl {
+  margin: 10px 0 0;
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ld-border);
+}
+.ventas-sale-confirmation dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: baseline;
+}
+.ventas-sale-confirmation dt {
+  color: var(--ld-text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.ventas-sale-confirmation dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.ventas-sale-confirmation dl > div:last-child dd {
+  font-weight: 800;
+}
+@media (max-width: 1100px) {
+  .ventas-ticket-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .ventas-tickets {
+    flex-direction: column;
+    overflow: auto;
+  }
+  .ventas-ticket-list {
+    width: 100%;
+    max-height: 60vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--ld-border);
+  }
+  .ventas-ticket-grid {
+    overflow: visible;
+    flex: none;
+  }
+}
+
+.ventas-ticket-grid > section > .grid,
+.ventas-ticket-grid .ventas-statement-view > .grid {
+  width: 100%;
+  max-width: 340px;
+  margin-inline: auto;
+}
