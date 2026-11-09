@@ -37,6 +37,7 @@ function store() {
     value: 1000,
     lastValue: 1000,
     lastQty: 10,
+    icon: null,
     active: true,
   });
   f.data.clients.push({
@@ -119,6 +120,7 @@ describe("Ventas task 2 UI", () => {
     let chosen: string | null = null;
     render(
       <CustomerPicker
+        today={f.data.today}
         clients={f.data.clients}
         accounts={f.data.accounts}
         value={null}

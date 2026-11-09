@@ -6,7 +6,7 @@ import { DomainFault } from "./domain.ts";
 type Row = Omit<Product, "active"> & { active: number };
 export function products(db: Db): Product[] {
   return db
-    .all<Row>("SELECT * FROM products ORDER BY name, id")
+    .all<Row>("SELECT * FROM products ORDER BY rowid")
     .map((p) => ({ ...p, active: Boolean(p.active) }));
 }
 export function product(db: Db, id: string, active = true): Product {
@@ -34,7 +34,7 @@ export function saveProduct(db: Db, input: ProductInput): string {
     );
   } else {
     db.run(
-      "INSERT INTO products(id,name,category,kind,unit,price,minStock) VALUES(?,?,?,?,?,?,?)",
+      "INSERT INTO products(id,name,category,kind,unit,price,minStock,icon) VALUES(?,?,?,?,?,?,?,?)",
       id,
       input.name,
       input.category,
@@ -42,6 +42,7 @@ export function saveProduct(db: Db, input: ProductInput): string {
       input.unit,
       input.price,
       input.minStock,
+      input.kind === "material" ? "package" : "candy",
     );
   }
   return id;

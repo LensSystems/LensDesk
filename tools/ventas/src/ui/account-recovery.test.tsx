@@ -36,6 +36,7 @@ for (const fail of [false, true])
       value: 100,
       lastValue: 100,
       lastQty: 5,
+      icon: null,
       active: true,
     });
     const cart = [{ productId, qty: 1 }];

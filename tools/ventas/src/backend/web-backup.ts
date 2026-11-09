@@ -34,7 +34,7 @@ function* webSteps(
     backup: {
       format: "lensdesk-ventas-native-backup",
       version: 1,
-      modelVersion: 6,
+      modelVersion: 7,
       createdAt: time((raw as Record<string, unknown>).createdAt),
       toolVersion: "0.1.0",
       revision: number(c.ledger.revision, Number.MAX_SAFE_INTEGER),

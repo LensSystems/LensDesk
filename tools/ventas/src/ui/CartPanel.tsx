@@ -1,5 +1,7 @@
-import { Button, IconButton, Trash2 } from "@lensdesk/ui";
+import { Button, Trash2 } from "@lensdesk/ui";
+import { ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { accountStatus } from "./account-status.ts";
 import { CustomerPicker } from "./CustomerPicker.tsx";
 import { moneyText } from "./format.ts";
 import type { ScreenProps } from "./types.ts";
@@ -17,7 +19,7 @@ export function CartPanel({
 }: ScreenProps & {
   total: number | null;
   onClient: (id: string | null) => void;
-  onCreate: () => void;
+  onCreate: (query: string) => void;
   onQuantity: (id: string, delta: number) => void;
   onClear: () => void;
   onCredit: () => void;
@@ -32,7 +34,7 @@ export function CartPanel({
   const valid = Boolean(data.draft.lines.length) && total !== null && !busy;
   return (
     <aside className="ventas-cart">
-      <div className="ventas-section-title">
+      <div className="ventas-section-title ventas-sale-heading">
         <h2 className="ventas-section-heading">{t("currentSale")}</h2>
         {client ? (
           <div className="ventas-client-actions">
@@ -46,6 +48,7 @@ export function CartPanel({
         ) : null}
       </div>
       <CustomerPicker
+        today={data.today}
         clients={data.clients}
         accounts={data.accounts}
         value={data.draft.clientId}
@@ -74,7 +77,8 @@ export function CartPanel({
             </div>
           </div>
           <p>
-            {t("termPerPurchase", { days: client.term })}
+            {t("termPerPurchase", { days: client.term })} ·{" "}
+            {t(`accountStatus.${accountStatus(account, data.today)}`)}
             {!client.active ? ` · ${t("inactive")}` : ""}
           </p>
         </div>
@@ -82,66 +86,66 @@ export function CartPanel({
         <p>{t("counterCashOnly")}</p>
       )}
       <div className="ventas-cart-lines">
-        <div className="ventas-section-title">
+        <div className="ventas-cart-heading">
           <h3 className="ventas-cart-products-title">{t("products")}</h3>
+          <span className="ventas-cart-counts">
+            {t("cartCounts", {
+              pieces: t("pieceCount", {
+                count: data.draft.lines.reduce((sum, line) => sum + line.qty, 0),
+              }),
+              products: t("productCount", { count: data.draft.lines.length }),
+            })}
+          </span>
           <Button variant="ghost" disabled={!data.draft.lines.length || busy} onClick={onClear}>
-            <Trash2 size={14} aria-hidden="true" />
+            <Trash2 size={16} aria-hidden="true" />
             {t("clearCart")}
           </Button>
         </div>
-        <p className="text-muted text-xs">
-          {t("cartCounts", {
-            pieces: t("pieceCount", {
-              count: data.draft.lines.reduce((sum, line) => sum + line.qty, 0),
-            }),
-            products: t("productCount", { count: data.draft.lines.length }),
+        <div className="ventas-cart-scroll">
+          {data.draft.lines.map((line) => {
+            const p = data.products.find((p) => p.id === line.productId);
+            const lineTotal = BigInt(p?.price ?? 0) * BigInt(line.qty);
+            return (
+              <div className="ventas-cart-item" key={line.productId}>
+                <div>
+                  <strong>{p?.name}</strong>
+                  <small>
+                    {moneyText(p?.price ?? 0, i18n.language)} {t("each")}
+                  </small>
+                </div>
+                <div className="ventas-stepper">
+                  <Button
+                    aria-label={t("removeNamedPiece", { name: p?.name })}
+                    disabled={busy}
+                    onClick={() => onQuantity(line.productId, -1)}
+                  >
+                    −
+                  </Button>
+                  <span>{line.qty}</span>
+                  <Button
+                    aria-label={t("addNamedPiece", { name: p?.name })}
+                    disabled={busy || !p?.active || line.qty >= (p?.stock ?? 0)}
+                    onClick={() => onQuantity(line.productId, 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+                <strong>
+                  {lineTotal <= 9_000_000_000_000n
+                    ? moneyText(Number(lineTotal), i18n.language)
+                    : t("amountLimit")}
+                </strong>
+              </div>
+            );
           })}
-        </p>
-        {data.draft.lines.map((line) => {
-          const p = data.products.find((p) => p.id === line.productId);
-          const lineTotal = BigInt(p?.price ?? 0) * BigInt(line.qty);
-          return (
-            <div className="ventas-cart-item" key={line.productId}>
-              <div>
-                <strong>{p?.name}</strong>
-                <small>
-                  {moneyText(p?.price ?? 0, i18n.language)} {t("each")}
-                </small>
-              </div>
-              <div className="ventas-stepper">
-                <Button
-                  aria-label={t("removeNamedPiece", { name: p?.name })}
-                  disabled={busy}
-                  onClick={() => onQuantity(line.productId, -1)}
-                >
-                  −
-                </Button>
-                <span>{line.qty}</span>
-                <Button
-                  aria-label={t("addNamedPiece", { name: p?.name })}
-                  disabled={busy || !p?.active || line.qty >= (p?.stock ?? 0)}
-                  onClick={() => onQuantity(line.productId, 1)}
-                >
-                  +
-                </Button>
-              </div>
-              <strong>
-                {lineTotal <= 9_000_000_000_000n
-                  ? moneyText(Number(lineTotal), i18n.language)
-                  : t("amountLimit")}
-              </strong>
-              <IconButton
-                type="button"
-                label={t("removeNamedProduct", { name: p?.name })}
-                disabled={busy}
-                onClick={() => onQuantity(line.productId, -line.qty)}
-              >
-                <Trash2 size={14} aria-hidden="true" />
-              </IconButton>
+          {!data.draft.lines.length ? (
+            <div className="ventas-empty-cart">
+              <ShoppingCart size={30} aria-hidden="true" />
+              <strong>{t("saleBeginsHere")}</strong>
+              <p>{t("addCatalogProducts")}</p>
             </div>
-          );
-        })}
-        {!data.draft.lines.length ? <p className="ventas-empty-cart">{t("emptyCart")}</p> : null}
+          ) : null}
+        </div>
       </div>
       <footer className="ventas-cart-footer">
         <div className="ventas-total-row">
@@ -156,7 +160,9 @@ export function CartPanel({
               <span>{t("projectedFullBalance")}</span>
               <strong>{moneyText(account.balance + total, i18n.language)}</strong>
             </div>
-          ) : null}
+          ) : (
+            <span className="ventas-sale-mode">{t("counterMode")}</span>
+          )}
         </div>
         <div className="ventas-parallel-actions">
           {client ? (

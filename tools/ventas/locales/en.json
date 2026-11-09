@@ -512,5 +512,10 @@
     "overdue": "Overdue debt · current"
   },
   "accountDueHeading": "Due",
-  "accountSettleAction": "Settle"
+  "accountSettleAction": "Settle",
+  "searchProductShortcut": "Search product · F2",
+  "searchClientShortcut": "Search or register customer · F4",
+  "saleBeginsHere": "Your sale starts here",
+  "addCatalogProducts": "Add products from the catalog.",
+  "counterMode": "Cash sale"
 }

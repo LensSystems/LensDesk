@@ -33,6 +33,7 @@ async function openDialog(kind: "product" | "recipe" | "stock") {
     value: 0,
     lastValue: 0,
     lastQty: 1,
+    icon: null,
     active: true,
   };
   f.data.products.push(

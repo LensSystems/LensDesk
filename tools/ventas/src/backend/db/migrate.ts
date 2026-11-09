@@ -1,4 +1,5 @@
 import { normalizeLegacySettings } from "../legacy-settings.ts";
+import { recoverProductIcons } from "../product-presentation.ts";
 import type { Db } from "./driver.ts";
 import inventoryMigration from "./migrations/001_inventory.sql?raw";
 import tradingMigration from "./migrations/002_sales_accounts_cash.sql?raw";
@@ -9,6 +10,8 @@ import backupMigration from "./migrations/005_backup.sql?raw";
 
 import preferencesMigration from "./migrations/006_settings_preferences.sql?raw";
 
+import presentationMigration from "./migrations/007_product_presentation.sql?raw";
+
 const sources = {
   "./migrations/001_inventory.sql": inventoryMigration,
   "./migrations/002_sales_accounts_cash.sql": tradingMigration,
@@ -16,6 +19,7 @@ const sources = {
   "./migrations/004_returns_reversals.sql": correctionsMigration,
   "./migrations/005_backup.sql": backupMigration,
   "./migrations/006_settings_preferences.sql": preferencesMigration,
+  "./migrations/007_product_presentation.sql": presentationMigration,
 };
 export function migrate(db: Db): void {
   db.exec(
@@ -36,6 +40,24 @@ export function migrate(db: Db): void {
           );
       }
       db.exec(sql);
+      if (version === 7) {
+        const data = {
+          products: db.all<Record<string, string | number | null>>(
+            "SELECT * FROM products ORDER BY rowid",
+          ),
+          origins: db.all<Record<string, string | number | null>>(
+            "SELECT * FROM origins ORDER BY rowid",
+          ),
+          import_archives: db.all<Record<string, string | number | null>>(
+            "SELECT * FROM import_archives ORDER BY rowid",
+          ),
+        };
+        for (const _ of recoverProductIcons(data)) {
+          /* Complete the forward migration atomically. */
+        }
+        for (const product of data.products)
+          db.run("UPDATE products SET icon=? WHERE id=?", product.icon ?? null, product.id ?? null);
+      }
       db.run(
         "INSERT INTO schema_migrations VALUES (?, ?, ?)",
         version,

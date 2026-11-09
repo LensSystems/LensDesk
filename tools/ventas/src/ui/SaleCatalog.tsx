@@ -1,20 +1,30 @@
-import { Button, Input } from "@lensdesk/ui";
-import { Candy } from "lucide-react";
-import { useState } from "react";
+import { Button, Input, SegmentedControl } from "@lensdesk/ui";
 import { useTranslation } from "react-i18next";
 import { moneyText, numberText } from "./format.ts";
+import { ProductIcon } from "./ProductIcon.tsx";
 import type { ScreenProps } from "./types.ts";
 export function SaleCatalog({
   data,
   busy,
   onAdd,
   onInventory,
-}: ScreenProps & { onAdd: (id: string) => void; onInventory: () => void }) {
+  state,
+  onState,
+}: ScreenProps & {
+  onAdd: (id: string) => void;
+  onInventory: () => void;
+  state: { query: string; category: string };
+  onState: (state: { query: string; category: string }) => void;
+}) {
   const { t, i18n } = useTranslation();
-  const [query, setQuery] = useState(""),
-    [category, setCategory] = useState<string | null>(null);
+  const { query, category } = state;
   const catalog = data.products.filter((p) => p.active && p.kind !== "material");
-  const categories = [...new Set(catalog.map((p) => p.category))];
+  const available = [...new Set(catalog.map((p) => p.category))];
+  const ordered = ["Dulces", "Frituras", "Pan", "Semillas", "Bebidas"];
+  const categories = [
+    ...ordered.filter((c) => available.includes(c)),
+    ...available.filter((c) => !ordered.includes(c)),
+  ];
   const products = catalog.filter(
     (p) =>
       (!category || p.category === category) &&
@@ -22,22 +32,30 @@ export function SaleCatalog({
   );
   return (
     <div className="ventas-catalog">
-      <Input
-        label={t("searchProduct")}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        type="search"
+      <div className="ventas-product-search">
+        <Input
+          label={t("searchProduct")}
+          placeholder={t("searchProductShortcut")}
+          data-sale-product-search
+          value={query}
+          onChange={(e) => onState({ ...state, query: e.target.value })}
+          type="search"
+        />
+      </div>
+      <SegmentedControl
+        aria-label={t("categories")}
+        value={category ? `category:${category}` : "all"}
+        onValueChange={(value) =>
+          onState({ ...state, category: value === "all" ? "" : value.slice(9) })
+        }
+        options={[
+          { value: "all", label: t("allCategories") },
+          ...categories.map((c) => ({ value: `category:${c}`, label: c })),
+        ]}
+        className="ventas-category-selector"
+        itemClassName="ventas-category-option"
+        indicatorClassName="ventas-category-indicator"
       />
-      <fieldset className="ventas-category-list" aria-label={t("categories")}>
-        <Button aria-pressed={!category} onClick={() => setCategory(null)}>
-          {t("allCategories")}
-        </Button>
-        {categories.map((c) => (
-          <Button key={c} aria-pressed={category === c} onClick={() => setCategory(c)}>
-            {c}
-          </Button>
-        ))}
-      </fieldset>
       {products.length ? (
         <div className="ventas-product-grid">
           {products.map((p) => {
@@ -53,10 +71,10 @@ export function SaleCatalog({
                 onClick={() => onAdd(p.id)}
               >
                 <span className="ventas-product-visual">
-                  <Candy aria-hidden="true" size={28} />
+                  <ProductIcon icon={p.icon} kind={p.kind} />
                   <span>{p.category}</span>
-                  {qty ? <strong className="ventas-qty-badge">{qty}</strong> : null}
                 </span>
+                {qty ? <strong className="ventas-qty-badge">{qty}</strong> : null}
                 <strong className="ventas-product-name">{p.name}</strong>
                 <span className="ventas-product-bottom">
                   <strong>{moneyText(p.price, i18n.language)}</strong>
@@ -67,7 +85,7 @@ export function SaleCatalog({
           })}
         </div>
       ) : (
-        <div className="ventas-empty">
+        <div className="ventas-empty ventas-catalog-empty">
           <h1>{t(catalog.length ? "noMatchingProducts" : "emptyCatalog")}</h1>
           <p>{t("startInventory")}</p>
           <Button onClick={onInventory}>{t("nav.inventory")}</Button>

@@ -122,6 +122,7 @@ export function fixture() {
         value: 0,
         lastValue: 0,
         lastQty: 1,
+        icon: command.action.product.kind === "material" ? "package" : "candy",
         active: true,
       });
     if (command.action.type === "saveDraft") data.draft = structuredClone(command.action.draft);

@@ -126,6 +126,7 @@ it("shows all positive balances in Summary including future/inactive, top6 stabl
       value: 40,
       lastValue: 40,
       lastQty: 1,
+      icon: null,
       active: true,
       minStock: 0,
     };

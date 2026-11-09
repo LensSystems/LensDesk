@@ -1,4 +1,11 @@
-import { Button, Dialog, DialogContent, DialogDescription, DialogTitle } from "@lensdesk/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  type DialogContentProps,
+  DialogDescription,
+  DialogTitle,
+} from "@lensdesk/ui";
 import type { ReactNode } from "react";
 import type { Action } from "../shared/contracts.ts";
 import { DialogFeedback } from "./DialogFeedback.tsx";
@@ -14,6 +21,7 @@ export function OperationModal({
   children,
   onSaved,
   managedDialog = false,
+  onCloseAutoFocus,
   ...props
 }: ScreenProps & {
   title: string;
@@ -24,10 +32,11 @@ export function OperationModal({
   children: ReactNode | ((changed: () => void) => ReactNode);
   onSaved?: (id: string) => void;
   managedDialog?: boolean;
+  onCloseAutoFocus?: DialogContentProps["onCloseAutoFocus"];
 }) {
   const form = useDialogOperation(props.run, props.operation, close, onSaved);
   const content = (
-    <DialogContent>
+    <DialogContent onCloseAutoFocus={onCloseAutoFocus}>
       <DialogTitle>{title}</DialogTitle>
       <DialogDescription>{description}</DialogDescription>
       <form

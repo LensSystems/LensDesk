@@ -1,3 +1,4 @@
+import { knownProductIcon } from "../shared/product-icons.ts";
 import { DomainFault } from "./domain.ts";
 import { bool, number, object, sourceId, text, uuid, type WebContext } from "./web-common.ts";
 export function* mapProducts(c: WebContext) {
@@ -63,6 +64,7 @@ export function* mapProducts(c: WebContext) {
       lastValue: n,
       lastQty: d,
       active: Number(bool(p.active)),
+      icon: knownProductIcon(p.icon),
     });
     c.data.inventory_bases.push({
       productId: id,

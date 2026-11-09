@@ -143,6 +143,7 @@ describe("Ventas history dates and stale cart", () => {
         value: 100,
         lastValue: 100,
         lastQty: 2,
+        icon: null,
         active: false,
       },
       {
@@ -157,6 +158,7 @@ describe("Ventas history dates and stale cart", () => {
         value: 100,
         lastValue: 100,
         lastQty: 2,
+        icon: null,
         active: true,
       },
     );
@@ -181,17 +183,22 @@ describe("Ventas history dates and stale cart", () => {
         { productId: other, qty: 1 },
       ]),
     );
-    const remove = screen.getByRole("button", {
-      name: es.removeNamedProduct.replace("{{name}}", "A"),
-    });
-    await waitFor(() => expect(remove).toBeEnabled());
-    fireEvent.click(remove);
-    await waitFor(() => expect(f.data.draft.lines).toEqual([{ productId: other, qty: 1 }]));
-    await waitFor(() =>
-      expect(
-        screen.queryByRole("button", { name: es.removeNamedProduct.replace("{{name}}", "A") }),
-      ).not.toBeInTheDocument(),
-    );
+    for (let count = 3; count >= 0; count--) {
+      const remove = screen.getByRole("button", {
+        name: es.removeNamedPiece.replace("{{name}}", "A"),
+      });
+      await waitFor(() => expect(remove).toBeEnabled());
+      fireEvent.click(remove);
+      await waitFor(() =>
+        expect(f.data.draft.lines).toEqual([
+          ...(count ? [{ productId: pid, qty: count }] : []),
+          { productId: other, qty: 1 },
+        ]),
+      );
+    }
+    expect(
+      screen.queryByRole("button", { name: es.removeNamedPiece.replace("{{name}}", "A") }),
+    ).not.toBeInTheDocument();
     expect(f.data.products[0]?.stock).toBe(2);
   });
 });

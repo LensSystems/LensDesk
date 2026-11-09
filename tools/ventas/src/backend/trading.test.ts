@@ -141,7 +141,7 @@ describe("Ventas trading", () => {
       expect(data.movements[0]?.id).toBe(moveId);
       expect(data.purchases[0]).toMatchObject({ id: purchaseId, cashId: null, bankSnapshot: null });
       expect(execute(migrated, { key, revision: 0, action }, signal)).toEqual(result);
-      expect(migrated.all("SELECT * FROM schema_migrations")).toHaveLength(6);
+      expect(migrated.all("SELECT * FROM schema_migrations")).toHaveLength(7);
       expect(data.cash).toBeNull();
     } finally {
       migrated.close();

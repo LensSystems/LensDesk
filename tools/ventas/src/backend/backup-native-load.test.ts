@@ -40,6 +40,7 @@ it("commits an admitted native file near 20 MiB without blocking cancellation de
       lastValue: 1,
       lastQty: 1,
       active: 1,
+      icon: null,
     });
     source.data.inventory_bases.push({ productId: id, stock: 0, value: 0 });
     const movement = (n: number) => ({

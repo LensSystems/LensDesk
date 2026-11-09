@@ -106,7 +106,7 @@ test("Ventas exporta y restaura archivos reales, copia previa y recibos tras rei
     await tool.getByRole("button", { name: "Guardar respaldo", exact: true }).click();
     await expect(tool.getByText("Respaldo guardado.", { exact: true })).toBeVisible();
     const exported = JSON.parse(await readFile(path, "utf8")) as NativeBackup;
-    expect(exported.modelVersion).toBe(6);
+    expect(exported.modelVersion).toBe(7);
     expect(exported.data.sales).toHaveLength(1);
     expect(exported.data.operations.length).toBeGreaterThan(0);
     await execute(tool, {

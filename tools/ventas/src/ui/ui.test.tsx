@@ -177,6 +177,7 @@ describe("Ventas UI", () => {
       value: 0,
       lastValue: 0,
       lastQty: 1,
+      icon: null,
       active: true,
     });
     f.mount();

@@ -69,12 +69,12 @@ describe("current preferences and historical compatibility", () => {
     if (!sourceSettings) throw Error("Missing settings");
     sourceSettings.data = JSON.stringify(legacy);
     const normalized = validateBackup(source, signal);
-    expect(normalized.modelVersion).toBe(6);
+    expect(normalized.modelVersion).toBe(7);
     expect(normalized.data.sales).toEqual(old.sales);
     expect(normalized.data.operations).toEqual(old.operations);
     db.transaction(() => replaceDataset(db, normalized.data));
     expect(execute(db, { key, revision: 0, action }, signal)).toEqual(original);
-    expect(readDataset(db).modelVersion).toBe(6);
+    expect(readDataset(db).modelVersion).toBe(7);
     expect(validateBackup(readDataset(db), signal).data).toEqual(readDataset(db).data);
     expect(JSON.parse(String(readDataset(db).data.sales[0]?.business))).not.toHaveProperty(
       "cashier",
@@ -120,7 +120,7 @@ describe("current preferences and historical compatibility", () => {
     expect(() => validateBackup(current, signal)).toThrow("E_BACKUP_REFS");
     currentSettings.data = JSON.stringify(legacy);
     expect(() => validateBackup(current, signal)).toThrow("E_BACKUP_REFS");
-    expect(() => validateBackup({ ...current, modelVersion: 7 }, signal)).toThrow(
+    expect(() => validateBackup({ ...current, modelVersion: 8 }, signal)).toThrow(
       "E_BACKUP_FORMAT",
     );
   });

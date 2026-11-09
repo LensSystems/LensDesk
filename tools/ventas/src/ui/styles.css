@@ -2,6 +2,7 @@
 @import "@lensdesk/ui/styles.css";
 @import "./settings.css";
 @import "./accounts-summary.css";
+@import "./sale.css";
 
 .ventas-app {
   height: 100dvh;

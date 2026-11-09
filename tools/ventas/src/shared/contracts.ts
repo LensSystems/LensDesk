@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { correctionActionSchemas } from "./corrections-contracts.ts";
+import { type ProductIconName, productIconSchema } from "./product-icons.ts";
 import { tradingActionSchemas, tradingSnapshotShape } from "./trading-contracts.ts";
 import type { Settings } from "./values.ts";
 import {
@@ -65,6 +66,7 @@ export type Command = z.infer<typeof commandSchema>;
 export type Action = Command["action"];
 export type ProductInput = z.infer<typeof productSchema>;
 export type Product = Required<ProductInput> & {
+  icon: ProductIconName | null;
   stock: number;
   value: number;
   lastValue: number;
@@ -162,6 +164,7 @@ export const snapshotResultSchema = z.strictObject({
     settings: settingsSchema,
     products: z.array(
       productSchema.required().extend({
+        icon: productIconSchema.nullable(),
         stock: quantity,
         value: money,
         lastValue: money,

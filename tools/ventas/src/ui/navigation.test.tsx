@@ -107,6 +107,7 @@ describe("Ventas navigation", () => {
       value: 1000,
       lastValue: 1000,
       lastQty: 10,
+      icon: null,
       active: true,
     });
     f.data.clients.push({

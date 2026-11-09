@@ -23,6 +23,7 @@ import { payment, returnRecord, reversal, sale } from "./correction-records.ts";
 import { type Db, memoryDatabase } from "./db/driver.ts";
 import { checkCancelled, DomainFault, proportional } from "./domain.ts";
 import { normalizeLegacySettings } from "./legacy-settings.ts";
+import { recoverProductIcons } from "./product-presentation.ts";
 import { snapshot } from "./service.ts";
 export function validateBackup(raw: unknown, signal: AbortSignal): NativeBackup {
   return drain(backupSteps(raw, signal));
@@ -71,13 +72,14 @@ function* backupSteps(
     const row = normalized.settings[0];
     if (!row) throw new DomainFault("E_BACKUP_REFS");
     const preferences = JSON.parse(String(row.data));
-    if (parsed.data.modelVersion === 6) currentSettingsSchema.parse(preferences);
+    if (parsed.data.modelVersion !== 5) currentSettingsSchema.parse(preferences);
     row.data = JSON.stringify(
       parsed.data.modelVersion === 5
         ? normalizeLegacySettings(preferences)
         : normalizeSettings(preferences),
     );
-    backup.modelVersion = 6;
+    if (parsed.data.modelVersion !== 7) yield* recoverProductIcons(normalized);
+    backup.modelVersion = 7;
     yield* stageSteps(db, normalized);
     yield* rowSteps(db, normalized, signal);
     yield* financialSteps(db, signal, false);

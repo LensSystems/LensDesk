@@ -1,4 +1,4 @@
-import { Input } from "@lensdesk/ui";
+import { type DialogContentProps, Input } from "@lensdesk/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ClientRecord } from "../shared/trading-contracts.ts";
@@ -11,8 +11,16 @@ export function ClientDialog({
   client,
   close,
   onSaved,
+  onCloseAutoFocus,
+  initialName = "",
   ...props
-}: ScreenProps & { client?: ClientRecord; close: () => void; onSaved?: (id: string) => void }) {
+}: ScreenProps & {
+  client?: ClientRecord;
+  close: () => void;
+  onSaved?: (id: string) => void;
+  onCloseAutoFocus?: DialogContentProps["onCloseAutoFocus"];
+  initialName?: string;
+}) {
   const { t } = useTranslation();
   const [term] = useState(() => client?.term ?? props.data.settings.defaultTerm ?? 15);
   const [limit, setLimit] = useState(
@@ -26,6 +34,7 @@ export function ClientDialog({
       label={t("save")}
       close={close}
       onSaved={onSaved}
+      onCloseAutoFocus={onCloseAutoFocus}
       onSubmit={(form) => ({
         type: "saveClient",
         client: {
@@ -42,7 +51,7 @@ export function ClientDialog({
         name="name"
         required
         maxLength={120}
-        defaultValue={client?.name ?? ""}
+        defaultValue={client?.name ?? initialName}
       />
       <Input label={t("phone")} name="phone" maxLength={40} defaultValue={client?.phone ?? ""} />
       <Input

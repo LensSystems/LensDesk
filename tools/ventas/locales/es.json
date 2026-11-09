@@ -512,5 +512,10 @@
     "overdue": "Deuda vencida · actual"
   },
   "accountDueHeading": "Vence",
-  "accountSettleAction": "Liquidar"
+  "accountSettleAction": "Liquidar",
+  "searchProductShortcut": "Buscar producto · F2",
+  "searchClientShortcut": "Buscar o registrar cliente · F4",
+  "saleBeginsHere": "Tu venta comienza aquí",
+  "addCatalogProducts": "Agrega productos del catálogo.",
+  "counterMode": "Contado"
 }
