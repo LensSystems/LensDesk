@@ -38,7 +38,7 @@ export function App({ client }: { client: Client }) {
   const [summaryPeriod, setSummaryPeriod] = useState<Period>("today");
   const [accountFocus, setAccountFocus] = useState(false);
   const [statementFocus, setStatementFocus] = useState(false);
-  const [workspace, setWorkspace] = useTicketWorkspace(sales.data, sales.restoredId);
+  const [workspace, setWorkspace] = useTicketWorkspace(sales, client.backend.invoke);
   const [saleFocus, setSaleFocus] = useState(false);
   const openAccount = (selected: string | null) => {
     setAccountFocus(true);

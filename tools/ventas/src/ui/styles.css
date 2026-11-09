@@ -577,57 +577,6 @@
 .ventas-cart-item > strong {
   font-size: 12px;
 }
-.ventas-paper {
-  width: min(100%, 340px);
-  margin-inline: auto;
-  padding: 24px 16px;
-  border: 1px solid var(--ld-border);
-  border-radius: var(--ld-radius-md);
-  background: var(--ld-surface-raised);
-  color: var(--ld-text);
-  font-size: 12px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-.ventas-paper > header {
-  text-align: center;
-  border-bottom: 1px solid var(--ld-border);
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-}
-.ventas-paper h2,
-.ventas-paper h3 {
-  font-size: 13px;
-  font-weight: 700;
-  margin-block: 8px;
-}
-.ventas-paper table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-block: 16px;
-  text-align: left;
-}
-.ventas-paper th,
-.ventas-paper td {
-  padding: 6px 4px;
-  border-bottom: 1px solid var(--ld-border);
-  vertical-align: top;
-}
-.ventas-paper td:not(:first-child) {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-.ventas-paper footer {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--ld-border);
-  text-align: center;
-}
-.ventas-paper small {
-  display: block;
-  color: var(--ld-text-muted);
-  margin-top: 12px;
-}
 .ventas-bank-details {
   border-top: 1px solid var(--ld-border);
   margin-top: 20px;
@@ -739,4 +688,122 @@
 .ventas-return-lines th:not(:first-child),
 .ventas-return-lines td:not(:first-child) {
   white-space: nowrap;
+}
+
+.ventas-paper {
+  width: 100%;
+  max-width: 340px;
+  margin-inline: auto;
+  padding: 20px 14px;
+  border: 1px solid var(--ld-border);
+  border-radius: 0;
+  background: var(--ld-surface-raised);
+  color: var(--ld-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.ventas-paper > header {
+  text-align: center;
+}
+.ventas-paper h2 {
+  font-size: 11px;
+  font-weight: 700;
+  margin: 0;
+}
+.ventas-paper h3 {
+  font-size: 14px;
+  font-weight: 700;
+}
+.ventas-paper table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  text-align: left;
+  font-size: 9px;
+}
+.ventas-paper th,
+.ventas-paper td {
+  padding: 5px 2px;
+  text-align: left;
+  vertical-align: top;
+}
+.ventas-paper thead th {
+  font-weight: 700;
+}
+.ventas-paper tbody th {
+  font-weight: 400;
+}
+.ventas-paper .ventas-paper-summary {
+  border-top: 1px dashed var(--ld-text-muted);
+  margin-top: 12px;
+  padding-top: 12px;
+  gap: 0;
+}
+.ventas-paper .ventas-paper-summary > div {
+  gap: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.ventas-paper .ventas-paper-summary dd {
+  font-size: inherit;
+  margin: 0;
+  text-align: right;
+}
+.ventas-paper footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--ld-text-muted);
+  text-align: center;
+}
+.ventas-paper small {
+  display: block;
+  margin-top: 8px;
+  font-size: 9px;
+  text-align: center;
+}
+
+.ventas-paper .ventas-bank-details {
+  border-top: 1px dashed var(--ld-text-muted);
+  margin-top: 12px;
+  padding-top: 12px;
+  font-size: 10px;
+}
+.ventas-paper .ventas-bank-details h3 {
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.ventas-paper .ventas-bank-details p {
+  margin-block: 3px;
+}
+
+.ventas-paper-line {
+  border-top: 1px dashed var(--ld-text-muted);
+  margin-block: 12px;
+}
+
+.ventas-paper h2 {
+  text-transform: uppercase;
+}
+.ventas-paper .ventas-paper-summary > div:first-child {
+  font-size: 15px;
+  font-weight: 800;
+}
+.ventas-paper td:not(:first-child),
+.ventas-paper thead th:not(:first-child) {
+  white-space: nowrap;
+}
+
+.ventas-paper-draft-note {
+  margin-top: 8px;
+  text-align: center;
+}
+.ventas-paper-amount {
+  font-weight: 700;
+}
+.ventas-paper-total-label {
+  text-transform: uppercase;
 }

@@ -552,5 +552,11 @@
   "confirmationReceived": "Received",
   "clientPhone": "Phone (optional)",
   "clientPaymentDays": "Payment term",
-  "saveClientChanges": "Save changes"
+  "saveClientChanges": "Save changes",
+  "draftPaymentInvalid": "Review payment amounts before confirming.",
+  "receivedAtSale": "Received at sale",
+  "statementAllocationNotice": "Allocations continue in the account payment history.",
+  "paperQuantity": "Qty.",
+  "paperAmount": "Amount",
+  "paperStatementProduct": "Date / Product"
 }

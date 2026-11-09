@@ -552,5 +552,11 @@
   "confirmationReceived": "Recibido",
   "clientPhone": "Teléfono (opcional)",
   "clientPaymentDays": "Plazo de pago",
-  "saveClientChanges": "Guardar cambios"
+  "saveClientChanges": "Guardar cambios",
+  "draftPaymentInvalid": "Importes por revisar antes de confirmar.",
+  "receivedAtSale": "Recibido al vender",
+  "statementAllocationNotice": "Las asignaciones continúan en el historial de pagos de la cuenta.",
+  "paperQuantity": "Cant.",
+  "paperAmount": "Importe",
+  "paperStatementProduct": "Fecha / Producto"
 }

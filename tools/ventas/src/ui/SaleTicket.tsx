@@ -7,7 +7,7 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
     s = detail.sale,
     money = (value: number) => moneyText(value, i18n.language);
   return (
-    <article className="ventas-paper" aria-label={t("saleTicket")}>
+    <article data-theme="light" className="ventas-paper" aria-label={t("saleTicket")}>
       <header>
         <h3>
           {s.historyMissing?.includes("business")
@@ -21,6 +21,7 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
           </p>
         ) : null}
         <p>{s.business.phone}</p>
+        <div className="ventas-paper-line" />
         <h2>{t(s.opening ? "openingBalance" : "saleTicket")}</h2>
       </header>
       <p>
@@ -36,48 +37,59 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
       {s.opening ? (
         <p>{s.note}</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              {["product", "quantity", "price", "amount"].map((k) => (
-                <th key={k}>{t(k)}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {s.lines.map((l) => (
-              <tr key={l.id}>
-                <th scope="row">{l.name}</th>
-                <td>{l.qty}</td>
-                <td>{money(l.price)}</td>
-                <td>{money(l.price * l.qty)}</td>
+        <>
+          <div className="ventas-paper-line" />
+          <table>
+            <thead>
+              <tr>
+                {["product", "paperQuantity", "price", "paperAmount"].map((k) => (
+                  <th key={k}>{t(k)}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {s.lines.map((l) => (
+                <tr key={l.id}>
+                  <th scope="row">{l.name}</th>
+                  <td>{l.qty}</td>
+                  <td>{money(l.price)}</td>
+                  <td>{money(l.price * l.qty)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
-      <dl className="ventas-confirm-summary">
+      <dl className="ventas-paper-summary">
         <div>
-          <dt>{t("originalTotal")}</dt>
+          <dt className="ventas-paper-total-label">{t("originalTotal")}</dt>
           <dd>
             <strong>{money(s.total)}</strong>
           </dd>
         </div>
         <div>
           <dt>{t("netAfterReturns")}</dt>
-          <dd>{money(detail.balance.total)}</dd>
+          <dd className="ventas-paper-amount">{money(detail.balance.total)}</dd>
         </div>
         <div>
           <dt>{t("netPaid")}</dt>
-          <dd>{money(detail.balance.paid)}</dd>
+          <dd className="ventas-paper-amount">{money(detail.balance.paid)}</dd>
         </div>
         <div>
           <dt>{t("pending")}</dt>
-          <dd>{money(detail.balance.pending)}</dd>
+          <dd className="ventas-paper-amount">{money(detail.balance.pending)}</dd>
+        </div>
+        <div>
+          <dt>{t("receivedAtSale")}</dt>
+          <dd className="ventas-paper-amount">
+            {s.historyMissing?.includes("received")
+              ? t("historicalUnavailable")
+              : money(s.received)}
+          </dd>
         </div>
         <div>
           <dt>{t("changeAtSale")}</dt>
-          <dd>
+          <dd className="ventas-paper-amount">
             {s.historyMissing?.includes("change") ? t("historicalUnavailable") : money(s.change)}
           </dd>
         </div>

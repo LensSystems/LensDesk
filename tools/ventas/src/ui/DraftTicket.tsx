@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { PaymentInput } from "../shared/trading-contracts.ts";
 import { BankDetails } from "./BankDetails.tsx";
+import { DraftPaymentSummary } from "./DraftPaymentSummary.tsx";
 import { dateText, moneyText } from "./format.ts";
 import type { ScreenProps } from "./types.ts";
 export function DraftTicket({
@@ -13,24 +14,29 @@ export function DraftTicket({
     client = data.clients.find((c) => c.id === data.draft.clientId),
     business = data.settings;
   return (
-    <article className="ventas-paper" aria-label={t("draftTicket")}>
+    <article data-theme="light" className="ventas-paper" aria-label={t("draftTicket")}>
       <header>
         <h3>{business.name || t("unconfiguredBusiness")}</h3>
         <p>{business.address}</p>
+        <p>{business.phone}</p>
         {business.rfc ? (
           <p>
             {t("rfc")}: {business.rfc}
           </p>
         ) : null}
+        <div className="ventas-paper-line" />
         <h2>{t("draftTicket")}</h2>
       </header>
       <p>
-        {dateText(data.today, i18n.language)} · {client?.name ?? t("counter")}
+        {t("date")}: {dateText(data.today, i18n.language)}
+        <br />
+        {t("client")}: {client?.name ?? t("counter")}
       </p>
+      <div className="ventas-paper-line" />
       <table>
         <thead>
           <tr>
-            {["product", "quantity", "price", "amount"].map((k) => (
+            {["product", "paperQuantity", "price", "paperAmount"].map((k) => (
               <th key={k}>{t(k)}</th>
             ))}
           </tr>
@@ -49,23 +55,12 @@ export function DraftTicket({
           })}
         </tbody>
       </table>
-      <strong>
-        {t("saleTotal")}: {moneyText(total, i18n.language)}
-      </strong>
-      <p>
-        {t("appliedPayment")}:{" "}
-        {Number.isFinite(payment.amount) ? moneyText(payment.amount, i18n.language) : "—"}
-      </p>
+      <DraftPaymentSummary total={total} payment={payment} today={data.today} term={client?.term} />
       {payment.method === "transfer" ? (
         <BankDetails bank={data.settings.banks.find((b) => b.id === payment.bankId) ?? null} />
       ) : null}
-      {business.cashier ? (
-        <p>
-          {t("servedBy")}: {business.cashier}
-        </p>
-      ) : null}
       <footer>{business.thanks || t("historicalThanksUnavailable")}</footer>
-      <p>{t("draftNotConfirmed")}</p>
+      <p className="ventas-paper-draft-note">{t("draftNotConfirmed")}</p>
     </article>
   );
 }

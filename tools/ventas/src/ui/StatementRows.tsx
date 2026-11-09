@@ -28,7 +28,8 @@ export function StatementRows({ sale, summary }: { sale: SaleRecord; summary?: H
           </tr>
         ))
       )}
-      {summary?.kind === "sale" ? (
+      {summary?.kind === "sale" &&
+      (summary.data.net !== sale.total || summary.data.pending !== sale.total) ? (
         <tr>
           <td colSpan={4}>
             {t("netAfterReturns")}: {moneyText(summary.data.net, i18n.language)} · {t("pending")}:{" "}

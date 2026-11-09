@@ -73,7 +73,7 @@ export function TicketWorkspaceView({
     pendingFocus.current = false;
   }, [props.busy, props.operation.issue, props.operation.writing, props.operation.loading]);
   const select = (selected: string | null) =>
-    onWorkspace({ ...workspace, selected, review: Boolean(selected) });
+    onWorkspace({ ...workspace, selected, review: Boolean(selected), autoSelect: false });
   return (
     <section className="ventas-tickets" ref={root}>
       <aside className="ventas-ticket-list">
@@ -113,7 +113,9 @@ export function TicketWorkspaceView({
         <hr className="ventas-checkout-divider" />
         <TicketList
           {...props}
-          autoSelect={!hasDraft}
+          autoSelect={!hasDraft && workspace.autoSelect}
+          filters={workspace.query}
+          onFilters={(query) => onWorkspace({ ...workspace, query })}
           selected={workspace.selected}
           onSelect={select}
         />

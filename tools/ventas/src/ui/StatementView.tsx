@@ -66,6 +66,7 @@ export function StatementView({
       {q.value ? (
         <>
           <StatementTicket statement={q.value} read={props.read} />
+          <p>{t("statementPageNotice")}</p>
           <h3>{t("purchasesAndDue")}</h3>
           <Pager page={q.value.salesPage} offset={salesOffset} limit={10} onPage={setSalesOffset} />
           <h3>{t("payments")}</h3>

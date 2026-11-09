@@ -1,7 +1,10 @@
 import type { PaymentForm } from "./PaymentFields.tsx";
+import type { Period } from "./PeriodControls.tsx";
 
 export type TicketWorkspace = {
   initialized: boolean;
+  autoSelect: boolean;
+  query: { search: string; period: Period; offset: number };
   selected: string | null;
   review: boolean;
   clientId: string | null;
@@ -14,6 +17,8 @@ export type WorkspaceProps = {
 };
 export const emptyWorkspace: TicketWorkspace = {
   initialized: false,
+  autoSelect: true,
+  query: { search: "", period: "all", offset: 0 },
   selected: null,
   review: false,
   clientId: null,

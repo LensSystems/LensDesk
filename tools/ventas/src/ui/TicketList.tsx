@@ -1,29 +1,31 @@
 import { Button, Input } from "@lensdesk/ui";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { historyPageSchema } from "../shared/history-contracts.ts";
 import { dateText, moneyText, saleFolio } from "./format.ts";
 import { Pager } from "./Pager.tsx";
-import { type Period, PeriodControls, periodRange } from "./PeriodControls.tsx";
+import { PeriodControls, periodRange } from "./PeriodControls.tsx";
 import { QueryNotice } from "./QueryNotice.tsx";
+import type { TicketWorkspace } from "./ticket-workspace.ts";
 import type { ScreenProps } from "./types.ts";
-import { useOffset } from "./use-offset.ts";
 import { useQuery } from "./use-query.ts";
 
 export function TicketList({
   selected,
   onSelect,
   autoSelect,
+  filters,
+  onFilters,
   ...props
 }: ScreenProps & {
   selected: string | null;
   autoSelect: boolean;
+  filters: TicketWorkspace["query"];
+  onFilters: (query: TicketWorkspace["query"]) => void;
   onSelect: (id: string | null) => void;
 }) {
   const { t, i18n } = useTranslation();
-  const [period, setPeriod] = useState<Period>("all");
-  const [search, setSearch] = useState("");
-  const [offset, setOffset] = useOffset(JSON.stringify([props.data.revision, props.data.today]));
+  const { period, search, offset } = filters;
   const query = useQuery(
     props.read,
     "history",
@@ -40,8 +42,12 @@ export function TicketList({
   );
   useEffect(() => {
     const first = query.value?.rows.find((row) => row.kind === "sale");
-    if (autoSelect && !selected && first) onSelect(first.data.id);
+    if (autoSelect && !selected && query.value) onSelect(first?.data.id ?? null);
   }, [autoSelect, selected, query.value, onSelect]);
+  useEffect(() => {
+    if (query.value && offset > 0 && offset >= query.value.total)
+      onFilters({ ...filters, offset: Math.max(0, Math.ceil(query.value.total / 20) - 1) * 20 });
+  }, [query.value, offset, filters, onFilters]);
   return (
     <>
       <h2>{t("tickets")}</h2>
@@ -49,9 +55,7 @@ export function TicketList({
         label={t("searchHistory")}
         value={search}
         onChange={(e) => {
-          setSearch(e.target.value.slice(0, 120));
-          setOffset(0);
-          onSelect(null);
+          onFilters({ ...filters, search: e.target.value.slice(0, 120), offset: 0 });
         }}
         maxLength={120}
         type="search"
@@ -59,16 +63,13 @@ export function TicketList({
       <PeriodControls
         value={period}
         onChange={(p) => {
-          setPeriod(p);
-          setOffset(0);
-          onSelect(null);
+          onFilters({ ...filters, period: p, offset: 0 });
         }}
       />
       <QueryNotice
         issue={query.issue}
         loading={query.loading}
         retry={() => {
-          setOffset(0);
           query.retry();
         }}
       />
@@ -104,8 +105,7 @@ export function TicketList({
         limit={20}
         loading={query.loading}
         onPage={(n) => {
-          setOffset(n);
-          onSelect(null);
+          onFilters({ ...filters, offset: n });
         }}
       />
     </>
