@@ -24,6 +24,11 @@ lectura fallida, recupera los datos: no vuelvas a registrar la venta.
 
 ## Historial
 
+Los documentos para clientes (borrador, ticket confirmado y estado de cuenta) no muestran
+vencimientos, plazos de crédito ni desglose de deuda vencida. Conservan la fecha de compra/emisión,
+productos, pagos, saldo y datos bancarios. Consulta vencimientos y vencidos en las vistas internas
+de Cuentas, confirmación de crédito y Resumen. Los datos históricos y respaldos siguen intactos.
+
 Tickets conserva el precio, costo, cliente, negocio y banco originales. Puedes consultar todas las
 páginas del estado de cuenta y el detalle de cada devolución, incluso tras una devolución total.
 Una devolución reduce deuda primero y reembolsa el exceso; indica motivo y si regresa vendible.

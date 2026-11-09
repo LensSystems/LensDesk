@@ -47,3 +47,11 @@ Windows, lectores de pantalla y pruebas humanas requieren comprobación en sus e
 la automatización macOS no acredita esos recorridos.
 Windows, screen readers and human workflows require checks in those environments;
 macOS automation does not establish those results.
+
+Los tickets de venta, borradores y estados de cuenta destinados al cliente muestran fechas de
+compra/emisión y saldos, sin vencimientos, plazos de crédito ni desglose de deuda vencida.
+Estos datos se conservan para la cobranza interna en Cuentas, confirmaciones y Resumen, y en respaldos.
+
+Customer sale tickets, drafts and statements show purchase/issue dates and balances, without
+credit due dates, credit terms or overdue breakdowns. These remain available for internal
+collections in Accounts, confirmations and Summary, and in backups.

@@ -99,10 +99,6 @@ export function StatementTicket({ statement: s, read }: { statement: Statement; 
               <strong>{money(s.account.balance)}</strong>
             </dd>
           </div>
-          <div>
-            <dt>{t("overdue")}</dt>
-            <dd className="ventas-paper-amount">{money(s.account.overdue)}</dd>
-          </div>
         </dl>
         <BankDetails bank={s.bankSnapshot} />
         {s.business.cashier ? (

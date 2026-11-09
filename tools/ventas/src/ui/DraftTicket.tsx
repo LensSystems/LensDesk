@@ -55,7 +55,7 @@ export function DraftTicket({
           })}
         </tbody>
       </table>
-      <DraftPaymentSummary total={total} payment={payment} today={data.today} term={client?.term} />
+      <DraftPaymentSummary total={total} payment={payment} />
       {payment.method === "transfer" ? (
         <BankDetails bank={data.settings.banks.find((b) => b.id === payment.bankId) ?? null} />
       ) : null}

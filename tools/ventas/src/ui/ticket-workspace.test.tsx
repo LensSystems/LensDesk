@@ -302,7 +302,8 @@ it("updates the draft paper from edited checkout amounts and keeps stock and com
   fireEvent.change(screen.getByLabelText(es.checkoutReceivedCash), { target: { value: "10.00" } });
   expect(row(es.pending)).toHaveTextContent("$11.00");
   expect(row(es.change)).toHaveTextContent("$5.00");
-  expect(paper).toHaveTextContent(dateText("2026-11-22", "es"));
+  expect(paper).not.toHaveTextContent(dateText("2026-11-22", "es"));
+  expect(paper).toHaveTextContent(dateText(f.data.today, "es"));
   expect(paper).toHaveTextContent(es.draftNotConfirmed);
   expect(f.data.products[0]?.stock).toBe(10);
   expect(f.invoke.mock.calls.some(([m]) => m === "execute")).toBe(false);

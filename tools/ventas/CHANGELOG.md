@@ -2,6 +2,11 @@
 
 ## [0.1.0] - 2026-11-07
 
+- Documentos del cliente sin vencimientos, plazos ni desglose de vencidos; fechas de compra,
+  emisión, importes y saldos conservados. Cobranza interna y respaldos mantienen esos datos.
+  Customer documents omit due dates, credit terms and overdue breakdowns while preserving
+  purchase/issue dates, amounts and balances. Internal collections and backups retain those data.
+
 Primera versión independiente de Ventas para LensDesk 0.5.0/API 1.
 First independent Sales release for LensDesk 0.5.0/API 1.
 

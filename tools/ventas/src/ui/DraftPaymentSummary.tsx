@@ -1,19 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { addDays } from "../shared/calendar.ts";
 import type { PaymentInput } from "../shared/trading-contracts.ts";
-import { dateText, moneyText } from "./format.ts";
+import { moneyText } from "./format.ts";
 
-export function DraftPaymentSummary({
-  total,
-  payment,
-  today,
-  term,
-}: {
-  total: number;
-  payment: PaymentInput;
-  today: string;
-  term?: number;
-}) {
+export function DraftPaymentSummary({ total, payment }: { total: number; payment: PaymentInput }) {
   const { t, i18n } = useTranslation();
   const money = (n: number) =>
     Number.isSafeInteger(n) && n >= 0 ? moneyText(n, i18n.language) : "—";
@@ -48,11 +37,6 @@ export function DraftPaymentSummary({
           </div>
         ) : null}
       </dl>
-      {pending !== null && pending > 0 && term !== undefined ? (
-        <p>
-          {t("dueDate")}: {dateText(addDays(today, term), i18n.language)}
-        </p>
-      ) : null}
       {!amountValid ||
       !receivedValid ||
       (payment.method === "transfer" && payment.received !== payment.amount) ? (

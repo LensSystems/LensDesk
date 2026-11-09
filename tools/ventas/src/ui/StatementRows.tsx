@@ -9,8 +9,6 @@ export function StatementRows({ sale, summary }: { sale: SaleRecord; summary?: H
       <tr>
         <th colSpan={4}>
           {saleFolio(sale)} · {dateText(sale.date, i18n.language)}
-          <br />
-          {t("dueDate")}: {dateText(sale.due, i18n.language)}
         </th>
       </tr>
       {sale.opening ? (

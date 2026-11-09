@@ -24,6 +24,11 @@ recording the sale again.
 
 ## History
 
+Customer documents (draft, confirmed sale ticket and statement) omit due dates, credit terms and
+overdue breakdowns. They retain purchase/issue dates, products, payments, balances and bank details.
+Use the internal Accounts, credit confirmation and Summary views for credit schedules and overdue
+amounts. Historical data and backups remain intact.
+
 Tickets preserve original prices, costs, customer, business and bank snapshots. Statements and
 return details remain available across all pages, even after a total return. Returns reduce debt first
 and refund the excess. Record a reason and whether the goods are sellable. Unsellable returns record

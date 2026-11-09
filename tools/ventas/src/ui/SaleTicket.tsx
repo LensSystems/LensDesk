@@ -93,10 +93,6 @@ export function SaleTicket({ detail }: { detail: SaleDetail }) {
             {s.historyMissing?.includes("change") ? t("historicalUnavailable") : money(s.change)}
           </dd>
         </div>
-        <div>
-          <dt>{t("dueDate")}</dt>
-          <dd>{dateText(s.due, i18n.language)}</dd>
-        </div>
       </dl>
       {s.exception ? (
         <p>
