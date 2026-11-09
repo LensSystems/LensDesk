@@ -39,6 +39,8 @@ export function PaymentFields({
   disabled = false,
   changed = () => {},
   variant = "default",
+  amountLabel: customAmountLabel,
+  showReference = true,
 }: {
   value: PaymentForm;
   onChange: (value: PaymentForm) => void;
@@ -47,19 +49,23 @@ export function PaymentFields({
   disabled?: boolean;
   changed?: () => void;
   variant?: "default" | "checkout" | "account";
+  amountLabel?: string;
+  showReference?: boolean;
 }) {
   const { t } = useTranslation();
   const set = <K extends keyof PaymentForm>(key: K, next: PaymentForm[K]) => {
     changed();
     onChange({ ...value, [key]: next });
   };
-  const amountLabel = t(
-    variant === "account"
-      ? "accountPaymentAmount"
-      : variant === "checkout"
-        ? "checkoutAppliedPayment"
-        : "appliedPayment",
-  );
+  const amountLabel =
+    customAmountLabel ??
+    t(
+      variant === "account"
+        ? "accountPaymentAmount"
+        : variant === "checkout"
+          ? "checkoutAppliedPayment"
+          : "appliedPayment",
+    );
   const methodLabel = t(variant === "account" ? "confirmationMethod" : "paymentMethod");
   return (
     <>
@@ -130,7 +136,7 @@ export function PaymentFields({
           ]}
         />
       ) : null}
-      {variant !== "checkout" || value.method === "transfer" ? (
+      {showReference && (variant !== "checkout" || value.method === "transfer") ? (
         <Input
           label={t("paymentReference")}
           value={value.reference}

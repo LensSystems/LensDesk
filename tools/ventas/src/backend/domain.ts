@@ -1,5 +1,6 @@
 import { LensError } from "@lensdesk/sdk/errors";
 import type { VentasIssue } from "../shared/contracts.ts";
+import { proportionalInteger } from "../shared/proportional.ts";
 
 export class DomainFault extends Error {
   readonly issue: VentasIssue;
@@ -17,7 +18,7 @@ export function checked(value: number, max = 9_000_000_000_000): number {
 }
 export function proportional(value: number, qty: number, stock: number): number {
   if (stock <= 0) throw new DomainFault("E_COST");
-  return checked(Number((BigInt(value) * BigInt(qty) * 2n + BigInt(stock)) / (BigInt(stock) * 2n)));
+  return checked(Number(proportionalInteger(value, qty, stock)));
 }
 export function operationalDate(at: string): string {
   const parts = new Intl.DateTimeFormat("en-CA", {

@@ -4,7 +4,7 @@ The portable native envelope is JSON UTF-8:
 El envelope nativo portable es JSON UTF-8:
 
 ```json
-{"format":"lensdesk-ventas-native-backup","version":1,"modelVersion":5,"createdAt":"2026-11-07T18:00:00.000Z","toolVersion":"0.1.0","revision":0,"data":{}}
+{"format":"lensdesk-ventas-native-backup","version":1,"modelVersion":7,"createdAt":"2026-11-07T18:00:00.000Z","toolVersion":"0.1.0","revision":0,"data":{}}
 ```
 
 `data` in this abbreviated illustration must contain every listed table, including empty arrays.
@@ -21,7 +21,7 @@ El envelope nativo portable es JSON UTF-8:
 | import_archives, origins, inventory_bases | Source payload, IDs/folios/missing fields and opening stock / Procedencia y bases |
 | restore_history | Portable record of restore events / Registro portable de recuperaciones |
 
-Rows retain all model 5 storage columns. Scalar values are strings, safe integers or null; storage
+Rows retain all model 7 storage columns. Scalar values are strings, safe integers or null; storage
 booleans use 0/1. JSON-valued columns remain JSON strings. UUIDs, line UUIDs, folios, fingerprints,
 results and original snapshots are preserved. The importer uses a fixed table/column allowlist and
 bound values; the file cannot supply SQL. Schema migration records and WAL are implementation
@@ -29,7 +29,7 @@ state, not portable data. Local `restore_receipts` and previous-copy files remai
 control; they are not replaced by imported operation keys or recursively embedded. Download the
 last previous copy separately. Portable `restore_history` retains restore-event provenance.
 
-Las filas conservan todas las columnas del modelo 5. Escalares: texto, entero seguro o null;
+Las filas conservan todas las columnas del modelo 7. Escalares: texto, entero seguro o null;
 booleanos almacenados como 0/1. Las columnas JSON siguen siendo cadenas JSON. Se conservan UUID,
 folios, fingerprints, resultados e instantáneas. Tablas/columnas se fijan en código y los valores se
 parametrizan: el archivo no aporta SQL. Migraciones y WAL son estado de implementación.
@@ -66,3 +66,25 @@ Ambos formatos: máximo 20 MiB reales UTF-8, incluida salida normalizada; hasta 
 Rigen límites por campo. La validación ocurre antes de mutar. Preparación ligada a hash/ID/revisión,
 caducidad 10 min, una por base/dos globales. Se relee el archivo, se conserva copia verificada y se
 revalida la revisión dentro de la transacción. Reintentos consultan recibos locales persistentes primero.
+
+## Model compatibility / Compatibilidad de modelos
+
+New exports use model 7. Native models 5 and 6 remain importable; model 7 includes nullable
+`products.icon` metadata and preserves catalog insertion order. Known Web 1 icons are mapped
+from validated provenance; unknown or absent values stay null. Icon recovery does not change
+stock, value, rational last-cost pairs, operation fingerprints, original financial rows or snapshots.
+
+Las exportaciones nuevas usan modelo 7. Se admiten modelos nativos 5 y 6. El modelo 7 incluye
+`products.icon` nullable y conserva orden de inserción del catálogo. Solo se recuperan iconos Web 1
+conocidos desde procedencia validada; los ausentes o desconocidos quedan null. No se modifican
+existencias, valores, fracciones de último costo, fingerprints ni filas o instantáneas financieras.
+
+Model 6 adds current business and bank preferences. Model 5 defaults those optional fields without
+backfilling historical sales. Repeated bank IDs accepted by old native model 5 are normalized only
+in the current bank catalog with deterministic IDs and `originalId`; historical snapshots and
+references retain their originals. Explicit model 6/7 duplicate IDs remain invalid.
+
+El modelo 6 añade preferencias actuales de negocio y bancos. Modelo 5 obtiene valores por defecto
+sin rellenar ventas históricas. IDs bancarios repetidos admitidos por modelo 5 antiguo se normalizan
+solo en el catálogo actual con IDs deterministas y `originalId`; referencias e instantáneas
+históricas conservan sus originales. Duplicados explícitos en modelos 6/7 siguen rechazados.

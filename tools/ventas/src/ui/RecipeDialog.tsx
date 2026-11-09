@@ -1,4 +1,13 @@
-import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, Input } from "@lensdesk/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  type DialogContentProps,
+  DialogDescription,
+  DialogTitle,
+  Input,
+} from "@lensdesk/ui";
+import { Package } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Product } from "../shared/contracts.ts";
@@ -14,7 +23,12 @@ export function RecipeDialog({
   busy,
   operation,
   close,
-}: ScreenProps & { product: Product; close: () => void }) {
+  onCloseAutoFocus,
+}: ScreenProps & {
+  product: Product;
+  close: () => void;
+  onCloseAutoFocus?: DialogContentProps["onCloseAutoFocus"];
+}) {
   const { t } = useTranslation();
   const formOperation = useDialogOperation(run, operation, close);
   const current = data.recipes.find((r) => r.productId === product.id);
@@ -33,8 +47,16 @@ export function RecipeDialog({
         if (!open && !operation.writing) close();
       }}
     >
-      <DialogContent>
-        <DialogTitle>{t("recipeFor", { name: product.name })}</DialogTitle>
+      <DialogContent
+        className="ventas-p3-dialog ventas-operation-dialog"
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
+        <div className="ventas-dialog-heading">
+          <span className="ventas-dialog-icon">
+            <Package size={21} aria-hidden="true" />
+          </span>
+          <DialogTitle>{t("recipeFor", { name: product.name })}</DialogTitle>
+        </div>
         <DialogDescription>{t("recipeIntro")}</DialogDescription>
         <form
           className="grid gap-4"
@@ -90,13 +112,18 @@ export function RecipeDialog({
               ...packaging.map((p) => ({ value: p.id, label: p.name })),
             ]}
           />
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={busy || formOperation.savedDraft || !materials.length}
-          >
-            {t("save")}
-          </Button>
+          <div className="ventas-dialog-actions">
+            <Button type="button" disabled={operation.writing} onClick={close}>
+              {t("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={busy || formOperation.savedDraft || !materials.length}
+            >
+              {t("save")}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

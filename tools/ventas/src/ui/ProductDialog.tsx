@@ -1,4 +1,13 @@
-import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, Input } from "@lensdesk/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  type DialogContentProps,
+  DialogDescription,
+  DialogTitle,
+  Input,
+} from "@lensdesk/ui";
+import { Package } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Product, ProductInput } from "../shared/contracts.ts";
@@ -14,11 +23,16 @@ export function ProductDialog({
   busy,
   operation,
   close,
-}: ScreenProps & { product?: Product; close: () => void }) {
+  onCloseAutoFocus,
+}: ScreenProps & {
+  product?: Product;
+  close: () => void;
+  onCloseAutoFocus?: DialogContentProps["onCloseAutoFocus"];
+}) {
   const { t } = useTranslation();
   const formOperation = useDialogOperation(run, operation, close);
   const [kind, setKind] = useState<ProductInput["kind"]>(product?.kind ?? "simple");
-  const [unit, setUnit] = useState<ProductInput["unit"]>(product?.unit ?? "piece");
+  const [unit, setUnit] = useState<ProductInput["unit"]>(product?.unit ?? "g");
   return (
     <Dialog
       open
@@ -26,8 +40,16 @@ export function ProductDialog({
         if (!open && !operation.writing) close();
       }}
     >
-      <DialogContent>
-        <DialogTitle>{t(product ? "editProduct" : "addProduct")}</DialogTitle>
+      <DialogContent
+        className="ventas-p3-dialog ventas-operation-dialog"
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
+        <div className="ventas-dialog-heading">
+          <span className="ventas-dialog-icon">
+            <Package size={21} aria-hidden="true" />
+          </span>
+          <DialogTitle>{t(product ? "editProduct" : "addProduct")}</DialogTitle>
+        </div>
         <DialogDescription>{t("productIntro")}</DialogDescription>
         <form
           className="grid gap-4"
@@ -44,7 +66,10 @@ export function ProductDialog({
                 category: String(form.get("category")),
                 kind,
                 unit: kind === "material" ? unit : "piece",
-                price: parseMoney(String(form.get("price"))),
+                price:
+                  kind === "material"
+                    ? (product?.price ?? 0)
+                    : parseMoney(String(form.get("price"))),
                 minStock: Number(form.get("minStock")),
               },
             });
@@ -90,14 +115,16 @@ export function ProductDialog({
               }}
             />
           ) : null}
-          <Input
-            label={t("pricePesos")}
-            name="price"
-            inputMode="decimal"
-            pattern="[0-9]+(\.[0-9]{1,2})?"
-            required
-            defaultValue={((product?.price ?? 0) / 100).toFixed(2)}
-          />
+          {kind !== "material" ? (
+            <Input
+              label={t("pricePesos")}
+              name="price"
+              inputMode="decimal"
+              pattern="[0-9]+(\.[0-9]{1,2})?"
+              required
+              defaultValue={((product?.price ?? 0) / 100).toFixed(2)}
+            />
+          ) : null}
           <Input
             label={t("minStock")}
             name="minStock"
@@ -106,11 +133,17 @@ export function ProductDialog({
             max={1_000_000_000}
             step={1}
             required
-            defaultValue={product?.minStock ?? 0}
+            defaultValue={product?.minStock ?? 5}
           />
-          <Button type="submit" variant="primary" disabled={busy || formOperation.savedDraft}>
-            {t("save")}
-          </Button>
+          {kind === "prepared" ? <p className="text-muted">{t("recipeSeparateSave")}</p> : null}
+          <div className="ventas-dialog-actions">
+            <Button type="button" disabled={operation.writing} onClick={close}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" variant="primary" disabled={busy || formOperation.savedDraft}>
+              {t("save")}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

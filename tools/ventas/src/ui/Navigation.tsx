@@ -48,7 +48,9 @@ export function Navigation({ data, busy }: { data: Snapshot | null; busy: boolea
       <div className="ventas-nav-status">
         <span>{data ? dateText(data.today, i18n.language) : ""}</span>
         <DialogTrigger asChild>
-          <Button disabled={busy || !data}>{t(data?.cash ? "cashOpen" : "openCash")}</Button>
+          <Button data-cash-dialog-trigger="nav" disabled={busy || !data}>
+            {t(data?.cash ? "cashOpen" : "openCash")}
+          </Button>
         </DialogTrigger>
       </div>
     </header>

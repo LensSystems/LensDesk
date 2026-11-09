@@ -1,4 +1,5 @@
-import { Input } from "@lensdesk/ui";
+import { type DialogContentProps, Input } from "@lensdesk/ui";
+import { Banknote } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { moneyText, parseMoney } from "./format.ts";
@@ -8,10 +9,12 @@ import type { ScreenProps } from "./types.ts";
 export function CashDialog({
   close,
   managedDialog = false,
+  onCloseAutoFocus,
   ...props
 }: ScreenProps & {
   close: () => void;
   managedDialog?: boolean;
+  onCloseAutoFocus?: DialogContentProps["onCloseAutoFocus"];
 }) {
   const { t, i18n } = useTranslation(),
     current = props.data.cash;
@@ -22,6 +25,10 @@ export function CashDialog({
     <OperationModal
       {...props}
       managedDialog={managedDialog}
+      onCloseAutoFocus={onCloseAutoFocus}
+      presentationClass="ventas-p3-dialog ventas-operation-dialog"
+      icon={<Banknote size={21} aria-hidden="true" />}
+      cancelLabel={t("cancel")}
       title={t(current ? "closeCash" : "openCash")}
       description={
         current
@@ -41,7 +48,14 @@ export function CashDialog({
         value={amount}
         onChange={setAmount}
       />
-      {current ? <Input label={t("differenceReason")} name="reason" maxLength={500} /> : null}
+      {current ? (
+        <Input
+          label={t("differenceReason")}
+          name="reason"
+          maxLength={500}
+          required={parseMoney(amount) !== current.expected}
+        />
+      ) : null}
     </OperationModal>
   );
 }

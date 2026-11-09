@@ -21,6 +21,7 @@ import { SettingsPage } from "./SettingsPage.tsx";
 import { SummaryPage } from "./SummaryPage.tsx";
 import { TicketsPage } from "./TicketsPage.tsx";
 import type { Client, Screen } from "./types.ts";
+import { useCashDialog } from "./use-cash-dialog.ts";
 import { useSales } from "./use-sales.ts";
 import { useTicketWorkspace } from "./use-ticket-workspace.ts";
 
@@ -53,7 +54,7 @@ export function App({ client }: { client: Client }) {
     }));
     setScreen("tickets");
   };
-  const [cashOpen, setCashOpen] = useState(false);
+  const cashDialog = useCashDialog(sales.busy, sales);
   const restoreSeen = useRef<string | null>(null);
   useEffect(() => {
     if (!sales.restoredId || restoreSeen.current === sales.restoredId) return;
@@ -99,15 +100,9 @@ export function App({ client }: { client: Client }) {
   return (
     <UiLabelsProvider labels={{ close: t("close"), dismiss: t("close"), loading: t("loading") }}>
       <TooltipProvider>
-        <Dialog
-          open={cashOpen}
-          onOpenChange={(open) => {
-            if (!open && sales.writing) return;
-            setCashOpen(open);
-          }}
-        >
+        <Dialog open={cashDialog.open} onOpenChange={cashDialog.change}>
           <Tabs value={screen} onValueChange={(value) => setScreen(value as Screen)} asChild>
-            <main className="ventas-app">
+            <main ref={cashDialog.root} className="ventas-app" tabIndex={-1}>
               <Navigation data={sales.data} busy={sales.busy} />
               {sales.issue ? (
                 <div className="p-3">
@@ -188,8 +183,13 @@ export function App({ client }: { client: Client }) {
                   />
                 ) : null}
               </TabsContent>
-              {cashOpen && props ? (
-                <CashDialog {...props} managedDialog close={() => setCashOpen(false)} />
+              {cashDialog.open && props ? (
+                <CashDialog
+                  {...props}
+                  managedDialog
+                  close={cashDialog.close}
+                  onCloseAutoFocus={cashDialog.restoreFocus}
+                />
               ) : null}
             </main>
           </Tabs>

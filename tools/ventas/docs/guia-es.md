@@ -39,7 +39,7 @@ En Ajustes, «Guardar respaldo» elige un archivo real y exporta todo el histori
 visibles. Cancelar el selector no modifica datos. Guarda una copia fuera del equipo: contiene
 clientes e información bancaria y no está cifrada por la herramienta.
 
-«Seleccionar archivo de respaldo» admite el formato nativo 1/modelo 5 y Web 1. El máximo es
+«Seleccionar archivo de respaldo» admite el formato nativo 1/modelos 5, 6 y 7 y Web 1. El máximo es
 20×1024×1024bytes reales de entrada y salida. Primero se valida formato, límites, referencias,
 existencias, costos, saldos y caja. Revisa nombre, formato, conteos, totales y advertencias.
 Cualquier dato no conservable se rechaza; no se trunca para hacerlo caber.
@@ -60,7 +60,8 @@ Después de reiniciar, la disponibilidad de la copia previa corresponde a la úl
 
 Se conservan folios textuales, IDs remapeados a UUID, saldos iniciales, pagos, devoluciones,
 reversas, recetas, preparaciones y compras correlacionadas por referencias. Extras de negocio,
-iconos, `done` y originales se archivan como procedencia no ejecutable.
+`done` y originales se archivan como procedencia no ejecutable. Los iconos conocidos y el orden
+del catálogo se conservan; un icono ausente o desconocido usa una imagen de reserva segura.
 Los stocks semilla se conservan con una base inicial identificada, sin inventar compras.
 
 Se declaran antes de confirmar los datos históricos ausentes: negocio, contacto/nombre del cliente,
@@ -76,3 +77,41 @@ nombres 120 caracteres, dirección/agradecimiento 300 y teléfono 40. No se cort
 La sincronización del archivo previo utiliza las garantías del sistema de archivos; ninguna copia
 local protege frente a pérdida del equipo. Conserva exportaciones externas. Windows y lectores de
 pantalla requieren validación humana independiente; no se acredita con pruebas automatizadas macOS.
+
+## Inventario, preferencias y teclado
+
+Todos, Bajo stock (incluye el mínimo), Bolsitas y Materia prima filtran por separado de la búsqueda
+por nombre. Los desactivados permanecen visibles; actívalos con confirmación antes de registrar
+movimientos. La prioridad del estado es Desactivado, Sin stock, Bajo stock y Bien.
+
+Un producto nuevo comienza sin existencias y con mínimo 5. Guarda el producto y después su
+Receta como operaciones separadas; si falla guardar la receta, el producto ya guardado permanece.
+La receta usa una materia prima en gramos (100 g inicialmente) y un empaque opcional por pieza.
+Preparar bolsitas propone 10 unidades y muestra consumo, disponibilidad, resultado y costo estimado
+con el mismo redondeo por componente del registro definitivo. Receta incompleta, insumos inactivos
+o existencias insuficientes impiden confirmar. La entrada de mercancía permite productos activos
+no preparados: captura cantidad y costo total; registra compra y existencias una sola vez.
+
+En Gastos, Compra de mercancía usa la misma entrada. Gastos y retiros registran dinero sin cambiar
+existencias. Movimientos recientes combina hasta 50 registros de cada fuente; selecciona Historial
+completo para consultar el resto con búsqueda, periodo y páginas. Caja muestra el desglose de
+salidas; las transferencias quedan fuera del efectivo. Un cierre con diferencia exige motivo.
+
+Ajustes permite negocio, propietario/RFC/cajero, plazo predeterminado para clientes nuevos y hasta
+20 cuentas bancarias. El alias identifica la cuenta en la interfaz; el ticket muestra banco, titular y
+CLABE. El banco predeterminado precarga formularios nuevos. Editar estos valores no reescribe
+ventas, vencimientos ni instantáneas históricas. Los respaldos nuevos exportan modelo 7.
+
+Desde Venta, F2 enfoca productos, F4 abre la búsqueda de clientes, F9 abre crédito y F10 abre Cobro.
+No confirman automáticamente ni funcionan dentro de un diálogo. Escape cierra diálogos cuando
+no hay escritura en curso. Usa Tab/Shift+Tab para moverte y Enter/Espacio para activar controles.
+
+## Comprobación manual en macOS y Windows
+
+En cada sistema, instala el paquete en un perfil de prueba y recorre alta de material/empaque,
+receta y preparación; registra una venta, abono, devolución, compra, gasto y cierre. Exporta un
+respaldo, cambia un dato de prueba y recupéralo revisando la copia previa. Reinicia y comprueba
+persistencia. Repite con ambos temas y con movimiento reducido activado en el sistema; prueba
+los atajos y el foco al cerrar diálogos. Con VoiceOver en macOS o NVDA en Windows comprueba
+nombres, errores y navegación del teclado. Estos pasos son instrucciones, no resultados humanos
+ni certificación de accesibilidad.

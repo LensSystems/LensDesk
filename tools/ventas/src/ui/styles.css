@@ -4,6 +4,7 @@
 @import "./accounts-summary.css";
 @import "./sale.css";
 @import "./checkout.css";
+@import "./inventory-expenses.css";
 
 .ventas-app {
   height: 100dvh;

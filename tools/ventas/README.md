@@ -20,6 +20,16 @@ Includes products, materials, prepared bags, customers, credit per purchase, FIF
 cash sessions, expenses/withdrawals, returns, historical tickets, queries and validated native/Web 1
 backups. No cloud, tax invoicing, real banking, printing or PDF.
 
+Inventario ofrece filtros independientes de la búsqueda, preparación con estimación racional y
+entrada global de mercancía. Gastos distingue compras, gastos y retiros, con acceso al historial
+completo y a la caja compartida. Ajustes conserva bancos y preferencias sin cambiar tickets anteriores.
+Los respaldos nuevos usan modelo 7 y admiten modelos nativos 5/6 y Web 1.
+
+Inventory offers independent search and filters, preparation with rational cost estimates and
+global merchandise entry. Expenses separates purchases, expenses and withdrawals, with full
+histories and the shared cash dialog. Settings preserve bank preferences without rewriting old
+tickets. New backups use model 7 and accept native models 5/6 and Web 1.
+
 ## Desarrollo / Development
 
 Desde la raíz / From the repository root:

@@ -39,7 +39,7 @@ In Settings, Save backup selects a real file and exports the complete history, n
 Cancelling the picker changes nothing. Keep a copy outside the computer: files contain customer and
 banking information and are not encrypted by this tool.
 
-Select backup file accepts native 1/model 5 and Web 1. Input and output must not exceed
+Select backup file accepts native 1/models 5, 6 and 7 and Web 1. Input and output must not exceed
 20×1024×1024 actual bytes. Format, limits, references, stock, costs, balances and cash are validated
 first. Review filename, format, counts, totals and limitations. Unrepresentable data is rejected,
 never silently truncated.
@@ -59,8 +59,9 @@ availability corresponds to the last confirmed restore.
 ## Web 1 compatibility
 
 Textual folios, remapped UUIDs, opening balances, payments, returns, reversals, recipes, preparations
-and reference-correlated purchases are preserved. Business extras, icons, `done` and original data
-are retained as non-executable provenance. Seed stock is kept with an explicit opening base,
+and reference-correlated purchases are preserved. Business extras, `done` and original data
+are retained as non-executable provenance. Known product icons and catalog order are preserved;
+missing or unknown icons use a safe fallback. Seed stock is kept with an explicit opening base,
 without inventing purchases.
 
 Missing business/customer/contact/received/change/bank history, ambiguous initial payments and
@@ -76,3 +77,40 @@ address/thank-you text 300 and phone 40. Longer text is not truncated.
 Previous-copy durability relies on filesystem guarantees; a local copy does not protect against losing
 the computer. Keep external exports. Windows and screen readers need independent human validation;
 automated macOS checks do not establish those results.
+
+## Inventory, preferences and keyboard
+
+All, Low stock (including the minimum), Prepared bags and Raw materials filter independently
+of name search. Inactive products stay visible; confirm activation before recording movements.
+Status priority is Inactive, Out of stock, Low stock and Good.
+
+New products start with no stock and a minimum of 5. Save the product, then its Recipe as separate
+operations. A failed recipe save leaves the saved product intact. Recipes use one material in grams
+(initially 100 g) and optional packaging by piece. Prepare bags defaults to 10 and shows consumption,
+availability, result and estimated cost with the same per-component rounding as the final record.
+Incomplete recipes, inactive ingredients and insufficient stock block confirmation. Receive
+merchandise accepts active non-prepared products: enter quantity and total cost. Purchases and stock
+are recorded once together.
+
+In Expenses, Purchase merchandise uses that same receipt. Expenses and withdrawals affect money
+without changing stock. Recent movements combines up to 50 rows from each source; select Full
+history for search, periods and pages covering the rest. Cash includes an expandable outflow
+breakdown; transfers stay outside cash counted. A closing difference requires a reason.
+
+Settings supports business, owner/tax ID/cashier, the default term for new customers and up to
+20 bank accounts. Aliases identify accounts in the interface; tickets show bank, holder and CLABE.
+The default bank prefills new forms. Editing preferences never rewrites previous sales, due dates
+or historical snapshots. New exports use model 7.
+
+From Sale, F2 focuses products, F4 opens customer search, F9 opens credit and F10 opens Checkout.
+They never confirm automatically or run inside a dialog. Escape closes dialogs when no write is
+running. Use Tab/Shift+Tab to navigate and Enter/Space to activate controls.
+
+## Manual checks on macOS and Windows
+
+On each system, install the package in a test profile and create a material, packaging, recipe and
+preparation. Record a sale, account payment, return, purchase, expense and cash closing. Export a
+backup, change test data and restore while checking the previous copy. Restart and verify persistence.
+Repeat in both themes and with reduced motion enabled in system settings; check shortcuts and
+focus after dialogs close. Use VoiceOver on macOS or NVDA on Windows to check names, errors and
+keyboard navigation. These are instructions, not human test results or accessibility certification.

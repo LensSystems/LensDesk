@@ -61,7 +61,7 @@ describe("Ventas UI", () => {
             kind: "simple",
             unit: "piece",
             price: 1835,
-            minStock: 0,
+            minStock: 5,
           },
         },
       }),
@@ -186,7 +186,11 @@ describe("Ventas UI", () => {
       within(screen.getByRole("navigation")).getByRole("tab", { name: es.nav.inventory }),
     );
     expect(screen.queryByRole("button", { name: es.receive })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: es.prepare })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("row", { name: /Bolsita/ })).getByRole("button", {
+        name: es.prepare,
+      }),
+    ).toBeInTheDocument();
   });
   it("keeps a newer context event when the initial response arrives late", async () => {
     const f = fixture();
