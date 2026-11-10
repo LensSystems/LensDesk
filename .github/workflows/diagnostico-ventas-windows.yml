@@ -158,18 +158,315 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
         shell: bash
-      - name: Unit tests
-        run: pnpm test
+      - name: Compare baseline and deferred checkpoint (experiment only)
         shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          import { spawnSync } from 'node:child_process';
+
+          const driverFile = 'tools/ventas/src/backend/db/driver.ts';
+          const commitFile = 'tools/ventas/src/backend/backup-commit.ts';
+          const originalBuffers = new Map([[driverFile, readFileSync(driverFile)], [commitFile, readFileSync(commitFile)]]);
+          const canonical = (value) => value.toString('utf8').replace(/\r\n/g, '\n');
+          const originals = new Map([...originalBuffers].map(([file, value]) => [file, canonical(value)]));
+          const expectedHashes = {
+            [driverFile]: '82ffea136a4706a4401f58bef5066ed9667314e9289e6d344c023038f16926f6',
+            [commitFile]: 'ec418da9fcf5d98af8b0fba0935745a79f66310038a87ba1ab71db24d5649165',
+            'tools/ventas/src/backend/backup-cancel.test.ts': 'c9bedb673afbf631adadf19f164ae05b969a03d054a6d4cffdb73cc82cc9b5e0',
+            'tools/ventas/src/backend/backup-native-load.test.ts': 'e4423193bde30a2a9c703c53268672077a7a3dec3ecb404f3cfb48fee310ea88',
+            'tools/ventas/src/backend/backup-timing-diagnostics.ts': '82340c7f1631e2b782a17bee588e2a04d7b48ca3342956a8129e996ca83ba472',
+          };
+          const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+          const originalRawHashes = Object.fromEntries(Object.keys(expectedHashes).map((file) => [file, sha256(readFileSync(file))]));
+          for (const [file, hash] of Object.entries(expectedHashes)) {
+            if (sha256(canonical(readFileSync(file))) !== hash) throw new Error('The approved source hash does not match: ' + file);
+          }
+          const replaceOnce = (text, original, replacement) => {
+            const position = text.indexOf(original);
+            if (position < 0 || text.indexOf(original, position + original.length) >= 0) {
+              throw new Error('A temporary source patch does not have exactly one match.');
+            }
+            return text.slice(0, position) + replacement + text.slice(position + original.length);
+          };
+          const driverInit = `  const diagnosticVariant = "__VARIANT__";
+            const connectionId = randomUUID();
+            const timingFiles = ["native-20mib", "web-10000"].map((caseId) => ({
+              caseId,
+              file: join("test-results", "ventas-restore-timing", \`\${caseId}-\${process.pid}.json\`),
+            }));
+            const hashReport = (file: string): string | null => {
+              try { return createHash("sha256").update(readFileSync(file)).digest("hex"); }
+              catch { return null; }
+            };
+            const timingAtOpen = new Map(timingFiles.map(({ caseId, file }) => [caseId, hashReport(file)]));
+            const diagnosticCode = (error: unknown): string =>
+              error && typeof error === "object" && "code" in error ? String(error.code) : "E_CHECKPOINT_DIAGNOSTIC";
+            const diagnosticStamp = () => ({ wall: performance.now(), cpu: process.cpuUsage() });
+            const diagnosticElapsed = (start: ReturnType<typeof diagnosticStamp>) => {
+              const cpu = process.cpuUsage(start.cpu);
+              return { wallMs: performance.now() - start.wall, userCpuMs: cpu.user / 1000, systemCpuMs: cpu.system / 1000 };
+            };
+          `;
+          const closeOriginal = `    close: () => {
+                statements.clear();
+                database.close();
+              },`;
+          const closeProbe = `    close: () => {
+                statements.clear();
+                let report: Record<string, unknown> | null = null;
+                try {
+                  const changed = path === ":memory:" ? [] : timingFiles.filter(({ caseId, file }) => {
+                    const current = hashReport(file);
+                    return current !== null && current !== timingAtOpen.get(caseId);
+                  });
+                  if (changed.length > 1) throw new Error("Ambiguous diagnostic report association");
+                  if (changed.length === 1) {
+                    const { caseId, file } = changed[0]!;
+                    const raw = readFileSync(file);
+                    const timing = JSON.parse(raw.toString("utf8")) as { caseId?: string };
+                    if (timing.caseId !== caseId) throw new Error("Diagnostic report identity mismatch");
+                    report = {
+                      format: "ventas-checkpoint-close-v1", variant: diagnosticVariant, caseId,
+                      pid: process.pid, connectionId,
+                      timingReportSha256: createHash("sha256").update(raw).digest("hex"),
+                      association: "PID and report hash changed during this connection lifetime",
+                      observerCost: "SQLite snapshots and close probe; explicit PASSIVE runs after test measurements and timer cancellation",
+                      restoreScope: (db as unknown as Record<symbol, unknown>)[Symbol.for("ventas.restore.checkpoint.scope")] ?? null,
+                    };
+                    const observe = () => {
+                      try {
+                        return {
+                          synchronous: db.get<{ synchronous: number }>("PRAGMA main.synchronous")?.synchronous,
+                          walAutocheckpoint: db.get<{ wal_autocheckpoint: number }>("PRAGMA main.wal_autocheckpoint")?.wal_autocheckpoint,
+                          pageSize: db.get<{ page_size: number }>("PRAGMA main.page_size")?.page_size,
+                          checkpoint: db.get<Record<string, number>>("PRAGMA main.wal_checkpoint(NOOP)"),
+                          errorCode: null,
+                        };
+                      } catch (error) { return { errorCode: diagnosticCode(error) }; }
+                    };
+                    report.beforePassive = observe();
+                    const passiveStart = diagnosticStamp();
+                    try {
+                      const result = db.get<Record<string, number>>("PRAGMA main.wal_checkpoint(PASSIVE)");
+                      report.passive = { result, ...diagnosticElapsed(passiveStart), errorCode: null };
+                    } catch (error) {
+                      report.passive = { ...diagnosticElapsed(passiveStart), errorCode: diagnosticCode(error) };
+                    }
+                    report.afterPassive = observe();
+                  }
+                } catch (error) {
+                  report = { format: "ventas-checkpoint-close-v1", variant: diagnosticVariant,
+                    pid: process.pid, connectionId, errorCode: diagnosticCode(error) };
+                }
+                const closeStart = diagnosticStamp();
+                let closeError: unknown;
+                let closed = false;
+                try {
+                  database.close();
+                  closed = true;
+                } catch (error) {
+                  closeError = error;
+                  throw error;
+                } finally {
+                  if (report) {
+                    report.close = { ...diagnosticElapsed(closeStart), closed,
+                      errorCode: closed ? null : diagnosticCode(closeError) };
+                    try {
+                      const directory = join("test-results", "ventas-checkpoint-close");
+                      mkdirSync(directory, { recursive: true });
+                      writeFileSync(join(directory, \`\${process.pid}-\${connectionId}.json\`), \`\${JSON.stringify(report, null, 2)}\\n\`);
+                    } catch {
+                      // Preserve the original close or test error; the comparison checks missing reports.
+                    }
+                  }
+                }
+              },`;
+          const commitOriginal = `export function commitRestore<T>(db: Db, work: () => T): T {
+            const previous = db.get<{ cache_size: number }>("PRAGMA main.cache_size")?.cache_size;
+            if (previous === undefined) throw new DomainFault("E_BACKUP_REFS");
+            // The admitted payload can exceed SQLite's default 2 MiB cache. Reserve a
+            // bounded working set for bulk copying and index rebuilding, without changing
+            // durability, foreign keys or cache-spill behavior. This scope never yields.
+            db.exec("PRAGMA main.cache_size=-32768");
+            try {
+              return db.transaction(work);
+            } finally {
+              db.exec(\`PRAGMA main.cache_size=\${previous}\`);
+            }
+          }
+          `;
+          const commitProbe = `export function commitRestore<T>(db: Db, work: () => T): T {
+            const deferred = __DEFERRED__;
+            const previous = db.get<{ cache_size: number }>("PRAGMA main.cache_size")?.cache_size;
+            const previousAuto = db.get<{ wal_autocheckpoint: number }>("PRAGMA main.wal_autocheckpoint")?.wal_autocheckpoint;
+            if (previous === undefined || previousAuto === undefined) throw new DomainFault("E_BACKUP_REFS");
+            const observe = () => {
+              const result: { synchronous: number | null; walAutocheckpoint: number | null;
+                checkpoint: Record<string, number> | null; errorCode: string | null } = {
+                synchronous: null, walAutocheckpoint: null, checkpoint: null, errorCode: null,
+              };
+              try {
+                result.synchronous = db.get<{ synchronous: number }>("PRAGMA main.synchronous")?.synchronous ?? null;
+                result.walAutocheckpoint = db.get<{ wal_autocheckpoint: number }>("PRAGMA main.wal_autocheckpoint")?.wal_autocheckpoint ?? null;
+                result.checkpoint = db.get<Record<string, number>>("PRAGMA main.wal_checkpoint(NOOP)") ?? null;
+              } catch (error) {
+                result.errorCode = error && typeof error === "object" && "code" in error ? String(error.code) : "E_CHECKPOINT_DIAGNOSTIC";
+              }
+              return result;
+            };
+            const scope = { variant: "__VARIANT__", before: observe(),
+              effective: null as unknown, afterTransaction: null as unknown, afterRestore: null as unknown,
+              restorationErrors: [] as string[] };
+            Object.defineProperty(db, Symbol.for("ventas.restore.checkpoint.scope"), { value: scope, configurable: true });
+            let failed = false;
+            try {
+              db.exec("PRAGMA main.cache_size=-32768");
+              if (deferred) db.exec("PRAGMA main.wal_autocheckpoint=0");
+              const effective = observe();
+              scope.effective = effective;
+              if (effective.errorCode !== null || effective.synchronous !== 2 ||
+                  effective.walAutocheckpoint !== (deferred ? 0 : previousAuto)) {
+                throw new DomainFault("E_BACKUP_REFS");
+              }
+              return db.transaction(work);
+            } catch (error) {
+              failed = true;
+              throw error;
+            } finally {
+              scope.afterTransaction = observe();
+              const restorationErrors: unknown[] = [];
+              if (deferred) {
+                try { db.exec(\`PRAGMA main.wal_autocheckpoint=\${previousAuto}\`); }
+                catch (error) { restorationErrors.push(error); }
+              }
+              try { db.exec(\`PRAGMA main.cache_size=\${previous}\`); }
+              catch (error) { restorationErrors.push(error); }
+              scope.restorationErrors = restorationErrors.map((error) =>
+                error && typeof error === "object" && "code" in error ? String(error.code) : "E_CHECKPOINT_RESTORE");
+              scope.afterRestore = observe();
+              if (!failed && restorationErrors.length > 0) throw restorationErrors[0];
+            }
+          }
+          `;
+          const output = 'test-results/ventas-checkpoint-comparison';
+          mkdirSync(output, { recursive: true });
+          const variants = [];
+          const runCommand = (command) => {
+            const child = spawnSync(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', command], { stdio: 'inherit' });
+            return { exitCode: child.status, signal: child.signal, launchError: child.error?.code ?? null };
+          };
+          const copyReports = (source, destination, pattern) => {
+            mkdirSync(destination, { recursive: true });
+            let names;
+            try { names = readdirSync(source); } catch (error) {
+              if (error.code === 'ENOENT') return [];
+              throw error;
+            }
+            const selected = names.filter((name) => pattern.test(name));
+            for (const name of selected) cpSync(join(source, name), join(destination, name));
+            return selected;
+          };
+          const metadata = JSON.parse(readFileSync('test-results/ventas-restore-diagnostic/environment.json', 'utf8'));
+          for (const variant of ['baseline', 'deferred']) {
+            const record = { variant, productionAcceptance: false,
+              explanation: variant === 'baseline' ? 'Control with common scope and close probes' : 'Experiment only: defer automatic checkpoint until after the atomic scope',
+              typecheck: null, tests: null, complete: false, diagnosticErrors: [], sourceHashes: {} };
+            const directory = join(output, variant);
+            mkdirSync(directory, { recursive: true });
+            try {
+              rmSync('test-results/ventas-restore-timing', { recursive: true, force: true });
+              rmSync('test-results/ventas-checkpoint-close', { recursive: true, force: true });
+              let driver = originals.get(driverFile);
+              driver = replaceOnce(driver, 'import { mkdirSync } from "node:fs";',
+                'import { mkdirSync, readFileSync, writeFileSync } from "node:fs";\nimport { createHash, randomUUID } from "node:crypto";');
+              driver = replaceOnce(driver, 'function createDatabase(path: string): Db {\n',
+                'function createDatabase(path: string): Db {\n' + driverInit.replaceAll('__VARIANT__', variant));
+              driver = replaceOnce(driver, closeOriginal, closeProbe);
+              const commit = replaceOnce(originals.get(commitFile), commitOriginal,
+                commitProbe.replaceAll('__VARIANT__', variant).replaceAll('__DEFERRED__', String(variant === 'deferred')));
+              writeFileSync(driverFile, driver);
+              writeFileSync(commitFile, commit);
+              record.sourceHashes = { [driverFile]: sha256(driver), [commitFile]: sha256(commit) };
+              writeFileSync(join(directory, 'environment.json'), JSON.stringify({ ...metadata,
+                variant, productionAcceptance: false, originalCanonicalSourceHashes: expectedHashes,
+                originalRawSourceHashes: originalRawHashes,
+                temporarySourceHashes: record.sourceHashes,
+                observerCost: 'Common SQLite NOOP/config snapshots outside original transaction measurements and close probing after timer cancellation',
+                experimentalChange: variant === 'deferred' ? 'wal_autocheckpoint=0 only around commitRestore, restored in finally; synchronous remains FULL' : 'No wal_autocheckpoint change',
+              }, null, 2) + '\n');
+              record.typecheck = runCommand('pnpm typecheck');
+              if (record.typecheck.exitCode === 0 && record.typecheck.launchError === null) {
+                record.tests = runCommand('pnpm test');
+              } else record.diagnosticErrors.push('Temporary instrumented source failed typecheck.');
+            } catch (error) {
+              record.diagnosticErrors.push(error.code ?? error.message);
+            } finally {
+              for (const [file, content] of originalBuffers) writeFileSync(file, content);
+              for (const [file, hash] of Object.entries(expectedHashes)) {
+                if (sha256(canonical(readFileSync(file))) !== hash || sha256(readFileSync(file)) !== originalRawHashes[file]) {
+                  record.diagnosticErrors.push('Source was not restored byte for byte: ' + file);
+                }
+              }
+            }
+            try {
+              const timingNames = copyReports('test-results/ventas-restore-timing', join(directory, 'restore-timing'), /^(native-20mib|web-10000)-[0-9]+\.json$/);
+              const probeNames = copyReports('test-results/ventas-checkpoint-close', join(directory, 'checkpoint-close'), /^[0-9]+-[a-f0-9-]+\.json$/);
+              const probes = probeNames.map((name) => JSON.parse(readFileSync(join(directory, 'checkpoint-close', name), 'utf8')));
+              if (timingNames.length !== 2 || probes.length !== 2) throw new Error('Expected two timing reports and two close probes.');
+              for (const caseId of ['native-20mib', 'web-10000']) {
+                const matching = timingNames.filter((name) => name.startsWith(caseId + '-'));
+                if (matching.length !== 1) throw new Error('Missing or ambiguous timing case: ' + caseId);
+                const raw = readFileSync(join(directory, 'restore-timing', matching[0]));
+                const timing = JSON.parse(raw.toString('utf8'));
+                const linked = probes.filter((probe) => probe.caseId === caseId && probe.timingReportSha256 === sha256(raw));
+                if (timing.caseId !== caseId || linked.length !== 1) throw new Error('Close probe association failed: ' + caseId);
+                const probe = linked[0];
+                if (probe.errorCode || probe.variant !== variant || !probe.close?.closed || probe.close.errorCode ||
+                    probe.beforePassive?.errorCode !== null || probe.passive?.errorCode !== null || probe.afterPassive?.errorCode !== null) {
+                  throw new Error('A checkpoint or close probe failed: ' + caseId);
+                }
+                const scope = probe.restoreScope;
+                const effectiveAuto = variant === 'deferred' ? 0 : 1000;
+                const checks = [[scope?.before, 1000], [scope?.effective, effectiveAuto],
+                  [scope?.afterTransaction, effectiveAuto], [scope?.afterRestore, 1000],
+                  [probe.beforePassive, 1000], [probe.afterPassive, 1000]];
+                if (scope?.variant !== variant || scope.restorationErrors.length !== 0 || checks.some(([state, auto]) =>
+                  state?.errorCode !== null || state.synchronous !== 2 || state.walAutocheckpoint !== auto ||
+                  !state.checkpoint || !Number.isFinite(state.checkpoint.log) || !Number.isFinite(state.checkpoint.checkpointed))) {
+                  throw new Error('Effective FULL/checkpoint configuration was not preserved: ' + caseId);
+                }
+              }
+              record.complete = true;
+            } catch (error) { record.diagnosticErrors.push(error.code ?? error.message); }
+            variants.push(record);
+            writeFileSync(join(directory, 'result.json'), JSON.stringify(record, null, 2) + '\n');
+          }
+          const failed = variants.some((record) => record.typecheck?.exitCode !== 0 || record.tests?.exitCode !== 0 ||
+            record.typecheck?.launchError || record.tests?.launchError || !record.complete || record.diagnosticErrors.length > 0);
+          writeFileSync(join(output, 'comparison.json'), JSON.stringify({
+            format: 'ventas-checkpoint-comparison-v1', codeSha: metadata.codeSha,
+            workflowSha: metadata.workflowSha, productionAcceptance: false,
+            interpretation: 'One sequential observation per variant on one runner, baseline first; ordering and warm caches are uncontrolled. A deferred green can move blocking work to explicit PASSIVE/close and is not a production fix.',
+            variants, aggregateExitCode: failed ? 1 : 0,
+          }, null, 2) + '\n');
+          process.exitCode = failed ? 1 : 0;
+          NODE
 
       - name: Upload diagnostic measurements
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: ventas-restore-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ventas-restore-checkpoint-comparison-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             test-results/ventas-restore-diagnostic/environment.json
-            test-results/ventas-restore-timing/native-20mib-*.json
-            test-results/ventas-restore-timing/web-10000-*.json
+            test-results/ventas-checkpoint-comparison/comparison.json
+            test-results/ventas-checkpoint-comparison/*/environment.json
+            test-results/ventas-checkpoint-comparison/*/result.json
+            test-results/ventas-checkpoint-comparison/*/restore-timing/native-20mib-*.json
+            test-results/ventas-checkpoint-comparison/*/restore-timing/web-10000-*.json
+            test-results/ventas-checkpoint-comparison/*/checkpoint-close/*.json
           if-no-files-found: warn
           retention-days: 3
