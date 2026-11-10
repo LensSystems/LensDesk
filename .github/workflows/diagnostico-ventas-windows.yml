@@ -1,0 +1,175 @@
+name: Diagnóstico de restauración Windows
+
+"on":
+  push:
+    branches: [develop]
+    paths: [.github/workflows/diagnostico-ventas-windows.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  restore-timing:
+    if: github.repository == 'LensSystems/LensDesk'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostic base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: a1fe8ab3f47388c6102130d4af760ae1a873b9ec
+          persist-credentials: false
+
+      - name: Validate and apply diagnostic ZIP
+        shell: pwsh
+        env:
+          VENTAS_DIAGNOSTIC_ZIP_B64: ${{ secrets.VENTAS_DIAGNOSTIC_ZIP_B64 }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $head = (git rev-parse HEAD | Out-String).Trim()
+          if ($LASTEXITCODE -ne 0 -or $head -cne 'a1fe8ab3f47388c6102130d4af760ae1a873b9ec') {
+            throw 'The checked-out diagnostic base does not match.'
+          }
+
+          $encoded = $env:VENTAS_DIAGNOSTIC_ZIP_B64
+          if ([string]::IsNullOrEmpty($encoded) -or $encoded.Length -ne 9560 -or
+              $encoded -cnotmatch '^[A-Za-z0-9+/]+$') {
+            throw 'Configure VENTAS_DIAGNOSTIC_ZIP_B64 with the approved ZIP encoded as one Base64 line.'
+          }
+          $payload = [Convert]::FromBase64String($encoded)
+          $zipHash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($payload)).ToLowerInvariant()
+          if ($payload.Length -ne 7170 -or
+              $zipHash -cne 'a7a3357d8aa017b2911854d8a668e3624fd6ed89b03cb306870b8375bcd434b3') {
+            throw 'The diagnostic ZIP does not match the approved archive.'
+          }
+
+          $expected = [ordered]@{
+            'tools/ventas/src/backend/backup-cancel.test.ts' = @{
+              Length = 9397
+              Hash = 'c9bedb673afbf631adadf19f164ae05b969a03d054a6d4cffdb73cc82cc9b5e0'
+            }
+            'tools/ventas/src/backend/backup-native-load.test.ts' = @{
+              Length = 5187
+              Hash = 'e4423193bde30a2a9c703c53268672077a7a3dec3ecb404f3cfb48fee310ea88'
+            }
+            'tools/ventas/src/backend/backup-timing-diagnostics.ts' = @{
+              Length = 5992
+              Hash = '82340c7f1631e2b782a17bee588e2a04d7b48ca3342956a8129e996ca83ba472'
+            }
+          }
+          Add-Type -AssemblyName System.IO.Compression
+          $stream = [System.IO.MemoryStream]::new($payload, $false)
+          $archive = $null
+          try {
+            $archive = [System.IO.Compression.ZipArchive]::new($stream, [System.IO.Compression.ZipArchiveMode]::Read)
+            if ($archive.Entries.Count -ne 3) {
+              throw 'The diagnostic ZIP must contain exactly three files.'
+            }
+            $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+            $validated = @{}
+            foreach ($entry in $archive.Entries) {
+              $name = $entry.FullName
+              if ($expected.Keys -cnotcontains $name -or !$seen.Add($name)) {
+                throw 'The diagnostic ZIP contains an unexpected or duplicate path.'
+              }
+              $unixType = ($entry.ExternalAttributes -shr 16) -band 0xF000
+              if (($unixType -ne 0 -and $unixType -ne 0x8000) -or
+                  $entry.Length -ne $expected[$name].Length -or
+                  $entry.CompressedLength -le 0 -or $entry.CompressedLength -gt 7170) {
+                throw 'The diagnostic ZIP contains an invalid file type or size.'
+              }
+              $content = [byte[]]::new([int]$entry.Length)
+              $entryStream = $entry.Open()
+              try {
+                $offset = 0
+                while ($offset -lt $content.Length) {
+                  $read = $entryStream.Read($content, $offset, $content.Length - $offset)
+                  if ($read -eq 0) { throw 'A diagnostic ZIP entry is truncated.' }
+                  $offset += $read
+                }
+                if ($entryStream.ReadByte() -ne -1) { throw 'A diagnostic ZIP entry exceeds its expected size.' }
+              } finally {
+                $entryStream.Dispose()
+              }
+              $hash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($content)).ToLowerInvariant()
+              if ($hash -cne $expected[$name].Hash) {
+                throw 'A diagnostic file does not match its approved hash.'
+              }
+              $validated[$name] = $content
+            }
+            # No source is written until all three entries have been validated.
+            foreach ($name in $expected.Keys) {
+              $destination = Join-Path $env:GITHUB_WORKSPACE $name
+              [System.IO.File]::WriteAllBytes($destination, $validated[$name])
+            }
+          } finally {
+            if ($null -ne $archive) { $archive.Dispose() }
+            $stream.Dispose()
+            $env:VENTAS_DIAGNOSTIC_ZIP_B64 = $null
+          }
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        shell: bash
+
+      - name: Record diagnostic environment
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { mkdirSync, writeFileSync } from 'node:fs';
+          import { availableParallelism, cpus, release, totalmem } from 'node:os';
+          const codeSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          if (process.platform !== 'win32' || codeSha !== 'a1fe8ab3f47388c6102130d4af760ae1a873b9ec') {
+            throw new Error('The diagnostic environment does not match the approved Windows base.');
+          }
+          const report = {
+            format: 'ventas-restore-environment-v1',
+            codeSha,
+            workflowSha: process.env.GITHUB_SHA,
+            runId: process.env.GITHUB_RUN_ID,
+            runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+            diagnosticZipSha256: 'a7a3357d8aa017b2911854d8a668e3624fd6ed89b03cb306870b8375bcd434b3',
+            platform: process.platform,
+            arch: process.arch,
+            node: process.versions.node,
+            sqlite: process.versions.sqlite ?? null,
+            windowsRelease: release(),
+            availableParallelism: availableParallelism(),
+            logicalCpuCount: cpus().length,
+            totalMemoryBytes: totalmem(),
+            imageOS: process.env.ImageOS ?? null,
+            imageVersion: process.env.ImageVersion ?? null,
+          };
+          const directory = 'test-results/ventas-restore-diagnostic';
+          mkdirSync(directory, { recursive: true });
+          writeFileSync(`${directory}/environment.json`, `${JSON.stringify(report, null, 2)}\n`);
+          NODE
+
+      - name: Lint
+        run: pnpm lint
+        shell: bash
+      - name: Typecheck
+        run: pnpm typecheck
+        shell: bash
+      - name: Unit tests
+        run: pnpm test
+        shell: bash
+
+      - name: Upload diagnostic measurements
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ventas-restore-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-results/ventas-restore-diagnostic/environment.json
+            test-results/ventas-restore-timing/native-20mib-*.json
+            test-results/ventas-restore-timing/web-10000-*.json
+          if-no-files-found: warn
+          retention-days: 3
