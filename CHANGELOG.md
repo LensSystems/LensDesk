@@ -7,6 +7,18 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Sin publicar]
 
+### Añadido
+
+- Ventas 0.1.0 como herramienta independiente: inventario, crédito, caja, devoluciones, tickets y
+  respaldos nativos/Web 1 con copia previa y reemplazo transaccional. [Guía es/en](tools/ventas/README.md).
+
+### Corregido
+
+- Restauraciones grandes de Ventas: menos trabajo repetido y turnos de validación acotados,
+  conservando cancelación, límites de archivos, comprobación de datos y reemplazo atómico.
+- Notas 0.4.2: la confirmación de copia vuelve a su estado inicial aunque una actualización de
+  la vista previa quede suspendida; las copias siguen usando el contenido visible.
+
 ## [0.5.0] - 2026-11-04
 
 Preparación de la publicación: LensDesk y sus herramientas pueden actualizarse por separado.

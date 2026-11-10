@@ -2,6 +2,11 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 const exclude = ["**/node_modules/**", "**/dist/**", "**/out/**", "**/release/**", "tests/e2e/**"];
+const restoreLatency = [
+  "tools/ventas/src/backend/worker-runtime.test.ts",
+  "tools/ventas/src/backend/backup-cancel.test.ts",
+  "tools/ventas/src/backend/backup-native-load.test.ts",
+];
 
 export default defineConfig({
   define: {
@@ -14,6 +19,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "node",
+          sequence: { groupOrder: 1 },
           environment: "node",
           include: [
             "apps/desktop/src/main/**/*.test.ts",
@@ -24,7 +30,7 @@ export default defineConfig({
             "tests/unit/**/*.test.ts",
             "scripts/**/*.test.ts",
           ],
-          exclude,
+          exclude: [...exclude, ...restoreLatency],
         },
       },
       {
@@ -32,6 +38,7 @@ export default defineConfig({
         plugins: [react()],
         test: {
           name: "dom",
+          sequence: { groupOrder: 1 },
           environment: "jsdom",
           include: [
             "apps/desktop/src/renderer/**/*.test.{ts,tsx}",
@@ -41,6 +48,17 @@ export default defineConfig({
           ],
           exclude,
           setupFiles: ["tests/setup/dom.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "restore-latency",
+          environment: "node",
+          include: restoreLatency,
+          exclude,
+          fileParallelism: false,
+          sequence: { groupOrder: 2 },
         },
       },
     ],

@@ -1,0 +1,289 @@
+.ventas-inventory-page,
+.ventas-expenses-workspace {
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ventas-inventory.ventas-inventory-page {
+  padding: 18px 20px;
+  gap: 14px;
+  overflow: auto;
+}
+.ventas-inventory-page .ventas-page-title,
+.ventas-expenses-workspace .ventas-page-title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+.ventas-inventory-page p,
+.ventas-expenses-workspace p {
+  margin: 0;
+}
+.ventas-inventory-page .text-muted,
+.ventas-expenses-workspace .text-muted {
+  font-size: 12px;
+}
+.ventas-inventory-global,
+.ventas-inventory-actions,
+.ventas-inventory-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ventas-inventory-global {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.ventas-inventory-global button,
+.ventas-expense-panel > button {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 20px;
+}
+.ventas-inventory-toolbar {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  flex: none;
+}
+.ventas-inventory-search {
+  width: 340px;
+  flex-shrink: 0;
+}
+.ventas-inventory-search > .grid {
+  gap: 0;
+}
+.ventas-inventory-search > .grid > label {
+  position: absolute;
+}
+
+.ventas-inventory-page .ventas-inventory-table {
+  flex: 1;
+  min-height: 180px;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+}
+.ventas-inventory-table table {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.ventas-inventory-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--ld-surface);
+  color: var(--ld-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 11px 12px;
+}
+.ventas-inventory-table tbody th,
+.ventas-inventory-table tbody td {
+  vertical-align: middle;
+}
+.ventas-inventory-table tbody th {
+  font-weight: 700;
+  min-width: 150px;
+  white-space: normal;
+}
+.ventas-inventory-table tbody small {
+  font-size: 11px;
+  font-weight: 400;
+}
+.ventas-inventory-product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ventas-inventory-product svg {
+  flex: none;
+}
+.ventas-inventory-actions {
+  flex-wrap: wrap;
+  min-width: 200px;
+}
+.ventas-inventory-actions button {
+  padding: 0 14px;
+  height: 32px;
+  min-height: 32px;
+  color: var(--ld-text);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.ventas-stock-status {
+  display: inline-block;
+  border-radius: 999px;
+  background: var(--ld-surface);
+  color: var(--ld-text-muted);
+  white-space: nowrap;
+  font-size: 11px;
+  padding: 3px 8px;
+}
+.ventas-cash-open {
+  color: var(--ld-success);
+  background: var(--ld-success-soft);
+}
+.ventas-stock-warning {
+  background: var(--ld-warning-soft);
+  color: var(--ld-warning-soft-fg);
+}
+.ventas-inventory-history {
+  align-self: flex-start;
+  flex: none;
+}
+.ventas-expenses-workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.ventas-expenses-sidebar,
+.ventas-expenses-movements {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  padding: 18px 20px;
+  scroll-padding-block: 18px;
+}
+.ventas-expenses-sidebar {
+  width: 420px;
+  flex: none;
+  border-right: 1px solid var(--ld-border);
+}
+.ventas-expenses-movements {
+  flex: 1;
+}
+.ventas-expense-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: none;
+  padding: 18px;
+  border: 1px solid var(--ld-border);
+  border-radius: 14px;
+  background: var(--ld-surface);
+  min-width: 0;
+}
+.ventas-app .ventas-expenses-workspace h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.ventas-expenses-workspace .ventas-event {
+  gap: 8px;
+  padding: 12px 0;
+  margin: 0;
+  align-items: start;
+}
+.ventas-cash-lines {
+  display: grid;
+  gap: 14px;
+}
+.ventas-expenses-workspace .ventas-event small {
+  font-size: 11px;
+}
+.ventas-closing-id {
+  overflow-wrap: anywhere;
+}
+.ventas-recent-movement {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+.ventas-recent-movement > strong {
+  flex: none;
+}
+.ventas-preparation-preview {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--ld-border);
+  border-radius: 14px;
+  background: var(--ld-surface);
+}
+.ventas-preparation-preview p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+.ventas-operation-dialog > p {
+  line-height: 1.5;
+}
+.ventas-operation-dialog form {
+  gap: 14px;
+}
+.ventas-operation-dialog form .grid {
+  gap: 6px;
+}
+@media (max-width: 700px) {
+  .ventas-expenses-sidebar {
+    width: min(420px, 70vw);
+  }
+  .ventas-expenses-movements {
+    min-width: 250px;
+  }
+  .ventas-expenses-workspace {
+    overflow-x: auto;
+  }
+  .ventas-inventory-page > .ventas-section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.ventas-inventory-filter {
+  padding: 0;
+  gap: 4px;
+  background: transparent;
+}
+.ventas-inventory-filter .ventas-inventory-option {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  line-height: 20.3px;
+  font-weight: 400;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.ventas-inventory-filter .ventas-inventory-option[data-state="checked"] {
+  color: var(--ld-text);
+  background: transparent;
+  box-shadow: none;
+}
+.ventas-inventory-filter .ventas-inventory-indicator {
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+  box-shadow: none;
+}
+
+.ventas-inventory-search input {
+  background: var(--ld-surface-raised);
+  border-radius: 10px;
+  padding: 0 14px;
+}
+.ventas-expenses-movements > .ventas-empty {
+  display: block;
+  flex: none;
+  min-height: 0;
+  padding: 28px 12px;
+  font-size: 13px;
+}
+.ventas-inventory-count {
+  flex: none;
+  font-size: 11px;
+}
+
+.ventas-operation-dialog .ventas-dialog-actions {
+  margin-top: 4px;
+}

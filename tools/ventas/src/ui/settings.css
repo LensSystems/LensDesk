@@ -1,0 +1,491 @@
+.ventas-settings-workspace {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  grid-template-columns: 190px minmax(0, 1fr) 270px;
+  grid-template-rows: auto 1fr;
+  gap: 24px;
+  padding: 24px;
+  align-items: start;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ventas-settings-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.ventas-settings-topbar h1 {
+  margin-bottom: 4px;
+}
+.ventas-settings-topbar p {
+  font-size: 13px;
+  color: var(--ld-text-muted);
+}
+.ventas-settings-topbar > span {
+  color: var(--ld-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ventas-settings-rail-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+}
+.ventas-settings-rail {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0 0;
+  background: transparent;
+  border-radius: 0;
+}
+.ventas-settings-rail .ventas-settings-rail-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: auto;
+  padding: 13px 12px;
+  border-radius: 12px;
+  text-align: left;
+  white-space: normal;
+  background: transparent;
+  color: var(--ld-text);
+}
+.ventas-settings-rail-item > svg {
+  flex-shrink: 0;
+}
+.ventas-settings-rail-item > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ventas-settings-rail-item b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ventas-settings-rail-item small {
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--ld-text-muted);
+}
+.ventas-settings-rail .ventas-settings-rail-item[data-state="active"],
+.ventas-settings-rail-item[data-state="active"] small {
+  color: var(--ld-accent-soft-fg);
+}
+.ventas-settings-rail > .ld-indicator {
+  border-radius: 12px;
+  background: var(--ld-accent-soft);
+  box-shadow: none;
+}
+.ventas-settings-rail-item:hover {
+  background: var(--ld-surface);
+}
+.ventas-settings-rail-help {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 24px 8px 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--ld-border);
+  color: var(--ld-text-muted);
+}
+.ventas-settings-rail-help p {
+  font-size: 11px;
+  line-height: 17px;
+}
+.ventas-settings-rail-help svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.ventas-settings-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 0 4px;
+}
+.ventas-settings-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+.ventas-settings-workspace .ventas-settings-heading h2 {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 700;
+}
+.ventas-settings-heading p {
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-business-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 112px;
+  padding: 22px 18px;
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-xl);
+  background: var(--ld-surface);
+}
+.ventas-business-mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 16px;
+  background: var(--ld-accent-soft);
+}
+.ventas-business-identity {
+  flex: 1;
+  min-width: 0;
+}
+.ventas-business-identity h3 {
+  margin-bottom: 5px;
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.ventas-business-identity p {
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-business-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+  padding: 4px 18px;
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-lg);
+}
+.ventas-business-details > div {
+  padding: 15px 0;
+  min-width: 0;
+}
+.ventas-business-details > div:nth-child(n + 3) {
+  border-top: 1px solid var(--ld-border);
+}
+.ventas-business-details dt {
+  margin-bottom: 5px;
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-business-details dd {
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+.ventas-settings-next {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 4px;
+  color: var(--ld-text-muted);
+}
+.ventas-settings-next > div {
+  flex: 1;
+}
+.ventas-settings-next b {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ld-text);
+}
+.ventas-settings-next p {
+  margin-top: 4px;
+  font-size: 11px;
+}
+.ventas-settings-preview {
+  position: sticky;
+  top: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-left: 20px;
+  border-left: 1px solid var(--ld-border);
+}
+.ventas-settings-preview-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ventas-settings-workspace .ventas-settings-preview-title h2 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ventas-settings-mini-ticket {
+  padding: 18px 14px;
+  background: var(--ld-surface-raised);
+  color: var(--ld-text);
+  box-shadow: var(--ld-shadow);
+  font:
+    10px / 1.6 "JetBrains Mono Variable",
+    "JetBrains Mono",
+    monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+.ventas-settings-paper-center,
+.ventas-settings-paper-name,
+.ventas-settings-mini-ticket footer {
+  text-align: center;
+}
+.ventas-settings-paper-name {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+.ventas-settings-paper-cut {
+  border-top: 1px dashed var(--ld-border-control);
+  margin: 6px 0;
+}
+.ventas-settings-paper-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ventas-settings-mini-ticket .ventas-bank-details {
+  font-size: 11px;
+  line-height: 17.6px;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+}
+.ventas-settings-preview-caption {
+  font-size: 11px;
+  line-height: 17px;
+  color: var(--ld-text-muted);
+}
+.ventas-bank-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.ventas-bank-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+}
+.ventas-bank-card.is-default {
+  grid-column: 1 / -1;
+  border-color: var(--ld-accent);
+  background: var(--ld-accent-soft);
+}
+.ventas-bank-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.ventas-bank-symbol {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ld-radius-md);
+  background: var(--ld-surface-raised);
+}
+.ventas-bank-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+.ventas-bank-heading h3 {
+  font-size: 15px;
+  line-height: 20px;
+  margin-bottom: 2px;
+  font-weight: 700;
+}
+.ventas-bank-heading p {
+  font-size: 11px;
+  color: var(--ld-text-muted);
+  overflow-wrap: anywhere;
+}
+.ventas-bank-default {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: var(--ld-radius-xl);
+  background: var(--ld-surface-raised);
+  color: var(--ld-accent-soft-fg);
+  font-weight: 600;
+}
+.ventas-bank-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+}
+.ventas-bank-clabe {
+  font:
+    12px / 20px "JetBrains Mono Variable",
+    "JetBrains Mono",
+    monospace;
+  letter-spacing: 0.25px;
+  overflow-wrap: anywhere;
+}
+.ventas-bank-card.is-default .ventas-bank-card-details {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.ventas-bank-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+.ventas-receipt-preferences,
+.ventas-term-preferences {
+  padding: 18px;
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-surface);
+}
+.ventas-preference-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ventas-preference-heading h3 {
+  flex: 1;
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 700;
+}
+.ventas-receipt-preferences blockquote {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 500;
+  margin: 20px 0 12px;
+}
+.ventas-receipt-preferences > p {
+  margin: 12px 0;
+  font-size: 12px;
+  color: var(--ld-text-muted);
+}
+.ventas-term-preferences h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.ventas-term-preferences > p {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ld-text-muted);
+  margin-bottom: 16px;
+}
+.ventas-term-shortcuts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ventas-term-shortcuts button[aria-pressed="true"] {
+  border-color: var(--ld-accent);
+  background: var(--ld-accent-soft);
+  color: var(--ld-accent-soft-fg);
+}
+.ventas-term-select {
+  margin-top: 18px;
+  max-width: 210px;
+}
+.ventas-term-select > div {
+  gap: 6px;
+}
+.ventas-term-select label {
+  font-size: 12px;
+  line-height: 19px;
+  font-weight: 600;
+  color: var(--ld-text-muted);
+}
+
+.ventas-settings-workspace button {
+  flex-shrink: 0;
+}
+.ventas-bank-heading h3,
+.ventas-bank-card-details > span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.ventas-settings-mini-ticket .ventas-bank-details h3 {
+  display: block;
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 800;
+  margin-bottom: 7px;
+}
+
+.ventas-settings-pane[hidden] {
+  display: none;
+}
+
+.ventas-settings-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ventas-settings-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ventas-settings-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ld-text-muted);
+}
+.ventas-settings-status[data-saved="true"]::before {
+  background: var(--ld-success);
+}
+
+.ventas-settings-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 20px;
+}
+.ventas-settings-dialog-heading > span {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ld-radius-lg);
+  background: var(--ld-accent-soft);
+  flex: none;
+}
+
+.ventas-settings-dialog {
+  width: 440px;
+  max-width: calc(100vw - 32px);
+}
+
+.ventas-settings-mini-ticket .ventas-bank-details p {
+  font-size: 11px;
+  line-height: 1.65;
+  margin: 0;
+}

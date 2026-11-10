@@ -1,0 +1,26 @@
+{
+  "name": "@lensdesk/tool-ventas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ventas minoristas e inventario local de LensDesk",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node ../../scripts/build-tool.ts",
+    "package": "node ../../scripts/build-tool.ts && node ../../packages/lenspkg/src/cli.ts pack dist --out dist/ --unsigned"
+  },
+  "devDependencies": {
+    "@lensdesk/sdk": "workspace:*",
+    "@lensdesk/ui": "workspace:*",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "clsx": "2.1.1",
+    "i18next": "26.4.4",
+    "lucide-react": "1.56.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-i18next": "17.0.16",
+    "tailwindcss": "4.3.3",
+    "zod": "4.6.7"
+  }
+}

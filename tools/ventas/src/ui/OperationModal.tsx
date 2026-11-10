@@ -1,0 +1,105 @@
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  type DialogContentProps,
+  DialogDescription,
+  DialogTitle,
+} from "@lensdesk/ui";
+import type { ReactNode } from "react";
+import type { Action } from "../shared/contracts.ts";
+import { DialogFeedback } from "./DialogFeedback.tsx";
+import type { ScreenProps } from "./types.ts";
+import { useDialogOperation } from "./use-dialog-operation.ts";
+
+export function OperationModal({
+  title,
+  description,
+  label,
+  close,
+  onSubmit,
+  children,
+  onSaved,
+  managedDialog = false,
+  onCloseAutoFocus,
+  cancelLabel,
+  presentationClass,
+  icon,
+  submitDisabled = false,
+  ...props
+}: ScreenProps & {
+  title: string;
+  description: string;
+  label: string;
+  close: () => void;
+  onSubmit: (data: FormData) => Action;
+  children: ReactNode | ((changed: () => void) => ReactNode);
+  onSaved?: (id: string) => void;
+  managedDialog?: boolean;
+  onCloseAutoFocus?: DialogContentProps["onCloseAutoFocus"];
+  cancelLabel?: string;
+  presentationClass?: string;
+  icon?: ReactNode;
+  submitDisabled?: boolean;
+}) {
+  const form = useDialogOperation(props.run, props.operation, close, onSaved);
+  const content = (
+    <DialogContent className={presentationClass} onCloseAutoFocus={onCloseAutoFocus}>
+      {icon ? (
+        <div className="ventas-dialog-heading">
+          <span className="ventas-dialog-icon">{icon}</span>
+          <DialogTitle>{title}</DialogTitle>
+        </div>
+      ) : (
+        <DialogTitle>{title}</DialogTitle>
+      )}
+      <DialogDescription>{description}</DialogDescription>
+      <form
+        className="grid gap-4"
+        onChange={form.changed}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (props.busy || form.savedDraft || submitDisabled) return;
+          form.submit(onSubmit(new FormData(e.currentTarget)));
+        }}
+      >
+        <DialogFeedback operation={props.operation} savedDraft={form.savedDraft} />
+        {typeof children === "function" ? children(form.changed) : children}
+        {cancelLabel ? (
+          <div className="ventas-dialog-actions">
+            <Button type="button" onClick={close} disabled={props.operation.writing}>
+              {cancelLabel}
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={props.busy || form.savedDraft || submitDisabled}
+            >
+              {label}
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={props.busy || form.savedDraft || submitDisabled}
+          >
+            {label}
+          </Button>
+        )}
+      </form>
+    </DialogContent>
+  );
+  return managedDialog ? (
+    content
+  ) : (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !props.operation.writing) close();
+      }}
+    >
+      {content}
+    </Dialog>
+  );
+}

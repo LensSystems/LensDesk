@@ -77,6 +77,7 @@ Disponibles como paquetes separados; no se preinstalan con LensDesk.
 |---|---|
 | **Notas** | Notas en Markdown con editor con resaltado de sintaxis, vista previa, búsqueda de texto completo que resalta lo encontrado, notas fijadas, papelera, e importación y exportación de archivos `.md`. |
 | **Convertidor** | Convierte documentos HTML, DOCX, CSV, PDF y XLSX a Markdown. Admite varios archivos a la vez, muestra el progreso, permite cancelar y guarda el resultado como `.md`. |
+| **Ventas** | Ventas minoristas, inventario, crédito, caja, tickets históricos y respaldos locales. Paquete independiente 0.1.0: [guía](tools/ventas/docs/guia-es.md). |
 
 <div align="center">
 
@@ -353,6 +354,7 @@ Available as separate packages; tools are not preinstalled with LensDesk.
 |---|---|
 | **Notes** | Markdown notes with a syntax-highlighting editor, preview, full-text search that highlights matches, pinned notes, trash, and `.md` import and export. |
 | **Converter** | Converts HTML, DOCX, CSV, PDF and XLSX documents to Markdown. Handles several files at once, shows progress, can cancel, and saves the result as `.md`. |
+| **Sales** | Retail sales, inventory, credit, cash, historical tickets and local backups. Separate 0.1.0 package: [guide](tools/ventas/docs/guide-en.md). |
 
 ## Installation
 

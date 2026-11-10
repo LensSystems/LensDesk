@@ -1,5 +1,5 @@
 import { MarkdownView, Notice } from "@lensdesk/ui";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CREDENTIAL_TOKEN, type CredentialPreview } from "./credential-preview.ts";
 import { COPY_CODE_TOKEN, renderPreview } from "./preview.ts";
@@ -38,7 +38,9 @@ export function NotePreview({
   const [copyFailure, setCopyFailure] = useState<symbol | null>(null);
   // Referencias a lo último recibido: el efecto no se reinstala (ni cancela «Copiado») en cada render.
   const latest = useRef({ onCopyCode, t, rendered, revision });
-  latest.current = { onCopyCode, t, rendered, revision };
+  useLayoutEffect(() => {
+    latest.current = { onCopyCode, t, rendered, revision };
+  }, [onCopyCode, t, rendered, revision]);
   useEffect(() => {
     const container = host.current;
     if (!container) return;
