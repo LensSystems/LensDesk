@@ -2,6 +2,11 @@
 
 ## [0.1.0] - 2026-11-07
 
+- SQLite se ejecuta en un worker dedicado con cola por base de datos; el receptor atiende
+  cancelaciones incluso durante un COMMIT largo, conservando atomicidad y reconciliación por recibo.
+  SQLite runs in a dedicated worker with a per-database queue; the receiver handles cancellation
+  even during a long COMMIT, preserving atomicity and receipt reconciliation.
+
 - Icono de lista con verificaciones en la tarjeta y pestaña, compatible con LensDesk 0.5.0.
   Checklist icon in the tool card and tab, compatible with LensDesk 0.5.0.
 

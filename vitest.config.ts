@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config";
 
 const exclude = ["**/node_modules/**", "**/dist/**", "**/out/**", "**/release/**", "tests/e2e/**"];
 const restoreLatency = [
+  "tools/ventas/src/backend/worker-runtime.test.ts",
   "tools/ventas/src/backend/backup-cancel.test.ts",
   "tools/ventas/src/backend/backup-native-load.test.ts",
 ];

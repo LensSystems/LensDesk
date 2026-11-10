@@ -1,0 +1,62 @@
+import { webFixture } from "./web-backup-fixture.ts";
+export function largeWeb(count = 5000) {
+  const base = webFixture(),
+    at = "2026-11-07T18:00:00.000Z",
+    date = "2026-11-07",
+    bank = base.business.accounts[0];
+  const products = Array.from({ length: count }, (_, n) => ({
+    id: `p${n}`,
+    name: `Producto ${n}`,
+    cat: "Otros",
+    kind: "simple",
+    unit: "pza",
+    price: 1,
+    minStock: 0,
+    stock: 1,
+    value: 1,
+    lastCost: 1,
+    active: true,
+    icon: "candy",
+  }));
+  return {
+    ...base,
+    ledger: {
+      schema: 1,
+      revision: 0,
+      sequence: 50000,
+      created: at,
+      products,
+      clients: [],
+      sales: [],
+      payments: [],
+      returns: [],
+      preparations: [],
+      closings: [],
+      cash: null,
+      done: {},
+      draft: { client: "mostrador", cart: {} },
+      movements: products.map((p) => ({
+        id: `m${p.id}`,
+        product: p.id,
+        qty: 1,
+        value: 1,
+        kind: "Compra",
+        ref: `o${p.id}`,
+        note: "",
+        at,
+        date,
+      })),
+      outflows: products.map((p) => ({
+        id: `o${p.id}`,
+        kind: "Compra de mercancía",
+        amount: 1,
+        method: "Transferencia",
+        bank: bank?.id,
+        bankSnapshot: bank,
+        concept: p.name,
+        at,
+        date,
+      })),
+    },
+  };
+}

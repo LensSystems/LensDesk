@@ -57,15 +57,55 @@ per table, 1,000 sale/cart lines, 50 queried history rows, 20 current bank accou
 Field limits also apply. Duplicate keys, dangerous keys, unsupported versions, unsafe/non-integral
 financial numbers, broken references and reconciliation failures are rejected before mutation.
 Preparation binds the source hash, ID and current revision, expires after 10 minutes, and retains
-at most one preparation per database/two globally. Confirmation rereads the source, preserves a
+at most one preparation per database/two per backend runtime. Confirmation rereads the source, preserves a
 verified previous copy, rechecks revision inside the replacement transaction and advances revision
 monotonically. Retry checks persistent local receipts before requiring preparation/token again.
 
 Ambos formatos: máximo 20 MiB reales UTF-8, incluida salida normalizada; hasta 100 000 filas por tabla,
 1 000 líneas de venta/carrito, 50 filas por consulta, 20 bancos actuales y 50 niveles de anidación.
 Rigen límites por campo. La validación ocurre antes de mutar. Preparación ligada a hash/ID/revisión,
-caducidad 10 min, una por base/dos globales. Se relee el archivo, se conserva copia verificada y se
+caducidad 10 min, una por base/dos por runtime del backend. Se relee el archivo, se conserva copia verificada y se
 revalida la revisión dentro de la transacción. Reintentos consultan recibos locales persistentes primero.
+
+## Cancellation and recovery / Cancelación y recuperación
+
+Each database has one dedicated SQLite worker. All methods share its queue, bounded to 32 active
+and waiting requests. At most two database workers remain resident per backend runtime; a third
+database is rejected with `E_BACKEND_UNAVAILABLE` until a worker exits. Idle workers retain the
+prepared backup and do not keep the receiving process alive. A failing worker keeps its database
+and capacity slot until its actual exit or completed termination; late messages cannot release it.
+The file bridge allows at most 32 native capability operations in flight per runtime. Cancellation
+or a worker crash retains each slot until the underlying file promise settles. Excess calls are
+rejected with `E_BACKEND_UNAVAILABLE` before invoking native file I/O.
+
+The receiver answers cancellation within one second even when the physical SQLite COMMIT takes
+longer. A cancelled waiting request never runs. An active cancelled request retains database
+ownership until its worker finishes; subsequent queries and mutations wait. Cancellation before
+replacement rolls back or preserves the previous state. After the irreversible commit point,
+`E_CANCELLED` does not establish whether a mutation committed. Retry confirmation with the same
+restore key and fingerprint to reconcile the durable receipt; retry `execute` with its original
+operation key and action. A worker crash rejects pending work without automatic replay. An
+explicit subsequent request starts a new worker and can reconcile persisted receipts. WAL, FULL
+synchronization, atomic replacement, revision checks and rollback remain in effect.
+
+Cada base tiene un worker SQLite exclusivo. Todos los métodos comparten su cola, limitada a 32
+solicitudes activas y en espera. Cada runtime conserva como máximo dos workers de base de datos;
+una tercera base recibe `E_BACKEND_UNAVAILABLE` hasta que termine un worker. Los workers inactivos
+conservan la preparación y permiten que el proceso receptor termine. Un worker en fallo conserva
+su base y su plaza hasta confirmar su salida o terminación completa; mensajes tardíos no la liberan.
+El puente admite como máximo 32 operaciones nativas de archivo en vuelo por runtime. Cancelar o
+perder el worker conserva cada plaza hasta que se resuelva la promesa de archivo subyacente.
+El exceso recibe `E_BACKEND_UNAVAILABLE` antes de invocar la operación nativa.
+
+El receptor responde a la cancelación en menos de un segundo aunque el COMMIT físico tarde más.
+Una solicitud cancelada en espera nunca se ejecuta. Una solicitud activa cancelada conserva la
+propiedad de la base hasta que termine el worker; consultas y mutaciones posteriores esperan.
+Antes del reemplazo, cancelar conserva el estado previo o revierte la transacción. Después del
+punto irreversible, `E_CANCELLED` no confirma si se guardó la mutación. Reintentar confirmación
+con la misma clave y fingerprint permite consultar el recibo persistente; `execute` se reintenta
+con su clave de operación y acción originales. Una caída rechaza el trabajo pendiente sin repetirlo
+automáticamente. Una solicitud explícita posterior crea otro worker y puede reconciliar recibos.
+Se conservan WAL, sincronización FULL, reemplazo atómico, revisión y rollback.
 
 ## Model compatibility / Compatibilidad de modelos
 
@@ -88,3 +128,9 @@ El modelo 6 añade preferencias actuales de negocio y bancos. Modelo 5 obtiene v
 sin rellenar ventas históricas. IDs bancarios repetidos admitidos por modelo 5 antiguo se normalizan
 solo en el catálogo actual con IDs deterministas y `originalId`; referencias e instantáneas
 históricas conservan sus originales. Duplicados explícitos en modelos 6/7 siguen rechazados.
+
+## Bitácora de cambios
+
+| Fecha | Cambio |
+| --- | --- |
+| 10/nov/2026 | Documentación de cancelación receptiva, cola, límites de workers, operaciones nativas pendientes y recuperación por recibos. |
