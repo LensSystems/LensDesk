@@ -225,10 +225,7 @@ it("clears absent restored client and bank without replacing them with current d
   rerender({ restore: "missing" });
   expect(result.current[0]).toMatchObject({ clientId: null, bankId: null, initialized: true });
 });
-it("ignores delayed detail A after selection B and recovers B errors without another ticket leaking", async () => {
-  const f = seed(),
-    original = f.invoke.getMockImplementation();
-  if (!original) throw new Error("Missing fixture");
+function addSecondSale(f: ReturnType<typeof seed>) {
   const second = structuredClone(f.detail);
   second.sale.id = bid;
   second.sale.folio = 2;
@@ -243,35 +240,87 @@ it("ignores delayed detail A after selection B and recovers B errors without ano
       folio: 2,
     },
   });
-  let release: (v: unknown) => void = () => {};
-  let fail = true;
+}
+function deferred() {
+  let resolve: (value: unknown) => void = () => {
+    throw new Error("Deferred promise has no resolver");
+  };
+  const promise = new Promise<unknown>((finish) => {
+    resolve = finish;
+  });
+  return { promise, resolve };
+}
+it("ignores delayed detail A after selection B and recovers B errors without another ticket leaking", async () => {
+  const f = seed(),
+    original = f.invoke.getMockImplementation();
+  if (!original) throw new Error("Missing fixture");
+  addSecondSale(f);
+  const pendingA = deferred(),
+    pendingB = deferred();
+  let bRequests = 0;
+  const detailIds = () =>
+    f.invoke.mock.calls
+      .filter(([method]) => method === "saleDetail")
+      .map(([, params]) => (params as { saleId: string }).saleId);
   f.invoke.mockImplementation(async (method, params) => {
-    if (method === "saleDetail" && (params as { saleId: string }).saleId === pid)
-      return new Promise((r) => {
-        release = r;
-      });
-    if (method === "saleDetail" && fail) {
-      fail = false;
-      return { kind: "rejected", issue: { code: "E_NOT_FOUND" } };
+    if (method === "saleDetail") {
+      const id = (params as { saleId: string }).saleId;
+      if (id === pid) return pendingA.promise;
+      if (id === bid && ++bRequests === 1) return pendingB.promise;
     }
     return original(method, params);
   });
   f.mount();
   await screen.findByText(es.emptyCatalog);
   navigate("tickets");
-  const list = screen.getByRole("complementary");
-  fireEvent.click(await within(list).findByRole("button", { name: /V-000002/ }));
+  const list = screen.getByRole("complementary"),
+    a = await within(list).findByRole("button", { name: /V-000001/ }),
+    b = within(list).getByRole("button", { name: /V-000002/ });
+  await waitFor(() => {
+    expect(a).toHaveAttribute("aria-current", "true");
+    expect(detailIds()).toEqual([pid]);
+  });
+  fireEvent.click(b);
+  await waitFor(() => {
+    expect(b).toHaveAttribute("aria-current", "true");
+    expect(detailIds()).toEqual([pid, bid]);
+  });
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  await act(async () => pendingB.resolve({ kind: "rejected", issue: { code: "E_NOT_FOUND" } }));
   await screen.findByRole("alert");
   expect(screen.queryByRole("article", { name: es.saleTicket })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: es.retry }));
   expect(await screen.findByRole("article", { name: es.saleTicket })).toHaveTextContent(
     "Original B",
   );
-  await act(async () => release({ kind: "ok", value: f.detail }));
+  expect(detailIds()).toEqual([pid, bid, bid]);
+  await act(async () => pendingA.resolve({ kind: "ok", value: f.detail }));
+  expect(b).toHaveAttribute("aria-current", "true");
   expect(screen.getByRole("article", { name: es.saleTicket })).toHaveTextContent("Original B");
   expect(screen.getByRole("article", { name: es.saleTicket })).not.toHaveTextContent("Original A");
+  expect(detailIds()).toEqual([pid, bid, bid]);
   const statementCalls = f.invoke.mock.calls.filter(([method]) => method === "statement");
+  expect(statementCalls.length).toBeGreaterThan(0);
   expect(statementCalls.every(([, p]) => (p as { clientId: string }).clientId === cid)).toBe(true);
+});
+it("keeps B selected when clicked as soon as the initial history becomes visible", async () => {
+  const f = seed();
+  addSecondSale(f);
+  f.mount();
+  await screen.findByText(es.emptyCatalog);
+  navigate("tickets");
+  const list = screen.getByRole("complementary"),
+    b = await within(list).findByRole("button", { name: /V-000002/ });
+  fireEvent.click(b);
+  expect(await screen.findByRole("article", { name: es.saleTicket })).toHaveTextContent(
+    "Original B",
+  );
+  expect(b).toHaveAttribute("aria-current", "true");
+  expect(within(list).getByRole("button", { name: /V-000001/ })).not.toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+  expect(f.invoke).toHaveBeenCalledWith("saleDetail", expect.objectContaining({ saleId: bid }));
 });
 it("updates the draft paper from edited checkout amounts and keeps stock and commands unchanged", async () => {
   const f = seed();
