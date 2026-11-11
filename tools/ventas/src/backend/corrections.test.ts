@@ -521,79 +521,94 @@ describe("Ventas history and period queries", () => {
       cid = randomUUID(),
       first = randomUUID(),
       second = randomUUID();
-    raw.exec(
-      "CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY,name TEXT,applied_at TEXT)",
-    );
-    for (const [version, name] of [
-      [1, "inventory"],
-      [2, "sales_accounts_cash"],
-      [3, "outflow_reference"],
-    ] as const) {
-      raw.exec(
-        readFileSync(
-          new URL(
-            `./db/migrations/${String(version).padStart(3, "0")}_${name}.sql`,
-            import.meta.url,
-          ),
-          "utf8",
-        ),
-      );
-      raw.prepare("INSERT INTO schema_migrations VALUES(?,?,?)").run(version, name, now);
-    }
-    raw.prepare("INSERT INTO clients VALUES(?,?,?,?,?,?)").run(cid, "Anterior", "", 15, null, 1);
-    const business = JSON.stringify({
-      name: "Anterior",
-      address: "",
-      phone: "",
-      thanks: "Histórico",
-      banks: [],
-    });
-    raw.prepare("INSERT INTO sales VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(
-      saleId,
-      1,
-      cid,
-      JSON.stringify({
-        id: cid,
-        name: "Anterior",
-        phone: "",
-        term: 15,
-        limit: null,
-        active: true,
-      }),
-      business,
-      "[]",
-      200,
-      15,
-      "2026-11-22",
-      "",
-      0,
-      "",
-      100,
-      0,
-      now,
-      "2026-11-07",
-    );
-    for (const [id, folio] of [
-      [first, 1],
-      [second, 2],
-    ] as const) {
-      raw
-        .prepare("INSERT INTO payments VALUES(?,?,?,?,?,?,?,?,?,?,?)")
-        .run(id, folio, cid, 100, "transfer", null, "null", "", null, now, "2026-11-07");
-      raw.prepare("INSERT INTO payment_allocations VALUES(?,?,?)").run(id, saleId, 100);
-    }
-    raw.close();
-    const migrated = openVentasDatabase(legacy);
     try {
-      expect(
-        migrated.get<{ initialPaymentId: string }>(
-          "SELECT initialPaymentId FROM sales WHERE id=?",
-          saleId,
-        )?.initialPaymentId,
-      ).toBe(first);
-      expect(migrated.all("PRAGMA foreign_key_check")).toEqual([]);
+      try {
+        raw.exec("BEGIN");
+        try {
+          raw.exec(
+            "CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY,name TEXT,applied_at TEXT)",
+          );
+          for (const [version, name] of [
+            [1, "inventory"],
+            [2, "sales_accounts_cash"],
+            [3, "outflow_reference"],
+          ] as const) {
+            raw.exec(
+              readFileSync(
+                new URL(
+                  `./db/migrations/${String(version).padStart(3, "0")}_${name}.sql`,
+                  import.meta.url,
+                ),
+                "utf8",
+              ),
+            );
+            raw.prepare("INSERT INTO schema_migrations VALUES(?,?,?)").run(version, name, now);
+          }
+          raw
+            .prepare("INSERT INTO clients VALUES(?,?,?,?,?,?)")
+            .run(cid, "Anterior", "", 15, null, 1);
+          const business = JSON.stringify({
+            name: "Anterior",
+            address: "",
+            phone: "",
+            thanks: "Histórico",
+            banks: [],
+          });
+          raw.prepare("INSERT INTO sales VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(
+            saleId,
+            1,
+            cid,
+            JSON.stringify({
+              id: cid,
+              name: "Anterior",
+              phone: "",
+              term: 15,
+              limit: null,
+              active: true,
+            }),
+            business,
+            "[]",
+            200,
+            15,
+            "2026-11-22",
+            "",
+            0,
+            "",
+            100,
+            0,
+            now,
+            "2026-11-07",
+          );
+          for (const [id, folio] of [
+            [first, 1],
+            [second, 2],
+          ] as const) {
+            raw
+              .prepare("INSERT INTO payments VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+              .run(id, folio, cid, 100, "transfer", null, "null", "", null, now, "2026-11-07");
+            raw.prepare("INSERT INTO payment_allocations VALUES(?,?,?)").run(id, saleId, 100);
+          }
+          raw.exec("COMMIT");
+        } catch (error) {
+          raw.exec("ROLLBACK");
+          throw error;
+        }
+      } finally {
+        raw.close();
+      }
+      const migrated = openVentasDatabase(legacy);
+      try {
+        expect(
+          migrated.get<{ initialPaymentId: string }>(
+            "SELECT initialPaymentId FROM sales WHERE id=?",
+            saleId,
+          )?.initialPaymentId,
+        ).toBe(first);
+        expect(migrated.all("PRAGMA foreign_key_check")).toEqual([]);
+      } finally {
+        migrated.close();
+      }
     } finally {
-      migrated.close();
       rmSync(legacy, { recursive: true, force: true });
     }
   });
